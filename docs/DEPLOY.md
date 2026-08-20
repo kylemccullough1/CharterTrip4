@@ -36,11 +36,16 @@ fine for planning. Before the trip, switch the plan to **B1** (about $13/month) 
 
 ## Step 2 — Tell it where to keep the data
 
-**Configuration** → **Environment variables** → **App settings** → **Add**:
+From the "deployment is complete" screen, click **Go to resource**. Everything below happens
+inside the Web App, using the left-hand sidebar.
+
+**Left sidebar → Settings → Environment variables → App settings tab → + Add**
 
 | Name | Value |
 | --- | --- |
 | `Trip__DataRoot` | `/home/data` |
+
+Then **Apply** at the bottom, and **Apply** again to confirm. The app restarts.
 
 That double underscore is how ASP.NET spells `Trip:DataRoot` in an environment variable.
 
@@ -52,7 +57,12 @@ Click **Apply**.
 
 ## Step 3 — Lock it to one instance
 
-**Scale out (App Service plan)** → set **manual scale** to **1 instance**, autoscale **off**.
+**Left sidebar → Settings → Scale out (App Service plan)** → **manual scale**, **1 instance**,
+autoscale **off**.
+
+On **F1 Free** this is already fixed at one instance and the controls may be greyed out — nothing
+to do today. It matters the moment you move up to B1 for the trip, which is why it is worth knowing
+where this page is.
 
 > **This is not optional.** The app keeps the whole trip in memory and owns `trip.json`. Two
 > instances means two writers with different pictures of reality, and edits vanish. One instance,
@@ -60,14 +70,20 @@ Click **Apply**.
 
 ## Step 4 — Connect GitHub
 
-1. In the Portal, open your Web App → **Overview** → **Download publish profile**. You get an
-   `.publishsettings` file. Open it in a text editor and copy **all** of it.
+1. In the Portal, open your Web App → **Overview** → **Download publish profile** in the top
+   toolbar. If you cannot see it, it is under the **⋯** (More) menu there. You get a
+   `.publishsettings` file — open it in a text editor and copy **all** of it.
 2. In GitHub: repo → **Settings** → **Secrets and variables** → **Actions** → **New repository
    secret**.
    - Name: `AZURE_WEBAPP_PUBLISH_PROFILE`
    - Value: the entire file contents
-3. If you named the app something other than `chartertrip`, update `AZURE_WEBAPP_NAME` at the top
-   of `.github/workflows/deploy.yml`.
+3. Check the app's **Name** on the Overview page. If it is not `chartertrip`, update
+   `AZURE_WEBAPP_NAME` near the top of `.github/workflows/deploy.yml` to match exactly — the deploy
+   targets that name.
+
+> **Where am I?** The left sidebar of a Web App is long and grouped into collapsible sections.
+> Everything in these steps lives under **Settings**, except the publish profile, which is a button
+> on **Overview**. If the sidebar looks short, widen the browser window or click the **»** to expand it.
 
 That file is a credential. It goes in GitHub Secrets and nowhere else — never committed.
 

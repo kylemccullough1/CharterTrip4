@@ -1,0 +1,18 @@
+@* The committee's view: every section, everything editable. *@
+
+<div class="shell shell-admin">
+    <NavMenu Admin="true" />
+
+    <main id="main" class="main">
+        @ChildContent
+    </main>
+
+    <SiteFooter>
+        <span class="chip tiny ok">Admin mode</span>
+        <span class="muted tiny">You can edit anything on the site.</span>
+    </SiteFooter>
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

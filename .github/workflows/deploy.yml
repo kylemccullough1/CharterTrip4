@@ -1,0 +1,73 @@
+# Publishes to Azure App Service on every push to main.
+#
+# One-time setup (see docs/DEPLOY.md):
+#   1. Create the Web App in Azure (Linux, .NET 10, ONE instance).
+#   2. Download its publish profile.
+#   3. Save it as the repo secret AZURE_WEBAPP_PUBLISH_PROFILE.
+#   4. Set AZURE_WEBAPP_NAME below to your app's name.
+#
+# Until that secret exists this workflow builds and then stops before deploying,
+# so it never fails the repo with a red X for setup you have not done yet.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: chartertrip
+  PUBLISH_DIR: ./publish
+
+jobs:
+  deploy:
+    name: Build, test and deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      # Never ship a build that does not pass its tests.
+      - name: Test
+        run: dotnet test --no-build --configuration Release
+
+      - name: Publish
+        run: dotnet publish src/CharterTrip.Web --no-build --configuration Release --output ${{ env.PUBLISH_DIR }}
+
+      - name: Check for the Azure secret
+        id: azure
+        run: |
+          if [ -n "${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::AZURE_WEBAPP_PUBLISH_PROFILE is not set — built and tested, skipping deploy. See docs/DEPLOY.md."
+          fi
+
+      - name: Deploy to Azure App Service
+        if: steps.azure.outputs.configured == 'true'
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ env.PUBLISH_DIR }}
+
+      - name: Smoke test the deployment
+        if: steps.azure.outputs.configured == 'true'
+        run: |
+          sleep 20
+          curl --fail --silent --show-error --retry 5 --retry-delay 10 --retry-all-errors \
+            "https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/healthz"

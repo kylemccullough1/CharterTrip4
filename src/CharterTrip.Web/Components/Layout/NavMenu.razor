@@ -1,0 +1,89 @@
+@implements IDisposable
+@inject NavigationManager Nav
+
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" href="/">
+            <span class="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 100 100">
+                    <path d="M50 8 L78 50 L50 92 L22 50 Z" fill="none" stroke="currentColor" stroke-width="5" />
+                    <path d="M50 28 L64 50 L50 72 L36 50 Z" fill="currentColor" />
+                </svg>
+            </span>
+            <span class="brand-text">
+                <b>Charter Trip</b>
+                <i>4th Annual · 2026</i>
+            </span>
+        </a>
+
+        <button class="nav-toggle"
+                aria-expanded="@(_open ? "true" : "false")"
+                aria-controls="mainnav"
+                aria-label="Toggle navigation"
+                @onclick="() => _open = !_open">
+            <span></span><span></span><span></span>
+        </button>
+
+        <nav id="mainnav" class="mainnav @(_open ? "open" : null)" aria-label="Main">
+            @foreach (var entry in _entries)
+            {
+                if (!entry.HasChildren)
+                {
+                    <NavLink class="navlink" href="@entry.Href" Match="Match(entry.Href)" @onclick="Close">
+                        @entry.Label
+                    </NavLink>
+                }
+                else
+                {
+                    <div class="dropdown">
+                        <span class="navlink has-kids" tabindex="0" role="button" aria-haspopup="true">
+                            @entry.Label<span class="caret">▾</span>
+                        </span>
+                        <div class="dropdown-menu">
+                            @foreach (var child in entry.Children!)
+                            {
+                                <NavLink class="dropdown-item" href="@child.Href" Match="Match(child.Href)" @onclick="Close">
+                                    @child.Label
+                                </NavLink>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </nav>
+
+        @if (Admin)
+        {
+            <span class="admin-band" title="You are signed in as a committee member">ADMIN</span>
+        }
+    </div>
+</header>
+
+@code {
+    [CascadingParameter] private TripPermissions Permissions { get; set; } = new(false, "Guest");
+
+    [Parameter] public bool Admin { get; set; }
+
+    private bool _open;
+    private IReadOnlyList<NavEntry> _entries = [];
+
+    protected override void OnInitialized()
+    {
+        _entries = NavTree.For(Permissions);
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    private static NavLinkMatch Match(string href) =>
+        href == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix;
+
+    private void Close() => _open = false;
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        if (!_open) return;
+        _open = false;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}

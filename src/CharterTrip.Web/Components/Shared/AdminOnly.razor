@@ -1,0 +1,23 @@
+@* Wraps admin-only page content. Phase 1 lets everyone through because AlwaysAdminUser says
+   so; the guard exists now so phase 2 only has to change who is admin. *@
+
+@if (Permissions.CanSeeAdminAreas)
+{
+    @ChildContent
+}
+else
+{
+    <div class="page">
+        <SectionCard Title="Committee only" Subtitle="This part of the site is for Jou, Ali, Kyle and Em.">
+            <div class="card">
+                <p>Nothing is broken — this page just isn't yours to see.</p>
+                <a class="btn btn-gold btn-sm" href="/">Back to the trip</a>
+            </div>
+        </SectionCard>
+    </div>
+}
+
+@code {
+    [CascadingParameter] private TripPermissions Permissions { get; set; } = new(false, "Guest");
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

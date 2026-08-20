@@ -1,0 +1,54 @@
+@* A single reusable "are you sure?" modal. Call ShowAsync from a page and await nothing —
+   the callback runs if the person confirms. *@
+
+@if (_open)
+{
+    <div class="modal-back" @onclick="Cancel">
+        <div class="modal-box narrow" role="dialog" aria-modal="true" @onclick:stopPropagation="true">
+            <div class="modal-head">
+                <h2>@_title</h2>
+                <button class="icon-btn" @onclick="Cancel" aria-label="Close">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="confirm-msg">@_message</p>
+                <div class="row gap end">
+                    <button class="btn" @onclick="Cancel">Cancel</button>
+                    <button class="btn btn-danger" @onclick="ConfirmAsync">@_confirmLabel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _open;
+    private string _title = "Are you sure?";
+    private string _message = string.Empty;
+    private string _confirmLabel = "Yes, do it";
+    private Func<Task>? _onConfirm;
+
+    public void Show(string message, Func<Task> onConfirm, string confirmLabel = "Yes, do it", string title = "Are you sure?")
+    {
+        _message = message;
+        _onConfirm = onConfirm;
+        _confirmLabel = confirmLabel;
+        _title = title;
+        _open = true;
+        StateHasChanged();
+    }
+
+    private void Cancel()
+    {
+        _open = false;
+        _onConfirm = null;
+    }
+
+    private async Task ConfirmAsync()
+    {
+        var action = _onConfirm;
+        _open = false;
+        _onConfirm = null;
+
+        if (action is not null) await action();
+    }
+}

@@ -1,0 +1,109 @@
+@* Click-to-edit text. Renders as plain text for anyone without edit rights, which is how the
+   member view stays read-only without every page writing an @if around each field. *@
+
+@if (!CanEditThis)
+{
+    <span class="@CssClass @EmptyClass">@Display</span>
+}
+else if (_editing)
+{
+    @if (Multiline)
+    {
+        <textarea @ref="_field"
+                  draggable="false"
+                  class="inline-edit @CssClass"
+                  rows="@Rows"
+                  value="@_draft"
+                  @oninput="e => _draft = e.Value?.ToString() ?? string.Empty"
+                  @onblur="CommitAsync"
+                  @onkeydown="OnKeyDownAsync"
+                  placeholder="@Placeholder"></textarea>
+    }
+    else
+    {
+        <input @ref="_field"
+               draggable="false"
+               class="inline-edit @CssClass"
+               type="text"
+               value="@_draft"
+               @oninput="e => _draft = e.Value?.ToString() ?? string.Empty"
+               @onblur="CommitAsync"
+               @onkeydown="OnKeyDownAsync"
+               placeholder="@Placeholder" />
+    }
+}
+else
+{
+    <span class="editable @CssClass @EmptyClass"
+          role="button"
+          tabindex="0"
+          title="Click to edit"
+          @onclick="BeginEdit"
+          @onkeydown="OnDisplayKeyDown">@Display</span>
+}
+
+@code {
+    [CascadingParameter] private TripPermissions Permissions { get; set; } = new(false, "Guest");
+
+    [Parameter, EditorRequired] public string Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "—";
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public bool Multiline { get; set; }
+    [Parameter] public int Rows { get; set; } = 2;
+
+    /// <summary>Lets a caller force read-only even for an admin.</summary>
+    [Parameter] public bool ReadOnly { get; set; }
+
+    private bool _editing;
+    private string _draft = string.Empty;
+    private bool _focusWanted;
+    private ElementReference _field;
+
+    private bool CanEditThis => Permissions.CanEdit && !ReadOnly;
+    private string Display => string.IsNullOrWhiteSpace(Value) ? Placeholder : Value;
+    private string? EmptyClass => string.IsNullOrWhiteSpace(Value) ? "is-empty" : null;
+
+    private void BeginEdit()
+    {
+        _draft = Value;
+        _editing = true;
+        _focusWanted = true;
+    }
+
+    private void OnDisplayKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or " ") BeginEdit();
+    }
+
+    private async Task OnKeyDownAsync(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _editing = false;
+            return;
+        }
+
+        // Shift+Enter inserts a newline in a multiline field; plain Enter always commits.
+        if (e.Key == "Enter" && (!Multiline || !e.ShiftKey))
+            await CommitAsync();
+    }
+
+    private async Task CommitAsync()
+    {
+        if (!_editing) return;
+        _editing = false;
+
+        var trimmed = _draft.Trim();
+        if (trimmed == Value) return;
+
+        await ValueChanged.InvokeAsync(trimmed);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_focusWanted) return;
+        _focusWanted = false;
+        try { await _field.FocusAsync(); } catch { /* element already gone */ }
+    }
+}

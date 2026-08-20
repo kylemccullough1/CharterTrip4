@@ -1,0 +1,33 @@
+@inherits LayoutComponentBase
+@inject ICurrentUser CurrentUser
+
+@*
+    Blazor's @layout attribute is fixed per page, so choosing a shell is done here instead:
+    resolve who is looking, then render the chrome that suits them. Admin and member get
+    genuinely different navigation and different affordances, not the same page with things
+    greyed out.
+*@
+
+<CascadingValue Value="_permissions" IsFixed="true">
+    @if (_permissions.IsAdmin)
+    {
+        <AdminShell>@Body</AdminShell>
+    }
+    else
+    {
+        <MemberShell>@Body</MemberShell>
+    }
+    <ToastHost />
+</CascadingValue>
+
+<div id="blazor-error-ui" data-nosnippet>
+    Something went wrong.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private TripPermissions _permissions = new(false, "Guest");
+
+    protected override void OnInitialized() => _permissions = CurrentUser.Get();
+}

@@ -1,0 +1,91 @@
+@page "/venue"
+@inherits TripAwareComponent
+
+<PageTitle>Venue & Area · Charter Trip 2026</PageTitle>
+
+<div class="page">
+    <SectionCard Title="@Place.Name" Subtitle="@($"{Place.City} · {Trip.Trip.Dates}")">
+        <div class="note-grid">
+            <div class="card">
+                <h4>Inside</h4>
+                <ul class="plain">
+                    @foreach (var line in Place.Inside) { <li>@line</li> }
+                </ul>
+            </div>
+            <div class="card">
+                <h4>Outside</h4>
+                <ul class="plain">
+                    @foreach (var line in Place.Outside) { <li>@line</li> }
+                </ul>
+            </div>
+            <div class="card">
+                <h4>Timing</h4>
+                <ul class="plain">
+                    <li>Check-in: <b>@Place.CheckIn</b></li>
+                    <li>Check-out: <b>@Place.CheckOut</b></li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4>Stores nearby</h4>
+                <ul class="plain">
+                    @foreach (var store in Place.Stores)
+                    {
+                        <li><b>@store.Name</b> — @store.Distance</li>
+                    }
+                </ul>
+            </div>
+            <div class="card">
+                <h4>Parks nearby</h4>
+                <ul class="plain">
+                    @foreach (var park in Place.Parks)
+                    {
+                        <li>
+                            <b>@park.Name</b> — @park.Distance
+                            @if (!string.IsNullOrWhiteSpace(park.Notes))
+                            {
+                                <p class="muted tiny">@park.Notes</p>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+            <div class="card">
+                <h4>Not included</h4>
+                <ul class="plain">
+                    @foreach (var line in Place.NotIncluded) { <li>@line</li> }
+                </ul>
+                <p class="muted tiny">@Place.Byo</p>
+            </div>
+        </div>
+    </SectionCard>
+
+    <SectionCard Title="The committee" Subtitle="@($"JAKE — {string.Join(", ", Trip.Trip.Committee)}")">
+        <div class="note-grid">
+            <div class="card">
+                <h4>Money</h4>
+                <p>Treasurer is Kyle. Venmo <code>@Trip.Trip.Venmo</code>.</p>
+                <p class="muted tiny">
+                    If cost is a problem for anyone, message one of the four of us and we will work it out.
+                </p>
+            </div>
+            <div class="card">
+                <h4>Sunday</h4>
+                <p>New committee members get picked before checkout. Volunteer or get volunteered.</p>
+            </div>
+            <div class="card">
+                <h4>Cost</h4>
+                <p>
+                    @Trip.Trip.PricePerPerson.ToString("C0") per person —
+                    @Trip.Trip.HousingPerPerson.ToString("C0") housing,
+                    @Trip.Trip.FoodPerPerson.ToString("C0") food and supplies.
+                </p>
+            </div>
+        </div>
+    </SectionCard>
+</div>
+
+@code {
+    protected override TripArea Watching => TripArea.Venue;
+
+    private VenueInfo Place => Trip.Venue;
+}

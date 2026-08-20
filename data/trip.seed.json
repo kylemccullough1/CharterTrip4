@@ -1,0 +1,2243 @@
+{
+  "revision": 0,
+  "updatedUtc": "2026-08-19T00:00:00+00:00",
+  "trip": {
+    "name": "Charter Trip",
+    "kicker": "4th Annual",
+    "year": 2026,
+    "venue": "Braun Manor",
+    "city": "Denison, TX",
+    "dates": "August 28-30, 2026",
+    "tagline": "One weekend. Four teams. One trophy.",
+    "startsAt": "2026-08-28T16:00:00-05:00",
+    "endsAt": "2026-08-30T12:00:00-05:00",
+    "pricePerPerson": 177,
+    "housingPerPerson": 127,
+    "foodPerPerson": 50,
+    "venmo": "@kyle-mccullough-98",
+    "committee": [
+      "Jou",
+      "Ali",
+      "Kyle",
+      "Em"
+    ]
+  },
+  "venue": {
+    "name": "Braun Manor",
+    "city": "Denison, TX",
+    "checkIn": "Friday 4:00 PM",
+    "checkOut": "Sunday 12:00 PM (pushed back - thanks Kyle)",
+    "byo": "BYOB / BYOTP / BYOPT / BYOL",
+    "inside": [
+      "8 bedrooms",
+      "4 bathrooms",
+      "Hair dryers provided",
+      "Soap and shampoo provided",
+      "Towels provided"
+    ],
+    "outside": [
+      "Swimming pool (no hot tub)",
+      "Pond - catch & release fishing allowed",
+      "Grill"
+    ],
+    "notIncluded": [
+      "Beer / liquor",
+      "Paper towels",
+      "Toilet paper"
+    ],
+    "stores": [
+      {
+        "name": "Albertson's",
+        "distance": "6 min",
+        "notes": ""
+      },
+      {
+        "name": "CVS Pharmacy",
+        "distance": "8 min",
+        "notes": ""
+      },
+      {
+        "name": "Walmart Supercenter",
+        "distance": "11 min",
+        "notes": ""
+      }
+    ],
+    "parks": [
+      {
+        "name": "Munson Park",
+        "distance": "1 min",
+        "notes": "Easy trails, picnic area, covered pavilions, basketball courts"
+      },
+      {
+        "name": "Waterloo Lake Regional Park",
+        "distance": "9 min",
+        "notes": "Nature trails, creeks, cave loop, fishing pond, sand volleyball court"
+      }
+    ]
+  },
+  "slides": [
+    {
+      "id": "slide-1",
+      "kind": "deco",
+      "caption": "4th Annual Charter Trip",
+      "sub": "Braun Manor - Denison, TX",
+      "hue": 0
+    },
+    {
+      "id": "slide-2",
+      "kind": "deco",
+      "caption": "August 28-30, 2026",
+      "sub": "26 of us. One weekend. One trophy.",
+      "hue": 1
+    },
+    {
+      "id": "slide-3",
+      "kind": "deco",
+      "caption": "Murder at West Egg Manor",
+      "sub": "Saturday, 8:00 PM - dress the part",
+      "hue": 2
+    },
+    {
+      "id": "slide-4",
+      "kind": "deco",
+      "caption": "Add your own photos",
+      "sub": "Coming in a later phase",
+      "hue": 3
+    }
+  ],
+  "teams": [
+    {
+      "id": "jou",
+      "name": "Team Jou",
+      "lead": "JouJou",
+      "color": "#d4af37",
+      "headband": ""
+    },
+    {
+      "id": "ali",
+      "name": "Team Ali",
+      "lead": "Ali Hussain",
+      "color": "#2e9e7e",
+      "headband": ""
+    },
+    {
+      "id": "kyle",
+      "name": "Team Kyle",
+      "lead": "Kyle McCullough",
+      "color": "#c94f5a",
+      "headband": ""
+    },
+    {
+      "id": "em",
+      "name": "Team Em",
+      "lead": "Emily Ea",
+      "color": "#4a7fd6",
+      "headband": ""
+    }
+  ],
+  "itinerary": [
+    {
+      "id": "day-fri",
+      "day": "Friday",
+      "date": "Aug 28",
+      "items": [
+        {
+          "id": "item-f1",
+          "time": "4:00 PM",
+          "title": "Check-in at Braun Manor",
+          "notes": "Kyle, Ali and Em targeting ~4pm. Jou ~7pm. Unload, claim rooms (8 rooms, 4 bathrooms).",
+          "tag": "logistics"
+        },
+        {
+          "id": "item-f2",
+          "time": "8:00 PM",
+          "title": "Dinner - Chicken Adobo + veggies",
+          "notes": "Late arrivals can eat whenever they get in. Rice cooker courtesy of Jou.",
+          "tag": "food"
+        },
+        {
+          "id": "item-f3",
+          "time": "9:30 PM",
+          "title": "Team Reveals",
+          "notes": "Headbands on, teams pick their team names, team photos.",
+          "tag": "game"
+        },
+        {
+          "id": "item-f4",
+          "time": "10:00 PM",
+          "title": "Jeopardy (Quiz Show / Game of Memes)",
+          "notes": "Everyone. 5 categories, $400-$2000.",
+          "tag": "game"
+        },
+        {
+          "id": "item-f5",
+          "time": "11:00 PM",
+          "title": "Newlywed Game",
+          "notes": "Pairs answer questions about each other.",
+          "tag": "game"
+        },
+        {
+          "id": "item-f6",
+          "time": "11:45 PM",
+          "title": "Police Sketch (optional)",
+          "notes": "Hosted by Em. If people still have gas in the tank.",
+          "tag": "game"
+        }
+      ]
+    },
+    {
+      "id": "day-sat",
+      "day": "Saturday",
+      "date": "Aug 29",
+      "items": [
+        {
+          "id": "item-s1",
+          "time": "10:00 AM",
+          "title": "Breakfast - eggs, bacon, pancakes & waffles",
+          "notes": "Be ready for the day!",
+          "tag": "food"
+        },
+        {
+          "id": "item-s2",
+          "time": "11:30 AM",
+          "title": "Spelling Bee",
+          "notes": "Hosted by Kyle. First game of the day. Optionally a drinking game.",
+          "tag": "game"
+        },
+        {
+          "id": "item-s3",
+          "time": "12:15 PM",
+          "title": "Pool Noodle Cup Game",
+          "notes": "Hosted by Jou. 4 players at a time, one per team.",
+          "tag": "game"
+        },
+        {
+          "id": "item-s4",
+          "time": "1:00 PM",
+          "title": "Beer Run",
+          "notes": "Hosted by Ali. Last game before lunch. Optionally a drinking game.",
+          "tag": "game"
+        },
+        {
+          "id": "item-s5",
+          "time": "1:30 PM",
+          "title": "Lunch - burgers & dogs",
+          "notes": "",
+          "tag": "food"
+        },
+        {
+          "id": "item-s6",
+          "time": "2:00 PM",
+          "title": "Pool / Chill",
+          "notes": "Pool, pond (catch & release), Munson Park is 1 minute away.",
+          "tag": "freeTime"
+        },
+        {
+          "id": "item-s7",
+          "time": "6:00 PM",
+          "title": "Dinner - Grill Night",
+          "notes": "Ali's marinated skirt steak, tortillas, salsa, veggies.",
+          "tag": "food"
+        },
+        {
+          "id": "item-s8",
+          "time": "8:00 PM",
+          "title": "Murder Mystery - Murder at West Egg Manor",
+          "notes": "Gatsby dress code. Group photo. Best-dressed group wins points.",
+          "tag": "game"
+        },
+        {
+          "id": "item-s9",
+          "time": "10:00 PM",
+          "title": "Relay Race",
+          "notes": "Outside. Each team leader facilitates a different team.",
+          "tag": "game"
+        },
+        {
+          "id": "item-s10",
+          "time": "11:30 PM",
+          "title": "Final Tally - winners, losers, superlatives",
+          "notes": "Trophy for the winning team. Shots / shotguns for the losers.",
+          "tag": "game"
+        },
+        {
+          "id": "item-s11",
+          "time": "12:00 AM",
+          "title": "Free for all",
+          "notes": "Drinking, etc.",
+          "tag": "freeTime"
+        }
+      ]
+    },
+    {
+      "id": "day-sun",
+      "day": "Sunday",
+      "date": "Aug 30",
+      "items": [
+        {
+          "id": "item-u1",
+          "time": "9:00 AM",
+          "title": "Breakfast - leftovers",
+          "notes": "Or grab something on the way home.",
+          "tag": "food"
+        },
+        {
+          "id": "item-u2",
+          "time": "10:00 AM",
+          "title": "Cleanup",
+          "notes": "All hands.",
+          "tag": "logistics"
+        },
+        {
+          "id": "item-u3",
+          "time": "11:00 AM",
+          "title": "Pick new committee members",
+          "notes": "Who runs the 5th annual?",
+          "tag": "logistics"
+        },
+        {
+          "id": "item-u4",
+          "time": "11:30 AM",
+          "title": "Group Photo",
+          "notes": "",
+          "tag": "logistics"
+        },
+        {
+          "id": "item-u5",
+          "time": "12:00 PM",
+          "title": "Check-out",
+          "notes": "Kyle got checkout pushed to 12pm.",
+          "tag": "logistics"
+        }
+      ]
+    }
+  ],
+  "scores": [],
+  "superlatives": [
+    {
+      "id": "sup-mvp",
+      "title": "Team MVP",
+      "winner": ""
+    },
+    {
+      "id": "sup-dress",
+      "title": "Best Dressed (Murder Mystery)",
+      "winner": ""
+    },
+    {
+      "id": "sup-light",
+      "title": "Lightweight",
+      "winner": ""
+    },
+    {
+      "id": "sup-heavy",
+      "title": "Heavyweight",
+      "winner": ""
+    },
+    {
+      "id": "sup-hoss",
+      "title": "Hoss King / Queen",
+      "winner": ""
+    },
+    {
+      "id": "sup-sleepy",
+      "title": "Sleepyhead",
+      "winner": ""
+    }
+  ],
+  "roster": [
+    {
+      "id": "p-emily-ea",
+      "name": "Emily Ea",
+      "teamId": "em",
+      "shirt": "L",
+      "drinker": false,
+      "paid": true,
+      "amount": 177,
+      "note": "Committee",
+      "role": "admin"
+    },
+    {
+      "id": "p-justin-brown",
+      "name": "Justin Brown",
+      "teamId": "kyle",
+      "shirt": "M",
+      "drinker": true,
+      "paid": true,
+      "amount": 177,
+      "note": "JB",
+      "role": "member"
+    },
+    {
+      "id": "p-maria-saba",
+      "name": "Maria Saba",
+      "teamId": "em",
+      "shirt": "M",
+      "drinker": false,
+      "paid": true,
+      "amount": 177,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-michael-lor",
+      "name": "Michael Lor",
+      "teamId": "kyle",
+      "shirt": "XL",
+      "drinker": true,
+      "paid": true,
+      "amount": 177,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-ali-hussain",
+      "name": "Ali Hussain",
+      "teamId": "ali",
+      "shirt": "",
+      "drinker": false,
+      "paid": false,
+      "amount": 0,
+      "note": "Committee",
+      "role": "admin"
+    },
+    {
+      "id": "p-ana-torres",
+      "name": "Ana Torres",
+      "teamId": "ali",
+      "shirt": "M",
+      "drinker": true,
+      "paid": false,
+      "amount": 0,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-austin-nguyen",
+      "name": "Austin Nguyen",
+      "teamId": "em",
+      "shirt": "M",
+      "drinker": true,
+      "paid": false,
+      "amount": 0,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-brandon-pham",
+      "name": "Brandon Pham",
+      "teamId": "jou",
+      "shirt": "",
+      "drinker": true,
+      "paid": false,
+      "amount": 0,
+      "note": "Shirt size needed",
+      "role": "member"
+    },
+    {
+      "id": "p-cat-xiong",
+      "name": "Cat Xiong",
+      "teamId": "ali",
+      "shirt": "XL",
+      "drinker": true,
+      "paid": false,
+      "amount": 0,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-dillon-lam",
+      "name": "Dillon Lam",
+      "teamId": "em",
+      "shirt": "L",
+      "drinker": true,
+      "paid": true,
+      "amount": 177,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-esther-niang",
+      "name": "Esther Niang",
+      "teamId": "jou",
+      "shirt": "L",
+      "drinker": false,
+      "paid": false,
+      "amount": 0,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-evie-fox",
+      "name": "Evie Fox",
+      "teamId": "kyle",
+      "shirt": "S",
+      "drinker": false,
+      "paid": false,
+      "amount": 0,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-hao-dinh",
+      "name": "Hao Dinh",
+      "teamId": "jou",
+      "shirt": "M",
+      "drinker": false,
+      "paid": false,
+      "amount": 0,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-jnguyen",
+      "name": "JNguyen",
+      "teamId": "kyle",
+      "shirt": "XXL",
+      "drinker": false,
+      "paid": false,
+      "amount": 0,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-joujou",
+      "name": "JouJou",
+      "teamId": "jou",
+      "shirt": "M",
+      "drinker": false,
+      "paid": false,
+      "amount": 0,
+      "note": "Committee",
+      "role": "admin"
+    },
+    {
+      "id": "p-keila-vanessa",
+      "name": "Keila Vanessa",
+      "teamId": "jou",
+      "shirt": "L",
+      "drinker": true,
+      "paid": false,
+      "amount": 0,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-kenny-duong",
+      "name": "Kenny Duong",
+      "teamId": "ali",
+      "shirt": "L",
+      "drinker": true,
+      "paid": false,
+      "amount": 0,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-kylie-jacelynn",
+      "name": "Kylie Jacelynn",
+      "teamId": "em",
+      "shirt": "L",
+      "drinker": false,
+      "paid": false,
+      "amount": 0,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-leon-kien",
+      "name": "Leon Kien",
+      "teamId": "ali",
+      "shirt": "L",
+      "drinker": true,
+      "paid": false,
+      "amount": 0,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-maria-riri",
+      "name": "Maria Riri",
+      "teamId": "ali",
+      "shirt": "XL",
+      "drinker": false,
+      "paid": false,
+      "amount": 0,
+      "note": "Said they would pay soon",
+      "role": "member"
+    },
+    {
+      "id": "p-marilyn-elizondo",
+      "name": "Marilyn Elizondo",
+      "teamId": "em",
+      "shirt": "L",
+      "drinker": true,
+      "paid": true,
+      "amount": 0,
+      "note": "Marked paid, amount not recorded on the sheet",
+      "role": "member"
+    },
+    {
+      "id": "p-sage-hermes",
+      "name": "Sage Hermes",
+      "teamId": "kyle",
+      "shirt": "M",
+      "drinker": false,
+      "paid": false,
+      "amount": 0,
+      "note": "Said they would pay soon",
+      "role": "member"
+    },
+    {
+      "id": "p-zach-montebon",
+      "name": "Zach Montebon",
+      "teamId": "jou",
+      "shirt": "M",
+      "drinker": true,
+      "paid": false,
+      "amount": 0,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-ben",
+      "name": "Ben",
+      "teamId": "ali",
+      "shirt": "XL",
+      "drinker": true,
+      "paid": false,
+      "amount": 0,
+      "note": "",
+      "role": "member"
+    },
+    {
+      "id": "p-may",
+      "name": "May",
+      "teamId": "kyle",
+      "shirt": "",
+      "drinker": true,
+      "paid": false,
+      "amount": 0,
+      "note": "Shirt size needed",
+      "role": "member"
+    },
+    {
+      "id": "p-kyle-mccullough",
+      "name": "Kyle McCullough",
+      "teamId": "kyle",
+      "shirt": "L",
+      "drinker": false,
+      "paid": true,
+      "amount": 177,
+      "note": "Committee - Treasurer",
+      "role": "admin"
+    }
+  ],
+  "games": [
+    {
+      "id": "jeopardy",
+      "name": "Jeopardy",
+      "host": "Everyone",
+      "when": "Friday night",
+      "icon": "microphone",
+      "blurb": "The quiz show / game of memes. Five categories of KDPhi and Lambda lore.",
+      "scoring": "board",
+      "legs": [],
+      "rules": [
+        "Teams take turns picking a category and a dollar value.",
+        "The board shows the answer - respond in the form of a question.",
+        "Correct response: the team earns the value. Wrong: the team loses the value and the board opens to a steal.",
+        "Values run $400 / $800 / $1200 / $1600 / $2000."
+      ]
+    },
+    {
+      "id": "newlywed",
+      "name": "Newlywed Game",
+      "host": "Everyone",
+      "when": "Friday night",
+      "icon": "ring",
+      "blurb": "Pairs answer questions about each other. Match = points.",
+      "scoring": "newlywed",
+      "legs": [],
+      "rules": [
+        "Split into pairs. One partner writes their answer down while the other is out of earshot.",
+        "Bring the partner back, ask the same question out loud.",
+        "A match is worth points for their team. Add your own bonus for a truly unhinged answer."
+      ]
+    },
+    {
+      "id": "sketch",
+      "name": "Police Sketch",
+      "host": "Em",
+      "when": "Friday night (optional)",
+      "icon": "palette",
+      "blurb": "Hosts describe a character feature by feature. Each team member draws one piece.",
+      "scoring": "rounds",
+      "legs": [],
+      "rules": [
+        "Hosts pick a character and describe features one at a time - never the name.",
+        "Each group member draws one piece of the character per description, then rotates the paper.",
+        "Hosts each describe a single feature per rotation.",
+        "First team to correctly guess the character wins the round."
+      ]
+    },
+    {
+      "id": "spelling",
+      "name": "Spelling Bee",
+      "host": "Kyle",
+      "when": "Saturday, first game",
+      "icon": "bee",
+      "blurb": "Alternating elimination spelling. Optionally a drinking game.",
+      "scoring": "spelling",
+      "legs": [],
+      "rules": [
+        "Players spell one word at a time in alternating order across teams.",
+        "Miss a word and you are out.",
+        "The final person standing has to get their word right - otherwise the last eliminated member from each team hops back in.",
+        "The last person standing wins the game for their team.",
+        "No helping teammates."
+      ]
+    },
+    {
+      "id": "noodlecup",
+      "name": "Pool Noodle Cup Game",
+      "host": "Jou",
+      "when": "Saturday morning",
+      "icon": "cup",
+      "blurb": "Knock cups off the table with a pool noodle. Cups knocked = points.",
+      "scoring": "cups",
+      "legs": [],
+      "rules": [
+        "One person per group goes at a time - four players in play at once.",
+        "No ganging up on one person.",
+        "Teams of five have to send one person twice.",
+        "However many cups you knock out is how many points you earn."
+      ]
+    },
+    {
+      "id": "beerrun",
+      "name": "Beer Run",
+      "host": "Ali",
+      "when": "Saturday, before lunch",
+      "icon": "beer",
+      "blurb": "Collect the beers. Optionally a drinking game.",
+      "scoring": "rounds",
+      "legs": [],
+      "rules": [
+        "Teams form a large circle, equidistant from a stack of beers in the center.",
+        "One player from each team per round.",
+        "Players have to collect 3-4 beers back to their side.",
+        "Most beers hauled home wins the round."
+      ]
+    },
+    {
+      "id": "relay",
+      "name": "Relay Race",
+      "host": "Team leads (swapped)",
+      "when": "Saturday evening",
+      "icon": "flag",
+      "blurb": "Outside, multi-leg relay. Each team leader facilitates a different team.",
+      "scoring": "relay",
+      "legs": [
+        "Pool noodle jump rope race (three-person leg)",
+        "Flip cup",
+        "Food race (crackers / biscuits)",
+        "Mini beer pong (1 cup - you make it, you drink it)",
+        "High low",
+        "Spin and carry an egg / golf ball with chopsticks"
+      ],
+      "rules": [
+        "All outside. Each team leader runs a leg for a team that is not their own.",
+        "Legs run back to back - finish yours before the next person starts.",
+        "Points awarded by finishing position for each leg."
+      ]
+    },
+    {
+      "id": "superlatives",
+      "name": "Superlatives & Trophy",
+      "host": "Group vote",
+      "when": "Saturday, final tally",
+      "icon": "trophy",
+      "blurb": "Group vote at the end of the weekend. Winning team takes the trophy.",
+      "scoring": "superlatives",
+      "legs": [],
+      "rules": [
+        "Group vote on each superlative at the final tally.",
+        "Best Dressed is judged off the Murder Mystery outfits.",
+        "Winning team gets the trophy. Losing team gets shots / a shotgun."
+      ]
+    }
+  ],
+  "jeopardy": {
+    "categories": [
+      "KDPhi",
+      "Lambdas",
+      "Parties",
+      "Pictures",
+      "Miscellaneous"
+    ],
+    "values": [
+      400,
+      800,
+      1200,
+      1600,
+      2000
+    ],
+    "clues": [
+      {
+        "category": "KDPhi",
+        "value": 400,
+        "clue": "The KDPhi Interest Group",
+        "response": "What is Ladies Involved in Leadership, Academics, Culture, and Service?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "KDPhi",
+        "value": 800,
+        "clue": "",
+        "response": "What is Kyle's favorite bridge?",
+        "draft": false,
+        "used": false,
+        "imageUrl": "https://shawnee-steel.com/wp-content/gallery/34th-street/OK-I35-Moore-Bridge.jpg?t=1625790073"
+      },
+      {
+        "category": "KDPhi",
+        "value": 1200,
+        "clue": "\"I'm the DOM\"",
+        "response": "What was written on Evie's white lies party shirt?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "KDPhi",
+        "value": 1600,
+        "clue": "The theme of the LILACS bid packet",
+        "response": "What is Head in the Clouds?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "KDPhi",
+        "value": 2000,
+        "clue": "Iowa, Texas, and Colorado",
+        "response": "What are the 3 states outside of Oklahoma at least half of the girls have traveled to together?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "Lambdas",
+        "value": 400,
+        "clue": "The LPhiE Interest Group",
+        "response": "What is Network Of Visionary Academics?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "Lambdas",
+        "value": 800,
+        "clue": "Tommy Nguyen during PTYC",
+        "response": "Who broke Brandon's leg?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "Lambdas",
+        "value": 1200,
+        "clue": "2L Sprite bottle and a bucket",
+        "response": "What did we use to build gravity bongs?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "Lambdas",
+        "value": 1600,
+        "clue": "At Cat and Jou's 2-bed progress apartment",
+        "response": "Where did Mikey get convinced to join NOVA?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "Lambdas",
+        "value": 2000,
+        "clue": "Brandon, Mikey, Kenny",
+        "response": "Who were the first 3 Shave-A-Lambda victims?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "Parties",
+        "value": 400,
+        "clue": "Doodlebob, Sexy Patrick, and Patricia Star - plus Ana in a yellow wig",
+        "response": "What were the Bikini Bottom birthday people dressed as?",
+        "draft": true,
+        "used": false
+      },
+      {
+        "category": "Parties",
+        "value": 800,
+        "clue": "A Buffalo Wild Wings bag",
+        "response": "In her freshman year, what container was Sage known to bring her mixed drinks in?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "Parties",
+        "value": 1200,
+        "clue": "OU's Lambdas' New Year",
+        "response": "Where did Zach get arrested?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "Parties",
+        "value": 1600,
+        "clue": "",
+        "response": "Whose birthdays were celebrated at the gender swap party?",
+        "draft": true,
+        "used": false
+      },
+      {
+        "category": "Parties",
+        "value": 2000,
+        "clue": "",
+        "response": "Where was the Lambda Gamma class probate party hosted?",
+        "draft": true,
+        "used": false
+      },
+      {
+        "category": "Pictures",
+        "value": 400,
+        "clue": "Groupme photo",
+        "response": "What is the Groupme photo?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "Pictures",
+        "value": 800,
+        "clue": "Baby cage video",
+        "response": "What is Baby Cage?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "Pictures",
+        "value": 1200,
+        "clue": "DCM Friendsgiving photo",
+        "response": "What is DCM Friendsgiving?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "Pictures",
+        "value": 1600,
+        "clue": "Meech, Ali, Austin shadow photo",
+        "response": "Who are Meech, Ali, and Austin?",
+        "draft": false,
+        "used": false
+      },
+      {
+        "category": "Pictures",
+        "value": 2000,
+        "clue": "",
+        "response": "Who is Ali throwing up the sign after everclear?",
+        "draft": true,
+        "used": false
+      },
+      {
+        "category": "Miscellaneous",
+        "value": 400,
+        "clue": "Fall 2022",
+        "response": "What semester did the KDPhi / Lambda team win the ODPhi Dodge for the Kause volleyball tournament?",
+        "draft": true,
+        "used": false
+      },
+      {
+        "category": "Miscellaneous",
+        "value": 800,
+        "clue": "",
+        "response": "What is the break-in through Ana's window during the party?",
+        "draft": true,
+        "used": false
+      },
+      {
+        "category": "Miscellaneous",
+        "value": 1200,
+        "clue": "The mural in the basement of the church house",
+        "response": "What is the mural that depicted an angel and Jesus on the cross?",
+        "draft": false,
+        "used": false,
+        "imageUrl": "https://photos.zillowstatic.com/fp/086eeec8b9f357f0f57495e03edbc53d-uncropped_scaled_within_1344_1008.jpg"
+      },
+      {
+        "category": "Miscellaneous",
+        "value": 1600,
+        "clue": "",
+        "response": "Who was the first brother to graduate?",
+        "draft": true,
+        "used": false
+      },
+      {
+        "category": "Miscellaneous",
+        "value": 2000,
+        "clue": "Section 218",
+        "response": "What graduation seating section do we all sit in?",
+        "draft": false,
+        "used": false
+      }
+    ]
+  },
+  "mystery": {
+    "title": "Murder at West Egg Manor",
+    "subtitle": "A Great Gatsby-inspired murder mystery for 26 players",
+    "setting": "Long Island - 1926",
+    "hook": "At midnight the lights go out. When they come back, millionaire James Blackwell is dead in his private study - and five guests share the blame.",
+    "premise": "A lavish soiree hosted by the mysterious millionaire James Blackwell. His extravagant parties attract politicians, socialites, bootleggers, jazz musicians and movie stars. At midnight the lights go out. When they return, Blackwell is dead in his private study. Everyone had a motive. The twist: five guests secretly conspired together.",
+    "hostNote": "This setup is designed to encourage teamwork, bluffing and deduction while giving every player a meaningful role in a glamorous Roaring Twenties setting.",
+    "crimeSteps": [
+      "Stole the key",
+      "Lured Blackwell to the study",
+      "Cut communications",
+      "Ensured there were no witnesses",
+      "Removed evidence afterward"
+    ],
+    "exampleSecrets": [
+      "Secretly bankrupt",
+      "Forged artwork",
+      "Hidden engagement",
+      "Gambling debts",
+      "Bootlegging customer",
+      "Affair with another guest",
+      "Fake aristocratic title",
+      "Stole expensive jewelry",
+      "Blackmailed someone",
+      "Secretly related to Blackwell"
+    ],
+    "clueTypes": [
+      "Witness statements",
+      "Hidden letters",
+      "Financial records",
+      "Torn photographs",
+      "Matchbooks",
+      "Jewelry",
+      "Guest-book entries",
+      "Telephone logs",
+      "Servant notes"
+    ],
+    "rounds": [
+      {
+        "name": "Round 1 - Cocktail Hour",
+        "description": "Guests mingle, introduce themselves and exchange rumors."
+      },
+      {
+        "name": "Round 2 - The Murder",
+        "description": "The body is discovered and the investigation begins."
+      },
+      {
+        "name": "Round 3 - Search the Mansion",
+        "description": "Clues are released and players compare evidence."
+      },
+      {
+        "name": "Round 4 - Interrogations",
+        "description": "Guests may privately question one another."
+      },
+      {
+        "name": "Round 5 - Final Revelations",
+        "description": "Additional evidence is revealed before accusations."
+      },
+      {
+        "name": "Finale",
+        "description": "Everyone votes for the five conspirators and names the mastermind."
+      }
+    ],
+    "characters": [
+      {
+        "id": "ch-01",
+        "role": "The Bootleg King",
+        "isConspirator": true,
+        "isMastermind": false,
+        "brief": "Organized illegal liquor distribution. Blackwell planned to expose him. He provided access to the mansion through hidden tunnels.",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-02",
+        "role": "The Corrupt Politician",
+        "isConspirator": true,
+        "isMastermind": false,
+        "brief": "Accepted bribes from the Syndicate. Blackwell possessed incriminating documents. The politician ordered servants away from the study.",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-03",
+        "role": "The Jazz Singer",
+        "isConspirator": true,
+        "isMastermind": false,
+        "brief": "A former lover of Blackwell. The singer stole a key to the study and distracted the guests with a special performance.",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-04",
+        "role": "The Chauffeur",
+        "isConspirator": true,
+        "isMastermind": false,
+        "brief": "Loyal to the Syndicate. The chauffeur disabled the mansion telephone and controlled arrivals and departures.",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-05",
+        "role": "The Socialite",
+        "isConspirator": true,
+        "isMastermind": true,
+        "brief": "The secret leader of the Syndicate. The socialite planned the conspiracy and destroyed the final piece of evidence.",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-06",
+        "role": "Blackwell's Fiancee",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-07",
+        "role": "His Estranged Brother",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-08",
+        "role": "Newspaper Reporter",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-09",
+        "role": "Famous Actress",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-10",
+        "role": "Silent Film Director",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-11",
+        "role": "Investment Banker",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-12",
+        "role": "Family Attorney",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-13",
+        "role": "Head Butler",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-14",
+        "role": "Maid",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-15",
+        "role": "French Chef",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-16",
+        "role": "Doctor",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-17",
+        "role": "Private Detective",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-18",
+        "role": "Jazz Trumpeter",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-19",
+        "role": "Flapper",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-20",
+        "role": "Prize Boxer",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-21",
+        "role": "College Professor",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-22",
+        "role": "Jewelry Dealer",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-23",
+        "role": "Neighboring Millionaire",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-24",
+        "role": "Artist",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-25",
+        "role": "Fashion Designer",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      },
+      {
+        "id": "ch-26",
+        "role": "Police Inspector",
+        "isConspirator": false,
+        "isMastermind": false,
+        "brief": "",
+        "secret": "",
+        "motive": "",
+        "protecting": "",
+        "suspiciousActivity": "",
+        "objective1": "",
+        "objective2": ""
+      }
+    ],
+    "clues": [],
+    "active": false,
+    "castRevealed": false,
+    "votingOpen": false,
+    "currentRound": -1
+  },
+  "checklist": [
+    {
+      "id": "ck-req",
+      "title": "Required of everyone",
+      "items": [
+        {
+          "id": "ck-r1",
+          "text": "One (1) roll of toilet paper",
+          "done": false
+        },
+        {
+          "id": "ck-r2",
+          "text": "One (1) roll of paper towels",
+          "done": false
+        },
+        {
+          "id": "ck-r3",
+          "text": "One (1) case of beer per car group",
+          "done": false
+        },
+        {
+          "id": "ck-r4",
+          "text": "Your team headband",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ck-clothes",
+      "title": "Clothing",
+      "items": [
+        {
+          "id": "ck-c1",
+          "text": "2-3 outfits (comfy / casual)",
+          "done": false
+        },
+        {
+          "id": "ck-c2",
+          "text": "1 Gatsby-inspired outfit - the fancier the better. Formal wear works. Think accessories!",
+          "done": false
+        },
+        {
+          "id": "ck-c3",
+          "text": "Pajamas",
+          "done": false
+        },
+        {
+          "id": "ck-c4",
+          "text": "Underwear",
+          "done": false
+        },
+        {
+          "id": "ck-c5",
+          "text": "Socks",
+          "done": false
+        },
+        {
+          "id": "ck-c6",
+          "text": "Lightweight jacket, hoodie or sweater",
+          "done": false
+        },
+        {
+          "id": "ck-c7",
+          "text": "Shoes",
+          "done": false
+        },
+        {
+          "id": "ck-c8",
+          "text": "Sunglasses, hats",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ck-pool",
+      "title": "Pool essentials",
+      "items": [
+        {
+          "id": "ck-p1",
+          "text": "Swimsuit(s)",
+          "done": false
+        },
+        {
+          "id": "ck-p2",
+          "text": "Pool sandals / flip-flops",
+          "done": false
+        },
+        {
+          "id": "ck-p3",
+          "text": "Goggles if you want",
+          "done": false
+        },
+        {
+          "id": "ck-p4",
+          "text": "Pool floaties or anything else",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ck-toiletries",
+      "title": "Toiletries",
+      "items": [
+        {
+          "id": "ck-t1",
+          "text": "Toothbrush and toothpaste",
+          "done": false
+        },
+        {
+          "id": "ck-t2",
+          "text": "Deodorant",
+          "done": false
+        },
+        {
+          "id": "ck-t3",
+          "text": "Shampoo and conditioner",
+          "done": false
+        },
+        {
+          "id": "ck-t4",
+          "text": "Body wash or soap",
+          "done": false
+        },
+        {
+          "id": "ck-t5",
+          "text": "Hairbrush or comb",
+          "done": false
+        },
+        {
+          "id": "ck-t6",
+          "text": "Skincare products",
+          "done": false
+        },
+        {
+          "id": "ck-t7",
+          "text": "Lip balm",
+          "done": false
+        },
+        {
+          "id": "ck-t8",
+          "text": "Sun protection",
+          "done": false
+        },
+        {
+          "id": "ck-t9",
+          "text": "Towel",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ck-tech",
+      "title": "Electronics",
+      "items": [
+        {
+          "id": "ck-e1",
+          "text": "Phone",
+          "done": false
+        },
+        {
+          "id": "ck-e2",
+          "text": "Chargers",
+          "done": false
+        },
+        {
+          "id": "ck-e3",
+          "text": "Earbuds or headphones",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ck-travel",
+      "title": "Travel essentials",
+      "items": [
+        {
+          "id": "ck-v1",
+          "text": "Wallet",
+          "done": false
+        },
+        {
+          "id": "ck-v2",
+          "text": "ID / driver's license",
+          "done": false
+        },
+        {
+          "id": "ck-v3",
+          "text": "Credit / debit cards",
+          "done": false
+        },
+        {
+          "id": "ck-v4",
+          "text": "Keys",
+          "done": false
+        },
+        {
+          "id": "ck-v5",
+          "text": "Water bottle",
+          "done": false
+        },
+        {
+          "id": "ck-v6",
+          "text": "Medicine / first-aid stuff",
+          "done": false
+        },
+        {
+          "id": "ck-v7",
+          "text": "Snacks",
+          "done": false
+        }
+      ]
+    }
+  ],
+  "toBring": [
+    {
+      "id": "tb-jou",
+      "who": "Jou",
+      "items": "Rice cooker, brown sugar, paper, cookies",
+      "done": false
+    },
+    {
+      "id": "tb-ali",
+      "who": "Ali",
+      "items": "Speaker",
+      "done": false
+    },
+    {
+      "id": "tb-kyle",
+      "who": "Kyle",
+      "items": "4 sheets of laminated paper, laminated props / superlatives, trophy, headbands, laptop & HDMI cord",
+      "done": false
+    },
+    {
+      "id": "tb-em",
+      "who": "Em",
+      "items": "Folding table, cards",
+      "done": false
+    }
+  ],
+  "budget": [
+    {
+      "id": "bl-01",
+      "item": "Members Mark Cage Free Grade A Large White Eggs, 2 dozen",
+      "unit": 4.47,
+      "qty": 2,
+      "store": "Sam's Club",
+      "category": "Food"
+    },
+    {
+      "id": "bl-02",
+      "item": "Hormel Black Label Thick Cut Bacon, 3 lbs",
+      "unit": 14.44,
+      "qty": 1,
+      "store": "Sam's Club",
+      "category": "Food"
+    },
+    {
+      "id": "bl-03",
+      "item": "Jimmy Dean Fully Cooked Original Pork Sausage Links",
+      "unit": 10.47,
+      "qty": 1,
+      "store": "Sam's Club",
+      "category": "Food"
+    },
+    {
+      "id": "bl-04",
+      "item": "Eggo Homestyle Waffles, 72 ct",
+      "unit": 10.97,
+      "qty": 1,
+      "store": "Sam's Club",
+      "category": "Food"
+    },
+    {
+      "id": "bl-05",
+      "item": "Eggo Minis Buttermilk Pancakes, 200 ct",
+      "unit": 11.98,
+      "qty": 1,
+      "store": "Sam's Club",
+      "category": "Food"
+    },
+    {
+      "id": "bl-06",
+      "item": "Great Value Original Syrup, 36 fl oz",
+      "unit": 3.12,
+      "qty": 2,
+      "store": "Walmart",
+      "category": "Food"
+    },
+    {
+      "id": "bl-07",
+      "item": "Cuties Clementine Oranges, 5 lbs",
+      "unit": 8.12,
+      "qty": 2,
+      "store": "Sam's Club",
+      "category": "Food"
+    },
+    {
+      "id": "bl-08",
+      "item": "Great Value Clear Fork and Spoon Combo, 120 ct",
+      "unit": 8.78,
+      "qty": 1,
+      "store": "Walmart",
+      "category": "Supplies"
+    },
+    {
+      "id": "bl-09",
+      "item": "Frito-Lay Variety Pack Chips, 30-50 pk",
+      "unit": 18.48,
+      "qty": 2,
+      "store": "Sam's Club",
+      "category": "Food"
+    },
+    {
+      "id": "bl-10",
+      "item": "Great Value 100% Apple Juice, 96 fl oz",
+      "unit": 3.24,
+      "qty": 2,
+      "store": "Walmart",
+      "category": "Food"
+    },
+    {
+      "id": "bl-11",
+      "item": "Great Value Orange Juice, No Pulp, 52 fl oz",
+      "unit": 3.87,
+      "qty": 2,
+      "store": "Walmart",
+      "category": "Food"
+    },
+    {
+      "id": "bl-12",
+      "item": "Members Mark Purified Water, 40 pk",
+      "unit": 3.98,
+      "qty": 3,
+      "store": "Sam's Club",
+      "category": "Food"
+    },
+    {
+      "id": "bl-13",
+      "item": "Great Value Sliced Cheese",
+      "unit": 1.67,
+      "qty": 6,
+      "store": "Walmart",
+      "category": "Food"
+    },
+    {
+      "id": "bl-14",
+      "item": "Heinz Ketchup, Mayo and Mustard Variety Pack",
+      "unit": 8.98,
+      "qty": 1,
+      "store": "Sam's Club",
+      "category": "Food"
+    },
+    {
+      "id": "bl-15",
+      "item": "Sandwich Bread",
+      "unit": 0,
+      "qty": 1,
+      "store": "",
+      "category": "Food"
+    },
+    {
+      "id": "bl-16",
+      "item": "Saturday dinner meat (skirt steak)",
+      "unit": 8.11,
+      "qty": 18,
+      "store": "HEB",
+      "category": "Food"
+    },
+    {
+      "id": "bl-17",
+      "item": "Tortillas, 20 ct (flour)",
+      "unit": 4.88,
+      "qty": 2,
+      "store": "HEB",
+      "category": "Food"
+    },
+    {
+      "id": "bl-18",
+      "item": "Tortillas, 30 ct (corn)",
+      "unit": 1.98,
+      "qty": 4,
+      "store": "HEB",
+      "category": "Food"
+    },
+    {
+      "id": "bl-19",
+      "item": "Fresh salsa - medium spicy",
+      "unit": 4.26,
+      "qty": 2,
+      "store": "",
+      "category": "Food"
+    },
+    {
+      "id": "bl-20",
+      "item": "White onion",
+      "unit": 1.14,
+      "qty": 4,
+      "store": "",
+      "category": "Food"
+    },
+    {
+      "id": "bl-21",
+      "item": "Cilantro",
+      "unit": 0.46,
+      "qty": 6,
+      "store": "",
+      "category": "Food"
+    },
+    {
+      "id": "bl-22",
+      "item": "Salsa verde - hot",
+      "unit": 5.98,
+      "qty": 2,
+      "store": "",
+      "category": "Food"
+    },
+    {
+      "id": "bl-23",
+      "item": "Kingsford Charcoal Briquettes - Original",
+      "unit": 10.92,
+      "qty": 1,
+      "store": "",
+      "category": "Supplies"
+    },
+    {
+      "id": "bl-24",
+      "item": "Salted tortilla chips",
+      "unit": 3.78,
+      "qty": 2,
+      "store": "",
+      "category": "Food"
+    },
+    {
+      "id": "bl-25",
+      "item": "Soda / juice packs",
+      "unit": 8.42,
+      "qty": 4,
+      "store": "",
+      "category": "Food"
+    },
+    {
+      "id": "bl-26",
+      "item": "Boneless chicken thighs, 4 lbs",
+      "unit": 10.23,
+      "qty": 3,
+      "store": "",
+      "category": "Food"
+    },
+    {
+      "id": "bl-27",
+      "item": "Filipino soy sauce and vinegar",
+      "unit": 13.0,
+      "qty": 1,
+      "store": "",
+      "category": "Food"
+    },
+    {
+      "id": "bl-28",
+      "item": "Garlic bulb, fresh whole",
+      "unit": 0.72,
+      "qty": 1,
+      "store": "",
+      "category": "Food"
+    },
+    {
+      "id": "bl-29",
+      "item": "Great Value Jasmine Rice, 5 lb",
+      "unit": 7.23,
+      "qty": 1,
+      "store": "",
+      "category": "Food"
+    },
+    {
+      "id": "bl-30",
+      "item": "Brown sugar",
+      "unit": 0,
+      "qty": 1,
+      "store": "Jou is bringing",
+      "category": "Food"
+    },
+    {
+      "id": "bl-31",
+      "item": "Pool noodles",
+      "unit": 1.25,
+      "qty": 12,
+      "store": "Dollar Tree",
+      "category": "Games"
+    },
+    {
+      "id": "bl-32",
+      "item": "Pens / Sharpies",
+      "unit": 1.25,
+      "qty": 2,
+      "store": "Dollar Tree",
+      "category": "Games"
+    },
+    {
+      "id": "bl-33",
+      "item": "Paper",
+      "unit": 0,
+      "qty": 1,
+      "store": "Jou is bringing",
+      "category": "Games"
+    },
+    {
+      "id": "bl-34",
+      "item": "Solo cups, 50 pack",
+      "unit": 3.98,
+      "qty": 3,
+      "store": "Walmart",
+      "category": "Games"
+    },
+    {
+      "id": "bl-35",
+      "item": "Ping pong balls",
+      "unit": 2.96,
+      "qty": 1,
+      "store": "Walmart",
+      "category": "Games"
+    },
+    {
+      "id": "bl-36",
+      "item": "White boards",
+      "unit": 0,
+      "qty": 1,
+      "store": "",
+      "category": "Games"
+    },
+    {
+      "id": "bl-37",
+      "item": "Murder mystery kit (homemade)",
+      "unit": 75,
+      "qty": 1,
+      "store": "",
+      "category": "Games"
+    },
+    {
+      "id": "bl-38",
+      "item": "Group t-shirts",
+      "unit": 21.73,
+      "qty": 26,
+      "store": "",
+      "category": "Merch"
+    },
+    {
+      "id": "bl-39",
+      "item": "Vrbo - Braun Manor",
+      "unit": 3421.0,
+      "qty": 1,
+      "store": "Vrbo",
+      "category": "Lodging"
+    }
+  ],
+  "shopping": [
+    {
+      "id": "sh-food",
+      "title": "Food",
+      "items": [
+        {
+          "id": "sf-01",
+          "text": "Cucumbers",
+          "qty": "a few?",
+          "done": false
+        },
+        {
+          "id": "sf-02",
+          "text": "Bagged salad - Caesar?",
+          "qty": "?",
+          "done": false
+        },
+        {
+          "id": "sf-03",
+          "text": "Great Value Jasmine Rice, 5 lb",
+          "qty": "1",
+          "done": false
+        },
+        {
+          "id": "sf-04",
+          "text": "Bulb of garlic",
+          "qty": "1",
+          "done": false
+        },
+        {
+          "id": "sf-05",
+          "text": "Filipino soy sauce and vinegar",
+          "qty": "1",
+          "done": false
+        },
+        {
+          "id": "sf-06",
+          "text": "Boneless chicken thighs, 4 lbs",
+          "qty": "3",
+          "done": false
+        },
+        {
+          "id": "sf-07",
+          "text": "Members Mark eggs, 2 dozen",
+          "qty": "2",
+          "done": false
+        },
+        {
+          "id": "sf-08",
+          "text": "Jimmy Dean pork sausage links",
+          "qty": "1",
+          "done": false
+        },
+        {
+          "id": "sf-09",
+          "text": "Hormel Black Label bacon, 3 lbs",
+          "qty": "1",
+          "done": false
+        },
+        {
+          "id": "sf-10",
+          "text": "Eggo Homestyle Waffles, 72 ct",
+          "qty": "1",
+          "done": false
+        },
+        {
+          "id": "sf-11",
+          "text": "Eggo Minis Buttermilk Pancakes, 200 ct",
+          "qty": "1",
+          "done": false
+        },
+        {
+          "id": "sf-12",
+          "text": "Great Value syrup, 36 fl oz",
+          "qty": "2",
+          "done": false
+        },
+        {
+          "id": "sf-13",
+          "text": "Cuties clementines, 5 lbs",
+          "qty": "2",
+          "done": false
+        },
+        {
+          "id": "sf-14",
+          "text": "Apple juice, 96 fl oz",
+          "qty": "2",
+          "done": false
+        },
+        {
+          "id": "sf-15",
+          "text": "Orange juice, no pulp, 52 fl oz",
+          "qty": "2",
+          "done": false
+        },
+        {
+          "id": "sf-16",
+          "text": "Frozen beef patties, 40 ct",
+          "qty": "1",
+          "done": false
+        },
+        {
+          "id": "sf-17",
+          "text": "Ball Park beef franks, 24 ct",
+          "qty": "2",
+          "done": false
+        },
+        {
+          "id": "sf-18",
+          "text": "Burger buns, 16 ct",
+          "qty": "3",
+          "done": false
+        },
+        {
+          "id": "sf-19",
+          "text": "Hot dog buns, 16 ct",
+          "qty": "3",
+          "done": false
+        },
+        {
+          "id": "sf-20",
+          "text": "Great Value sliced cheese, 12 ct",
+          "qty": "4",
+          "done": false
+        },
+        {
+          "id": "sf-21",
+          "text": "Head of lettuce",
+          "qty": "2",
+          "done": false
+        },
+        {
+          "id": "sf-22",
+          "text": "Tomatoes",
+          "qty": "4",
+          "done": false
+        },
+        {
+          "id": "sf-23",
+          "text": "Onions",
+          "qty": "6",
+          "done": false
+        },
+        {
+          "id": "sf-24",
+          "text": "Heinz ketchup, mayo and mustard variety pack",
+          "qty": "1",
+          "done": false
+        },
+        {
+          "id": "sf-25",
+          "text": "Frito-Lay variety pack chips, 50 pk",
+          "qty": "2",
+          "done": false
+        },
+        {
+          "id": "sf-26",
+          "text": "Skirt steak",
+          "qty": "16 lbs",
+          "done": false
+        },
+        {
+          "id": "sf-27",
+          "text": "Marinade ingredients",
+          "qty": "1 set",
+          "done": false
+        },
+        {
+          "id": "sf-28",
+          "text": "Tortillas, 20 ct (flour)",
+          "qty": "2",
+          "done": false
+        },
+        {
+          "id": "sf-29",
+          "text": "Tortillas, 30 ct (corn)",
+          "qty": "4",
+          "done": false
+        },
+        {
+          "id": "sf-30",
+          "text": "Fresh salsa - medium spicy",
+          "qty": "2",
+          "done": false
+        },
+        {
+          "id": "sf-31",
+          "text": "Cilantro",
+          "qty": "6",
+          "done": false
+        },
+        {
+          "id": "sf-32",
+          "text": "Salsa verde - hot",
+          "qty": "2",
+          "done": false
+        },
+        {
+          "id": "sf-33",
+          "text": "Salted tortilla chips",
+          "qty": "2",
+          "done": false
+        },
+        {
+          "id": "sf-34",
+          "text": "Capri Sun, 40 pk",
+          "qty": "3",
+          "done": false
+        },
+        {
+          "id": "sf-35",
+          "text": "Members Mark purified water, 40 pk",
+          "qty": "3",
+          "done": false
+        },
+        {
+          "id": "sf-36",
+          "text": "Cookies / Oreos",
+          "qty": "?",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "sh-misc",
+      "title": "Miscellaneous",
+      "items": [
+        {
+          "id": "sm-01",
+          "text": "Great Value clear fork and spoon combo, 120 ct",
+          "qty": "1",
+          "done": false
+        },
+        {
+          "id": "sm-02",
+          "text": "Paper plates, 150 pk",
+          "qty": "1",
+          "done": false
+        },
+        {
+          "id": "sm-03",
+          "text": "Solo cups, 50 pack",
+          "qty": "3",
+          "done": false
+        },
+        {
+          "id": "sm-04",
+          "text": "Pens / Sharpies",
+          "qty": "1 pack each",
+          "done": false
+        },
+        {
+          "id": "sm-05",
+          "text": "Ping pong balls, 6 pk",
+          "qty": "2",
+          "done": false
+        },
+        {
+          "id": "sm-06",
+          "text": "Pool noodles",
+          "qty": "12",
+          "done": false
+        },
+        {
+          "id": "sm-07",
+          "text": "Dry erase markers",
+          "qty": "4",
+          "done": false
+        },
+        {
+          "id": "sm-08",
+          "text": "Aluminum foil trays",
+          "qty": "5?",
+          "done": false
+        },
+        {
+          "id": "sm-09",
+          "text": "Charcoal briquettes",
+          "qty": "1",
+          "done": false
+        },
+        {
+          "id": "sm-10",
+          "text": "Team headbands (7 per team lead)",
+          "qty": "28",
+          "done": false
+        }
+      ]
+    }
+  ]
+}

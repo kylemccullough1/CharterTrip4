@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="4th Annual Charter Trip — Braun Manor, Denison TX, August 28–30 2026" />
+    <meta name="theme-color" content="#0a0c10" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <base href="/" />
+
+    <title>4th Annual Charter Trip · 2026</title>
+
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,800;1,600&display=swap"
+          rel="stylesheet" />
+
+    <ResourcePreloader />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="@Assets["CharterTrip.Web.styles.css"]" />
+    <ImportMap />
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <Routes @rendermode="InteractiveServer" />
+    <ReconnectModal />
+
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+</body>
+
+</html>

@@ -1,0 +1,96 @@
+@page "/games"
+@page "/games/{GameId}"
+@inherits TripAwareComponent
+
+<PageTitle>@(Game?.Name ?? "Games") · Charter Trip 2026</PageTitle>
+
+<div class="page">
+    @if (Game is null)
+    {
+        @if (GameId is not null)
+        {
+            <SectionCard Title="Unknown game" Subtitle="@($"There is no game called “{GameId}”.")">
+                <a class="btn btn-gold btn-sm" href="/games">See all games</a>
+            </SectionCard>
+        }
+
+        <SectionCard Title="Games"
+                     Subtitle="Eight events across the weekend. Rules are live; scoring arrives in phase 4.">
+            <div class="game-grid">
+                @foreach (var game in Trip.Games)
+                {
+                    <a class="game-card" href="@($"/games/{game.Id}")" @key="game.Id">
+                        <h3>@game.Name</h3>
+                        <p class="game-card-when">@game.When · @game.Host</p>
+                        <p class="game-card-blurb">@game.Blurb</p>
+                        <p class="muted tiny">@game.Rules.Count rules</p>
+                    </a>
+                }
+                <a class="game-card game-card-alt" href="/mystery">
+                    <h3>Murder at West Egg Manor</h3>
+                    <p class="game-card-when">Saturday 8:00 PM · everyone</p>
+                    <p class="game-card-blurb">26 characters, 5 conspirators, one mastermind. Gatsby dress code.</p>
+                    <p class="muted tiny">Full host kit →</p>
+                </a>
+            </div>
+        </SectionCard>
+    }
+    else
+    {
+        <div class="game-head">
+            <div class="grow">
+                <h1 class="game-title">@Game.Name</h1>
+                <p class="game-meta"><b>@Game.When</b> · hosted by <b>@Game.Host</b></p>
+                <p class="game-blurb">@Game.Blurb</p>
+            </div>
+            <a class="btn btn-ghost btn-sm" href="/games">← All games</a>
+        </div>
+
+        <SectionCard Title="Rules">
+            <div class="card rules-card">
+                <ul class="rules">
+                    @foreach (var rule in Game.Rules)
+                    {
+                        <li>@rule</li>
+                    }
+                </ul>
+                @if (Game.Legs.Count > 0)
+                {
+                    <h4 class="mt">Legs</h4>
+                    <ol class="rules">
+                        @foreach (var leg in Game.Legs)
+                        {
+                            <li>@leg</li>
+                        }
+                    </ol>
+                }
+            </div>
+        </SectionCard>
+
+        <SectionCard Title="Scoring">
+            <div class="card coming-soon">
+                <p class="coming-badge">Phase 4</p>
+                <p>
+                    Live scoring for this game lands with the rest of the games work.
+                    @if (Game.Id == "jeopardy")
+                    {
+                        <text>
+                            The full board — 25 clues, both image clues, and phone buzzers — is already
+                            seeded in <code>trip.json</code> and just needs its screen.
+                        </text>
+                    }
+                </p>
+            </div>
+        </SectionCard>
+    }
+</div>
+
+@code {
+    protected override TripArea Watching => TripArea.Games;
+
+    [Parameter] public string? GameId { get; set; }
+
+    private Game? Game => GameId is null
+        ? null
+        : Trip.Games.FirstOrDefault(g => string.Equals(g.Id, GameId, StringComparison.OrdinalIgnoreCase));
+}

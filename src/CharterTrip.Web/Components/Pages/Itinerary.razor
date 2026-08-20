@@ -1,0 +1,322 @@
+@page "/itinerary"
+@inherits TripAwareComponent
+@inject CharterTrip.Web.Services.ToastService Toasts
+
+<PageTitle>Itinerary · Charter Trip 2026</PageTitle>
+
+<div class="page">
+
+    <SectionCard Title="Itinerary" Subtitle="@SubtitleText">
+        <Actions>
+            @if (CanEdit)
+            {
+                <button class="btn btn-ghost btn-sm" @onclick="SortEveryDayAsync">Sort each day by time</button>
+                <button class="btn btn-ghost btn-sm" @onclick="AddDayAsync">+ Add day</button>
+            }
+        </Actions>
+        <ChildContent>
+            <div class="itin-board">
+                @foreach (var day in Trip.Itinerary)
+                {
+                    <div class="itin-col" @key="day.Id">
+
+                        <div class="itin-col-head">
+                            <div>
+                                <h3>
+                                    <EditableText Value="@day.Day"
+                                                  ValueChanged="@(v => RenameDayAsync(day.Id, v))"
+                                                  Placeholder="Day" />
+                                </h3>
+                                <p class="muted tiny">
+                                    <EditableText Value="@day.Date"
+                                                  ValueChanged="@(v => SetDayDateAsync(day.Id, v))"
+                                                  Placeholder="date" />
+                                </p>
+                            </div>
+                            <span class="count">@day.Items.Count items</span>
+                        </div>
+
+                        <div class="itin-list @(_dropListId == day.Id ? "drop-into" : null)"
+                             @ondragover:preventDefault="true"
+                             @ondragenter="() => _dropListId = day.Id"
+                             @ondrop="() => DropAtEndAsync(day.Id)"
+                             @ondrop:preventDefault="true">
+
+                            @foreach (var item in day.Items)
+                            {
+                                <article class="itin-item @(_dropItemId == item.Id ? "drop-before" : null)"
+                                         style="--tag: @TagColor(item.Tag)"
+                                         draggable="@CanEdit.ToString().ToLowerInvariant()"
+                                         @key="item.Id"
+                                         @ondragstart="() => _draggingId = item.Id"
+                                         @ondragend="ClearDrag"
+                                         @ondragenter="() => _dropItemId = item.Id"
+                                         @ondragover:preventDefault="true"
+                                         @ondrop="() => DropBeforeAsync(day.Id, item.Id)"
+                                         @ondrop:preventDefault="true"
+                                         @ondrop:stopPropagation="true">
+
+                                    <div class="itin-row">
+                                        @if (CanEdit)
+                                        {
+                                            <span class="drag-handle" title="Drag to reorder" aria-hidden="true">⠿</span>
+                                        }
+
+                                        <span class="itin-time">
+                                            <EditableText Value="@item.Time"
+                                                          ValueChanged="@(v => SetTimeAsync(item.Id, v))"
+                                                          Placeholder="time" />
+                                        </span>
+
+                                        @if (CanEdit)
+                                        {
+                                            <select class="tag-select"
+                                                    aria-label="Category"
+                                                    value="@item.Tag"
+                                                    @onchange="e => SetTagAsync(item.Id, e.Value?.ToString())">
+                                                @foreach (var tag in Enum.GetValues<ItineraryTag>())
+                                                {
+                                                    <option value="@tag" selected="@(tag == item.Tag)">@TagLabel(tag)</option>
+                                                }
+                                            </select>
+                                        }
+                                        else
+                                        {
+                                            <TagChip Tag="item.Tag" />
+                                        }
+
+                                        <div class="spacer"></div>
+
+                                        @if (CanEdit)
+                                        {
+                                            <div class="itin-move">
+                                                <button class="mini-btn" title="Move up"
+                                                        @onclick="() => NudgeAsync(item.Id, -1)">↑</button>
+                                                <button class="mini-btn" title="Move down"
+                                                        @onclick="() => NudgeAsync(item.Id, 1)">↓</button>
+                                                <button class="mini-btn" title="Previous day"
+                                                        @onclick="() => MoveDayAsync(item.Id, -1)">«</button>
+                                                <button class="mini-btn" title="Next day"
+                                                        @onclick="() => MoveDayAsync(item.Id, 1)">»</button>
+                                                <button class="mini-btn btn-danger-ghost" title="Delete"
+                                                        @onclick="() => ConfirmDeleteItem(item)">✕</button>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="itin-title">
+                                        <EditableText Value="@item.Title"
+                                                      ValueChanged="@(v => SetTitleAsync(item.Id, v))"
+                                                      Placeholder="What is happening?" />
+                                    </div>
+
+                                    <div class="itin-notes">
+                                        <EditableText Value="@item.Notes"
+                                                      ValueChanged="@(v => SetNotesAsync(item.Id, v))"
+                                                      Placeholder="Notes…"
+                                                      Multiline="true" />
+                                    </div>
+                                </article>
+                            }
+
+                            @if (day.Items.Count == 0)
+                            {
+                                <p class="muted tiny empty-day">Nothing scheduled yet.</p>
+                            }
+                        </div>
+
+                        @if (CanEdit)
+                        {
+                            <div class="itin-col-foot">
+                                <button class="btn btn-ghost btn-sm btn-block" @onclick="() => AddItemAsync(day.Id)">
+                                    + Add item
+                                </button>
+                                @if (day.Items.Count == 0)
+                                {
+                                    <button class="btn btn-sm btn-danger-ghost btn-block mt"
+                                            @onclick="() => ConfirmDeleteDay(day)">
+                                        Delete this day
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </ChildContent>
+    </SectionCard>
+
+    <SectionCard Title="Notes from the committee">
+        <div class="note-grid">
+            <div class="card">
+                <h4>Arrival</h4>
+                <p>Check-in is 4:00 PM. Kyle, Ali and Em are aiming for ~4pm; Jou around 7pm.
+                   Late arrivals eat whenever they land.</p>
+            </div>
+            <div class="card">
+                <h4>Checkout</h4>
+                <p>Pushed back to 12:00 PM on Sunday. Cleanup starts well before that.</p>
+            </div>
+            <div class="card">
+                <h4>Bring per car group</h4>
+                <p>One case of beer, one paper towel roll, one roll of toilet paper.</p>
+            </div>
+            <div class="card">
+                <h4>Saturday dress code</h4>
+                <p>One Gatsby-inspired outfit for the murder mystery. The fancier the better —
+                   formal wear works. Best-dressed group wins points.</p>
+            </div>
+        </div>
+    </SectionCard>
+
+</div>
+
+<ConfirmDialog @ref="_confirm" />
+
+@code {
+    protected override TripArea Watching => TripArea.Itinerary;
+
+    private ConfirmDialog? _confirm;
+
+    private string? _draggingId;
+    private string? _dropItemId;
+    private string? _dropListId;
+
+    private string SubtitleText => CanEdit
+        ? "Click any time, title or note to edit it. Drag the cards to reorder, or use ↑ ↓ « » on touch."
+        : "The plan for the weekend. The committee keeps this up to date.";
+
+    // ---------------------------------------------------------------- editing
+
+    private Task RenameDayAsync(string dayId, string value) => MutateAsync(t =>
+    {
+        var day = ItineraryService.FindDay(t, dayId);
+        if (day is not null) day.Day = value;
+    });
+
+    private Task SetDayDateAsync(string dayId, string value) => MutateAsync(t =>
+    {
+        var day = ItineraryService.FindDay(t, dayId);
+        if (day is not null) day.Date = value;
+    });
+
+    private Task SetTimeAsync(string itemId, string value) => WithItemAsync(itemId, i => i.Time = value);
+    private Task SetTitleAsync(string itemId, string value) => WithItemAsync(itemId, i => i.Title = value);
+    private Task SetNotesAsync(string itemId, string value) => WithItemAsync(itemId, i => i.Notes = value);
+
+    private Task SetTagAsync(string itemId, string? raw)
+    {
+        if (!Enum.TryParse<ItineraryTag>(raw, out var tag)) return Task.CompletedTask;
+        return WithItemAsync(itemId, i => i.Tag = tag);
+    }
+
+    private Task WithItemAsync(string itemId, Action<ItineraryItem> change) => MutateAsync(t =>
+    {
+        var (_, item) = ItineraryService.Locate(t, itemId);
+        if (item is not null) change(item);
+    });
+
+    // ------------------------------------------------------- add / remove
+
+    private async Task AddItemAsync(string dayId)
+    {
+        await MutateAsync(t => ItineraryService.AddItem(t, dayId));
+        Toasts.Show("Item added");
+    }
+
+    private async Task AddDayAsync()
+    {
+        await MutateAsync(t => ItineraryService.AddDay(t));
+        Toasts.Show("Day added");
+    }
+
+    private void ConfirmDeleteItem(ItineraryItem item) =>
+        _confirm?.Show($"Delete “{item.Title}”?", async () =>
+        {
+            await MutateAsync(t => ItineraryService.RemoveItem(t, item.Id));
+            Toasts.Show("Item deleted", CharterTrip.Web.Services.ToastKind.Bad);
+        }, "Delete");
+
+    private void ConfirmDeleteDay(ItineraryDay day) =>
+        _confirm?.Show($"Delete the “{day.Day}” column?", async () =>
+        {
+            await MutateAsync(t => ItineraryService.RemoveDay(t, day.Id));
+            Toasts.Show("Day deleted", CharterTrip.Web.Services.ToastKind.Bad);
+        }, "Delete");
+
+    // ---------------------------------------------------------- reordering
+
+    private Task NudgeAsync(string itemId, int delta) =>
+        MutateAsync(t => ItineraryService.Nudge(t, itemId, delta));
+
+    private Task MoveDayAsync(string itemId, int direction) =>
+        MutateAsync(t => ItineraryService.MoveToAdjacentDay(t, itemId, direction));
+
+    private async Task SortEveryDayAsync()
+    {
+        await MutateAsync(t =>
+        {
+            foreach (var day in t.Itinerary) ItineraryService.SortDayByTime(t, day.Id);
+        });
+        Toasts.Show("Sorted by time", CharterTrip.Web.Services.ToastKind.Good);
+    }
+
+    // ---------------------------------------------------- drag and drop
+    // Only dragstart/dragenter/drop are handled. dragover is preventDefault-only so the
+    // browser allows the drop without firing a server round-trip every few milliseconds.
+
+    private async Task DropBeforeAsync(string dayId, string targetItemId)
+    {
+        var dragged = _draggingId;
+        ClearDrag();
+        if (dragged is null || dragged == targetItemId) return;
+
+        await MutateAsync(t =>
+        {
+            var day = ItineraryService.FindDay(t, dayId);
+            if (day is null) return;
+
+            var index = day.Items.FindIndex(i => i.Id == targetItemId);
+            if (index < 0) return;
+
+            ItineraryService.MoveItem(t, dragged, dayId, index);
+        });
+    }
+
+    private async Task DropAtEndAsync(string dayId)
+    {
+        var dragged = _draggingId;
+        ClearDrag();
+        if (dragged is null) return;
+
+        await MutateAsync(t =>
+        {
+            var day = ItineraryService.FindDay(t, dayId);
+            if (day is not null) ItineraryService.MoveItem(t, dragged, dayId, day.Items.Count);
+        });
+    }
+
+    private void ClearDrag()
+    {
+        _draggingId = null;
+        _dropItemId = null;
+        _dropListId = null;
+    }
+
+    // ------------------------------------------------------------- display
+
+    private static string TagLabel(ItineraryTag tag) => tag switch
+    {
+        ItineraryTag.FreeTime => "Free time",
+        _ => tag.ToString()
+    };
+
+    private static string TagColor(ItineraryTag tag) => tag switch
+    {
+        ItineraryTag.Food => "#e0a458",
+        ItineraryTag.Game => "#c94f5a",
+        ItineraryTag.Logistics => "#4a7fd6",
+        ItineraryTag.FreeTime => "#2e9e7e",
+        _ => "#888888"
+    };
+}

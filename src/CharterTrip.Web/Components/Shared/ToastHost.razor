@@ -1,0 +1,17 @@
+@implements IDisposable
+@inject CharterTrip.Web.Services.ToastService Toasts
+
+<div class="toast-wrap" aria-live="polite">
+    @foreach (var toast in Toasts.Current)
+    {
+        <div class="toast toast-@toast.Kind.ToString().ToLowerInvariant() in" @key="toast.Id">@toast.Message</div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized() => Toasts.Changed += OnChanged;
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Toasts.Changed -= OnChanged;
+}

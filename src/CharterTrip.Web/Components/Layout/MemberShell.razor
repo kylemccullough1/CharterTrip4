@@ -1,0 +1,17 @@
+@* Everyone else's view: the parts of the weekend that concern them, read-only. *@
+
+<div class="shell shell-member">
+    <NavMenu Admin="false" />
+
+    <main id="main" class="main">
+        @ChildContent
+    </main>
+
+    <SiteFooter>
+        <span class="muted tiny">Spotted something wrong? Tell Jou, Ali, Kyle or Em.</span>
+    </SiteFooter>
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

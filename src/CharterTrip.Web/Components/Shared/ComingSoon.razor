@@ -1,0 +1,31 @@
+@* Placeholder for a page that is planned but not built yet. Better than a 404: it tells you
+   the nav is right, the route works, and what is coming. *@
+
+<div class="page">
+    <SectionCard Title="@Title" Subtitle="@Subtitle">
+        <div class="card coming-soon">
+            <p class="coming-badge">Phase @Phase</p>
+            <p>@Description</p>
+            @if (Bullets is not null && Bullets.Count > 0)
+            {
+                <ul class="plain">
+                    @foreach (var bullet in Bullets)
+                    {
+                        <li>@bullet</li>
+                    }
+                </ul>
+            }
+            <p class="muted tiny">
+                The data behind this page is already seeded in <code>trip.json</code> — only the screen is missing.
+            </p>
+        </div>
+    </SectionCard>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public int Phase { get; set; } = 2;
+    [Parameter] public string Description { get; set; } = "Not built yet.";
+    [Parameter] public IReadOnlyList<string>? Bullets { get; set; }
+}

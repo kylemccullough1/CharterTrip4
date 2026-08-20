@@ -1,0 +1,205 @@
+@page "/"
+@inherits TripAwareComponent
+@using CharterTrip.Web.Services
+@implements IDisposable
+
+<PageTitle>4th Annual Charter Trip · 2026</PageTitle>
+
+<div class="page page-home">
+
+    <section class="hero">
+        <div class="carousel">
+            <div class="slides">
+                @for (var i = 0; i < Slides.Count; i++)
+                {
+                    <div class="slide @(i == _slideIndex ? "active" : null)"
+                         style="background-image: url('@DecoArt.SlideDataUri(Slides[i].Hue)')"
+                         @key="Slides[i].Id"></div>
+                }
+            </div>
+        </div>
+        <div class="hero-scrim"></div>
+
+        <div class="hero-inner">
+            <div class="hero-top">
+                <p class="kicker">@Trip.Trip.Kicker</p>
+                <h1 class="hero-title">
+                    @Trip.Trip.Name<span class="hero-year">@Trip.Trip.Year</span>
+                </h1>
+                <p class="hero-meta">
+                    <b>@Trip.Trip.Venue</b> · @Trip.Trip.City · @Trip.Trip.Dates
+                </p>
+                <p class="hero-tag">@Trip.Trip.Tagline</p>
+            </div>
+
+            <div class="hero-board">
+                <div class="hero-board-head">
+                    <span class="hb-label">@(AnyScores ? "Current standings" : "Standings — no points yet")</span>
+                    <a class="hb-link" href="/teams">Full scoreboard →</a>
+                </div>
+                <div class="hb-rows">
+                    @{ var top = Standings.Count > 0 ? Math.Max(1, Standings[0].Total) : 1; }
+                    @for (var i = 0; i < Standings.Count; i++)
+                    {
+                        var row = Standings[i];
+                        var pct = Math.Max(3, (int)(Math.Max(0, row.Total) / (double)top * 100));
+                        <div class="hb-row @(i == 0 && AnyScores ? "hb-lead" : null)">
+                            <span class="hb-rank">@(i + 1)</span>
+                            <span class="hb-dot" style="background: @row.Team.Color"></span>
+                            <span class="hb-name">@row.Team.Name</span>
+                            <span class="hb-bar"><i style="width: @pct%; background: @row.Team.Color"></i></span>
+                            <span class="hb-pts">@row.Total</span>
+                        </div>
+                    }
+                </div>
+                <p class="hb-foot muted">
+                    @if (AnyScores)
+                    {
+                        <text>
+                            <b>@Standings[0].Team.Name</b> leads by
+                            <b>@(Standings[0].Total - (Standings.Count > 1 ? Standings[1].Total : 0))</b> points
+                        </text>
+                    }
+                    else
+                    {
+                        <text>Scoring arrives with the games pages in phase 2.</text>
+                    }
+                </p>
+            </div>
+
+            <div class="hero-cd">
+                <b>@_countdown.Headline</b><span>@_countdown.Detail</span>
+            </div>
+        </div>
+
+        <div class="carousel-ui">
+            <button class="car-btn" aria-label="Previous photo" @onclick="() => Advance(-1)">‹</button>
+            <div class="car-mid">
+                <p class="slide-caption">
+                    <b>@CurrentSlide.Caption</b>
+                    @if (!string.IsNullOrWhiteSpace(CurrentSlide.Sub))
+                    {
+                        <span> · @CurrentSlide.Sub</span>
+                    }
+                </p>
+                <div class="dots">
+                    @for (var i = 0; i < Slides.Count; i++)
+                    {
+                        var index = i;
+                        <button class="dot @(index == _slideIndex ? "on" : null)"
+                                aria-label="@($"Photo {index + 1}")"
+                                @onclick="() => Show(index)"></button>
+                    }
+                </div>
+            </div>
+            <button class="car-btn" aria-label="Next photo" @onclick="() => Advance(1)">›</button>
+        </div>
+    </section>
+
+    <SectionCard Title="The weekend at a glance"
+                 Subtitle="@($"{Trip.Trip.Venue} · {Trip.Trip.Dates}")">
+        <Actions>
+            <a class="btn btn-ghost btn-sm" href="/itinerary">Edit itinerary →</a>
+        </Actions>
+        <ChildContent>
+            <div class="glance-grid">
+                @foreach (var day in Trip.Itinerary)
+                {
+                    <div class="card glance-card" @key="day.Id">
+                        <h3 class="glance-day">@day.Day<span class="glance-date">@day.Date</span></h3>
+                        <ul class="glance-list">
+                            @foreach (var item in day.Items)
+                            {
+                                <li @key="item.Id">
+                                    <span class="gl-time">@item.Time</span>
+                                    <span class="gl-title">@item.Title</span>
+                                    <TagChip Tag="item.Tag" />
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        </ChildContent>
+    </SectionCard>
+
+    <SectionCard Title="Trip status">
+        <div class="tile-grid">
+            <div class="tile">
+                <span class="tile-label">Headcount</span>
+                <b class="tile-big">@Trip.Roster.Count</b>
+                <span class="tile-small">people going</span>
+            </div>
+            <div class="tile">
+                <span class="tile-label">Cost to you</span>
+                <b class="tile-big">@Trip.Trip.PricePerPerson.ToString("C0")</b>
+                <span class="tile-small">
+                    @Trip.Trip.HousingPerPerson.ToString("C0") housing + @Trip.Trip.FoodPerPerson.ToString("C0") food
+                </span>
+            </div>
+            @if (Permissions.CanSeeAdminAreas)
+            {
+                <div class="tile">
+                    <span class="tile-label">Paid up</span>
+                    <b class="tile-big">@Trip.Roster.Count(p => p.Paid) / @Trip.Roster.Count</b>
+                    <span class="tile-small">@Trip.Roster.Sum(p => p.Amount).ToString("C0") collected</span>
+                </div>
+                <div class="tile">
+                    <span class="tile-label">Budget</span>
+                    <b class="tile-big">@Trip.Budget.Sum(b => b.Total).ToString("C0")</b>
+                    <span class="tile-small">@Trip.Budget.Count line items</span>
+                </div>
+            }
+            <div class="tile">
+                <span class="tile-label">Games</span>
+                <b class="tile-big">@Trip.Games.Count</b>
+                <span class="tile-small">on the schedule</span>
+            </div>
+            <div class="tile">
+                <span class="tile-label">Venmo</span>
+                <b class="tile-big">@Trip.Trip.Venmo</b>
+                <span class="tile-small">pay Kyle</span>
+            </div>
+        </div>
+    </SectionCard>
+
+</div>
+
+@code {
+    protected override TripArea Watching => TripArea.All;
+
+    private int _slideIndex;
+    private Timer? _timer;
+    private TripSummary.Countdown _countdown;
+
+    private List<CarouselSlide> Slides => Trip.Slides;
+    private CarouselSlide CurrentSlide => Slides.Count > 0 ? Slides[_slideIndex] : new CarouselSlide();
+    private IReadOnlyList<(Team Team, int Total)> Standings => TripSummary.Standings(Trip);
+    private bool AnyScores => Trip.Scores.Count > 0;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _countdown = TripSummary.ToStart(Trip.Trip, DateTimeOffset.UtcNow);
+
+        // Rotating on the server costs one tiny render per client every 6.5s. With a couple of
+        // dozen people that is nothing, and it keeps the caption in step with the image without
+        // any JavaScript. If this ever becomes a crowd, move it to a CSS animation.
+        _timer = new Timer(_ => _ = InvokeAsync(() => { Advance(1); StateHasChanged(); }),
+                           null, TimeSpan.FromSeconds(6.5), TimeSpan.FromSeconds(6.5));
+    }
+
+    private void Advance(int delta)
+    {
+        if (Slides.Count == 0) return;
+        _slideIndex = ((_slideIndex + delta) % Slides.Count + Slides.Count) % Slides.Count;
+    }
+
+    private void Show(int index) => _slideIndex = index;
+
+    public override void Dispose()
+    {
+        _timer?.Dispose();
+        base.Dispose();
+    }
+}

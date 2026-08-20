@@ -1,0 +1,21 @@
+@page "/budget"
+@* Admin-only in phase 2 onward. *@
+
+<PageTitle>Budget · Charter Trip 2026</PageTitle>
+
+<AdminOnly>
+<ComingSoon Title="Budget"
+            Subtitle="Live totals that recalculate as you edit."
+            Phase="5"
+            Description="Thirty-nine budget lines are seeded, including the Vrbo and the t-shirt order."
+            Bullets="_bullets" />
+</AdminOnly>
+
+@code {
+    private readonly string[] _bullets =
+    [
+        "Editable line items grouped by category",
+        "Cost per person against the $177 charged",
+        "The steak and lunch costings the committee ran",
+    ];
+}

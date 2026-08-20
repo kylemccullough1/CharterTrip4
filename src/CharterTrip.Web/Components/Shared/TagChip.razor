@@ -1,0 +1,23 @@
+<span class="tag" style="--tag: @Color">@Label</span>
+
+@code {
+    [Parameter, EditorRequired] public ItineraryTag Tag { get; set; }
+
+    private string Label => Tag switch
+    {
+        ItineraryTag.Food => "Food",
+        ItineraryTag.Game => "Game",
+        ItineraryTag.Logistics => "Logistics",
+        ItineraryTag.FreeTime => "Free time",
+        _ => Tag.ToString()
+    };
+
+    private string Color => Tag switch
+    {
+        ItineraryTag.Food => "#e0a458",
+        ItineraryTag.Game => "#c94f5a",
+        ItineraryTag.Logistics => "#4a7fd6",
+        ItineraryTag.FreeTime => "#2e9e7e",
+        _ => "#888888"
+    };
+}

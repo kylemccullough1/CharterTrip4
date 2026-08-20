@@ -51,10 +51,15 @@ jobs:
       - name: Publish
         run: dotnet publish src/CharterTrip.Web --no-build --configuration Release --output ${{ env.PUBLISH_DIR }}
 
+      # Never interpolate a secret into shell source. The publish profile is multi-line XML
+      # full of quotes, which turns `[ -n "<xml ...>" ]` into a syntax error that silently
+      # falls through to "not configured". Pass it as an env var and test that instead.
       - name: Check for the Azure secret
         id: azure
+        env:
+          PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         run: |
-          if [ -n "${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}" ]; then
+          if [ -n "$PUBLISH_PROFILE" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"

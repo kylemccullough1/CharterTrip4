@@ -39,6 +39,18 @@ fine for planning. Before the trip, switch the plan to **B1** (about $13/month) 
 From the "deployment is complete" screen, click **Go to resource**. Everything below happens
 inside the Web App, using the left-hand sidebar.
 
+> **Make sure you are in the app, not the resource group.** Creating the app also created a
+> *resource group* (a folder) called something like `chartertrip_group`, and it is easy to land
+> there instead. Check the small grey text under the page title:
+>
+> - `Resource group` — wrong level. Its sidebar only shows Deployments, Security, Policies, Locks.
+>   Click **Overview**, then click the row whose **Type** is **App Service**.
+> - `App Service` — correct. The sidebar now has Deployment Center, Environment variables, Scale up,
+>   Scale out.
+>
+> The group usually holds two things: the **App Service** (your app and its settings) and the
+> **App Service plan** (the hardware tier, and the thing that actually bills you).
+
 **Left sidebar → Settings → Environment variables → App settings tab → + Add**
 
 | Name | Value |

@@ -82,6 +82,15 @@ where this page is.
 
 ## Step 4 — Connect GitHub
 
+> **"Basic authentication is disabled."** Azure turns basic auth off by default on new App
+> Services, and a publish profile *is* a basic auth credential, so the download refuses. Turn it on:
+>
+> **Settings → Configuration → General settings → Platform settings →
+> SCM Basic Auth Publishing Credentials → On → Save.**
+>
+> Then come back to Overview and download it. (The more modern alternative is OIDC federated
+> credentials via `azure/login`, which stores no secret at all — more setup, worth doing later.)
+
 1. In the Portal, open your Web App → **Overview** → **Download publish profile** in the top
    toolbar. If you cannot see it, it is under the **⋯** (More) menu there. You get a
    `.publishsettings` file — open it in a text editor and copy **all** of it.
@@ -89,9 +98,16 @@ where this page is.
    secret**.
    - Name: `AZURE_WEBAPP_PUBLISH_PROFILE`
    - Value: the entire file contents
-3. Check the app's **Name** on the Overview page. If it is not `chartertrip`, update
-   `AZURE_WEBAPP_NAME` near the top of `.github/workflows/deploy.yml` to match exactly — the deploy
-   targets that name.
+3. Check two values on the **Overview** page and make `.github/workflows/deploy.yml` match:
+
+   | Portal field | Workflow variable | Note |
+   | --- | --- | --- |
+   | **Name** (top of the page) | `AZURE_WEBAPP_NAME` | What the deploy targets |
+   | **Default domain** | `AZURE_WEBAPP_HOSTNAME` | What the smoke test curls |
+
+   These are **not** the same thing any more. Azure appends a random suffix to new apps, so an app
+   named `chartertrip` is served at something like
+   `chartertrip-ggeddmesa6d7hbbd.centralus-01.azurewebsites.net`. Copy the default domain verbatim.
 
 > **Where am I?** The left sidebar of a Web App is long and grouped into collapsible sections.
 > Everything in these steps lives under **Settings**, except the publish profile, which is a button
@@ -107,8 +123,8 @@ git push origin main
 
 Watch the **Actions** tab. When it goes green:
 
-- `https://<your-app>.azurewebsites.net` — the site
-- `https://<your-app>.azurewebsites.net/healthz` — should return
+- `https://<default-domain>` — the site (the **Default domain** from the Overview page)
+- `https://<default-domain>/healthz` — should return
   `{"status":"healthy","revision":0,"people":26,...}`
 
 ## Step 6 — Prove the data actually persists

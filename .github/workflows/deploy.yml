@@ -4,7 +4,7 @@
 #   1. Create the Web App in Azure (Linux, .NET 10, ONE instance).
 #   2. Download its publish profile.
 #   3. Save it as the repo secret AZURE_WEBAPP_PUBLISH_PROFILE.
-#   4. Set AZURE_WEBAPP_NAME below to your app's name.
+#   4. Set AZURE_WEBAPP_NAME and AZURE_WEBAPP_HOSTNAME below to match your app.
 #
 # Until that secret exists this workflow builds and then stops before deploying,
 # so it never fails the repo with a red X for setup you have not done yet.
@@ -17,7 +17,11 @@ on:
   workflow_dispatch:
 
 env:
+  # The App Service resource name, as shown in the Azure Portal.
   AZURE_WEBAPP_NAME: chartertrip
+  # The public hostname. Azure appends a random suffix to new apps, so this is NOT
+  # simply "<name>.azurewebsites.net" — copy it from Overview -> Default domain.
+  AZURE_WEBAPP_HOSTNAME: chartertrip-ggeddmesa6d7hbbd.centralus-01.azurewebsites.net
   PUBLISH_DIR: ./publish
 
 jobs:
@@ -70,4 +74,4 @@ jobs:
         run: |
           sleep 20
           curl --fail --silent --show-error --retry 5 --retry-delay 10 --retry-all-errors \
-            "https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/healthz"
+            "https://${{ env.AZURE_WEBAPP_HOSTNAME }}/healthz"

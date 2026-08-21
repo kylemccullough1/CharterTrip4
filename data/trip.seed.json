@@ -1,4 +1,5 @@
 {
+  "schemaVersion": 2,
   "revision": 0,
   "updatedUtc": "2026-08-19T00:00:00+00:00",
   "trip": {
@@ -143,42 +144,48 @@
       "items": [
         {
           "id": "item-f1",
-          "time": "4:00 PM",
+          "startMinutes": 960,
+          "durationMinutes": 60,
           "title": "Check-in at Braun Manor",
           "notes": "Kyle, Ali and Em targeting ~4pm. Jou ~7pm. Unload, claim rooms (8 rooms, 4 bathrooms).",
           "tag": "logistics"
         },
         {
           "id": "item-f2",
-          "time": "8:00 PM",
+          "startMinutes": 1200,
+          "durationMinutes": 90,
           "title": "Dinner - Chicken Adobo + veggies",
           "notes": "Late arrivals can eat whenever they get in. Rice cooker courtesy of Jou.",
           "tag": "food"
         },
         {
           "id": "item-f3",
-          "time": "9:30 PM",
+          "startMinutes": 1290,
+          "durationMinutes": 30,
           "title": "Team Reveals",
           "notes": "Headbands on, teams pick their team names, team photos.",
           "tag": "game"
         },
         {
           "id": "item-f4",
-          "time": "10:00 PM",
+          "startMinutes": 1320,
+          "durationMinutes": 60,
           "title": "Jeopardy (Quiz Show / Game of Memes)",
           "notes": "Everyone. 5 categories, $400-$2000.",
           "tag": "game"
         },
         {
           "id": "item-f5",
-          "time": "11:00 PM",
+          "startMinutes": 1380,
+          "durationMinutes": 45,
           "title": "Newlywed Game",
           "notes": "Pairs answer questions about each other.",
           "tag": "game"
         },
         {
           "id": "item-f6",
-          "time": "11:45 PM",
+          "startMinutes": 1425,
+          "durationMinutes": 45,
           "title": "Police Sketch (optional)",
           "notes": "Hosted by Em. If people still have gas in the tank.",
           "tag": "game"
@@ -192,77 +199,88 @@
       "items": [
         {
           "id": "item-s1",
-          "time": "10:00 AM",
+          "startMinutes": 600,
+          "durationMinutes": 90,
           "title": "Breakfast - eggs, bacon, pancakes & waffles",
           "notes": "Be ready for the day!",
           "tag": "food"
         },
         {
           "id": "item-s2",
-          "time": "11:30 AM",
+          "startMinutes": 690,
+          "durationMinutes": 45,
           "title": "Spelling Bee",
           "notes": "Hosted by Kyle. First game of the day. Optionally a drinking game.",
           "tag": "game"
         },
         {
           "id": "item-s3",
-          "time": "12:15 PM",
+          "startMinutes": 735,
+          "durationMinutes": 45,
           "title": "Pool Noodle Cup Game",
           "notes": "Hosted by Jou. 4 players at a time, one per team.",
           "tag": "game"
         },
         {
           "id": "item-s4",
-          "time": "1:00 PM",
+          "startMinutes": 780,
+          "durationMinutes": 30,
           "title": "Beer Run",
           "notes": "Hosted by Ali. Last game before lunch. Optionally a drinking game.",
           "tag": "game"
         },
         {
           "id": "item-s5",
-          "time": "1:30 PM",
+          "startMinutes": 810,
+          "durationMinutes": 60,
           "title": "Lunch - burgers & dogs",
           "notes": "",
           "tag": "food"
         },
         {
           "id": "item-s6",
-          "time": "2:00 PM",
+          "startMinutes": 870,
+          "durationMinutes": 210,
           "title": "Pool / Chill",
           "notes": "Pool, pond (catch & release), Munson Park is 1 minute away.",
           "tag": "freeTime"
         },
         {
           "id": "item-s7",
-          "time": "6:00 PM",
+          "startMinutes": 1080,
+          "durationMinutes": 120,
           "title": "Dinner - Grill Night",
           "notes": "Ali's marinated skirt steak, tortillas, salsa, veggies.",
           "tag": "food"
         },
         {
           "id": "item-s8",
-          "time": "8:00 PM",
+          "startMinutes": 1200,
+          "durationMinutes": 120,
           "title": "Murder Mystery - Murder at West Egg Manor",
           "notes": "Gatsby dress code. Group photo. Best-dressed group wins points.",
           "tag": "game"
         },
         {
           "id": "item-s9",
-          "time": "10:00 PM",
+          "startMinutes": 1320,
+          "durationMinutes": 90,
           "title": "Relay Race",
           "notes": "Outside. Each team leader facilitates a different team.",
           "tag": "game"
         },
         {
           "id": "item-s10",
-          "time": "11:30 PM",
+          "startMinutes": 1410,
+          "durationMinutes": 30,
           "title": "Final Tally - winners, losers, superlatives",
           "notes": "Trophy for the winning team. Shots / shotguns for the losers.",
           "tag": "game"
         },
         {
           "id": "item-s11",
-          "time": "12:00 AM",
+          "startMinutes": 1440,
+          "durationMinutes": 120,
           "title": "Free for all",
           "notes": "Drinking, etc.",
           "tag": "freeTime"
@@ -276,35 +294,40 @@
       "items": [
         {
           "id": "item-u1",
-          "time": "9:00 AM",
+          "startMinutes": 540,
+          "durationMinutes": 60,
           "title": "Breakfast - leftovers",
           "notes": "Or grab something on the way home.",
           "tag": "food"
         },
         {
           "id": "item-u2",
-          "time": "10:00 AM",
+          "startMinutes": 600,
+          "durationMinutes": 60,
           "title": "Cleanup",
           "notes": "All hands.",
           "tag": "logistics"
         },
         {
           "id": "item-u3",
-          "time": "11:00 AM",
+          "startMinutes": 660,
+          "durationMinutes": 30,
           "title": "Pick new committee members",
           "notes": "Who runs the 5th annual?",
           "tag": "logistics"
         },
         {
           "id": "item-u4",
-          "time": "11:30 AM",
+          "startMinutes": 690,
+          "durationMinutes": 30,
           "title": "Group Photo",
           "notes": "",
           "tag": "logistics"
         },
         {
           "id": "item-u5",
-          "time": "12:00 PM",
+          "startMinutes": 720,
+          "durationMinutes": 30,
           "title": "Check-out",
           "notes": "Kyle got checkout pushed to 12pm.",
           "tag": "logistics"

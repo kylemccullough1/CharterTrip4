@@ -1,5 +1,8 @@
 @page "/itinerary"
+@using CharterTrip.Core.Services
 @inherits TripAwareComponent
+@implements IAsyncDisposable
+@inject IJSRuntime JS
 @inject CharterTrip.Web.Services.ToastService Toasts
 
 <PageTitle>Itinerary · Charter Trip 2026</PageTitle>
@@ -8,185 +11,367 @@
 
     <SectionCard Title="Itinerary" Subtitle="@SubtitleText">
         <Actions>
-            @if (CanEdit)
-            {
-                <button class="btn btn-ghost btn-sm" @onclick="SortEveryDayAsync">Sort each day by time</button>
-                <button class="btn btn-ghost btn-sm" @onclick="AddDayAsync">+ Add day</button>
-            }
+            <div class="planner-tools">
+                <div class="zoom" role="group" aria-label="Zoom">
+                    <button class="mini-btn" title="Zoom out" disabled="@(_pxPerHour <= MinZoom)"
+                            @onclick="() => Zoom(-1)">−</button>
+                    <span class="zoom-label">@(_pxPerHour)px/hr</span>
+                    <button class="mini-btn" title="Zoom in" disabled="@(_pxPerHour >= MaxZoom)"
+                            @onclick="() => Zoom(1)">+</button>
+                </div>
+
+                <button class="btn btn-ghost btn-sm" @onclick="ToggleAllGaps">
+                    @(AnyCollapsed ? "Expand empty hours" : "Collapse empty hours")
+                </button>
+
+                @if (CanEdit)
+                {
+                    <button class="btn btn-ghost btn-sm" @onclick="AddDayAsync">+ Day</button>
+                }
+            </div>
         </Actions>
+
         <ChildContent>
-            <div class="itin-board">
+
+            @* Day tabs. Hidden on desktop by CSS, where every day is shown at once. *@
+            <div class="planner-tabs" role="tablist">
                 @foreach (var day in Trip.Itinerary)
                 {
-                    <div class="itin-col" @key="day.Id">
+                    <button role="tab"
+                            class="planner-tab @(day.Id == ActiveDayId ? "is-active" : null)"
+                            aria-selected="@(day.Id == ActiveDayId)"
+                            @onclick="() => _activeDayId = day.Id">
+                        @day.Day
+                    </button>
+                }
+            </div>
 
-                        <div class="itin-col-head">
-                            <div>
-                                <h3>
-                                    <EditableText Value="@day.Day"
-                                                  ValueChanged="@(v => RenameDayAsync(day.Id, v))"
-                                                  Placeholder="Day" />
-                                </h3>
-                                <p class="muted tiny">
-                                    <EditableText Value="@day.Date"
-                                                  ValueChanged="@(v => SetDayDateAsync(day.Id, v))"
-                                                  Placeholder="date" />
-                                </p>
-                            </div>
-                            <span class="count">@day.Items.Count items</span>
-                        </div>
-
-                        <div class="itin-list @(_dropListId == day.Id ? "drop-into" : null)"
-                             @ondragover:preventDefault="true"
-                             @ondragenter="() => _dropListId = day.Id"
-                             @ondrop="() => DropAtEndAsync(day.Id)"
-                             @ondrop:preventDefault="true">
-
-                            @foreach (var item in day.Items)
-                            {
-                                <article class="itin-item @(_dropItemId == item.Id ? "drop-before" : null)"
-                                         style="--tag: @TagColor(item.Tag)"
-                                         draggable="@CanEdit.ToString().ToLowerInvariant()"
-                                         @key="item.Id"
-                                         @ondragstart="() => _draggingId = item.Id"
-                                         @ondragend="ClearDrag"
-                                         @ondragenter="() => _dropItemId = item.Id"
-                                         @ondragover:preventDefault="true"
-                                         @ondrop="() => DropBeforeAsync(day.Id, item.Id)"
-                                         @ondrop:preventDefault="true"
-                                         @ondrop:stopPropagation="true">
-
-                                    <div class="itin-row">
-                                        @if (CanEdit)
-                                        {
-                                            <span class="drag-handle" title="Drag to reorder" aria-hidden="true">⠿</span>
-                                        }
-
-                                        <span class="itin-time">
-                                            <EditableText Value="@item.Time"
-                                                          ValueChanged="@(v => SetTimeAsync(item.Id, v))"
-                                                          Placeholder="time" />
-                                        </span>
-
-                                        @if (CanEdit)
-                                        {
-                                            <select class="tag-select"
-                                                    aria-label="Category"
-                                                    value="@item.Tag"
-                                                    @onchange="e => SetTagAsync(item.Id, e.Value?.ToString())">
-                                                @foreach (var tag in Enum.GetValues<ItineraryTag>())
-                                                {
-                                                    <option value="@tag" selected="@(tag == item.Tag)">@TagLabel(tag)</option>
-                                                }
-                                            </select>
-                                        }
-                                        else
-                                        {
-                                            <TagChip Tag="item.Tag" />
-                                        }
-
-                                        <div class="spacer"></div>
-
-                                        @if (CanEdit)
-                                        {
-                                            <div class="itin-move">
-                                                <button class="mini-btn" title="Move up"
-                                                        @onclick="() => NudgeAsync(item.Id, -1)">↑</button>
-                                                <button class="mini-btn" title="Move down"
-                                                        @onclick="() => NudgeAsync(item.Id, 1)">↓</button>
-                                                <button class="mini-btn" title="Previous day"
-                                                        @onclick="() => MoveDayAsync(item.Id, -1)">«</button>
-                                                <button class="mini-btn" title="Next day"
-                                                        @onclick="() => MoveDayAsync(item.Id, 1)">»</button>
-                                                <button class="mini-btn btn-danger-ghost" title="Delete"
-                                                        @onclick="() => ConfirmDeleteItem(item)">✕</button>
-                                            </div>
-                                        }
-                                    </div>
-
-                                    <div class="itin-title">
-                                        <EditableText Value="@item.Title"
-                                                      ValueChanged="@(v => SetTitleAsync(item.Id, v))"
-                                                      Placeholder="What is happening?" />
-                                    </div>
-
-                                    <div class="itin-notes">
-                                        <EditableText Value="@item.Notes"
-                                                      ValueChanged="@(v => SetNotesAsync(item.Id, v))"
-                                                      Placeholder="Notes…"
-                                                      Multiline="true" />
-                                    </div>
-                                </article>
-                            }
-
-                            @if (day.Items.Count == 0)
-                            {
-                                <p class="muted tiny empty-day">Nothing scheduled yet.</p>
-                            }
-                        </div>
-
-                        @if (CanEdit)
+            @if (Unscheduled.Count > 0)
+            {
+                <div class="planner-tray">
+                    <div class="tray-head">
+                        <strong>Not scheduled yet</strong>
+                        <span class="muted tiny">@Unscheduled.Count item@(Unscheduled.Count == 1 ? "" : "s") · give them a time to put them on the grid</span>
+                    </div>
+                    <div class="tray-items">
+                        @foreach (var (day, item) in Unscheduled)
                         {
-                            <div class="itin-col-foot">
-                                <button class="btn btn-ghost btn-sm btn-block" @onclick="() => AddItemAsync(day.Id)">
-                                    + Add item
-                                </button>
-                                @if (day.Items.Count == 0)
+                            <div class="tray-card" @key="item.Id">
+                                <TagChip Tag="item.Tag" />
+                                <span class="tray-title">@Display(item.Title, "Untitled")</span>
+                                @if (!string.IsNullOrWhiteSpace(item.TimeNote))
                                 {
-                                    <button class="btn btn-sm btn-danger-ghost btn-block mt"
-                                            @onclick="() => ConfirmDeleteDay(day)">
-                                        Delete this day
-                                    </button>
+                                    <span class="tray-note">“@item.TimeNote”</span>
+                                }
+                                <span class="tray-day">@day.Day</span>
+                                @if (CanEdit)
+                                {
+                                    <button class="btn btn-ghost btn-xs" @onclick="() => ScheduleAsync(item.Id)">Schedule</button>
+                                    <button class="mini-btn" title="Edit" @onclick="() => _editingId = item.Id">✎</button>
                                 }
                             </div>
                         }
                     </div>
+                </div>
+            }
+
+            <div class="planner">
+                @foreach (var day in Trip.Itinerary)
+                {
+                    var timeline = TimelineFor(day);
+                    var positioned = OverlapLayout.Arrange(day.Items);
+
+                    <section class="planner-day @(day.Id == ActiveDayId ? "is-active" : null)" @key="day.Id">
+
+                        <header class="planner-day-head">
+                            <div>
+                                <h3>
+                                    <EditableText Value="@day.Day" ReadOnly="@(!CanEdit)"
+                                                  ValueChanged="@(v => RenameDayAsync(day.Id, v))"
+                                                  Placeholder="Day" />
+                                </h3>
+                                <p class="muted tiny">
+                                    <EditableText Value="@day.Date" ReadOnly="@(!CanEdit)"
+                                                  ValueChanged="@(v => SetDayDateAsync(day.Id, v))"
+                                                  Placeholder="date" />
+                                    · @ScheduledCount(day) scheduled
+                                </p>
+                            </div>
+                            @if (CanEdit)
+                            {
+                                <div class="planner-day-actions">
+                                    <button class="mini-btn" title="Add an item at noon"
+                                            @onclick="() => AddItemAsync(day.Id)">+</button>
+                                    @if (day.Items.Count == 0)
+                                    {
+                                        <button class="mini-btn btn-danger-ghost" title="Delete this day"
+                                                @onclick="() => ConfirmDeleteDay(day)">✕</button>
+                                    }
+                                </div>
+                            }
+                        </header>
+
+                        <div class="planner-canvas" style="height:@Px(timeline.TotalPixels)">
+
+                            @* hour lines and their labels *@
+                            @foreach (var mark in timeline.HourMarks())
+                            {
+                                <div class="planner-hour" style="top:@Px(timeline.ToPixels(mark))">
+                                    <span class="planner-hour-label">@TimeText.FormatShort(mark)</span>
+                                </div>
+                            }
+
+                            @* squashed empty stretches — click to open them out *@
+                            @foreach (var band in timeline.Bands.Where(b => b.Kind == BandKind.Collapsed))
+                            {
+                                <button type="button" class="planner-gap"
+                                        style="top:@Px(band.TopPixels); height:@Px(band.HeightPixels)"
+                                        title="@TimeText.Format(band.StartMinutes) – @TimeText.Format(band.EndMinutes)"
+                                        @onclick="() => ToggleGap(day.Id, band.Key)">
+                                    <span>@TimeText.Humanize(band.DurationMinutes) free · show hours</span>
+                                </button>
+                            }
+
+                            @* an expanded gap keeps a quiet marker so it can be closed again *@
+                            @foreach (var band in ExpandedGapBands(day, timeline))
+                            {
+                                <button type="button" class="planner-gap-open"
+                                        style="top:@Px(band.TopPixels); height:@Px(band.HeightPixels)"
+                                        @onclick="() => ToggleGap(day.Id, band.Key)">
+                                    <span>collapse @TimeText.Humanize(band.DurationMinutes)</span>
+                                </button>
+                            }
+
+                            <div class="planner-lanes" data-day-id="@day.Id">
+                                @foreach (var pos in positioned)
+                                {
+                                    var item = pos.Item;
+                                    var top = timeline.ToPixels(item.StartMinutes!.Value);
+                                    var height = Math.Max(MinCardPixels, timeline.HeightOf(item.StartMinutes.Value, item.DurationMinutes));
+                                    var width = 100d / pos.ColumnCount;
+
+                                    <article class="planner-card @SizeClass(height) @(_editingId == item.Id ? "is-editing" : null)"
+                                             @key="item.Id"
+                                             data-item-id="@item.Id"
+                                             data-day-id="@day.Id"
+                                             style="top:@Px(top); height:@Px(height); left:@Pct(pos.Column * width); width:@Pct(width); --tag:@TagColor(item.Tag)"
+                                             tabindex="0"
+                                             @onclick="() => ToggleEditor(item.Id)"
+                                             @onkeydown="e => CardKeyAsync(e, item.Id)">
+
+                                        <div class="card-time">@TimeText.FormatRange(item.StartMinutes.Value, item.DurationMinutes)</div>
+                                        <div class="card-title">@Display(item.Title, "Untitled")</div>
+                                        @if (!string.IsNullOrWhiteSpace(item.Notes))
+                                        {
+                                            <div class="card-notes">@item.Notes</div>
+                                        }
+
+                                        @if (CanEdit)
+                                        {
+                                            <div class="card-resize" data-resize="@item.Id" title="Drag to change how long this runs"></div>
+                                        }
+                                    </article>
+                                }
+                            </div>
+                        </div>
+                    </section>
                 }
             </div>
+
+            @if (EditingItem is { } editing)
+            {
+                <div class="planner-editor-backdrop" @onclick="() => _editingId = null"></div>
+                <aside class="planner-editor" @onclick:stopPropagation="true">
+                    <header>
+                        <strong>Edit item</strong>
+                        <button class="mini-btn" title="Close" @onclick="() => _editingId = null">✕</button>
+                    </header>
+
+                    <label>
+                        <span>Title</span>
+                        <input class="inline-edit" value="@editing.Title"
+                               @onchange="e => SetTitleAsync(editing.Id, e.Value?.ToString() ?? string.Empty)" />
+                    </label>
+
+                    <label>
+                        <span>Notes</span>
+                        <textarea class="inline-edit" rows="3"
+                                  @onchange="e => SetNotesAsync(editing.Id, e.Value?.ToString() ?? string.Empty)">@editing.Notes</textarea>
+                    </label>
+
+                    <div class="editor-row">
+                        <label>
+                            <span>Starts</span>
+                            <input type="time" step="900" class="inline-edit"
+                                   value="@ClockValue(editing)"
+                                   @onchange="e => SetStartFromClockAsync(editing.Id, e.Value?.ToString())" />
+                        </label>
+
+                        <label>
+                            <span>Runs for</span>
+                            <select class="inline-edit" value="@editing.DurationMinutes"
+                                    @onchange="e => SetDurationAsync(editing.Id, e.Value?.ToString())">
+                                @foreach (var minutes in DurationChoices)
+                                {
+                                    <option value="@minutes" selected="@(minutes == editing.DurationMinutes)">
+                                        @TimeText.Humanize(minutes)
+                                    </option>
+                                }
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="editor-row">
+                        <label>
+                            <span>Category</span>
+                            <select class="inline-edit" value="@editing.Tag"
+                                    @onchange="e => SetTagAsync(editing.Id, e.Value?.ToString())">
+                                @foreach (var tag in Enum.GetValues<ItineraryTag>())
+                                {
+                                    <option value="@tag" selected="@(tag == editing.Tag)">@TagLabel(tag)</option>
+                                }
+                            </select>
+                        </label>
+
+                        <label>
+                            <span>Day</span>
+                            <select class="inline-edit" value="@DayOf(editing.Id)?.Id"
+                                    @onchange="e => MoveToDayAsync(editing.Id, e.Value?.ToString())">
+                                @foreach (var day in Trip.Itinerary)
+                                {
+                                    <option value="@day.Id" selected="@(day.Id == DayOf(editing.Id)?.Id)">@day.Day</option>
+                                }
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="editor-nudge">
+                        <span class="muted tiny">Shift the start</span>
+                        <div>
+                            <button class="mini-btn" @onclick="() => NudgeStartAsync(editing.Id, -15)">−15m</button>
+                            <button class="mini-btn" @onclick="() => NudgeStartAsync(editing.Id, 15)">+15m</button>
+                            <button class="mini-btn" @onclick="() => MoveDayAsync(editing.Id, -1)">« day</button>
+                            <button class="mini-btn" @onclick="() => MoveDayAsync(editing.Id, 1)">day »</button>
+                        </div>
+                    </div>
+
+                    <footer>
+                        @if (editing.IsScheduled)
+                        {
+                            <button class="btn btn-ghost btn-sm" @onclick="() => UnscheduleAsync(editing.Id)">Move to tray</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-ghost btn-sm" @onclick="() => ScheduleAsync(editing.Id)">Put on the grid</button>
+                        }
+                        <button class="btn btn-sm btn-danger-ghost" @onclick="() => ConfirmDeleteItem(editing)">Delete</button>
+                    </footer>
+                </aside>
+            }
+
         </ChildContent>
     </SectionCard>
 
-    <SectionCard Title="Notes from the committee">
-        <div class="note-grid">
-            <div class="card">
-                <h4>Arrival</h4>
-                <p>Check-in is 4:00 PM. Kyle, Ali and Em are aiming for ~4pm; Jou around 7pm.
-                   Late arrivals eat whenever they land.</p>
-            </div>
-            <div class="card">
-                <h4>Checkout</h4>
-                <p>Pushed back to 12:00 PM on Sunday. Cleanup starts well before that.</p>
-            </div>
-            <div class="card">
-                <h4>Bring per car group</h4>
-                <p>One case of beer, one paper towel roll, one roll of toilet paper.</p>
-            </div>
-            <div class="card">
-                <h4>Saturday dress code</h4>
-                <p>One Gatsby-inspired outfit for the murder mystery. The fancier the better —
-                   formal wear works. Best-dressed group wins points.</p>
-            </div>
-        </div>
-    </SectionCard>
-
+    <ConfirmDialog @ref="_confirm" />
 </div>
-
-<ConfirmDialog @ref="_confirm" />
 
 @code {
     protected override TripArea Watching => TripArea.Itinerary;
 
-    private ConfirmDialog? _confirm;
+    private const int MinZoom = 40;
+    private const int MaxZoom = 112;
+    private const double MinCardPixels = 22;
+    private const int DefaultNewItemStart = 12 * 60;
 
-    private string? _draggingId;
-    private string? _dropItemId;
-    private string? _dropListId;
+    private static readonly int[] DurationChoices =
+        [15, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360];
+
+    private ConfirmDialog? _confirm;
+    private int _pxPerHour = 64;
+    private string? _activeDayId;
+    private string? _editingId;
+
+    /// <summary>Gap band keys the user has opened out, per day.</summary>
+    private readonly Dictionary<string, HashSet<string>> _expanded = [];
+
+    private IJSObjectReference? _module;
+    private DotNetObjectReference<Itinerary>? _self;
 
     private string SubtitleText => CanEdit
-        ? "Click any time, title or note to edit it. Drag the cards to reorder, or use ↑ ↓ « » on touch."
+        ? "Drag a card to change when it happens, or drag its bottom edge to change how long it runs."
         : "The plan for the weekend. The committee keeps this up to date.";
 
-    // ---------------------------------------------------------------- editing
+    private string? ActiveDayId => _activeDayId ?? Trip.Itinerary.FirstOrDefault()?.Id;
+
+    private ItineraryItem? EditingItem =>
+        _editingId is null ? null : ItineraryService.Locate(Trip, _editingId).Item;
+
+    private List<(ItineraryDay Day, ItineraryItem Item)> Unscheduled =>
+        Trip.Itinerary
+            .SelectMany(d => d.Items.Where(i => !i.IsScheduled).Select(i => (Day: d, Item: i)))
+            .ToList();
+
+    // ------------------------------------------------------------- timeline
+
+    private TimelineSettings Settings => new() { PxPerHour = _pxPerHour };
+
+    private DayTimeline TimelineFor(ItineraryDay day) =>
+        DayTimeline.Build(day, Settings, ExpandedFor(day.Id));
+
+    private HashSet<string> ExpandedFor(string dayId) =>
+        _expanded.TryGetValue(dayId, out var set) ? set : [];
+
+    /// <summary>
+    /// Gaps the user has opened. A band is one of ours if its key is in the expanded set —
+    /// which is exactly the set of gaps that would otherwise have been collapsed.
+    /// </summary>
+    private IEnumerable<TimelineBand> ExpandedGapBands(ItineraryDay day, DayTimeline timeline)
+    {
+        var open = ExpandedFor(day.Id);
+        return open.Count == 0
+            ? []
+            : timeline.Bands.Where(b => b.Kind == BandKind.Expanded && open.Contains(b.Key));
+    }
+
+    private bool AnyCollapsed => Trip.Itinerary
+        .Any(d => TimelineFor(d).Bands.Any(b => b.Kind == BandKind.Collapsed));
+
+    private void ToggleGap(string dayId, string bandKey)
+    {
+        var set = _expanded.TryGetValue(dayId, out var existing) ? existing : _expanded[dayId] = [];
+        if (!set.Remove(bandKey)) set.Add(bandKey);
+    }
+
+    private void ToggleAllGaps()
+    {
+        if (AnyCollapsed)
+        {
+            foreach (var day in Trip.Itinerary)
+            {
+                var set = _expanded.TryGetValue(day.Id, out var existing) ? existing : _expanded[day.Id] = [];
+                foreach (var band in TimelineFor(day).Bands.Where(b => b.Kind == BandKind.Collapsed))
+                    set.Add(band.Key);
+            }
+        }
+        else
+        {
+            _expanded.Clear();
+        }
+    }
+
+    private void Zoom(int direction)
+    {
+        var next = _pxPerHour + direction * 16;
+        _pxPerHour = Math.Clamp(next, MinZoom, MaxZoom);
+    }
+
+    // ------------------------------------------------------------- editing
+
+    private void ToggleEditor(string itemId)
+    {
+        if (!CanEdit) return;
+        _editingId = _editingId == itemId ? null : itemId;
+    }
 
     private Task RenameDayAsync(string dayId, string value) => MutateAsync(t =>
     {
@@ -200,110 +385,157 @@
         if (day is not null) day.Date = value;
     });
 
-    private Task SetTimeAsync(string itemId, string value) => WithItemAsync(itemId, i => i.Time = value);
-    private Task SetTitleAsync(string itemId, string value) => WithItemAsync(itemId, i => i.Title = value);
-    private Task SetNotesAsync(string itemId, string value) => WithItemAsync(itemId, i => i.Notes = value);
+    private Task SetTitleAsync(string itemId, string value) =>
+        MutateAsync(t => WithItem(t, itemId, i => i.Title = value));
 
-    private Task SetTagAsync(string itemId, string? raw)
+    private Task SetNotesAsync(string itemId, string value) =>
+        MutateAsync(t => WithItem(t, itemId, i => i.Notes = value));
+
+    private Task SetTagAsync(string itemId, string? raw) =>
+        Enum.TryParse<ItineraryTag>(raw, out var tag)
+            ? MutateAsync(t => WithItem(t, itemId, i => i.Tag = tag))
+            : Task.CompletedTask;
+
+    private Task SetDurationAsync(string itemId, string? raw) =>
+        int.TryParse(raw, out var minutes)
+            ? MutateAsync(t => ItineraryService.SetDuration(t, itemId, minutes))
+            : Task.CompletedTask;
+
+    /// <summary>
+    /// The browser's time input has no concept of "1am belongs to last night", so anything
+    /// before the 6am anchor is pushed into the small hours of the same planner day.
+    /// </summary>
+    private Task SetStartFromClockAsync(string itemId, string? raw)
     {
-        if (!Enum.TryParse<ItineraryTag>(raw, out var tag)) return Task.CompletedTask;
-        return WithItemAsync(itemId, i => i.Tag = tag);
+        if (!TimeOnly.TryParse(raw, out var clock)) return Task.CompletedTask;
+
+        var minutes = clock.Hour * 60 + clock.Minute;
+        if (minutes < TimeText.DayAnchor) minutes += TimeText.Day;
+
+        return MutateAsync(t => ItineraryService.SetStart(t, itemId, minutes));
     }
 
-    private Task WithItemAsync(string itemId, Action<ItineraryItem> change) => MutateAsync(t =>
+    private static string ClockValue(ItineraryItem item)
     {
-        var (_, item) = ItineraryService.Locate(t, itemId);
+        var minutes = (item.StartMinutes ?? DefaultNewItemStart) % TimeText.Day;
+        return $"{minutes / 60:00}:{minutes % 60:00}";
+    }
+
+    private static void WithItem(TripData trip, string itemId, Action<ItineraryItem> change)
+    {
+        var (_, item) = ItineraryService.Locate(trip, itemId);
         if (item is not null) change(item);
-    });
-
-    // ------------------------------------------------------- add / remove
-
-    private async Task AddItemAsync(string dayId)
-    {
-        await MutateAsync(t => ItineraryService.AddItem(t, dayId));
-        Toasts.Show("Item added");
     }
 
-    private async Task AddDayAsync()
-    {
-        await MutateAsync(t => ItineraryService.AddDay(t));
-        Toasts.Show("Day added");
-    }
+    // ------------------------------------------------------------- moving
 
-    private void ConfirmDeleteItem(ItineraryItem item) =>
-        _confirm?.Show($"Delete “{item.Title}”?", async () =>
-        {
-            await MutateAsync(t => ItineraryService.RemoveItem(t, item.Id));
-            Toasts.Show("Item deleted", CharterTrip.Web.Services.ToastKind.Bad);
-        }, "Delete");
-
-    private void ConfirmDeleteDay(ItineraryDay day) =>
-        _confirm?.Show($"Delete the “{day.Day}” column?", async () =>
-        {
-            await MutateAsync(t => ItineraryService.RemoveDay(t, day.Id));
-            Toasts.Show("Day deleted", CharterTrip.Web.Services.ToastKind.Bad);
-        }, "Delete");
-
-    // ---------------------------------------------------------- reordering
-
-    private Task NudgeAsync(string itemId, int delta) =>
-        MutateAsync(t => ItineraryService.Nudge(t, itemId, delta));
+    private Task NudgeStartAsync(string itemId, int deltaMinutes) =>
+        MutateAsync(t => ItineraryService.NudgeStart(t, itemId, deltaMinutes));
 
     private Task MoveDayAsync(string itemId, int direction) =>
         MutateAsync(t => ItineraryService.MoveToAdjacentDay(t, itemId, direction));
 
-    private async Task SortEveryDayAsync()
+    private Task MoveToDayAsync(string itemId, string? targetDayId) =>
+        string.IsNullOrEmpty(targetDayId)
+            ? Task.CompletedTask
+            : MutateAsync(t => ItineraryService.MoveToDay(t, itemId, targetDayId));
+
+    private Task UnscheduleAsync(string itemId) =>
+        MutateAsync(t => ItineraryService.Unschedule(t, itemId));
+
+    private Task ScheduleAsync(string itemId) =>
+        MutateAsync(t => ItineraryService.SetStart(t, itemId, DefaultNewItemStart));
+
+    private async Task CardKeyAsync(KeyboardEventArgs e, string itemId)
     {
-        await MutateAsync(t =>
+        if (!CanEdit) return;
+
+        switch (e.Key)
         {
-            foreach (var day in t.Itinerary) ItineraryService.SortDayByTime(t, day.Id);
-        });
-        Toasts.Show("Sorted by time", CharterTrip.Web.Services.ToastKind.Good);
+            case "ArrowUp": await NudgeStartAsync(itemId, -15); break;
+            case "ArrowDown": await NudgeStartAsync(itemId, 15); break;
+            case "Enter" or " ": ToggleEditor(itemId); break;
+        }
     }
 
-    // ---------------------------------------------------- drag and drop
-    // Only dragstart/dragenter/drop are handled. dragover is preventDefault-only so the
-    // browser allows the drop without firing a server round-trip every few milliseconds.
+    // ------------------------------------------------------- adding, removing
 
-    private async Task DropBeforeAsync(string dayId, string targetItemId)
+    private async Task AddItemAsync(string dayId)
     {
-        var dragged = _draggingId;
-        ClearDrag();
-        if (dragged is null || dragged == targetItemId) return;
-
-        await MutateAsync(t =>
-        {
-            var day = ItineraryService.FindDay(t, dayId);
-            if (day is null) return;
-
-            var index = day.Items.FindIndex(i => i.Id == targetItemId);
-            if (index < 0) return;
-
-            ItineraryService.MoveItem(t, dragged, dayId, index);
-        });
+        string? newId = null;
+        await MutateAsync(t => newId = ItineraryService.AddItem(t, dayId, DefaultNewItemStart)?.Id);
+        _editingId = newId;
     }
 
-    private async Task DropAtEndAsync(string dayId)
-    {
-        var dragged = _draggingId;
-        ClearDrag();
-        if (dragged is null) return;
+    private Task AddDayAsync() => MutateAsync(t => ItineraryService.AddDay(t));
 
-        await MutateAsync(t =>
+    private void ConfirmDeleteItem(ItineraryItem item) =>
+        _confirm?.Show($"Delete “{Display(item.Title, "this item")}”?", async () =>
         {
-            var day = ItineraryService.FindDay(t, dayId);
-            if (day is not null) ItineraryService.MoveItem(t, dragged, dayId, day.Items.Count);
-        });
+            _editingId = null;
+            await MutateAsync(t => ItineraryService.RemoveItem(t, item.Id));
+        }, "Delete");
+
+    private void ConfirmDeleteDay(ItineraryDay day) =>
+        _confirm?.Show($"Delete {Display(day.Day, "this day")}?", async () =>
+        {
+            await MutateAsync(t => ItineraryService.RemoveDay(t, day.Id));
+        }, "Delete");
+
+    // ------------------------------------------------------- drag and resize
+    // The browser reports pixels; the conversion to minutes happens here, because collapsed
+    // bands make that mapping non-linear and DayTimeline is the one place that knows about them.
+
+    [JSInvokable]
+    public async Task ItemDropped(string itemId, string dayId, double topPixels)
+    {
+        var day = ItineraryService.FindDay(Trip, dayId);
+        if (day is null) return;
+
+        var minutes = TimeText.Snap(TimelineFor(day).ToMinutes(topPixels));
+        await MutateAsync(t => ItineraryService.MoveToDay(t, itemId, dayId, minutes));
     }
 
-    private void ClearDrag()
+    [JSInvokable]
+    public async Task ItemResized(string itemId, double bottomPixels)
     {
-        _draggingId = null;
-        _dropItemId = null;
-        _dropListId = null;
+        var (day, item) = ItineraryService.Locate(Trip, itemId);
+        if (day is null || item is null || !item.IsScheduled) return;
+
+        var end = TimeText.Snap(TimelineFor(day).ToMinutes(bottomPixels));
+        var duration = end - item.StartMinutes!.Value;
+
+        await MutateAsync(t => ItineraryService.SetDuration(t, itemId, duration));
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !CanEdit) return;
+
+        _self = DotNetObjectReference.Create(this);
+        _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/planner.js");
+        await _module.InvokeVoidAsync("init", _self);
     }
 
     // ------------------------------------------------------------- display
+
+    private static string Px(double value) => $"{value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}px";
+    private static string Pct(double value) => $"{value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)}%";
+
+    private static string Display(string? value, string fallback) =>
+        string.IsNullOrWhiteSpace(value) ? fallback : value;
+
+    private ItineraryDay? DayOf(string itemId) => ItineraryService.Locate(Trip, itemId).Day;
+
+    private static int ScheduledCount(ItineraryDay day) => day.Items.Count(i => i.IsScheduled);
+
+    /// <summary>A 30-minute card has room for a title and nothing else. Render to fit.</summary>
+    private static string SizeClass(double height) => height switch
+    {
+        >= 74 => "is-full",
+        >= 42 => "is-medium",
+        _ => "is-compact"
+    };
 
     private static string TagLabel(ItineraryTag tag) => tag switch
     {
@@ -319,4 +551,16 @@
         ItineraryTag.FreeTime => "#2e9e7e",
         _ => "#888888"
     };
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_module is not null)
+        {
+            try { await _module.InvokeVoidAsync("dispose"); } catch (JSDisconnectedException) { }
+            try { await _module.DisposeAsync(); } catch (JSDisconnectedException) { }
+        }
+
+        _self?.Dispose();
+        Dispose();
+    }
 }

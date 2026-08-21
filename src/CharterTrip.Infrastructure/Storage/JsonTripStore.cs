@@ -89,6 +89,18 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
                 var loaded = JsonSerializer.Deserialize<TripData>(json, TripJson.Options);
                 if (loaded is not null)
                 {
+                    var from = loaded.SchemaVersion;
+                    if (TripMigrations.Apply(loaded))
+                    {
+                        _logger.LogInformation(
+                            "Migrated trip data from schema v{From} to v{To}.", from, loaded.SchemaVersion);
+
+                        // Keep a copy of the pre-migration file. If a migration is ever wrong,
+                        // this is the thing that saves the weekend.
+                        TryArchivePreMigration(path, json, from);
+                        AtomicFileWriter.Write(path, JsonSerializer.Serialize(loaded, TripJson.Options));
+                    }
+
                     _logger.LogInformation("Loaded trip data from {Path} (revision {Revision}).", path, loaded.Revision);
                     return loaded;
                 }
@@ -104,6 +116,7 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
         }
 
         var seeded = SeedLoader.Load();
+        TripMigrations.Apply(seeded);
         seeded.UpdatedUtc = _clock.UtcNow;
 
         try
@@ -118,6 +131,22 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
         }
 
         return seeded;
+    }
+
+    /// <summary>Snapshot the file as it was before a schema migration touched it.</summary>
+    private void TryArchivePreMigration(string path, string originalJson, int fromVersion)
+    {
+        try
+        {
+            var dir = Path.Combine(_options.BackupDirectory);
+            Directory.CreateDirectory(dir);
+            var name = $"trip-pre-v{fromVersion}-{_clock.UtcNow:yyyyMMdd-HHmmss}.json";
+            AtomicFileWriter.Write(Path.Combine(dir, name), originalJson);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not archive the pre-migration copy of {Path}.", path);
+        }
     }
 
     /// <summary>Never delete a file we failed to parse — rename it so it can be inspected.</summary>

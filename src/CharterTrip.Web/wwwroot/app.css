@@ -494,44 +494,128 @@ select.textfield { cursor: pointer; }
 .feed-pts.neg { color: var(--ruby); }
 
 /* ============================================================ ITINERARY == */
-.itin-board { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: start; }
-.itin-col {
-  background: linear-gradient(180deg, var(--panel), var(--ink-2));
-  border: 1px solid var(--line-soft); border-radius: var(--radius);
-  display: flex; flex-direction: column; overflow: hidden;
-}
-.itin-col-head {
-  display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
-  padding: 13px 16px; border-bottom: 1px solid var(--line-soft);
-  background: rgba(212,175,55,.06);
-}
-.itin-col-head h3 { font-family: var(--display); font-size: 15px; letter-spacing: .12em; text-transform: uppercase; margin: 0; }
-.count { font-size: 11px; color: var(--text-faint); letter-spacing: .06em; white-space: nowrap; }
-.itin-list { padding: 10px; display: flex; flex-direction: column; gap: 9px; min-height: 90px; }
-.itin-col-foot { padding: 0 10px 12px; }
+/* A time grid, not a list: vertical position is the clock, height is duration.
+   Long empty stretches squash into a thin band so a 16-hour Saturday still fits. */
 
-.itin-item {
-  background: var(--ink-2); border: 1px solid var(--line-soft);
-  border-left: 3px solid var(--tag, var(--gold));
-  border-radius: var(--radius-sm); padding: 9px 11px;
-  transition: box-shadow .15s, border-color .15s, opacity .15s;
-}
-.itin-item:hover { border-color: var(--line); box-shadow: var(--shadow-sm); }
-.itin-item.dragging { opacity: .45; cursor: grabbing; }
-.itin-row { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
-.drag-handle { color: var(--text-faint); cursor: grab; font-size: 13px; letter-spacing: -2px; }
-.itin-time { font-family: var(--display); font-size: 12.5px; font-weight: 700; color: var(--gold); letter-spacing: .04em; white-space: nowrap; }
-.tag-select {
-  background: transparent; border: 1px solid var(--line); color: var(--text-faint);
-  border-radius: 999px; font-size: 10.5px; padding: 1px 6px; cursor: pointer;
-  text-transform: uppercase; letter-spacing: .06em; font-family: var(--sans);
-}
-.itin-move { display: flex; gap: 3px; opacity: 0; transition: opacity .15s; }
-.itin-item:hover .itin-move, .itin-item:focus-within .itin-move { opacity: 1; }
-.itin-title { font-size: 14.5px; font-weight: 600; display: block; }
-.itin-notes { font-size: 12.5px; color: var(--text-dim); display: block; margin-top: 3px; }
+.planner-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.zoom { display: inline-flex; align-items: center; gap: 4px; }
+.zoom-label { font-size: 11px; color: var(--text-faint); min-width: 54px; text-align: center; }
 
-@media (hover: none) { .itin-move { opacity: 1; } }
+/* day tabs: phones only — desktop shows all three columns at once */
+.planner-tabs { display: none; gap: 6px; margin-bottom: 12px; }
+.planner-tab {
+  flex: 1; padding: 9px 10px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line-soft); background: var(--panel);
+  color: var(--text-dim); font-family: var(--display); font-size: 12px;
+  letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
+}
+.planner-tab.is-active { border-color: var(--gold-dim); color: var(--gold-light); background: var(--panel-2); }
+
+/* unscheduled tray */
+.planner-tray {
+  border: 1px dashed var(--line); border-radius: var(--radius);
+  background: var(--ink-2); padding: 12px; margin-bottom: 16px;
+}
+.tray-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 9px; }
+.tray-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.tray-card {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm); padding: 7px 10px; font-size: 13px;
+}
+.tray-title { font-weight: 600; }
+.tray-note { color: var(--text-faint); font-style: italic; font-size: 12px; }
+.tray-day { color: var(--text-faint); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+
+/* board */
+.planner { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; }
+.planner-day { background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius); overflow: hidden; }
+.planner-day-head {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
+  padding: 11px 13px; border-bottom: 1px solid var(--line-soft); background: var(--panel-2);
+}
+.planner-day-head h3 { font-family: var(--display); font-size: 15px; letter-spacing: .12em; text-transform: uppercase; margin: 0; }
+.planner-day-actions { display: flex; gap: 4px; }
+
+/* canvas: the gutter is carved out of the left padding */
+.planner-canvas { position: relative; padding: 10px 10px 10px 58px; }
+
+.planner-hour { position: absolute; left: 0; right: 10px; height: 0; border-top: 1px solid var(--line-soft); pointer-events: none; }
+.planner-hour-label {
+  position: absolute; left: 8px; top: -8px; width: 46px; text-align: right;
+  font-size: 10.5px; color: var(--text-faint); letter-spacing: .04em; background: var(--panel); padding-right: 2px;
+}
+
+/* collapsed empty stretch */
+.planner-gap {
+  position: absolute; left: 58px; right: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: repeating-linear-gradient(135deg, transparent 0 7px, rgba(212,175,55,.05) 7px 14px);
+  border: 1px dashed var(--line); border-radius: var(--radius-sm);
+  color: var(--text-faint); font-size: 11px; letter-spacing: .05em; cursor: pointer;
+}
+.planner-gap:hover { border-color: var(--gold-dim); color: var(--gold-light); }
+
+/* an opened stretch keeps a quiet way back */
+.planner-gap-open {
+  position: absolute; left: 58px; right: 10px;
+  background: none; border: 1px dashed var(--line-soft); border-radius: var(--radius-sm);
+  color: transparent; font-size: 10.5px; cursor: pointer; display: flex;
+  align-items: flex-start; justify-content: center; padding-top: 3px;
+}
+.planner-gap-open:hover { color: var(--text-faint); border-color: var(--gold-dim); }
+
+/* cards */
+.planner-lanes { position: absolute; left: 58px; right: 10px; top: 10px; bottom: 10px; }
+.planner-card {
+  position: absolute; box-sizing: border-box;
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-left: 3px solid var(--tag, var(--gold-dim));
+  border-radius: var(--radius-sm); padding: 4px 8px; overflow: hidden;
+  cursor: pointer; touch-action: none; transition: border-color .15s, box-shadow .15s;
+}
+.planner-card:hover, .planner-card:focus-visible { border-color: var(--gold-dim); box-shadow: var(--shadow-sm); outline: none; }
+.planner-card.is-editing { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold-dim); }
+.planner-card.is-dragging { opacity: .85; box-shadow: var(--shadow); z-index: 30; cursor: grabbing; }
+.planner-card.is-resizing { z-index: 30; }
+
+.card-time { font-family: var(--display); font-size: 10.5px; font-weight: 700; color: var(--gold); letter-spacing: .03em; white-space: nowrap; }
+.card-title { font-size: 13px; font-weight: 600; line-height: 1.25; }
+.card-notes { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+
+/* shrink the content to whatever the duration allows */
+.planner-card.is-medium .card-notes { display: none; }
+.planner-card.is-compact { padding: 2px 8px; display: flex; align-items: center; gap: 6px; }
+.planner-card.is-compact .card-time { font-size: 9.5px; }
+.planner-card.is-compact .card-title { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.planner-card.is-compact .card-notes { display: none; }
+
+.card-resize {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 8px;
+  cursor: ns-resize; touch-action: none;
+}
+.card-resize::after {
+  content: ''; position: absolute; left: 50%; bottom: 2px; width: 22px; height: 2px;
+  transform: translateX(-50%); border-radius: 2px; background: var(--line); opacity: 0; transition: opacity .15s;
+}
+.planner-card:hover .card-resize::after { opacity: 1; }
+
+/* editor sheet */
+.planner-editor-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 60; }
+.planner-editor {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(380px, 100vw);
+  background: var(--panel); border-left: 1px solid var(--line);
+  box-shadow: var(--shadow); z-index: 61; overflow-y: auto;
+  padding: 16px; display: flex; flex-direction: column; gap: 12px;
+}
+.planner-editor header { display: flex; justify-content: space-between; align-items: center; }
+.planner-editor label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-dim); }
+.planner-editor label > span { letter-spacing: .06em; text-transform: uppercase; font-size: 10.5px; }
+.editor-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.editor-nudge { display: flex; flex-direction: column; gap: 6px; }
+.editor-nudge > div { display: flex; gap: 5px; flex-wrap: wrap; }
+.planner-editor footer { display: flex; gap: 8px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+
 
 /* =============================================================== TEAMS == */
 .score-strip { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
@@ -914,6 +998,28 @@ select.textfield { cursor: pointer; }
   .game-cols { grid-template-columns: 1fr; }
   .hero-inner { grid-template-columns: 1fr; }
   .hero-board { max-width: 560px; }
+}
+
+/* --- planner: one day at a time on a phone ------------------------------ */
+@media (max-width: 860px) {
+  .planner-tabs { display: flex; }
+  .planner { grid-template-columns: 1fr; }
+  .planner-day { display: none; }
+  .planner-day.is-active { display: block; }
+
+  /* the editor becomes a bottom sheet, which is reachable one-handed */
+  .planner-editor {
+    top: auto; left: 0; right: 0; bottom: 0; width: 100%;
+    max-height: 88vh; border-left: none; border-top: 1px solid var(--line);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  /* bigger hit targets, and room for them */
+  .planner-canvas { padding-left: 52px; }
+  .planner-lanes, .planner-gap, .planner-gap-open { left: 52px; right: 8px; }
+  .card-resize { height: 14px; }
+  .card-resize::after { opacity: 1; }
 }
 
 @media (max-width: 860px) {

@@ -7,6 +7,12 @@ namespace CharterTrip.Core.Models;
 /// </summary>
 public sealed class TripData
 {
+    /// <summary>
+    /// The shape this document was written in. TripMigrations upgrades older documents on load.
+    /// Bump it whenever the model changes in a way old files wouldn't survive.
+    /// </summary>
+    public int SchemaVersion { get; set; }
+
     /// <summary>Bumped on every mutation. Useful for debugging and for "did anything change?" checks.</summary>
     public int Revision { get; set; }
 

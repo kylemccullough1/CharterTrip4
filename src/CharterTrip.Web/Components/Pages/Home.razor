@@ -111,7 +111,7 @@
                             @foreach (var item in day.Items)
                             {
                                 <li @key="item.Id">
-                                    <span class="gl-time">@item.Time</span>
+                                    <span class="gl-time">@GlanceTime(item)</span>
                                     <span class="gl-title">@item.Title</span>
                                     <TagChip Tag="item.Tag" />
                                 </li>
@@ -166,6 +166,15 @@
 </div>
 
 @code {
+    /// <summary>
+    /// The glance list wants one short label per row. Scheduled items show their start time;
+    /// anything still in the planner's tray shows whatever note it carried ("after dinner").
+    /// </summary>
+    private static string GlanceTime(ItineraryItem item) =>
+        item.StartMinutes is { } start
+            ? CharterTrip.Core.Services.TimeText.Format(start)
+            : string.IsNullOrWhiteSpace(item.TimeNote) ? "TBD" : item.TimeNote!;
+
     protected override TripArea Watching => TripArea.All;
 
     private int _slideIndex;

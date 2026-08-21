@@ -205,4 +205,71 @@ public class ItineraryServiceTests
         ItineraryService.RemoveDay(t, "fri");
         Assert.Single(t.Itinerary);
     }
+
+    // ----------------------------------------------------------------- swap
+
+    [Fact]
+    public void SwapSlots_exchanges_start_and_duration()
+    {
+        var t = Trip();
+        ItineraryService.SwapSlots(t, "a", "b");   // Dinner 8pm/90m <-> Check-in 4pm/60m
+
+        var dinner = ItineraryService.Locate(t, "a").Item!;
+        var checkIn = ItineraryService.Locate(t, "b").Item!;
+
+        Assert.Equal(FourPm, dinner.StartMinutes);
+        Assert.Equal(60, dinner.DurationMinutes);
+        Assert.Equal(EightPm, checkIn.StartMinutes);
+        Assert.Equal(90, checkIn.DurationMinutes);
+    }
+
+    [Fact]
+    public void SwapSlots_leaves_no_overlap_between_the_two()
+    {
+        var t = Trip();
+        ItineraryService.SwapSlots(t, "a", "b");
+
+        var dinner = ItineraryService.Locate(t, "a").Item!;
+        var checkIn = ItineraryService.Locate(t, "b").Item!;
+
+        var apart = dinner.EndMinutes <= checkIn.StartMinutes || checkIn.EndMinutes <= dinner.StartMinutes;
+        Assert.True(apart, "swapping whole slots should never leave the pair overlapping");
+    }
+
+    [Fact]
+    public void SwapSlots_works_across_days()
+    {
+        var t = Trip();
+        ItineraryService.SwapSlots(t, "a", "d");   // Friday dinner <-> Saturday breakfast
+
+        var (dinnerDay, dinner) = ItineraryService.Locate(t, "a");
+        var (breakfastDay, breakfast) = ItineraryService.Locate(t, "d");
+
+        Assert.Equal("sat", dinnerDay!.Id);
+        Assert.Equal(TenAm, dinner!.StartMinutes);
+        Assert.Equal("fri", breakfastDay!.Id);
+        Assert.Equal(EightPm, breakfast!.StartMinutes);
+    }
+
+    [Fact]
+    public void SwapSlots_with_itself_is_a_no_op()
+    {
+        var t = Trip();
+        ItineraryService.SwapSlots(t, "a", "a");
+
+        var dinner = ItineraryService.Locate(t, "a").Item!;
+        Assert.Equal(EightPm, dinner.StartMinutes);
+        Assert.Equal(90, dinner.DurationMinutes);
+    }
+
+    [Fact]
+    public void SwapSlots_can_pull_an_item_out_of_the_tray()
+    {
+        var t = Trip();
+        ItineraryService.Unschedule(t, "b");
+        ItineraryService.SwapSlots(t, "a", "b");
+
+        Assert.False(ItineraryService.Locate(t, "a").Item!.IsScheduled);
+        Assert.Equal(EightPm, ItineraryService.Locate(t, "b").Item!.StartMinutes);
+    }
 }

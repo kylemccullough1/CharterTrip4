@@ -487,8 +487,16 @@
     // bands make that mapping non-linear and DayTimeline is the one place that knows about them.
 
     [JSInvokable]
-    public async Task ItemDropped(string itemId, string dayId, double topPixels)
+    public async Task ItemDropped(string itemId, string dayId, double topPixels, string? ontoItemId)
     {
+        // Landing on top of another card means the two should trade places. Landing on empty
+        // space means "put it here", which is the only case that needs a pixel conversion.
+        if (!string.IsNullOrEmpty(ontoItemId) && ontoItemId != itemId)
+        {
+            await MutateAsync(t => ItineraryService.SwapSlots(t, itemId, ontoItemId));
+            return;
+        }
+
         var day = ItineraryService.FindDay(Trip, dayId);
         if (day is null) return;
 

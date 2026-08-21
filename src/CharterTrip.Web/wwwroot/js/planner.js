@@ -117,11 +117,25 @@ async function onPointerUp(event) {
         const target = laneUnder(event.clientX, event.clientY) ?? drag.card.closest('.planner-lanes');
         if (!target) return;
 
+        // Dropped straight onto another card? Then the intent is "these two trade places",
+        // not "stack them both at this minute". C# decides what swapping means.
+        const onto = cardUnder(event.clientX, event.clientY, drag.card);
+
         const top = event.clientY - drag.grabOffsetTop - target.getBoundingClientRect().top;
-        await state.ref.invokeMethodAsync('ItemDropped', drag.itemId, target.dataset.dayId, top);
+        await state.ref.invokeMethodAsync(
+            'ItemDropped', drag.itemId, target.dataset.dayId, top, onto?.dataset.itemId ?? null);
     } catch {
         // The circuit went away mid-drop; the next render will show the truth.
     }
+}
+
+/// The topmost card under the pointer, skipping the one being dragged.
+function cardUnder(x, y, exclude) {
+    for (const el of document.elementsFromPoint(x, y)) {
+        const card = el.closest?.('.planner-card');
+        if (card && card !== exclude) return card;
+    }
+    return null;
 }
 
 /// Which day column is under the pointer, ignoring the card being dragged.

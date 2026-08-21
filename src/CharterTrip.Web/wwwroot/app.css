@@ -566,9 +566,11 @@ select.textfield { cursor: pointer; }
 .planner-gap-open:hover { color: var(--text-faint); border-color: var(--gold-dim); }
 
 /* cards */
-.planner-lanes { position: absolute; left: 58px; right: 10px; top: 10px; bottom: 10px; }
+/* The lane layer spans the whole canvas, so left as-is it would swallow every click
+   aimed at the collapsed-hour bands sitting underneath. Only the cards are clickable. */
+.planner-lanes { position: absolute; left: 58px; right: 10px; top: 10px; bottom: 10px; pointer-events: none; }
 .planner-card {
-  position: absolute; box-sizing: border-box;
+  position: absolute; box-sizing: border-box; pointer-events: auto;
   background: var(--panel-2); border: 1px solid var(--line);
   border-left: 3px solid var(--tag, var(--gold-dim));
   border-radius: var(--radius-sm); padding: 4px 8px; overflow: hidden;
@@ -948,8 +950,11 @@ select.textfield { cursor: pointer; }
 
 /* =============================================================== MODAL == */
 .modal-root { position: fixed; inset: 0; z-index: 200; }
+/* Fixed, not absolute: ConfirmDialog renders .modal-back on its own without the
+   .modal-root wrapper, so an absolute box anchors to the document and appears at the
+   top of the page — invisible to anyone scrolled down. */
 .modal-back {
-  position: absolute; inset: 0; background: rgba(4,6,10,.82);
+  position: fixed; inset: 0; z-index: 200; background: rgba(4,6,10,.82);
   display: flex; align-items: center; justify-content: center; padding: 20px;
   backdrop-filter: blur(3px);
 }
@@ -1079,6 +1084,14 @@ select.textfield { cursor: pointer; }
 /* --- dropdowns: pure CSS now, no JS class toggling ---------------------- */
 .dropdown:hover > .dropdown-menu,
 .dropdown:focus-within > .dropdown-menu { display: block; }
+
+/* The menu sits 6px below the trigger. Without this the pointer crosses that dead gap,
+   leaves .dropdown, and the menu vanishes before it can be reached — which is why it
+   only felt usable after clicking (that held it open via :focus-within). The invisible
+   bridge extends the hover area across the gap without changing how anything looks. */
+.dropdown-menu::before {
+  content: ''; position: absolute; left: 0; right: 0; top: -10px; height: 10px;
+}
 
 /* --- inline editing: real inputs instead of contenteditable ------------- */
 .inline-edit {

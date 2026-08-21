@@ -145,6 +145,37 @@ public static class ItineraryService
         MoveToDay(trip, itemId, target.Id);
     }
 
+    /// <summary>
+    /// Two items trade places: each takes the other's day, start and length.
+    ///
+    /// Swapping the whole slot rather than just the start time is deliberate. If only the
+    /// starts were exchanged, a 30-minute item landing in a 3-hour slot would leave the two
+    /// overlapping, which is the pile-up this is meant to avoid.
+    /// </summary>
+    public static void SwapSlots(TripData trip, string firstId, string secondId)
+    {
+        if (firstId == secondId) return;
+
+        var (firstDay, first) = Locate(trip, firstId);
+        var (secondDay, second) = Locate(trip, secondId);
+        if (firstDay is null || first is null || secondDay is null || second is null) return;
+
+        (first.StartMinutes, second.StartMinutes) = (second.StartMinutes, first.StartMinutes);
+        (first.DurationMinutes, second.DurationMinutes) = (second.DurationMinutes, first.DurationMinutes);
+        (first.TimeNote, second.TimeNote) = (second.TimeNote, first.TimeNote);
+
+        if (firstDay.Id != secondDay.Id)
+        {
+            firstDay.Items.Remove(first);
+            secondDay.Items.Remove(second);
+            secondDay.Items.Add(first);
+            firstDay.Items.Add(second);
+        }
+
+        SortDay(firstDay);
+        SortDay(secondDay);
+    }
+
     // --------------------------------------------------------------- helpers
 
     /// <summary>Keeps trip.json in chronological order. Unscheduled items sink to the bottom.</summary>

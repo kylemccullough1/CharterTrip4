@@ -43,7 +43,6 @@ public enum TripArea
     Scores,
     Jeopardy,
     Mystery,
-    Checklist,
     Venue
 }
 

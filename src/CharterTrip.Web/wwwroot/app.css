@@ -627,69 +627,70 @@ select.textfield { cursor: pointer; }
 
 
 /* =============================================================== TEAMS == */
-.score-strip { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-.score-card {
-  position: relative; text-align: center; padding: 16px 14px;
-  border-radius: var(--radius); border: 1px solid var(--line-soft);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--team) 12%, var(--panel)), var(--ink-2));
-  overflow: hidden;
-}
-.score-card.leading { border-color: var(--team); box-shadow: 0 0 0 1px color-mix(in srgb, var(--team) 40%, transparent); }
-.score-card.leading::after {
-  content: '★'; position: absolute; top: 8px; right: 11px; color: var(--team); font-size: 13px;
-}
-.sc-rank { display: block; font-size: 11px; letter-spacing: .16em; color: var(--text-faint); }
-.sc-name { display: block; font-family: var(--display); font-size: 14.5px; letter-spacing: .07em; text-transform: uppercase; margin: 3px 0 6px; }
-.sc-total { display: block; font-family: var(--display); font-size: 34px; font-weight: 900; color: var(--team); line-height: 1; }
-.sc-unit { display: block; font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--text-faint); }
-.row.center { justify-content: center; }
 
-.team-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-.team-card {
+.team-board { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); align-items: start; }
+
+.team-col {
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-top: 3px solid var(--team, var(--gold-dim));
   border-radius: var(--radius); overflow: hidden;
-  border: 1px solid var(--line-soft);
-  background: linear-gradient(180deg, var(--panel), var(--ink-2));
-  border-top: 3px solid var(--team);
-  display: flex; flex-direction: column;
+  transition: border-color .15s, background .15s;
 }
-.team-photo { position: relative; aspect-ratio: 16 / 9; background: #0d1117; overflow: hidden; }
-.photo-box { width: 100%; height: 100%; background-size: cover; background-position: center; position: relative; }
-.photo-box.photo-empty {
-  background-image:
-    repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0 10px, transparent 10px 20px);
-  background-color: color-mix(in srgb, var(--team, #888) 14%, #0d1117);
-}
-.photo-box.photo-empty::after {
-  content: attr(data-empty); position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-faint); font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
-}
-.team-photo-actions {
-  position: absolute; left: 0; right: 0; bottom: 0; padding: 8px;
-  display: flex; gap: 6px; justify-content: flex-end;
-  background: linear-gradient(180deg, transparent, rgba(0,0,0,.7));
-  opacity: 0; transition: opacity .15s;
-}
-.team-photo:hover .team-photo-actions { opacity: 1; }
-@media (hover: none) { .team-photo-actions { opacity: 1; } }
+.team-col.is-drop { border-color: var(--gold); background: var(--panel-2); }
 
-.team-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
-.team-name { font-family: var(--display); font-size: 17px; letter-spacing: .06em; text-transform: uppercase; margin: 0; }
-.team-lead { font-size: 12.5px; color: var(--text-dim); margin: 0; }
-.team-score { display: flex; align-items: baseline; gap: 7px; padding: 8px 0; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
-.team-score b { font-family: var(--display); font-size: 28px; color: var(--team); line-height: 1; }
-.team-score span { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--text-faint); }
-.team-breakdown { list-style: none; margin: 0; padding: 0; font-size: 12.5px; }
-.team-breakdown li { display: flex; justify-content: space-between; padding: 2px 0; color: var(--text-dim); }
-.team-breakdown b { color: var(--gold); }
-.team-sub { font-family: var(--display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-faint); margin: 6px 0 0; display: flex; gap: 8px; align-items: baseline; }
-.member-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.member { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 3px 0; }
-.member-name { flex: 1 1 auto; min-width: 0; }
-.member-team {
-  background: transparent; border: 1px solid var(--line); color: var(--text-faint);
-  border-radius: 6px; font-size: 11px; padding: 1px 4px; cursor: pointer; max-width: 96px;
+.team-col-head { padding: 11px 13px; border-bottom: 1px solid var(--line-soft); }
+.team-title { display: flex; align-items: center; gap: 8px; }
+.team-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--team, var(--gold)); flex: 0 0 auto; }
+.team-col-head h3 {
+  font-family: var(--display); font-size: 14px; letter-spacing: .1em;
+  text-transform: uppercase; margin: 0; min-width: 0;
 }
+.team-col-head p { margin: 4px 0 0; }
+
+.team-people { padding: 8px; display: flex; flex-direction: column; gap: 5px; min-height: 60px; }
+
+.person {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 9px; border-radius: var(--radius-sm);
+  background: var(--panel-2); border: 1px solid transparent;
+  font-size: 13.5px; cursor: grab; touch-action: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.person:hover { border-color: var(--line); }
+.person.is-dragging { opacity: .9; box-shadow: var(--shadow); border-color: var(--gold-dim); z-index: 40; position: relative; cursor: grabbing; }
+.person.is-lead { background: rgba(212,175,55,.08); }
+.person-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.lead-tag {
+  font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--gold); border: 1px solid var(--gold-dim); border-radius: 999px;
+  padding: 1px 6px; flex: 0 0 auto;
+}
+
+/* The reliable way to move somebody: works on a phone and from the keyboard. */
+.person-pick {
+  flex: 0 0 auto; width: 26px; opacity: 0;
+  background: transparent; border: 1px solid var(--line); border-radius: 6px;
+  color: var(--text-dim); font: inherit; font-size: 11px; padding: 2px;
+  cursor: pointer; transition: opacity .15s, width .15s;
+}
+.person:hover .person-pick, .person-pick:focus { opacity: 1; width: 104px; }
+
+/* No hover on touch, so the picker is always out — and wide enough that the team name is not
+   fighting the select's own chevron for the last few pixels. */
+@media (hover: none) { .person-pick { opacity: 1; width: 118px; padding-right: 4px; } }
+
+.empty-team { padding: 10px 4px; text-align: center; }
+
+/* unassigned tray */
+.team-tray {
+  border: 1px dashed var(--line); border-radius: var(--radius);
+  background: var(--ink-2); padding: 12px; margin-bottom: 16px;
+}
+.team-tray .tray-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 9px; }
+.tray-people { display: flex; flex-wrap: wrap; gap: 6px; }
+.person.is-loose { background: var(--panel); border-color: var(--line-soft); }
+.person.is-loose .person-name { flex: 0 0 auto; }
 
 /* =============================================================== GAMES == */
 .game-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }

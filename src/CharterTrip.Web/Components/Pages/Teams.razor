@@ -1,19 +1,191 @@
 @page "/teams"
+@using CharterTrip.Core.Services
+@inherits TripAwareComponent
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject CharterTrip.Web.Services.ToastService Toasts
 
 <PageTitle>Teams · Charter Trip 2026</PageTitle>
 
-<ComingSoon Title="Teams"
-            Subtitle="Four teams, twenty-six people, one trophy."
-            Phase="2"
-            Description="Team rosters and colours are already in the data. What's missing is the screen and the live scoring behind it."
-            Bullets="_bullets" />
+<div class="page">
+
+    <SectionCard Title="Teams" Subtitle="@SubtitleText">
+        <Actions>
+            <span class="muted tiny">@Trip.Roster.Count people · @Spread</span>
+        </Actions>
+
+        <ChildContent>
+            @if (Unassigned.Count > 0)
+            {
+                <div class="team-tray" data-team-id="">
+                    <div class="tray-head">
+                        <strong>Not on a team</strong>
+                        <span class="muted tiny">drop someone here to take them off a team</span>
+                    </div>
+                    <div class="tray-people">
+                        @foreach (var person in Unassigned)
+                        {
+                            <div class="person is-loose" @key="person.Id" data-person-id="@person.Id">
+                                <span class="person-name">@person.Name</span>
+                                @if (CanEdit)
+                                {
+                                    <select class="person-pick" aria-label="@($"Team for {person.Name}")"
+                                            value=""
+                                            @onchange="e => MoveAsync(person.Id, e.Value?.ToString())">
+                                        <option value="" selected>—</option>
+                                        @foreach (var team in Trip.Teams)
+                                        {
+                                            <option value="@team.Id">@team.Name</option>
+                                        }
+                                    </select>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <div class="team-board">
+                @foreach (var roster in Rosters)
+                {
+                    var team = roster.Team;
+
+                    <section class="team-col @(_dropTarget == team.Id ? "is-drop" : null)"
+                             @key="team.Id"
+                             data-team-id="@team.Id"
+                             style="--team:@team.Color">
+
+                        <header class="team-col-head">
+                            <div class="team-title">
+                                <span class="team-dot" aria-hidden="true"></span>
+                                <h3>
+                                    <EditableText Value="@team.Name" ReadOnly="@(!CanEdit)"
+                                                  ValueChanged="@(v => RenameAsync(team.Id, v))"
+                                                  Placeholder="Team name" />
+                                </h3>
+                            </div>
+                            <p class="muted tiny">
+                                @roster.Count @(roster.Count == 1 ? "person" : "people")
+                                @if (!string.IsNullOrWhiteSpace(team.Lead))
+                                {
+                                    <span> · led by @team.Lead</span>
+                                }
+                            </p>
+                        </header>
+
+                        <div class="team-people">
+                            @foreach (var person in roster.Members)
+                            {
+                                <div class="person @(TeamService.IsLead(team, person) ? "is-lead" : null)"
+                                     @key="person.Id"
+                                     data-person-id="@person.Id">
+
+                                    <span class="person-name">@person.Name</span>
+
+                                    @if (TeamService.IsLead(team, person))
+                                    {
+                                        <span class="lead-tag" title="Team lead">lead</span>
+                                    }
+
+                                    @if (CanEdit)
+                                    {
+                                        <select class="person-pick" aria-label="@($"Team for {person.Name}")"
+                                                value="@team.Id"
+                                                @onchange="e => MoveAsync(person.Id, e.Value?.ToString())">
+                                            @foreach (var other in Trip.Teams)
+                                            {
+                                                <option value="@other.Id" selected="@(other.Id == team.Id)">@other.Name</option>
+                                            }
+                                            <option value="">Not on a team</option>
+                                        </select>
+                                    }
+                                </div>
+                            }
+
+                            @if (roster.Count == 0)
+                            {
+                                <p class="muted tiny empty-team">Nobody yet.</p>
+                            }
+                        </div>
+                    </section>
+                }
+            </div>
+        </ChildContent>
+    </SectionCard>
+</div>
 
 @code {
-    private readonly string[] _bullets =
-    [
-        "Editable team names, revealed on Friday night",
-        "Team photos",
-        "Live scoreboard that updates on every phone at once",
-        "Per-game points breakdown and an undo log",
-    ];
+    protected override TripArea Watching => TripArea.Teams;
+
+    private IJSObjectReference? _module;
+    private DotNetObjectReference<Teams>? _self;
+    private string? _dropTarget;
+
+    private IReadOnlyList<TeamRoster> Rosters => TeamService.Rosters(Trip);
+    private IReadOnlyList<RosterPerson> Unassigned => TeamService.Unassigned(Trip);
+
+    private string SubtitleText => CanEdit
+        ? "Drag a name onto another team, or use the picker beside it. Click a team name to rename it."
+        : "Who is on which team.";
+
+    private string Spread
+    {
+        get
+        {
+            var (smallest, largest) = TeamService.Spread(Trip);
+            return largest - smallest > 1
+                ? $"uneven — {smallest} to {largest} per team"
+                : "evenly split";
+        }
+    }
+
+    private Task RenameAsync(string teamId, string name) =>
+        MutateAsync(t => TeamService.RenameTeam(t, teamId, name));
+
+    private async Task MoveAsync(string personId, string? teamId)
+    {
+        var person = TeamService.FindPerson(Trip, personId);
+        if (person is null || person.TeamId == (teamId ?? "")) return;
+
+        await MutateAsync(t => TeamService.MovePerson(t, personId, teamId));
+
+        var where = string.IsNullOrWhiteSpace(teamId)
+            ? "off a team"
+            : $"to {TeamService.FindTeam(Trip, teamId!)?.Name}";
+        Toasts.Show($"{person.Name} moved {where}", CharterTrip.Web.Services.ToastKind.Good);
+    }
+
+    // ------------------------------------------------------------------ drag
+
+    [JSInvokable]
+    public Task PersonDropped(string personId, string? teamId) => MoveAsync(personId, teamId);
+
+    /// <summary>Highlights the column being hovered mid-drag.</summary>
+    [JSInvokable]
+    public Task DropTargetChanged(string? teamId)
+    {
+        _dropTarget = teamId;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !CanEdit) return;
+
+        _self = DotNetObjectReference.Create(this);
+        _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/teams.js");
+        await _module.InvokeVoidAsync("init", _self);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_module is not null)
+        {
+            try { await _module.InvokeVoidAsync("dispose"); } catch (JSDisconnectedException) { }
+            try { await _module.DisposeAsync(); } catch (JSDisconnectedException) { }
+        }
+
+        _self?.Dispose();
+        Dispose();
+    }
 }

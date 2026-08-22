@@ -33,8 +33,7 @@ public static class NavTree
             new("Superlatives", "/games/superlatives")
         ]),
         new("Murder Mystery", "/mystery"),
-        new("Venue", "/venue"),
-        new("Checklist", "/checklist")
+        new("Venue", "/venue")
     ];
 
     /// <summary>The menu as a given person should see it, with admin-only branches pruned.</summary>

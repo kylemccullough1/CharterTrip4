@@ -10,7 +10,7 @@ public class JsonTripStoreTests
         await using var fx = new StoreFixture();
 
         Assert.True(File.Exists(fx.TripFilePath));
-        Assert.Equal(26, fx.Store.Current.Roster.Count);
+        Assert.Equal(25, fx.Store.Current.Roster.Count);
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public class JsonTripStoreTests
 
         var recovered = await fx.RestartAsync();
 
-        Assert.Equal(26, recovered.Current.Roster.Count);                       // fell back to the seed
+        Assert.Equal(25, recovered.Current.Roster.Count);                       // fell back to the seed
         Assert.NotEmpty(Directory.GetFiles(fx.DataRoot, "*.unreadable-*"));     // kept the evidence
     }
 

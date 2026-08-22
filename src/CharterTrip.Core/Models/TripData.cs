@@ -30,7 +30,6 @@ public sealed class TripData
     public List<Superlative> Superlatives { get; set; } = [];
     public JeopardyBoard Jeopardy { get; set; } = new();
     public MysteryState Mystery { get; set; } = new();
-    public List<ChecklistGroup> Checklist { get; set; } = [];
 }
 
 public sealed class TripInfo

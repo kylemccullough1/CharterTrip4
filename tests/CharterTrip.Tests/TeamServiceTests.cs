@@ -1,0 +1,137 @@
+using CharterTrip.Core.Models;
+using CharterTrip.Core.Services;
+
+namespace CharterTrip.Tests;
+
+public class TeamServiceTests
+{
+    private static TripData Trip()
+    {
+        var trip = new TripData
+        {
+            Teams =
+            [
+                new Team { Id = "jou",  Name = "Team Jou",  Lead = "JouJou" },
+                new Team { Id = "ali",  Name = "Team Ali",  Lead = "Ali Hussain" },
+                new Team { Id = "kyle", Name = "Team Kyle", Lead = "Kyle McCullough" },
+                new Team { Id = "em",   Name = "Team Em",   Lead = "Emily Ea" }
+            ]
+        };
+
+        void Add(string name, string teamId) =>
+            trip.Roster.Add(new RosterPerson { Id = $"p-{name.ToLowerInvariant().Replace(' ', '-')}", Name = name, TeamId = teamId });
+
+        Add("JouJou", "jou"); Add("Zach Montebon", "jou"); Add("Brandon Pham", "jou");
+        Add("Ali Hussain", "ali"); Add("Cat Xiong", "ali");
+        Add("Kyle McCullough", "kyle"); Add("Evie Fox", "kyle");
+        Add("Emily Ea", "em"); Add("Dillon Lam", "em");
+        return trip;
+    }
+
+    private static List<string> Names(TripData trip, string teamId) =>
+        TeamService.Rosters(trip).Single(r => r.Team.Id == teamId).Members.Select(m => m.Name).ToList();
+
+    [Fact]
+    public void Rosters_come_back_in_stored_team_order()
+    {
+        Assert.Equal(["jou", "ali", "kyle", "em"], TeamService.Rosters(Trip()).Select(r => r.Team.Id));
+    }
+
+    [Fact]
+    public void The_lead_is_listed_first_and_the_rest_alphabetically()
+    {
+        Assert.Equal(["JouJou", "Brandon Pham", "Zach Montebon"], Names(Trip(), "jou"));
+    }
+
+    [Fact]
+    public void Moving_someone_takes_them_off_their_old_team()
+    {
+        var trip = Trip();
+        var zach = trip.Roster.Single(p => p.Name == "Zach Montebon");
+
+        TeamService.MovePerson(trip, zach.Id, "em");
+
+        Assert.DoesNotContain("Zach Montebon", Names(trip, "jou"));
+        Assert.Contains("Zach Montebon", Names(trip, "em"));
+    }
+
+    [Fact]
+    public void A_person_can_only_ever_be_on_one_team()
+    {
+        var trip = Trip();
+        var cat = trip.Roster.Single(p => p.Name == "Cat Xiong");
+
+        TeamService.MovePerson(trip, cat.Id, "kyle");
+        TeamService.MovePerson(trip, cat.Id, "em");
+
+        var appearances = TeamService.Rosters(trip).Count(r => r.Members.Any(m => m.Id == cat.Id));
+        Assert.Equal(1, appearances);
+        Assert.Contains("Cat Xiong", Names(trip, "em"));
+    }
+
+    [Fact]
+    public void Moving_to_a_team_that_does_not_exist_is_ignored()
+    {
+        var trip = Trip();
+        var cat = trip.Roster.Single(p => p.Name == "Cat Xiong");
+
+        TeamService.MovePerson(trip, cat.Id, "nonsense");
+
+        Assert.Equal("ali", cat.TeamId);
+    }
+
+    [Fact]
+    public void Someone_can_be_taken_off_a_team_and_lands_in_unassigned()
+    {
+        var trip = Trip();
+        var cat = trip.Roster.Single(p => p.Name == "Cat Xiong");
+
+        TeamService.MovePerson(trip, cat.Id, null);
+
+        Assert.DoesNotContain("Cat Xiong", Names(trip, "ali"));
+        Assert.Contains(TeamService.Unassigned(trip), p => p.Name == "Cat Xiong");
+    }
+
+    [Fact]
+    public void Someone_pointing_at_a_deleted_team_shows_as_unassigned_rather_than_vanishing()
+    {
+        var trip = Trip();
+        trip.Roster.Add(new RosterPerson { Id = "p-ghost", Name = "Ghost", TeamId = "deleted-team" });
+
+        Assert.Contains(TeamService.Unassigned(trip), p => p.Name == "Ghost");
+    }
+
+    [Fact]
+    public void Everyone_on_the_roster_appears_exactly_once_across_teams_and_unassigned()
+    {
+        var trip = Trip();
+        TeamService.MovePerson(trip, trip.Roster[1].Id, null);
+
+        var shown = TeamService.Rosters(trip).SelectMany(r => r.Members)
+            .Concat(TeamService.Unassigned(trip))
+            .Select(p => p.Id)
+            .ToList();
+
+        Assert.Equal(trip.Roster.Count, shown.Count);
+        Assert.Equal(trip.Roster.Count, shown.Distinct().Count());
+    }
+
+    [Fact]
+    public void Renaming_a_team_trims_and_refuses_a_blank()
+    {
+        var trip = Trip();
+
+        TeamService.RenameTeam(trip, "jou", "  The Jouggernauts  ");
+        Assert.Equal("The Jouggernauts", TeamService.FindTeam(trip, "jou")!.Name);
+
+        TeamService.RenameTeam(trip, "jou", "   ");
+        Assert.Equal("The Jouggernauts", TeamService.FindTeam(trip, "jou")!.Name);
+    }
+
+    [Fact]
+    public void Spread_reports_the_smallest_and_largest_team()
+    {
+        var trip = Trip();                       // 3 / 2 / 2 / 2
+        Assert.Equal((2, 3), TeamService.Spread(trip));
+    }
+}

@@ -12,7 +12,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 5;
+    public const int CurrentVersion = 6;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -23,6 +23,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 3) changed |= ToV3_AlwaysScheduledAndVersioned(trip);
         if (trip.SchemaVersion < 4) changed |= ToV4_LogisticsRemoved(trip);
         if (trip.SchemaVersion < 5) changed |= ToV5_VenueCorrections(trip);
+        if (trip.SchemaVersion < 6) changed |= ToV6_ChecklistGoneAndRosterTrimmed(trip);
 
         if (trip.SchemaVersion != CurrentVersion)
         {
@@ -165,6 +166,24 @@ public static class TripMigrations
         }
 
         return changed;
+    }
+
+    /// <summary>
+    /// v6 drops the packing checklist, which is tracked off-site like the rest of the logistics,
+    /// and takes Leon Kien off the roster — he is no longer coming, which brings the headcount
+    /// to 25.
+    ///
+    /// The checklist key disappears on its own once the property is gone from the model. The
+    /// roster change does need doing here, since it is the only route to the copy on Azure.
+    /// </summary>
+    private static bool ToV6_ChecklistGoneAndRosterTrimmed(TripData trip)
+    {
+        var removed = trip.Roster.RemoveAll(p =>
+            string.Equals(p.Id, "p-leon-kien", StringComparison.OrdinalIgnoreCase));
+
+        // True regardless, so the version bump forces the checklist key out of the file rather
+        // than leaving it there until someone happens to make an edit.
+        return true || removed > 0;
     }
 
     private static bool ClearLegacy(ItineraryItem item)

@@ -23,7 +23,7 @@ public class SeedDataTests
     [Fact]
     public void Everyone_is_on_the_trip_and_on_a_team()
     {
-        Assert.Equal(26, Seed.Roster.Count);
+        Assert.Equal(25, Seed.Roster.Count);
 
         var teamIds = Seed.Teams.Select(t => t.Id).ToHashSet();
         Assert.All(Seed.Roster, p => Assert.Contains(p.TeamId, teamIds));
@@ -96,9 +96,15 @@ public class SeedDataTests
     }
 
     [Fact]
-    public void Mystery_roles_match_the_headcount()
+    public void There_is_a_mystery_role_for_everyone_going()
     {
-        Assert.Equal(Seed.Roster.Count, Seed.Mystery.Characters.Count);
+        // West Egg Manor is written for 26 and the roster is 25, so a role goes spare. What
+        // matters is that nobody is left without one — the surplus is the host's to trim.
+        Assert.True(Seed.Mystery.Characters.Count >= Seed.Roster.Count,
+            $"{Seed.Roster.Count} people but only {Seed.Mystery.Characters.Count} roles");
+
+        Assert.Equal(5, Seed.Mystery.Characters.Count(c => c.IsConspirator));
+        Assert.Equal(1, Seed.Mystery.Characters.Count(c => c.IsMastermind));
     }
 
     [Fact]

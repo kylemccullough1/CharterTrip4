@@ -12,7 +12,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -21,6 +21,7 @@ public static class TripMigrations
 
         if (trip.SchemaVersion < 2) changed |= ToV2_StructuredItineraryTimes(trip);
         if (trip.SchemaVersion < 3) changed |= ToV3_AlwaysScheduledAndVersioned(trip);
+        if (trip.SchemaVersion < 4) changed |= ToV4_LogisticsRemoved(trip);
 
         if (trip.SchemaVersion != CurrentVersion)
         {
@@ -113,6 +114,18 @@ public static class TripMigrations
 
         return changed;
     }
+
+    /// <summary>
+    /// v4 removed the committee bookkeeping — budget, shopping, payment tracking, shirt sizes,
+    /// per-person pricing and the treasurer's Venmo handle. That is all tracked off-site now.
+    ///
+    /// There is nothing to rewrite here: the properties are gone from the model, so those keys
+    /// are ignored on read and simply stop being written. What this does earn is the version
+    /// bump, which forces the store to rewrite trip.json on the next load instead of leaving the
+    /// dead keys — including the Venmo handle — sitting in the file until someone happens to
+    /// make an edit. It also triggers the usual pre-migration archive.
+    /// </summary>
+    private static bool ToV4_LogisticsRemoved(TripData trip) => true;
 
     private static bool ClearLegacy(ItineraryItem item)
     {

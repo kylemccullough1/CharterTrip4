@@ -19,11 +19,6 @@ public sealed class RosterPerson
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string TeamId { get; set; } = "";
-    public string Shirt { get; set; } = "";
-    public bool Drinker { get; set; }
-    public bool Paid { get; set; }
-    public decimal Amount { get; set; }
-    public string Note { get; set; } = "";
 
     /// <summary>Phase 2: the secret in their personal /join/{token} link.</summary>
     public string? JoinToken { get; set; }

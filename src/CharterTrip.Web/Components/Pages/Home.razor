@@ -101,45 +101,6 @@
         </ChildContent>
     </SectionCard>
 
-    <SectionCard Title="Trip status">
-        <div class="tile-grid">
-            <div class="tile">
-                <span class="tile-label">Headcount</span>
-                <b class="tile-big">@Trip.Roster.Count</b>
-                <span class="tile-small">people going</span>
-            </div>
-            <div class="tile">
-                <span class="tile-label">Cost to you</span>
-                <b class="tile-big">@Trip.Trip.PricePerPerson.ToString("C0")</b>
-                <span class="tile-small">
-                    @Trip.Trip.HousingPerPerson.ToString("C0") housing + @Trip.Trip.FoodPerPerson.ToString("C0") food
-                </span>
-            </div>
-            @if (Permissions.CanSeeAdminAreas)
-            {
-                <div class="tile">
-                    <span class="tile-label">Paid up</span>
-                    <b class="tile-big">@Trip.Roster.Count(p => p.Paid) / @Trip.Roster.Count</b>
-                    <span class="tile-small">@Trip.Roster.Sum(p => p.Amount).ToString("C0") collected</span>
-                </div>
-                <div class="tile">
-                    <span class="tile-label">Budget</span>
-                    <b class="tile-big">@Trip.Budget.Sum(b => b.Total).ToString("C0")</b>
-                    <span class="tile-small">@Trip.Budget.Count line items</span>
-                </div>
-            }
-            <div class="tile">
-                <span class="tile-label">Games</span>
-                <b class="tile-big">@Trip.Games.Count</b>
-                <span class="tile-small">on the schedule</span>
-            </div>
-            <div class="tile">
-                <span class="tile-label">Venmo</span>
-                <b class="tile-big">@Trip.Trip.Venmo</b>
-                <span class="tile-small">pay Kyle</span>
-            </div>
-        </div>
-    </SectionCard>
 
 </div>
 

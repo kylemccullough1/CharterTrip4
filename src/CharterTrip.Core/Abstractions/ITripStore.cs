@@ -44,8 +44,6 @@ public enum TripArea
     Jeopardy,
     Mystery,
     Checklist,
-    Budget,
-    Shopping,
     Venue
 }
 

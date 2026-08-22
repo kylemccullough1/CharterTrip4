@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "revision": 0,
   "updatedUtc": "2026-08-19T00:00:00+00:00",
   "trip": {
@@ -12,10 +12,6 @@
     "tagline": "One weekend. Four teams. One trophy.",
     "startsAt": "2026-08-28T16:00:00-05:00",
     "endsAt": "2026-08-30T12:00:00-05:00",
-    "pricePerPerson": 177,
-    "housingPerPerson": 127,
-    "foodPerPerson": 50,
-    "venmo": "@kyle-mccullough-98",
     "committee": [
       "Jou",
       "Ali",
@@ -395,286 +391,156 @@
       "id": "p-emily-ea",
       "name": "Emily Ea",
       "teamId": "em",
-      "shirt": "L",
-      "drinker": false,
-      "paid": true,
-      "amount": 177,
-      "note": "Committee",
       "role": "admin"
     },
     {
       "id": "p-justin-brown",
       "name": "Justin Brown",
       "teamId": "kyle",
-      "shirt": "M",
-      "drinker": true,
-      "paid": true,
-      "amount": 177,
-      "note": "JB",
       "role": "member"
     },
     {
       "id": "p-maria-saba",
       "name": "Maria Saba",
       "teamId": "em",
-      "shirt": "M",
-      "drinker": false,
-      "paid": true,
-      "amount": 177,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-michael-lor",
       "name": "Michael Lor",
       "teamId": "kyle",
-      "shirt": "XL",
-      "drinker": true,
-      "paid": true,
-      "amount": 177,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-ali-hussain",
       "name": "Ali Hussain",
       "teamId": "ali",
-      "shirt": "",
-      "drinker": false,
-      "paid": false,
-      "amount": 0,
-      "note": "Committee",
       "role": "admin"
     },
     {
       "id": "p-ana-torres",
       "name": "Ana Torres",
       "teamId": "ali",
-      "shirt": "M",
-      "drinker": true,
-      "paid": false,
-      "amount": 0,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-austin-nguyen",
       "name": "Austin Nguyen",
       "teamId": "em",
-      "shirt": "M",
-      "drinker": true,
-      "paid": false,
-      "amount": 0,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-brandon-pham",
       "name": "Brandon Pham",
       "teamId": "jou",
-      "shirt": "",
-      "drinker": true,
-      "paid": false,
-      "amount": 0,
-      "note": "Shirt size needed",
       "role": "member"
     },
     {
       "id": "p-cat-xiong",
       "name": "Cat Xiong",
       "teamId": "ali",
-      "shirt": "XL",
-      "drinker": true,
-      "paid": false,
-      "amount": 0,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-dillon-lam",
       "name": "Dillon Lam",
       "teamId": "em",
-      "shirt": "L",
-      "drinker": true,
-      "paid": true,
-      "amount": 177,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-esther-niang",
       "name": "Esther Niang",
       "teamId": "jou",
-      "shirt": "L",
-      "drinker": false,
-      "paid": false,
-      "amount": 0,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-evie-fox",
       "name": "Evie Fox",
       "teamId": "kyle",
-      "shirt": "S",
-      "drinker": false,
-      "paid": false,
-      "amount": 0,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-hao-dinh",
       "name": "Hao Dinh",
       "teamId": "jou",
-      "shirt": "M",
-      "drinker": false,
-      "paid": false,
-      "amount": 0,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-jnguyen",
       "name": "JNguyen",
       "teamId": "kyle",
-      "shirt": "XXL",
-      "drinker": false,
-      "paid": false,
-      "amount": 0,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-joujou",
       "name": "JouJou",
       "teamId": "jou",
-      "shirt": "M",
-      "drinker": false,
-      "paid": false,
-      "amount": 0,
-      "note": "Committee",
       "role": "admin"
     },
     {
       "id": "p-keila-vanessa",
       "name": "Keila Vanessa",
       "teamId": "jou",
-      "shirt": "L",
-      "drinker": true,
-      "paid": false,
-      "amount": 0,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-kenny-duong",
       "name": "Kenny Duong",
       "teamId": "ali",
-      "shirt": "L",
-      "drinker": true,
-      "paid": false,
-      "amount": 0,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-kylie-jacelynn",
       "name": "Kylie Jacelynn",
       "teamId": "em",
-      "shirt": "L",
-      "drinker": false,
-      "paid": false,
-      "amount": 0,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-leon-kien",
       "name": "Leon Kien",
       "teamId": "ali",
-      "shirt": "L",
-      "drinker": true,
-      "paid": false,
-      "amount": 0,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-maria-riri",
       "name": "Maria Riri",
       "teamId": "ali",
-      "shirt": "XL",
-      "drinker": false,
-      "paid": false,
-      "amount": 0,
-      "note": "Said they would pay soon",
       "role": "member"
     },
     {
       "id": "p-marilyn-elizondo",
       "name": "Marilyn Elizondo",
       "teamId": "em",
-      "shirt": "L",
-      "drinker": true,
-      "paid": true,
-      "amount": 0,
-      "note": "Marked paid, amount not recorded on the sheet",
       "role": "member"
     },
     {
       "id": "p-sage-hermes",
       "name": "Sage Hermes",
       "teamId": "kyle",
-      "shirt": "M",
-      "drinker": false,
-      "paid": false,
-      "amount": 0,
-      "note": "Said they would pay soon",
       "role": "member"
     },
     {
       "id": "p-zach-montebon",
       "name": "Zach Montebon",
       "teamId": "jou",
-      "shirt": "M",
-      "drinker": true,
-      "paid": false,
-      "amount": 0,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-ben",
       "name": "Ben",
       "teamId": "ali",
-      "shirt": "XL",
-      "drinker": true,
-      "paid": false,
-      "amount": 0,
-      "note": "",
       "role": "member"
     },
     {
       "id": "p-may",
       "name": "May",
       "teamId": "kyle",
-      "shirt": "",
-      "drinker": true,
-      "paid": false,
-      "amount": 0,
-      "note": "Shirt size needed",
       "role": "member"
     },
     {
       "id": "p-kyle-mccullough",
       "name": "Kyle McCullough",
       "teamId": "kyle",
-      "shirt": "L",
-      "drinker": false,
-      "paid": true,
-      "amount": 177,
-      "note": "Committee - Treasurer",
       "role": "admin"
     }
   ],
@@ -1650,628 +1516,6 @@
         {
           "id": "ck-v7",
           "text": "Snacks",
-          "done": false
-        }
-      ]
-    }
-  ],
-  "toBring": [
-    {
-      "id": "tb-jou",
-      "who": "Jou",
-      "items": "Rice cooker, brown sugar, paper, cookies",
-      "done": false
-    },
-    {
-      "id": "tb-ali",
-      "who": "Ali",
-      "items": "Speaker",
-      "done": false
-    },
-    {
-      "id": "tb-kyle",
-      "who": "Kyle",
-      "items": "4 sheets of laminated paper, laminated props / superlatives, trophy, headbands, laptop & HDMI cord",
-      "done": false
-    },
-    {
-      "id": "tb-em",
-      "who": "Em",
-      "items": "Folding table, cards",
-      "done": false
-    }
-  ],
-  "budget": [
-    {
-      "id": "bl-01",
-      "item": "Members Mark Cage Free Grade A Large White Eggs, 2 dozen",
-      "unit": 4.47,
-      "qty": 2,
-      "store": "Sam's Club",
-      "category": "Food"
-    },
-    {
-      "id": "bl-02",
-      "item": "Hormel Black Label Thick Cut Bacon, 3 lbs",
-      "unit": 14.44,
-      "qty": 1,
-      "store": "Sam's Club",
-      "category": "Food"
-    },
-    {
-      "id": "bl-03",
-      "item": "Jimmy Dean Fully Cooked Original Pork Sausage Links",
-      "unit": 10.47,
-      "qty": 1,
-      "store": "Sam's Club",
-      "category": "Food"
-    },
-    {
-      "id": "bl-04",
-      "item": "Eggo Homestyle Waffles, 72 ct",
-      "unit": 10.97,
-      "qty": 1,
-      "store": "Sam's Club",
-      "category": "Food"
-    },
-    {
-      "id": "bl-05",
-      "item": "Eggo Minis Buttermilk Pancakes, 200 ct",
-      "unit": 11.98,
-      "qty": 1,
-      "store": "Sam's Club",
-      "category": "Food"
-    },
-    {
-      "id": "bl-06",
-      "item": "Great Value Original Syrup, 36 fl oz",
-      "unit": 3.12,
-      "qty": 2,
-      "store": "Walmart",
-      "category": "Food"
-    },
-    {
-      "id": "bl-07",
-      "item": "Cuties Clementine Oranges, 5 lbs",
-      "unit": 8.12,
-      "qty": 2,
-      "store": "Sam's Club",
-      "category": "Food"
-    },
-    {
-      "id": "bl-08",
-      "item": "Great Value Clear Fork and Spoon Combo, 120 ct",
-      "unit": 8.78,
-      "qty": 1,
-      "store": "Walmart",
-      "category": "Supplies"
-    },
-    {
-      "id": "bl-09",
-      "item": "Frito-Lay Variety Pack Chips, 30-50 pk",
-      "unit": 18.48,
-      "qty": 2,
-      "store": "Sam's Club",
-      "category": "Food"
-    },
-    {
-      "id": "bl-10",
-      "item": "Great Value 100% Apple Juice, 96 fl oz",
-      "unit": 3.24,
-      "qty": 2,
-      "store": "Walmart",
-      "category": "Food"
-    },
-    {
-      "id": "bl-11",
-      "item": "Great Value Orange Juice, No Pulp, 52 fl oz",
-      "unit": 3.87,
-      "qty": 2,
-      "store": "Walmart",
-      "category": "Food"
-    },
-    {
-      "id": "bl-12",
-      "item": "Members Mark Purified Water, 40 pk",
-      "unit": 3.98,
-      "qty": 3,
-      "store": "Sam's Club",
-      "category": "Food"
-    },
-    {
-      "id": "bl-13",
-      "item": "Great Value Sliced Cheese",
-      "unit": 1.67,
-      "qty": 6,
-      "store": "Walmart",
-      "category": "Food"
-    },
-    {
-      "id": "bl-14",
-      "item": "Heinz Ketchup, Mayo and Mustard Variety Pack",
-      "unit": 8.98,
-      "qty": 1,
-      "store": "Sam's Club",
-      "category": "Food"
-    },
-    {
-      "id": "bl-15",
-      "item": "Sandwich Bread",
-      "unit": 0,
-      "qty": 1,
-      "store": "",
-      "category": "Food"
-    },
-    {
-      "id": "bl-16",
-      "item": "Saturday dinner meat (skirt steak)",
-      "unit": 8.11,
-      "qty": 18,
-      "store": "HEB",
-      "category": "Food"
-    },
-    {
-      "id": "bl-17",
-      "item": "Tortillas, 20 ct (flour)",
-      "unit": 4.88,
-      "qty": 2,
-      "store": "HEB",
-      "category": "Food"
-    },
-    {
-      "id": "bl-18",
-      "item": "Tortillas, 30 ct (corn)",
-      "unit": 1.98,
-      "qty": 4,
-      "store": "HEB",
-      "category": "Food"
-    },
-    {
-      "id": "bl-19",
-      "item": "Fresh salsa - medium spicy",
-      "unit": 4.26,
-      "qty": 2,
-      "store": "",
-      "category": "Food"
-    },
-    {
-      "id": "bl-20",
-      "item": "White onion",
-      "unit": 1.14,
-      "qty": 4,
-      "store": "",
-      "category": "Food"
-    },
-    {
-      "id": "bl-21",
-      "item": "Cilantro",
-      "unit": 0.46,
-      "qty": 6,
-      "store": "",
-      "category": "Food"
-    },
-    {
-      "id": "bl-22",
-      "item": "Salsa verde - hot",
-      "unit": 5.98,
-      "qty": 2,
-      "store": "",
-      "category": "Food"
-    },
-    {
-      "id": "bl-23",
-      "item": "Kingsford Charcoal Briquettes - Original",
-      "unit": 10.92,
-      "qty": 1,
-      "store": "",
-      "category": "Supplies"
-    },
-    {
-      "id": "bl-24",
-      "item": "Salted tortilla chips",
-      "unit": 3.78,
-      "qty": 2,
-      "store": "",
-      "category": "Food"
-    },
-    {
-      "id": "bl-25",
-      "item": "Soda / juice packs",
-      "unit": 8.42,
-      "qty": 4,
-      "store": "",
-      "category": "Food"
-    },
-    {
-      "id": "bl-26",
-      "item": "Boneless chicken thighs, 4 lbs",
-      "unit": 10.23,
-      "qty": 3,
-      "store": "",
-      "category": "Food"
-    },
-    {
-      "id": "bl-27",
-      "item": "Filipino soy sauce and vinegar",
-      "unit": 13.0,
-      "qty": 1,
-      "store": "",
-      "category": "Food"
-    },
-    {
-      "id": "bl-28",
-      "item": "Garlic bulb, fresh whole",
-      "unit": 0.72,
-      "qty": 1,
-      "store": "",
-      "category": "Food"
-    },
-    {
-      "id": "bl-29",
-      "item": "Great Value Jasmine Rice, 5 lb",
-      "unit": 7.23,
-      "qty": 1,
-      "store": "",
-      "category": "Food"
-    },
-    {
-      "id": "bl-30",
-      "item": "Brown sugar",
-      "unit": 0,
-      "qty": 1,
-      "store": "Jou is bringing",
-      "category": "Food"
-    },
-    {
-      "id": "bl-31",
-      "item": "Pool noodles",
-      "unit": 1.25,
-      "qty": 12,
-      "store": "Dollar Tree",
-      "category": "Games"
-    },
-    {
-      "id": "bl-32",
-      "item": "Pens / Sharpies",
-      "unit": 1.25,
-      "qty": 2,
-      "store": "Dollar Tree",
-      "category": "Games"
-    },
-    {
-      "id": "bl-33",
-      "item": "Paper",
-      "unit": 0,
-      "qty": 1,
-      "store": "Jou is bringing",
-      "category": "Games"
-    },
-    {
-      "id": "bl-34",
-      "item": "Solo cups, 50 pack",
-      "unit": 3.98,
-      "qty": 3,
-      "store": "Walmart",
-      "category": "Games"
-    },
-    {
-      "id": "bl-35",
-      "item": "Ping pong balls",
-      "unit": 2.96,
-      "qty": 1,
-      "store": "Walmart",
-      "category": "Games"
-    },
-    {
-      "id": "bl-36",
-      "item": "White boards",
-      "unit": 0,
-      "qty": 1,
-      "store": "",
-      "category": "Games"
-    },
-    {
-      "id": "bl-38",
-      "item": "Group t-shirts",
-      "unit": 21.73,
-      "qty": 26,
-      "store": "",
-      "category": "Merch"
-    },
-    {
-      "id": "bl-39",
-      "item": "Vrbo - Braun Manor",
-      "unit": 3421.0,
-      "qty": 1,
-      "store": "Vrbo",
-      "category": "Lodging"
-    }
-  ],
-  "shopping": [
-    {
-      "id": "sh-food",
-      "title": "Food",
-      "items": [
-        {
-          "id": "sf-01",
-          "text": "Cucumbers",
-          "qty": "a few?",
-          "done": false
-        },
-        {
-          "id": "sf-02",
-          "text": "Bagged salad - Caesar?",
-          "qty": "?",
-          "done": false
-        },
-        {
-          "id": "sf-03",
-          "text": "Great Value Jasmine Rice, 5 lb",
-          "qty": "1",
-          "done": false
-        },
-        {
-          "id": "sf-04",
-          "text": "Bulb of garlic",
-          "qty": "1",
-          "done": false
-        },
-        {
-          "id": "sf-05",
-          "text": "Filipino soy sauce and vinegar",
-          "qty": "1",
-          "done": false
-        },
-        {
-          "id": "sf-06",
-          "text": "Boneless chicken thighs, 4 lbs",
-          "qty": "3",
-          "done": false
-        },
-        {
-          "id": "sf-07",
-          "text": "Members Mark eggs, 2 dozen",
-          "qty": "2",
-          "done": false
-        },
-        {
-          "id": "sf-08",
-          "text": "Jimmy Dean pork sausage links",
-          "qty": "1",
-          "done": false
-        },
-        {
-          "id": "sf-09",
-          "text": "Hormel Black Label bacon, 3 lbs",
-          "qty": "1",
-          "done": false
-        },
-        {
-          "id": "sf-10",
-          "text": "Eggo Homestyle Waffles, 72 ct",
-          "qty": "1",
-          "done": false
-        },
-        {
-          "id": "sf-11",
-          "text": "Eggo Minis Buttermilk Pancakes, 200 ct",
-          "qty": "1",
-          "done": false
-        },
-        {
-          "id": "sf-12",
-          "text": "Great Value syrup, 36 fl oz",
-          "qty": "2",
-          "done": false
-        },
-        {
-          "id": "sf-13",
-          "text": "Cuties clementines, 5 lbs",
-          "qty": "2",
-          "done": false
-        },
-        {
-          "id": "sf-14",
-          "text": "Apple juice, 96 fl oz",
-          "qty": "2",
-          "done": false
-        },
-        {
-          "id": "sf-15",
-          "text": "Orange juice, no pulp, 52 fl oz",
-          "qty": "2",
-          "done": false
-        },
-        {
-          "id": "sf-16",
-          "text": "Frozen beef patties, 40 ct",
-          "qty": "1",
-          "done": false
-        },
-        {
-          "id": "sf-17",
-          "text": "Ball Park beef franks, 24 ct",
-          "qty": "2",
-          "done": false
-        },
-        {
-          "id": "sf-18",
-          "text": "Burger buns, 16 ct",
-          "qty": "3",
-          "done": false
-        },
-        {
-          "id": "sf-19",
-          "text": "Hot dog buns, 16 ct",
-          "qty": "3",
-          "done": false
-        },
-        {
-          "id": "sf-20",
-          "text": "Great Value sliced cheese, 12 ct",
-          "qty": "4",
-          "done": false
-        },
-        {
-          "id": "sf-21",
-          "text": "Head of lettuce",
-          "qty": "2",
-          "done": false
-        },
-        {
-          "id": "sf-22",
-          "text": "Tomatoes",
-          "qty": "4",
-          "done": false
-        },
-        {
-          "id": "sf-23",
-          "text": "Onions",
-          "qty": "6",
-          "done": false
-        },
-        {
-          "id": "sf-24",
-          "text": "Heinz ketchup, mayo and mustard variety pack",
-          "qty": "1",
-          "done": false
-        },
-        {
-          "id": "sf-25",
-          "text": "Frito-Lay variety pack chips, 50 pk",
-          "qty": "2",
-          "done": false
-        },
-        {
-          "id": "sf-26",
-          "text": "Skirt steak",
-          "qty": "16 lbs",
-          "done": false
-        },
-        {
-          "id": "sf-27",
-          "text": "Marinade ingredients",
-          "qty": "1 set",
-          "done": false
-        },
-        {
-          "id": "sf-28",
-          "text": "Tortillas, 20 ct (flour)",
-          "qty": "2",
-          "done": false
-        },
-        {
-          "id": "sf-29",
-          "text": "Tortillas, 30 ct (corn)",
-          "qty": "4",
-          "done": false
-        },
-        {
-          "id": "sf-30",
-          "text": "Fresh salsa - medium spicy",
-          "qty": "2",
-          "done": false
-        },
-        {
-          "id": "sf-31",
-          "text": "Cilantro",
-          "qty": "6",
-          "done": false
-        },
-        {
-          "id": "sf-32",
-          "text": "Salsa verde - hot",
-          "qty": "2",
-          "done": false
-        },
-        {
-          "id": "sf-33",
-          "text": "Salted tortilla chips",
-          "qty": "2",
-          "done": false
-        },
-        {
-          "id": "sf-34",
-          "text": "Capri Sun, 40 pk",
-          "qty": "3",
-          "done": false
-        },
-        {
-          "id": "sf-35",
-          "text": "Members Mark purified water, 40 pk",
-          "qty": "3",
-          "done": false
-        },
-        {
-          "id": "sf-36",
-          "text": "Cookies / Oreos",
-          "qty": "?",
-          "done": false
-        }
-      ]
-    },
-    {
-      "id": "sh-misc",
-      "title": "Miscellaneous",
-      "items": [
-        {
-          "id": "sm-01",
-          "text": "Great Value clear fork and spoon combo, 120 ct",
-          "qty": "1",
-          "done": false
-        },
-        {
-          "id": "sm-02",
-          "text": "Paper plates, 150 pk",
-          "qty": "1",
-          "done": false
-        },
-        {
-          "id": "sm-03",
-          "text": "Solo cups, 50 pack",
-          "qty": "3",
-          "done": false
-        },
-        {
-          "id": "sm-04",
-          "text": "Pens / Sharpies",
-          "qty": "1 pack each",
-          "done": false
-        },
-        {
-          "id": "sm-05",
-          "text": "Ping pong balls, 6 pk",
-          "qty": "2",
-          "done": false
-        },
-        {
-          "id": "sm-06",
-          "text": "Pool noodles",
-          "qty": "12",
-          "done": false
-        },
-        {
-          "id": "sm-07",
-          "text": "Dry erase markers",
-          "qty": "4",
-          "done": false
-        },
-        {
-          "id": "sm-08",
-          "text": "Aluminum foil trays",
-          "qty": "5?",
-          "done": false
-        },
-        {
-          "id": "sm-09",
-          "text": "Charcoal briquettes",
-          "qty": "1",
-          "done": false
-        },
-        {
-          "id": "sm-10",
-          "text": "Team headbands (7 per team lead)",
-          "qty": "28",
           "done": false
         }
       ]

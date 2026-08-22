@@ -31,9 +31,6 @@ public sealed class TripData
     public JeopardyBoard Jeopardy { get; set; } = new();
     public MysteryState Mystery { get; set; } = new();
     public List<ChecklistGroup> Checklist { get; set; } = [];
-    public List<BringItem> ToBring { get; set; } = [];
-    public List<BudgetLine> Budget { get; set; } = [];
-    public List<ShoppingList> Shopping { get; set; } = [];
 }
 
 public sealed class TripInfo
@@ -48,10 +45,7 @@ public sealed class TripInfo
     public DateTimeOffset StartsAt { get; set; }
     public DateTimeOffset EndsAt { get; set; }
 
-    public decimal PricePerPerson { get; set; }
-    public decimal HousingPerPerson { get; set; }
-    public decimal FoodPerPerson { get; set; }
-    public string Venmo { get; set; } = "";
+    /// <summary>Who put the weekend together — the byline in the footer.</summary>
     public List<string> Committee { get; set; } = [];
 }
 

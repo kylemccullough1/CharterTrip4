@@ -18,7 +18,6 @@ public class SeedDataTests
         Assert.Equal("Charter Trip", Seed.Trip.Name);
         Assert.Equal(2026, Seed.Trip.Year);
         Assert.Equal("Braun Manor", Seed.Trip.Venue);
-        Assert.Equal(177m, Seed.Trip.PricePerPerson);
     }
 
     [Fact]
@@ -103,13 +102,10 @@ public class SeedDataTests
     }
 
     [Fact]
-    public void Games_and_budget_are_populated()
+    public void Games_are_populated()
     {
         Assert.Equal(8, Seed.Games.Count);
         Assert.All(Seed.Games, g => Assert.NotEmpty(g.Rules));
-
-        Assert.NotEmpty(Seed.Budget);
-        Assert.True(Seed.Budget.Sum(b => b.Total) > 4000m);
     }
 
     [Fact]
@@ -119,6 +115,5 @@ public class SeedDataTests
         Assert.All(Seed.Roster, p => Assert.False(string.IsNullOrWhiteSpace(p.Id)));
         Assert.All(Seed.Games, g => Assert.False(string.IsNullOrWhiteSpace(g.Id)));
         Assert.All(Seed.Itinerary, d => Assert.False(string.IsNullOrWhiteSpace(d.Id)));
-        Assert.All(Seed.Budget, b => Assert.False(string.IsNullOrWhiteSpace(b.Id)));
     }
 }

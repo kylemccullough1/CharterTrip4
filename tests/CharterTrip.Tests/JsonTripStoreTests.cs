@@ -51,7 +51,7 @@ public class JsonTripStoreTests
         var change = Assert.Single(seen);
         Assert.Equal(TripArea.Trip, change.Area);
         Assert.True(change.Affects(TripArea.Trip));
-        Assert.False(change.Affects(TripArea.Budget));
+        Assert.False(change.Affects(TripArea.Games));
         Assert.True(change.Affects(TripArea.All));
     }
 

@@ -141,4 +141,64 @@ public class JsonTripStoreTests
         Assert.Equal(26, recovered.Current.Roster.Count);                       // fell back to the seed
         Assert.NotEmpty(Directory.GetFiles(fx.DataRoot, "*.unreadable-*"));     // kept the evidence
     }
+
+    // ------------------------------------------------ concurrent writers
+
+    [Fact]
+    public async Task A_write_from_outside_the_process_is_archived_before_being_overwritten()
+    {
+        await using var fx = new StoreFixture();
+        await fx.Store.MutateAsync(t => t.Trip.Tagline = "ours", TripArea.Trip);
+        await fx.Store.FlushAsync();
+
+        // Somebody edits trip.json by hand, or a second instance writes it.
+        var foreign = "{\"schemaVersion\":3,\"revision\":999,\"trip\":{\"name\":\"edited by hand\"}}";
+        File.WriteAllText(fx.TripFilePath, foreign);
+        File.SetLastWriteTimeUtc(fx.TripFilePath, DateTime.UtcNow.AddSeconds(5));
+
+        await fx.Store.MutateAsync(t => t.Trip.Tagline = "ours again", TripArea.Trip);
+        await fx.Store.FlushAsync();
+
+        var archived = Directory.GetFiles(Path.Combine(fx.DataRoot, "backups"), "trip-external-*.json");
+        var saved = Assert.Single(archived);
+        Assert.Contains("edited by hand", File.ReadAllText(saved));
+
+        // Our in-memory copy still wins the file — but nothing was destroyed without a copy.
+        Assert.Contains("ours again", File.ReadAllText(fx.TripFilePath));
+    }
+
+    [Fact]
+    public async Task Our_own_writes_are_not_mistaken_for_foreign_ones()
+    {
+        await using var fx = new StoreFixture();
+
+        for (var i = 0; i < 5; i++)
+        {
+            await fx.Store.MutateAsync(t => t.Trip.Tagline = $"pass {i}", TripArea.Trip);
+            await fx.Store.FlushAsync();
+        }
+
+        var backups = Path.Combine(fx.DataRoot, "backups");
+        var archived = Directory.Exists(backups)
+            ? Directory.GetFiles(backups, "trip-external-*.json")
+            : [];
+
+        Assert.Empty(archived);
+    }
+
+    [Fact]
+    public async Task Concurrent_mutations_all_land()
+    {
+        await using var fx = new StoreFixture();
+
+        await Task.WhenAll(Enumerable.Range(0, 40).Select(i =>
+            fx.Store.MutateAsync(t => t.Superlatives.Add(new CharterTrip.Core.Models.Superlative
+            {
+                Id = $"concurrent-{i}", Title = $"Award {i}"
+            }), TripArea.Trip)));
+
+        // The seed ships its own superlatives, so count only the ones this test added.
+        Assert.Equal(40, fx.Store.Current.Superlatives.Count(s => s.Id.StartsWith("concurrent-")));
+        Assert.Equal(40, fx.Store.Current.Superlatives.Select(s => s.Id).Distinct().Count(id => id.StartsWith("concurrent-")));
+    }
 }

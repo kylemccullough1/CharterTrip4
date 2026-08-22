@@ -75,13 +75,4 @@ public class OverlapLayoutTests
         Assert.All(layout, p => Assert.Equal(1, p.ColumnCount));
     }
 
-    [Fact]
-    public void Unscheduled_items_are_left_out()
-    {
-        var tray = new ItineraryItem { Id = "tray", Title = "Someday", StartMinutes = null };
-        var layout = OverlapLayout.Arrange([Item("a", 600, 60), tray]);
-
-        Assert.Single(layout);
-        Assert.Equal("a", layout[0].Item.Id);
-    }
 }

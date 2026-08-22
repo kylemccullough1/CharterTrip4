@@ -19,15 +19,30 @@ public sealed class ItineraryDay
 
 public sealed class ItineraryItem
 {
+    /// <summary>Where a new or repaired item lands: midday.</summary>
+    public const int DefaultStartMinutes = 12 * 60;
+
     public string Id { get; set; } = "";
+
+    /// <summary>
+    /// The serialized start time. Nullable only so that a hand-edited or pre-v3 file degrades
+    /// to a sensible default instead of failing to parse and taking the whole document with it.
+    /// Read and write <see cref="StartMinutes"/> instead of this.
+    /// </summary>
+    [JsonPropertyName("startMinutes")]
+    public int? StartMinutesOrNull { get; set; }
 
     /// <summary>
     /// When this starts, on the same scale <see cref="Services.TimeText.ToMinutes"/> produces:
     /// minutes past midnight, with anything before 6am shifted +1440 so a 12:00 AM nightcap
     /// belongs to the end of Saturday rather than the start of it.
-    /// Null means unscheduled — it sits in the tray until someone gives it a time.
     /// </summary>
-    public int? StartMinutes { get; set; }
+    [JsonIgnore]
+    public int StartMinutes
+    {
+        get => StartMinutesOrNull ?? DefaultStartMinutes;
+        set => StartMinutesOrNull = value;
+    }
 
     public int DurationMinutes { get; set; } = 60;
 
@@ -35,8 +50,12 @@ public sealed class ItineraryItem
     public string Notes { get; set; } = "";
     public ItineraryTag Tag { get; set; } = ItineraryTag.Logistics;
 
-    /// <summary>What the time used to say when it wasn't a clock time — "after dinner", "TBD".</summary>
-    public string? TimeNote { get; set; }
+    /// <summary>
+    /// Bumped on every change to this item. The editor records the version it opened with and
+    /// refuses to save over a newer one, so two people editing the same thing get a choice
+    /// instead of one of them silently losing their work.
+    /// </summary>
+    public int Version { get; set; } = 1;
 
     /// <summary>
     /// The pre-v2 free-text time field. Only the migration reads it; it is nulled out afterwards
@@ -45,11 +64,12 @@ public sealed class ItineraryItem
     [JsonPropertyName("time")]
     public string? LegacyTime { get; set; }
 
-    [JsonIgnore]
-    public bool IsScheduled => StartMinutes.HasValue;
+    /// <summary>The pre-v3 home for times that could not be parsed. Folded into Notes by v3.</summary>
+    [JsonPropertyName("timeNote")]
+    public string? LegacyTimeNote { get; set; }
 
     [JsonIgnore]
-    public int EndMinutes => (StartMinutes ?? 0) + DurationMinutes;
+    public int EndMinutes => StartMinutes + DurationMinutes;
 }
 
 public enum ItineraryTag
@@ -58,4 +78,27 @@ public enum ItineraryTag
     Game,
     Logistics,
     FreeTime
+}
+
+/// <summary>
+/// One editor session's worth of changes, carried from the form to the store as a unit.
+/// <paramref name="BaseVersion"/> is the item's version when the form was opened.
+/// </summary>
+public sealed record ItemEdit(
+    string ItemId,
+    int BaseVersion,
+    string DayId,
+    string Title,
+    string Notes,
+    ItineraryTag Tag,
+    int StartMinutes,
+    int DurationMinutes);
+
+public enum SaveOutcome
+{
+    Saved,
+    /// <summary>Someone else changed this item since the form was opened.</summary>
+    Conflict,
+    /// <summary>Someone else deleted it while the form was open.</summary>
+    Missing
 }

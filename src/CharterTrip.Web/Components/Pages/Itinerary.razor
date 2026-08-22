@@ -46,35 +46,6 @@
                 }
             </div>
 
-            @if (Unscheduled.Count > 0)
-            {
-                <div class="planner-tray">
-                    <div class="tray-head">
-                        <strong>Not scheduled yet</strong>
-                        <span class="muted tiny">@Unscheduled.Count item@(Unscheduled.Count == 1 ? "" : "s") · give them a time to put them on the grid</span>
-                    </div>
-                    <div class="tray-items">
-                        @foreach (var (day, item) in Unscheduled)
-                        {
-                            <div class="tray-card" @key="item.Id">
-                                <TagChip Tag="item.Tag" />
-                                <span class="tray-title">@Display(item.Title, "Untitled")</span>
-                                @if (!string.IsNullOrWhiteSpace(item.TimeNote))
-                                {
-                                    <span class="tray-note">“@item.TimeNote”</span>
-                                }
-                                <span class="tray-day">@day.Day</span>
-                                @if (CanEdit)
-                                {
-                                    <button class="btn btn-ghost btn-xs" @onclick="() => ScheduleAsync(item.Id)">Schedule</button>
-                                    <button class="mini-btn" title="Edit" @onclick="() => _editingId = item.Id">✎</button>
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-
             <div class="planner">
                 @foreach (var day in Trip.Itinerary)
                 {
@@ -94,13 +65,13 @@
                                     <EditableText Value="@day.Date" ReadOnly="@(!CanEdit)"
                                                   ValueChanged="@(v => SetDayDateAsync(day.Id, v))"
                                                   Placeholder="date" />
-                                    · @ScheduledCount(day) scheduled
+                                    · @day.Items.Count item@(day.Items.Count == 1 ? "" : "s")
                                 </p>
                             </div>
                             @if (CanEdit)
                             {
                                 <div class="planner-day-actions">
-                                    <button class="mini-btn" title="Add an item at noon"
+                                    <button class="mini-btn" title="Add an item at midday"
                                             @onclick="() => AddItemAsync(day.Id)">+</button>
                                     @if (day.Items.Count == 0)
                                     {
@@ -113,7 +84,6 @@
 
                         <div class="planner-canvas" style="height:@Px(timeline.TotalPixels)">
 
-                            @* hour lines and their labels *@
                             @foreach (var mark in timeline.HourMarks())
                             {
                                 <div class="planner-hour" style="top:@Px(timeline.ToPixels(mark))">
@@ -121,7 +91,6 @@
                                 </div>
                             }
 
-                            @* squashed empty stretches — click to open them out *@
                             @foreach (var band in timeline.Bands.Where(b => b.Kind == BandKind.Collapsed))
                             {
                                 <button type="button" class="planner-gap"
@@ -132,7 +101,6 @@
                                 </button>
                             }
 
-                            @* an expanded gap keeps a quiet marker so it can be closed again *@
                             @foreach (var band in ExpandedGapBands(day, timeline))
                             {
                                 <button type="button" class="planner-gap-open"
@@ -146,20 +114,20 @@
                                 @foreach (var pos in positioned)
                                 {
                                     var item = pos.Item;
-                                    var top = timeline.ToPixels(item.StartMinutes!.Value);
-                                    var height = Math.Max(MinCardPixels, timeline.HeightOf(item.StartMinutes.Value, item.DurationMinutes));
+                                    var top = timeline.ToPixels(item.StartMinutes);
+                                    var height = Math.Max(MinCardPixels, timeline.HeightOf(item.StartMinutes, item.DurationMinutes));
                                     var width = 100d / pos.ColumnCount;
 
-                                    <article class="planner-card @SizeClass(height) @(_editingId == item.Id ? "is-editing" : null)"
+                                    <article class="planner-card @SizeClass(height) @(_draft?.ItemId == item.Id ? "is-editing" : null)"
                                              @key="item.Id"
                                              data-item-id="@item.Id"
                                              data-day-id="@day.Id"
                                              style="top:@Px(top); height:@Px(height); left:@Pct(pos.Column * width); width:@Pct(width); --tag:@TagColor(item.Tag)"
                                              tabindex="0"
-                                             @onclick="() => ToggleEditor(item.Id)"
-                                             @onkeydown="e => CardKeyAsync(e, item.Id)">
+                                             @onclick="() => OpenEditor(item)"
+                                             @onkeydown="e => CardKey(e, item)">
 
-                                        <div class="card-time">@TimeText.FormatRange(item.StartMinutes.Value, item.DurationMinutes)</div>
+                                        <div class="card-time">@TimeText.FormatRange(item.StartMinutes, item.DurationMinutes)</div>
                                         <div class="card-title">@Display(item.Title, "Untitled")</div>
                                         @if (!string.IsNullOrWhiteSpace(item.Notes))
                                         {
@@ -178,44 +146,59 @@
                 }
             </div>
 
-            @if (EditingItem is { } editing)
+            @if (_draft is not null)
             {
-                <div class="planner-editor-backdrop" @onclick="() => _editingId = null"></div>
+                <div class="planner-editor-backdrop" @onclick="TryCloseAsync"></div>
                 <aside class="planner-editor" @onclick:stopPropagation="true">
                     <header>
-                        <strong>Edit item</strong>
-                        <button class="mini-btn" title="Close" @onclick="() => _editingId = null">✕</button>
+                        <strong>Edit item @(IsDirty ? "·" : "")</strong>
+                        <button class="mini-btn" title="Close" @onclick="TryCloseAsync">✕</button>
                     </header>
+
+                    @if (_conflict is not null)
+                    {
+                        <div class="conflict">
+                            <strong>Someone else changed this</strong>
+                            <p class="tiny">While this was open, it was edited elsewhere. Pick which version wins.</p>
+                            <ul class="tiny">
+                                @foreach (var line in _conflict.Differences)
+                                {
+                                    <li>@line</li>
+                                }
+                            </ul>
+                            <div class="conflict-actions">
+                                <button class="btn btn-sm" @onclick="UseTheirsAsync">Use theirs</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => SaveAsync(force: true)">Keep mine</button>
+                            </div>
+                        </div>
+                    }
 
                     <label>
                         <span>Title</span>
-                        <input class="inline-edit" value="@editing.Title"
-                               @onchange="e => SetTitleAsync(editing.Id, e.Value?.ToString() ?? string.Empty)" />
+                        <input class="inline-edit" @bind="_draft.Title" @bind:event="oninput" />
                     </label>
 
                     <label>
                         <span>Notes</span>
-                        <textarea class="inline-edit" rows="3"
-                                  @onchange="e => SetNotesAsync(editing.Id, e.Value?.ToString() ?? string.Empty)">@editing.Notes</textarea>
+                        <textarea class="inline-edit" rows="3" @bind="_draft.Notes" @bind:event="oninput"></textarea>
                     </label>
 
                     <div class="editor-row">
                         <label>
                             <span>Starts</span>
+                            @* Explicit value/@onchange rather than @bind: Blazor infers TimeOnly
+                               for type="time" inputs, which will not bind to a string property. *@
                             <input type="time" step="900" class="inline-edit"
-                                   value="@ClockValue(editing)"
-                                   @onchange="e => SetStartFromClockAsync(editing.Id, e.Value?.ToString())" />
+                                   value="@DraftClock"
+                                   @onchange="e => DraftClock = e.Value?.ToString() ?? string.Empty" />
                         </label>
 
                         <label>
                             <span>Runs for</span>
-                            <select class="inline-edit" value="@editing.DurationMinutes"
-                                    @onchange="e => SetDurationAsync(editing.Id, e.Value?.ToString())">
+                            <select class="inline-edit" @bind="_draft.DurationMinutes">
                                 @foreach (var minutes in DurationChoices)
                                 {
-                                    <option value="@minutes" selected="@(minutes == editing.DurationMinutes)">
-                                        @TimeText.Humanize(minutes)
-                                    </option>
+                                    <option value="@minutes">@TimeText.Humanize(minutes)</option>
                                 }
                             </select>
                         </label>
@@ -224,22 +207,20 @@
                     <div class="editor-row">
                         <label>
                             <span>Category</span>
-                            <select class="inline-edit" value="@editing.Tag"
-                                    @onchange="e => SetTagAsync(editing.Id, e.Value?.ToString())">
+                            <select class="inline-edit" @bind="_draft.Tag">
                                 @foreach (var tag in Enum.GetValues<ItineraryTag>())
                                 {
-                                    <option value="@tag" selected="@(tag == editing.Tag)">@TagLabel(tag)</option>
+                                    <option value="@tag">@TagLabel(tag)</option>
                                 }
                             </select>
                         </label>
 
                         <label>
                             <span>Day</span>
-                            <select class="inline-edit" value="@DayOf(editing.Id)?.Id"
-                                    @onchange="e => MoveToDayAsync(editing.Id, e.Value?.ToString())">
+                            <select class="inline-edit" @bind="_draft.DayId">
                                 @foreach (var day in Trip.Itinerary)
                                 {
-                                    <option value="@day.Id" selected="@(day.Id == DayOf(editing.Id)?.Id)">@day.Day</option>
+                                    <option value="@day.Id">@day.Day</option>
                                 }
                             </select>
                         </label>
@@ -248,23 +229,19 @@
                     <div class="editor-nudge">
                         <span class="muted tiny">Shift the start</span>
                         <div>
-                            <button class="pill-btn" @onclick="() => NudgeStartAsync(editing.Id, -15)">−15 min</button>
-                            <button class="pill-btn" @onclick="() => NudgeStartAsync(editing.Id, 15)">+15 min</button>
-                            <button class="pill-btn" @onclick="() => MoveDayAsync(editing.Id, -1)">« Prev day</button>
-                            <button class="pill-btn" @onclick="() => MoveDayAsync(editing.Id, 1)">Next day »</button>
+                            <button class="pill-btn" @onclick="() => NudgeDraft(-15)">−15 min</button>
+                            <button class="pill-btn" @onclick="() => NudgeDraft(15)">+15 min</button>
                         </div>
+                        <span class="muted tiny">@TimeText.FormatRange(_draft.StartMinutes, _draft.DurationMinutes)</span>
                     </div>
 
                     <footer>
-                        @if (editing.IsScheduled)
-                        {
-                            <button class="btn btn-ghost btn-sm" @onclick="() => UnscheduleAsync(editing.Id)">Move to tray</button>
-                        }
-                        else
-                        {
-                            <button class="btn btn-ghost btn-sm" @onclick="() => ScheduleAsync(editing.Id)">Put on the grid</button>
-                        }
-                        <button class="btn btn-sm btn-danger-ghost" @onclick="() => ConfirmDeleteItem(editing)">Delete</button>
+                        <button class="btn btn-sm btn-danger-ghost" @onclick="ConfirmDeleteDraft">Delete</button>
+                        <div class="spacer"></div>
+                        <button class="btn btn-sm" @onclick="TryCloseAsync">Cancel</button>
+                        <button class="btn btn-sm btn-gold" disabled="@(!IsDirty)" @onclick="() => SaveAsync(false)">
+                            @(IsDirty ? "Save" : "Saved")
+                        </button>
                     </footer>
                 </aside>
             }
@@ -281,7 +258,6 @@
     private const int MinZoom = 40;
     private const int MaxZoom = 112;
     private const double MinCardPixels = 22;
-    private const int DefaultNewItemStart = 12 * 60;
 
     private static readonly int[] DurationChoices =
         [15, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360];
@@ -289,27 +265,27 @@
     private ConfirmDialog? _confirm;
     private int _pxPerHour = 64;
     private string? _activeDayId;
-    private string? _editingId;
 
     /// <summary>Gap band keys the user has opened out, per day.</summary>
     private readonly Dictionary<string, HashSet<string>> _expanded = [];
+
+    // --- the editor's working copy -----------------------------------------
+    // Nothing here touches the trip until Save is pressed. _pristine is the copy the form
+    // opened with, so "is this dirty?" is a comparison rather than a pile of change flags.
+    private Draft? _draft;
+    private Draft? _pristine;
+    private ConflictInfo? _conflict;
 
     private IJSObjectReference? _module;
     private DotNetObjectReference<Itinerary>? _self;
 
     private string SubtitleText => CanEdit
-        ? "Drag a card to change when it happens, or drag its bottom edge to change how long it runs."
+        ? "Drag a card to move it, or drag its bottom edge to change how long it runs. Click a card to edit the details."
         : "The plan for the weekend. The committee keeps this up to date.";
 
     private string? ActiveDayId => _activeDayId ?? Trip.Itinerary.FirstOrDefault()?.Id;
 
-    private ItineraryItem? EditingItem =>
-        _editingId is null ? null : ItineraryService.Locate(Trip, _editingId).Item;
-
-    private List<(ItineraryDay Day, ItineraryItem Item)> Unscheduled =>
-        Trip.Itinerary
-            .SelectMany(d => d.Items.Where(i => !i.IsScheduled).Select(i => (Day: d, Item: i)))
-            .ToList();
+    private bool IsDirty => _draft is not null && _pristine is not null && !_draft.SameAs(_pristine);
 
     // ------------------------------------------------------------- timeline
 
@@ -321,10 +297,6 @@
     private HashSet<string> ExpandedFor(string dayId) =>
         _expanded.TryGetValue(dayId, out var set) ? set : [];
 
-    /// <summary>
-    /// Gaps the user has opened. A band is one of ours if its key is in the expanded set —
-    /// which is exactly the set of gaps that would otherwise have been collapsed.
-    /// </summary>
     private IEnumerable<TimelineBand> ExpandedGapBands(ItineraryDay day, DayTimeline timeline)
     {
         var open = ExpandedFor(day.Id);
@@ -359,19 +331,124 @@
         }
     }
 
-    private void Zoom(int direction)
-    {
-        var next = _pxPerHour + direction * 16;
-        _pxPerHour = Math.Clamp(next, MinZoom, MaxZoom);
-    }
+    private void Zoom(int direction) =>
+        _pxPerHour = Math.Clamp(_pxPerHour + direction * 16, MinZoom, MaxZoom);
 
-    // ------------------------------------------------------------- editing
+    // --------------------------------------------------------- editor form
 
-    private void ToggleEditor(string itemId)
+    private void OpenEditor(ItineraryItem item)
     {
         if (!CanEdit) return;
-        _editingId = _editingId == itemId ? null : itemId;
+
+        var day = ItineraryService.Locate(Trip, item.Id).Day;
+        if (day is null) return;
+
+        _draft = Draft.From(item, day.Id);
+        _pristine = _draft.Copy();
+        _conflict = null;
     }
+
+    private void CloseEditor()
+    {
+        _draft = null;
+        _pristine = null;
+        _conflict = null;
+    }
+
+    private Task TryCloseAsync()
+    {
+        if (!IsDirty)
+        {
+            CloseEditor();
+            return Task.CompletedTask;
+        }
+
+        _confirm?.Show("Close without saving? Your changes to this item will be lost.",
+            () => { CloseEditor(); StateHasChanged(); return Task.CompletedTask; },
+            "Discard changes", "Unsaved changes");
+
+        return Task.CompletedTask;
+    }
+
+    private string DraftClock
+    {
+        get
+        {
+            var m = (_draft?.StartMinutes ?? ItineraryItem.DefaultStartMinutes) % TimeText.Day;
+            return $"{m / 60:00}:{m % 60:00}";
+        }
+        set
+        {
+            if (_draft is null || !TimeOnly.TryParse(value, out var clock)) return;
+
+            // A browser time input has no concept of "1am belongs to last night", so anything
+            // before the 6am anchor is pushed into the small hours of the same planner day.
+            var minutes = clock.Hour * 60 + clock.Minute;
+            if (minutes < TimeText.DayAnchor) minutes += TimeText.Day;
+            _draft.StartMinutes = ItineraryService.ClampStart(minutes);
+        }
+    }
+
+    private void NudgeDraft(int deltaMinutes)
+    {
+        if (_draft is null) return;
+        _draft.StartMinutes = ItineraryService.ClampStart(TimeText.Snap(_draft.StartMinutes + deltaMinutes));
+    }
+
+    private async Task SaveAsync(bool force)
+    {
+        if (_draft is null) return;
+
+        var outcome = SaveOutcome.Saved;
+        await MutateAsync(t => outcome = ItineraryService.ApplyEdit(t, _draft.ToEdit(), force));
+
+        switch (outcome)
+        {
+            case SaveOutcome.Saved:
+                var saved = ItineraryService.Locate(Trip, _draft.ItemId).Item;
+                if (saved is not null) _draft.BaseVersion = saved.Version;
+                _pristine = _draft.Copy();
+                _conflict = null;
+                Toasts.Show("Saved", CharterTrip.Web.Services.ToastKind.Good);
+                break;
+
+            case SaveOutcome.Conflict:
+                var theirs = ItineraryService.Locate(Trip, _draft.ItemId).Item;
+                _conflict = theirs is null ? null : ConflictInfo.Between(_draft, theirs, Trip);
+                break;
+
+            case SaveOutcome.Missing:
+                Toasts.Show("That item was deleted by someone else", CharterTrip.Web.Services.ToastKind.Bad);
+                CloseEditor();
+                break;
+        }
+    }
+
+    /// <summary>Throw away the local edits and reload the form from whatever is current.</summary>
+    private Task UseTheirsAsync()
+    {
+        if (_draft is null) return Task.CompletedTask;
+
+        var (day, item) = ItineraryService.Locate(Trip, _draft.ItemId);
+        if (day is null || item is null)
+        {
+            CloseEditor();
+            return Task.CompletedTask;
+        }
+
+        _draft = Draft.From(item, day.Id);
+        _pristine = _draft.Copy();
+        _conflict = null;
+        return Task.CompletedTask;
+    }
+
+    private void CardKey(KeyboardEventArgs e, ItineraryItem item)
+    {
+        if (!CanEdit) return;
+        if (e.Key is "Enter" or " ") OpenEditor(item);
+    }
+
+    // ------------------------------------------------------- adding, removing
 
     private Task RenameDayAsync(string dayId, string value) => MutateAsync(t =>
     {
@@ -385,112 +462,45 @@
         if (day is not null) day.Date = value;
     });
 
-    private Task SetTitleAsync(string itemId, string value) =>
-        MutateAsync(t => WithItem(t, itemId, i => i.Title = value));
-
-    private Task SetNotesAsync(string itemId, string value) =>
-        MutateAsync(t => WithItem(t, itemId, i => i.Notes = value));
-
-    private Task SetTagAsync(string itemId, string? raw) =>
-        Enum.TryParse<ItineraryTag>(raw, out var tag)
-            ? MutateAsync(t => WithItem(t, itemId, i => i.Tag = tag))
-            : Task.CompletedTask;
-
-    private Task SetDurationAsync(string itemId, string? raw) =>
-        int.TryParse(raw, out var minutes)
-            ? MutateAsync(t => ItineraryService.SetDuration(t, itemId, minutes))
-            : Task.CompletedTask;
-
-    /// <summary>
-    /// The browser's time input has no concept of "1am belongs to last night", so anything
-    /// before the 6am anchor is pushed into the small hours of the same planner day.
-    /// </summary>
-    private Task SetStartFromClockAsync(string itemId, string? raw)
-    {
-        if (!TimeOnly.TryParse(raw, out var clock)) return Task.CompletedTask;
-
-        var minutes = clock.Hour * 60 + clock.Minute;
-        if (minutes < TimeText.DayAnchor) minutes += TimeText.Day;
-
-        return MutateAsync(t => ItineraryService.SetStart(t, itemId, minutes));
-    }
-
-    private static string ClockValue(ItineraryItem item)
-    {
-        var minutes = (item.StartMinutes ?? DefaultNewItemStart) % TimeText.Day;
-        return $"{minutes / 60:00}:{minutes % 60:00}";
-    }
-
-    private static void WithItem(TripData trip, string itemId, Action<ItineraryItem> change)
-    {
-        var (_, item) = ItineraryService.Locate(trip, itemId);
-        if (item is not null) change(item);
-    }
-
-    // ------------------------------------------------------------- moving
-
-    private Task NudgeStartAsync(string itemId, int deltaMinutes) =>
-        MutateAsync(t => ItineraryService.NudgeStart(t, itemId, deltaMinutes));
-
-    private Task MoveDayAsync(string itemId, int direction) =>
-        MutateAsync(t => ItineraryService.MoveToAdjacentDay(t, itemId, direction));
-
-    private Task MoveToDayAsync(string itemId, string? targetDayId) =>
-        string.IsNullOrEmpty(targetDayId)
-            ? Task.CompletedTask
-            : MutateAsync(t => ItineraryService.MoveToDay(t, itemId, targetDayId));
-
-    private Task UnscheduleAsync(string itemId) =>
-        MutateAsync(t => ItineraryService.Unschedule(t, itemId));
-
-    private Task ScheduleAsync(string itemId) =>
-        MutateAsync(t => ItineraryService.SetStart(t, itemId, DefaultNewItemStart));
-
-    private async Task CardKeyAsync(KeyboardEventArgs e, string itemId)
-    {
-        if (!CanEdit) return;
-
-        switch (e.Key)
-        {
-            case "ArrowUp": await NudgeStartAsync(itemId, -15); break;
-            case "ArrowDown": await NudgeStartAsync(itemId, 15); break;
-            case "Enter" or " ": ToggleEditor(itemId); break;
-        }
-    }
-
-    // ------------------------------------------------------- adding, removing
-
     private async Task AddItemAsync(string dayId)
     {
         string? newId = null;
-        await MutateAsync(t => newId = ItineraryService.AddItem(t, dayId, DefaultNewItemStart)?.Id);
-        _editingId = newId;
+        await MutateAsync(t => newId = ItineraryService.AddItem(t, dayId)?.Id);
+
+        var added = newId is null ? null : ItineraryService.Locate(Trip, newId).Item;
+        if (added is not null) OpenEditor(added);
     }
 
     private Task AddDayAsync() => MutateAsync(t => ItineraryService.AddDay(t));
 
-    private void ConfirmDeleteItem(ItineraryItem item) =>
-        _confirm?.Show($"Delete “{Display(item.Title, "this item")}”?", async () =>
+    private void ConfirmDeleteDraft()
+    {
+        if (_draft is null) return;
+
+        var id = _draft.ItemId;
+        var title = Display(_draft.Title, "this item");
+
+        _confirm?.Show($"Delete “{title}”?", async () =>
         {
-            _editingId = null;
-            await MutateAsync(t => ItineraryService.RemoveItem(t, item.Id));
+            CloseEditor();
+            await MutateAsync(t => ItineraryService.RemoveItem(t, id));
         }, "Delete");
+    }
 
     private void ConfirmDeleteDay(ItineraryDay day) =>
-        _confirm?.Show($"Delete {Display(day.Day, "this day")}?", async () =>
-        {
-            await MutateAsync(t => ItineraryService.RemoveDay(t, day.Id));
-        }, "Delete");
+        _confirm?.Show($"Delete {Display(day.Day, "this day")}?",
+            () => MutateAsync(t => ItineraryService.RemoveDay(t, day.Id)), "Delete");
 
     // ------------------------------------------------------- drag and resize
     // The browser reports pixels; the conversion to minutes happens here, because collapsed
     // bands make that mapping non-linear and DayTimeline is the one place that knows about them.
+    //
+    // Dragging stays immediate rather than joining the save model — direct manipulation that
+    // needed a separate confirmation would be its own kind of strange.
 
     [JSInvokable]
     public async Task ItemDropped(string itemId, string dayId, double topPixels, string? ontoItemId)
     {
-        // Landing on top of another card means the two should trade places. Landing on empty
-        // space means "put it here", which is the only case that needs a pixel conversion.
         if (!string.IsNullOrEmpty(ontoItemId) && ontoItemId != itemId)
         {
             await MutateAsync(t => ItineraryService.SwapSlots(t, itemId, ontoItemId));
@@ -508,12 +518,10 @@
     public async Task ItemResized(string itemId, double bottomPixels)
     {
         var (day, item) = ItineraryService.Locate(Trip, itemId);
-        if (day is null || item is null || !item.IsScheduled) return;
+        if (day is null || item is null) return;
 
         var end = TimeText.Snap(TimelineFor(day).ToMinutes(bottomPixels));
-        var duration = end - item.StartMinutes!.Value;
-
-        await MutateAsync(t => ItineraryService.SetDuration(t, itemId, duration));
+        await MutateAsync(t => ItineraryService.SetDuration(t, itemId, end - item.StartMinutes));
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -532,10 +540,6 @@
 
     private static string Display(string? value, string fallback) =>
         string.IsNullOrWhiteSpace(value) ? fallback : value;
-
-    private ItineraryDay? DayOf(string itemId) => ItineraryService.Locate(Trip, itemId).Day;
-
-    private static int ScheduledCount(ItineraryDay day) => day.Items.Count(i => i.IsScheduled);
 
     /// <summary>A 30-minute card has room for a title and nothing else. Render to fit.</summary>
     private static string SizeClass(double height) => height switch
@@ -559,6 +563,72 @@
         ItineraryTag.FreeTime => "#2e9e7e",
         _ => "#888888"
     };
+
+    // ---------------------------------------------------------------- types
+
+    /// <summary>The editor's mutable working copy. Bound to the form; never shared with the store.</summary>
+    private sealed class Draft
+    {
+        public string ItemId { get; set; } = "";
+        public int BaseVersion { get; set; }
+        public string DayId { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Notes { get; set; } = "";
+        public ItineraryTag Tag { get; set; }
+        public int StartMinutes { get; set; }
+        public int DurationMinutes { get; set; }
+
+        public static Draft From(ItineraryItem item, string dayId) => new()
+        {
+            ItemId = item.Id,
+            BaseVersion = item.Version,
+            DayId = dayId,
+            Title = item.Title,
+            Notes = item.Notes,
+            Tag = item.Tag,
+            StartMinutes = item.StartMinutes,
+            DurationMinutes = item.DurationMinutes
+        };
+
+        public Draft Copy() => (Draft)MemberwiseClone();
+
+        public bool SameAs(Draft other) =>
+            DayId == other.DayId && Title == other.Title && Notes == other.Notes &&
+            Tag == other.Tag && StartMinutes == other.StartMinutes && DurationMinutes == other.DurationMinutes;
+
+        public ItemEdit ToEdit() =>
+            new(ItemId, BaseVersion, DayId, Title, Notes, Tag, StartMinutes, DurationMinutes);
+    }
+
+    /// <summary>What the other person changed, in words, so the choice is an informed one.</summary>
+    private sealed record ConflictInfo(IReadOnlyList<string> Differences)
+    {
+        public static ConflictInfo Between(Draft mine, ItineraryItem theirs, TripData trip)
+        {
+            var lines = new List<string>();
+
+            if (mine.Title != theirs.Title)
+                lines.Add($"Title — theirs: “{theirs.Title}”, yours: “{mine.Title}”");
+
+            if (mine.StartMinutes != theirs.StartMinutes || mine.DurationMinutes != theirs.DurationMinutes)
+                lines.Add($"Time — theirs: {TimeText.FormatRange(theirs.StartMinutes, theirs.DurationMinutes)}, " +
+                          $"yours: {TimeText.FormatRange(mine.StartMinutes, mine.DurationMinutes)}");
+
+            if (mine.Notes != theirs.Notes)
+                lines.Add("Notes differ");
+
+            if (mine.Tag != theirs.Tag)
+                lines.Add($"Category — theirs: {theirs.Tag}, yours: {mine.Tag}");
+
+            var theirDay = ItineraryService.Locate(trip, theirs.Id).Day;
+            if (theirDay is not null && theirDay.Id != mine.DayId)
+                lines.Add($"Day — theirs: {theirDay.Day}");
+
+            if (lines.Count == 0) lines.Add("Someone saved it without changing anything you also edited.");
+
+            return new ConflictInfo(lines);
+        }
+    }
 
     public async ValueTask DisposeAsync()
     {

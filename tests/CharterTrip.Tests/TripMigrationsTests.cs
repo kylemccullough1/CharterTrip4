@@ -43,15 +43,17 @@ public class TripMigrationsTests
     }
 
     [Fact]
-    public void An_unparseable_time_becomes_an_unscheduled_item_and_keeps_its_text()
+    public void An_unparseable_time_keeps_its_wording_in_the_notes()
     {
         var trip = LoadV1();
         TripMigrations.Apply(trip);
 
         var sketch = trip.Itinerary[0].Items.Single(i => i.Id == "d");
 
-        Assert.False(sketch.IsScheduled);
-        Assert.Equal("after dinner", sketch.TimeNote);
+        // v3 removed the unscheduled state: it lands at midday and the original wording
+        // survives in the notes rather than being thrown away.
+        Assert.Equal(ItineraryItem.DefaultStartMinutes, sketch.StartMinutes);
+        Assert.Contains("after dinner", sketch.Notes);
         Assert.Equal("Sketch", sketch.Title);             // nothing was lost
     }
 
@@ -81,6 +83,7 @@ public class TripMigrationsTests
 
         var rewritten = JsonSerializer.Serialize(trip, TripJson.Options);
         Assert.DoesNotContain("\"time\"", rewritten);
+        Assert.DoesNotContain("\"timeNote\"", rewritten);
         Assert.Contains("\"startMinutes\"", rewritten);
     }
 
@@ -107,12 +110,13 @@ public class TripMigrationsTests
     }
 
     [Fact]
-    public void Items_end_up_in_chronological_order_with_the_tray_last()
+    public void Items_end_up_in_chronological_order()
     {
         var trip = LoadV1();
         TripMigrations.Apply(trip);
 
-        Assert.Equal(["a", "b", "c", "d"], trip.Itinerary[0].Items.Select(i => i.Id));
+        // d lands at midday, so it sorts before the 4pm check-in.
+        Assert.Equal(["d", "a", "b", "c"], trip.Itinerary[0].Items.Select(i => i.Id));
     }
 
     [Fact]
@@ -137,12 +141,30 @@ public class TripMigrationsTests
                 new ItineraryDay
                 {
                     Id = "fri",
-                    Items = [new ItineraryItem { Id = "a", StartMinutes = 600, DurationMinutes = 45, Title = "Keep me" }]
+                    Items = [new ItineraryItem { Id = "a", StartMinutes = 600, DurationMinutes = 45, Title = "Keep me", Version = 3 }]
                 }
             ]
         };
 
         Assert.False(TripMigrations.Apply(trip));
         Assert.Equal(45, trip.Itinerary[0].Items[0].DurationMinutes);
+    }
+
+    [Fact]
+    public void Every_item_comes_out_of_the_migration_with_a_version()
+    {
+        var trip = LoadV1();
+        TripMigrations.Apply(trip);
+
+        Assert.All(trip.Itinerary.SelectMany(d => d.Items), i => Assert.True(i.Version >= 1));
+    }
+
+    [Fact]
+    public void No_item_is_left_without_a_start_time()
+    {
+        var trip = LoadV1();
+        TripMigrations.Apply(trip);
+
+        Assert.All(trip.Itinerary.SelectMany(d => d.Items), i => Assert.NotNull(i.StartMinutesOrNull));
     }
 }

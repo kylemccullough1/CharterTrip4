@@ -7,9 +7,8 @@ namespace CharterTrip.Core.Services;
 /// without a browser. Each method mutates the TripData it is handed — callers run them inside
 /// ITripStore.MutateAsync, which owns the locking and persistence.
 ///
-/// Since v2 an item's position on the page comes from its start time, not its index in the list,
-/// so "move" means "change the time" rather than "reorder". The list is still kept sorted, purely
-/// so trip.json reads in chronological order.
+/// Two rules hold throughout: an item always has a time (there is no unscheduled state), and
+/// anything that changes an item bumps its Version so concurrent editors can be detected.
 /// </summary>
 public static class ItineraryService
 {
@@ -42,7 +41,7 @@ public static class ItineraryService
         var item = new ItineraryItem
         {
             Id = Ids.New("item"),
-            StartMinutes = startMinutes is null ? null : ClampStart(startMinutes.Value),
+            StartMinutes = ClampStart(startMinutes ?? ItineraryItem.DefaultStartMinutes),
             DurationMinutes = 60,
             Title = "New item",
             Tag = ItineraryTag.Logistics
@@ -59,6 +58,40 @@ public static class ItineraryService
             day.Items.RemoveAll(i => i.Id == itemId);
     }
 
+    // ---------------------------------------------------------------- saving
+
+    /// <summary>
+    /// Commit a whole editor session at once.
+    ///
+    /// Returns <see cref="SaveOutcome.Conflict"/> without writing anything if the item moved on
+    /// since the form was opened — that is the entire point of the version stamp. Pass
+    /// <paramref name="force"/> once the person has looked at the difference and chosen to win.
+    /// </summary>
+    public static SaveOutcome ApplyEdit(TripData trip, ItemEdit edit, bool force = false)
+    {
+        var (day, item) = Locate(trip, edit.ItemId);
+        if (day is null || item is null) return SaveOutcome.Missing;
+        if (!force && item.Version != edit.BaseVersion) return SaveOutcome.Conflict;
+
+        item.Title = edit.Title;
+        item.Notes = edit.Notes;
+        item.Tag = edit.Tag;
+        item.StartMinutes = ClampStart(edit.StartMinutes);
+        item.DurationMinutes = Math.Clamp(edit.DurationMinutes, MinDuration, MaxDuration);
+        Touch(item);
+
+        var target = FindDay(trip, edit.DayId) ?? day;
+        if (target.Id != day.Id)
+        {
+            day.Items.Remove(item);
+            target.Items.Add(item);
+            SortDay(day);
+        }
+
+        SortDay(target);
+        return SaveOutcome.Saved;
+    }
+
     // ------------------------------------------------------------------ time
 
     public static void SetStart(TripData trip, string itemId, int startMinutes)
@@ -67,17 +100,7 @@ public static class ItineraryService
         if (day is null || item is null) return;
 
         item.StartMinutes = ClampStart(startMinutes);
-        item.TimeNote = null;
-        SortDay(day);
-    }
-
-    /// <summary>Shift the start by a delta, snapped to the step. The ↑ ↓ buttons use this.</summary>
-    public static void NudgeStart(TripData trip, string itemId, int deltaMinutes, int step = 15)
-    {
-        var (day, item) = Locate(trip, itemId);
-        if (day is null || item is null || !item.IsScheduled) return;
-
-        item.StartMinutes = ClampStart(TimeText.Snap(item.StartMinutes!.Value + deltaMinutes, step));
+        Touch(item);
         SortDay(day);
     }
 
@@ -87,30 +110,14 @@ public static class ItineraryService
         if (item is null) return;
 
         item.DurationMinutes = Math.Clamp(durationMinutes, MinDuration, MaxDuration);
-    }
-
-    public static void NudgeDuration(TripData trip, string itemId, int deltaMinutes)
-    {
-        var (_, item) = Locate(trip, itemId);
-        if (item is null) return;
-
-        item.DurationMinutes = Math.Clamp(item.DurationMinutes + deltaMinutes, MinDuration, MaxDuration);
-    }
-
-    /// <summary>Take an item off the grid and put it back in the unscheduled tray.</summary>
-    public static void Unschedule(TripData trip, string itemId)
-    {
-        var (_, item) = Locate(trip, itemId);
-        if (item is null) return;
-
-        item.StartMinutes = null;
+        Touch(item);
     }
 
     // ------------------------------------------------------------------ move
 
     /// <summary>
     /// Move an item to another day. Passing a start time also reschedules it; leaving it null
-    /// keeps the same time of day, which is what the « » buttons want.
+    /// keeps the same time of day.
     /// </summary>
     public static void MoveToDay(TripData trip, string itemId, string targetDayId, int? startMinutes = null)
     {
@@ -118,11 +125,8 @@ public static class ItineraryService
         var target = FindDay(trip, targetDayId);
         if (day is null || item is null || target is null) return;
 
-        if (startMinutes is not null)
-        {
-            item.StartMinutes = ClampStart(startMinutes.Value);
-            item.TimeNote = null;
-        }
+        if (startMinutes is not null) item.StartMinutes = ClampStart(startMinutes.Value);
+        Touch(item);
 
         if (day.Id != target.Id)
         {
@@ -140,9 +144,7 @@ public static class ItineraryService
         if (day is null || item is null) return;
 
         var target = trip.Itinerary.ElementAtOrDefault(trip.Itinerary.IndexOf(day) + direction);
-        if (target is null) return;
-
-        MoveToDay(trip, itemId, target.Id);
+        if (target is not null) MoveToDay(trip, itemId, target.Id);
     }
 
     /// <summary>
@@ -162,7 +164,8 @@ public static class ItineraryService
 
         (first.StartMinutes, second.StartMinutes) = (second.StartMinutes, first.StartMinutes);
         (first.DurationMinutes, second.DurationMinutes) = (second.DurationMinutes, first.DurationMinutes);
-        (first.TimeNote, second.TimeNote) = (second.TimeNote, first.TimeNote);
+        Touch(first);
+        Touch(second);
 
         if (firstDay.Id != secondDay.Id)
         {
@@ -178,10 +181,13 @@ public static class ItineraryService
 
     // --------------------------------------------------------------- helpers
 
-    /// <summary>Keeps trip.json in chronological order. Unscheduled items sink to the bottom.</summary>
+    /// <summary>Record that this item changed, so open editors know their copy is stale.</summary>
+    public static void Touch(ItineraryItem item) => item.Version++;
+
+    /// <summary>Keeps trip.json in chronological order.</summary>
     public static void SortDay(ItineraryDay day) =>
         day.Items = day.Items
-            .OrderBy(i => i.StartMinutes ?? int.MaxValue)
+            .OrderBy(i => i.StartMinutes)
             .ThenBy(i => i.Title, StringComparer.OrdinalIgnoreCase)
             .ToList();
 

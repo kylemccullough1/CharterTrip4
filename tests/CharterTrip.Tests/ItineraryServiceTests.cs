@@ -35,77 +35,139 @@ public class ItineraryServiceTests
     private static List<string> Ids(TripData t, string dayId) =>
         ItineraryService.FindDay(t, dayId)!.Items.Select(i => i.Id).ToList();
 
-    // ----------------------------------------------------------------- time
+    private static ItineraryItem Item(TripData t, string id) => ItineraryService.Locate(t, id).Item!;
+
+    private static ItemEdit EditFor(TripData t, string id, string dayId,
+        string? title = null, int? start = null, int? duration = null, ItineraryTag? tag = null, string? notes = null)
+    {
+        var item = Item(t, id);
+        return new ItemEdit(id, item.Version, dayId,
+            title ?? item.Title, notes ?? item.Notes, tag ?? item.Tag,
+            start ?? item.StartMinutes, duration ?? item.DurationMinutes);
+    }
+
+    // ---------------------------------------------------------------- saving
 
     [Fact]
-    public void SetStart_moves_the_item_and_resorts_the_day()
+    public void ApplyEdit_commits_the_whole_form_at_once()
     {
         var t = Trip();
-        ItineraryService.SetStart(t, "a", 9 * 60);   // dinner at 9am, before check-in
+        var edit = EditFor(t, "b", "fri", title: "Arrive", start: 17 * 60, duration: 45, tag: ItineraryTag.Food);
 
-        Assert.Equal(9 * 60, ItineraryService.Locate(t, "a").Item!.StartMinutes);
+        Assert.Equal(SaveOutcome.Saved, ItineraryService.ApplyEdit(t, edit));
+
+        var item = Item(t, "b");
+        Assert.Equal("Arrive", item.Title);
+        Assert.Equal(17 * 60, item.StartMinutes);
+        Assert.Equal(45, item.DurationMinutes);
+        Assert.Equal(ItineraryTag.Food, item.Tag);
+    }
+
+    [Fact]
+    public void ApplyEdit_can_move_the_item_to_another_day()
+    {
+        var t = Trip();
+        Assert.Equal(SaveOutcome.Saved, ItineraryService.ApplyEdit(t, EditFor(t, "a", "sat")));
+
+        Assert.Equal("sat", ItineraryService.Locate(t, "a").Day!.Id);
+        Assert.Equal(["d", "a"], Ids(t, "sat"));
+    }
+
+    [Fact]
+    public void ApplyEdit_bumps_the_version()
+    {
+        var t = Trip();
+        var before = Item(t, "b").Version;
+
+        ItineraryService.ApplyEdit(t, EditFor(t, "b", "fri", title: "Changed"));
+
+        Assert.Equal(before + 1, Item(t, "b").Version);
+    }
+
+    [Fact]
+    public void ApplyEdit_refuses_a_stale_edit_and_changes_nothing()
+    {
+        var t = Trip();
+        var stale = EditFor(t, "b", "fri", title: "Mine");
+
+        // Someone else saves first, moving the version on.
+        ItineraryService.ApplyEdit(t, EditFor(t, "b", "fri", title: "Theirs"));
+
+        Assert.Equal(SaveOutcome.Conflict, ItineraryService.ApplyEdit(t, stale));
+        Assert.Equal("Theirs", Item(t, "b").Title);
+    }
+
+    [Fact]
+    public void A_forced_edit_wins_over_a_newer_version()
+    {
+        var t = Trip();
+        var stale = EditFor(t, "b", "fri", title: "Mine");
+        ItineraryService.ApplyEdit(t, EditFor(t, "b", "fri", title: "Theirs"));
+
+        Assert.Equal(SaveOutcome.Saved, ItineraryService.ApplyEdit(t, stale, force: true));
+        Assert.Equal("Mine", Item(t, "b").Title);
+    }
+
+    [Fact]
+    public void Editing_a_deleted_item_reports_it_rather_than_resurrecting_it()
+    {
+        var t = Trip();
+        var edit = EditFor(t, "b", "fri", title: "Mine");
+        ItineraryService.RemoveItem(t, "b");
+
+        Assert.Equal(SaveOutcome.Missing, ItineraryService.ApplyEdit(t, edit));
+        Assert.Equal(["a", "c"], Ids(t, "fri"));
+    }
+
+    [Fact]
+    public void Two_people_editing_different_items_do_not_conflict()
+    {
+        var t = Trip();
+        var mine = EditFor(t, "a", "fri", title: "Mine");
+        var theirs = EditFor(t, "b", "fri", title: "Theirs");
+
+        Assert.Equal(SaveOutcome.Saved, ItineraryService.ApplyEdit(t, theirs));
+        Assert.Equal(SaveOutcome.Saved, ItineraryService.ApplyEdit(t, mine));
+        Assert.Equal("Mine", Item(t, "a").Title);
+        Assert.Equal("Theirs", Item(t, "b").Title);
+    }
+
+    [Fact]
+    public void ApplyEdit_clamps_out_of_range_values()
+    {
+        var t = Trip();
+        ItineraryService.ApplyEdit(t, EditFor(t, "b", "fri", start: -500, duration: 10_000));
+
+        var item = Item(t, "b");
+        Assert.Equal(ItineraryService.EarliestStart, item.StartMinutes);
+        Assert.Equal(ItineraryService.MaxDuration, item.DurationMinutes);
+    }
+
+    // ------------------------------------------------------ direct manipulation
+
+    [Fact]
+    public void SetStart_moves_the_item_resorts_the_day_and_bumps_the_version()
+    {
+        var t = Trip();
+        var before = Item(t, "a").Version;
+
+        ItineraryService.SetStart(t, "a", 9 * 60);
+
+        Assert.Equal(9 * 60, Item(t, "a").StartMinutes);
         Assert.Equal(["a", "b", "c"], Ids(t, "fri"));
+        Assert.Equal(before + 1, Item(t, "a").Version);
     }
 
     [Fact]
-    public void NudgeStart_shifts_by_the_delta_and_snaps()
+    public void SetDuration_is_clamped_and_bumps_the_version()
     {
         var t = Trip();
-        ItineraryService.NudgeStart(t, "b", 15);
-        Assert.Equal(FourPm + 15, ItineraryService.Locate(t, "b").Item!.StartMinutes);
-
-        // An off-grid start gets pulled back onto the 15-minute grid.
-        ItineraryService.SetStart(t, "b", FourPm + 7);
-        ItineraryService.NudgeStart(t, "b", 15);
-        Assert.Equal(FourPm + 15, ItineraryService.Locate(t, "b").Item!.StartMinutes);
-    }
-
-    [Fact]
-    public void NudgeStart_ignores_unscheduled_items()
-    {
-        var t = Trip();
-        ItineraryService.Unschedule(t, "a");
-        ItineraryService.NudgeStart(t, "a", 30);
-
-        Assert.Null(ItineraryService.Locate(t, "a").Item!.StartMinutes);
-    }
-
-    [Fact]
-    public void Start_is_clamped_to_the_planner_window()
-    {
-        var t = Trip();
-
-        ItineraryService.SetStart(t, "b", -500);
-        Assert.Equal(ItineraryService.EarliestStart, ItineraryService.Locate(t, "b").Item!.StartMinutes);
-
-        ItineraryService.SetStart(t, "b", 99_999);
-        Assert.Equal(ItineraryService.LatestStart, ItineraryService.Locate(t, "b").Item!.StartMinutes);
-    }
-
-    [Fact]
-    public void Duration_is_clamped_to_sane_bounds()
-    {
-        var t = Trip();
+        var before = Item(t, "a").Version;
 
         ItineraryService.SetDuration(t, "a", 1);
-        Assert.Equal(ItineraryService.MinDuration, ItineraryService.Locate(t, "a").Item!.DurationMinutes);
-
-        ItineraryService.SetDuration(t, "a", 10_000);
-        Assert.Equal(ItineraryService.MaxDuration, ItineraryService.Locate(t, "a").Item!.DurationMinutes);
+        Assert.Equal(ItineraryService.MinDuration, Item(t, "a").DurationMinutes);
+        Assert.Equal(before + 1, Item(t, "a").Version);
     }
-
-    [Fact]
-    public void NudgeDuration_grows_and_shrinks_the_block()
-    {
-        var t = Trip();
-        ItineraryService.NudgeDuration(t, "a", 30);
-        Assert.Equal(120, ItineraryService.Locate(t, "a").Item!.DurationMinutes);
-
-        ItineraryService.NudgeDuration(t, "a", -90);
-        Assert.Equal(30, ItineraryService.Locate(t, "a").Item!.DurationMinutes);
-    }
-
-    // ----------------------------------------------------------------- move
 
     [Fact]
     public void MoveToDay_keeps_the_time_when_none_is_given()
@@ -113,57 +175,73 @@ public class ItineraryServiceTests
         var t = Trip();
         ItineraryService.MoveToDay(t, "a", "sat");
 
-        var (day, item) = ItineraryService.Locate(t, "a");
-        Assert.Equal("sat", day!.Id);
-        Assert.Equal(EightPm, item!.StartMinutes);
-    }
-
-    [Fact]
-    public void MoveToDay_reschedules_when_a_time_is_given()
-    {
-        var t = Trip();
-        ItineraryService.MoveToDay(t, "a", "sat", 11 * 60);
-
-        var (day, item) = ItineraryService.Locate(t, "a");
-        Assert.Equal("sat", day!.Id);
-        Assert.Equal(11 * 60, item!.StartMinutes);
-        Assert.Equal(["d", "a"], Ids(t, "sat"));   // sorted into place
+        Assert.Equal("sat", ItineraryService.Locate(t, "a").Day!.Id);
+        Assert.Equal(EightPm, Item(t, "a").StartMinutes);
     }
 
     [Fact]
     public void MoveToAdjacentDay_stops_at_the_ends()
     {
         var t = Trip();
-        ItineraryService.MoveToAdjacentDay(t, "d", +1);    // Saturday is last
+        ItineraryService.MoveToAdjacentDay(t, "d", +1);
         Assert.Equal("sat", ItineraryService.Locate(t, "d").Day!.Id);
 
-        ItineraryService.MoveToAdjacentDay(t, "b", -1);    // Friday is first
+        ItineraryService.MoveToAdjacentDay(t, "b", -1);
         Assert.Equal("fri", ItineraryService.Locate(t, "b").Day!.Id);
     }
 
-    // ---------------------------------------------------------- scheduling
+    // ----------------------------------------------------------------- swap
 
     [Fact]
-    public void Unschedule_sends_an_item_to_the_tray_and_keeps_its_details()
+    public void SwapSlots_exchanges_start_and_duration()
     {
         var t = Trip();
-        ItineraryService.Unschedule(t, "a");
+        ItineraryService.SwapSlots(t, "a", "b");
 
-        var item = ItineraryService.Locate(t, "a").Item!;
-        Assert.Null(item.StartMinutes);
-        Assert.False(item.IsScheduled);
-        Assert.Equal("Dinner", item.Title);
+        Assert.Equal(FourPm, Item(t, "a").StartMinutes);
+        Assert.Equal(60, Item(t, "a").DurationMinutes);
+        Assert.Equal(EightPm, Item(t, "b").StartMinutes);
+        Assert.Equal(90, Item(t, "b").DurationMinutes);
     }
 
     [Fact]
-    public void SortDay_sinks_unscheduled_items_to_the_bottom()
+    public void SwapSlots_leaves_no_overlap_between_the_two()
     {
         var t = Trip();
-        ItineraryService.Unschedule(t, "b");
-        ItineraryService.SortDayByTime(t, "fri");
+        ItineraryService.SwapSlots(t, "a", "b");
 
-        Assert.Equal(["a", "c", "b"], Ids(t, "fri"));
+        var first = Item(t, "a");
+        var second = Item(t, "b");
+        Assert.True(first.EndMinutes <= second.StartMinutes || second.EndMinutes <= first.StartMinutes);
     }
+
+    [Fact]
+    public void SwapSlots_works_across_days_and_bumps_both_versions()
+    {
+        var t = Trip();
+        var (v1, v2) = (Item(t, "a").Version, Item(t, "d").Version);
+
+        ItineraryService.SwapSlots(t, "a", "d");
+
+        Assert.Equal("sat", ItineraryService.Locate(t, "a").Day!.Id);
+        Assert.Equal(TenAm, Item(t, "a").StartMinutes);
+        Assert.Equal("fri", ItineraryService.Locate(t, "d").Day!.Id);
+        Assert.Equal(EightPm, Item(t, "d").StartMinutes);
+        Assert.Equal(v1 + 1, Item(t, "a").Version);
+        Assert.Equal(v2 + 1, Item(t, "d").Version);
+    }
+
+    [Fact]
+    public void SwapSlots_with_itself_is_a_no_op()
+    {
+        var t = Trip();
+        ItineraryService.SwapSlots(t, "a", "a");
+
+        Assert.Equal(EightPm, Item(t, "a").StartMinutes);
+        Assert.Equal(90, Item(t, "a").DurationMinutes);
+    }
+
+    // ------------------------------------------------------- adding, removing
 
     [Fact]
     public void Midnight_sorts_to_the_end_of_the_night_not_the_start()
@@ -175,24 +253,24 @@ public class ItineraryServiceTests
     }
 
     [Fact]
-    public void AddItem_can_land_at_a_specific_time()
-    {
-        var t = Trip();
-        var added = ItineraryService.AddItem(t, "fri", 18 * 60);
-
-        Assert.NotNull(added);
-        Assert.Equal(18 * 60, added!.StartMinutes);
-        Assert.Equal(["b", added.Id, "a", "c"], Ids(t, "fri"));
-    }
-
-    [Fact]
-    public void AddItem_without_a_time_goes_to_the_tray()
+    public void AddItem_lands_at_midday_by_default_and_is_always_scheduled()
     {
         var t = Trip();
         var added = ItineraryService.AddItem(t, "fri");
 
         Assert.NotNull(added);
-        Assert.Null(added!.StartMinutes);
+        Assert.Equal(ItineraryItem.DefaultStartMinutes, added!.StartMinutes);
+        Assert.Equal(1, added.Version);
+    }
+
+    [Fact]
+    public void AddItem_can_land_at_a_specific_time()
+    {
+        var t = Trip();
+        var added = ItineraryService.AddItem(t, "fri", 18 * 60);
+
+        Assert.Equal(18 * 60, added!.StartMinutes);
+        Assert.Equal(["b", added.Id, "a", "c"], Ids(t, "fri"));
     }
 
     [Fact]
@@ -204,72 +282,5 @@ public class ItineraryServiceTests
 
         ItineraryService.RemoveDay(t, "fri");
         Assert.Single(t.Itinerary);
-    }
-
-    // ----------------------------------------------------------------- swap
-
-    [Fact]
-    public void SwapSlots_exchanges_start_and_duration()
-    {
-        var t = Trip();
-        ItineraryService.SwapSlots(t, "a", "b");   // Dinner 8pm/90m <-> Check-in 4pm/60m
-
-        var dinner = ItineraryService.Locate(t, "a").Item!;
-        var checkIn = ItineraryService.Locate(t, "b").Item!;
-
-        Assert.Equal(FourPm, dinner.StartMinutes);
-        Assert.Equal(60, dinner.DurationMinutes);
-        Assert.Equal(EightPm, checkIn.StartMinutes);
-        Assert.Equal(90, checkIn.DurationMinutes);
-    }
-
-    [Fact]
-    public void SwapSlots_leaves_no_overlap_between_the_two()
-    {
-        var t = Trip();
-        ItineraryService.SwapSlots(t, "a", "b");
-
-        var dinner = ItineraryService.Locate(t, "a").Item!;
-        var checkIn = ItineraryService.Locate(t, "b").Item!;
-
-        var apart = dinner.EndMinutes <= checkIn.StartMinutes || checkIn.EndMinutes <= dinner.StartMinutes;
-        Assert.True(apart, "swapping whole slots should never leave the pair overlapping");
-    }
-
-    [Fact]
-    public void SwapSlots_works_across_days()
-    {
-        var t = Trip();
-        ItineraryService.SwapSlots(t, "a", "d");   // Friday dinner <-> Saturday breakfast
-
-        var (dinnerDay, dinner) = ItineraryService.Locate(t, "a");
-        var (breakfastDay, breakfast) = ItineraryService.Locate(t, "d");
-
-        Assert.Equal("sat", dinnerDay!.Id);
-        Assert.Equal(TenAm, dinner!.StartMinutes);
-        Assert.Equal("fri", breakfastDay!.Id);
-        Assert.Equal(EightPm, breakfast!.StartMinutes);
-    }
-
-    [Fact]
-    public void SwapSlots_with_itself_is_a_no_op()
-    {
-        var t = Trip();
-        ItineraryService.SwapSlots(t, "a", "a");
-
-        var dinner = ItineraryService.Locate(t, "a").Item!;
-        Assert.Equal(EightPm, dinner.StartMinutes);
-        Assert.Equal(90, dinner.DurationMinutes);
-    }
-
-    [Fact]
-    public void SwapSlots_can_pull_an_item_out_of_the_tray()
-    {
-        var t = Trip();
-        ItineraryService.Unschedule(t, "b");
-        ItineraryService.SwapSlots(t, "a", "b");
-
-        Assert.False(ItineraryService.Locate(t, "a").Item!.IsScheduled);
-        Assert.Equal(EightPm, ItineraryService.Locate(t, "b").Item!.StartMinutes);
     }
 }

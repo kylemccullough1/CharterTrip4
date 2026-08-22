@@ -71,8 +71,7 @@ public sealed class DayTimeline
         expandedGaps ??= new HashSet<string>();
 
         var scheduled = day.Items
-            .Where(i => i.IsScheduled)
-            .OrderBy(i => i.StartMinutes!.Value)
+            .OrderBy(i => i.StartMinutes)
             .ToList();
 
         var (windowStart, windowEnd) = Window(day, scheduled, settings);
@@ -92,7 +91,7 @@ public sealed class DayTimeline
         }
         else
         {
-            start = day.WindowStartMinutes ?? FloorToHour(scheduled.Min(i => i.StartMinutes!.Value));
+            start = day.WindowStartMinutes ?? FloorToHour(scheduled.Min(i => i.StartMinutes));
             end = day.WindowEndMinutes ?? CeilingToHour(scheduled.Max(i => i.EndMinutes));
         }
 
@@ -159,7 +158,7 @@ public sealed class DayTimeline
 
         foreach (var item in scheduled)
         {
-            var start = Math.Max(windowStart, item.StartMinutes!.Value);
+            var start = Math.Max(windowStart, item.StartMinutes);
             var end = Math.Min(windowEnd, item.EndMinutes);
             if (end <= start) continue;
 

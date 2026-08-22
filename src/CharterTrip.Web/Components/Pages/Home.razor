@@ -167,13 +167,10 @@
 
 @code {
     /// <summary>
-    /// The glance list wants one short label per row. Scheduled items show their start time;
-    /// anything still in the planner's tray shows whatever note it carried ("after dinner").
+    /// The glance list wants one short label per row: just the start time.
     /// </summary>
     private static string GlanceTime(ItineraryItem item) =>
-        item.StartMinutes is { } start
-            ? CharterTrip.Core.Services.TimeText.Format(start)
-            : string.IsNullOrWhiteSpace(item.TimeNote) ? "TBD" : item.TimeNote!;
+        CharterTrip.Core.Services.TimeText.Format(item.StartMinutes);
 
     protected override TripArea Watching => TripArea.All;
 

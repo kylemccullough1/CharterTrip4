@@ -12,7 +12,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -20,6 +20,7 @@ public static class TripMigrations
         var changed = false;
 
         if (trip.SchemaVersion < 2) changed |= ToV2_StructuredItineraryTimes(trip);
+        if (trip.SchemaVersion < 3) changed |= ToV3_AlwaysScheduledAndVersioned(trip);
 
         if (trip.SchemaVersion != CurrentVersion)
         {
@@ -46,7 +47,7 @@ public static class TripMigrations
         {
             foreach (var item in day.Items)
             {
-                if (item.StartMinutes is not null || string.IsNullOrWhiteSpace(item.LegacyTime))
+                if (item.StartMinutesOrNull is not null || string.IsNullOrWhiteSpace(item.LegacyTime))
                 {
                     if (ClearLegacy(item)) changed = true;
                     continue;
@@ -54,7 +55,7 @@ public static class TripMigrations
 
                 var minutes = TimeText.ToMinutes(item.LegacyTime);
                 if (minutes == TimeText.Unparseable)
-                    item.TimeNote = item.LegacyTime!.Trim();
+                    item.LegacyTimeNote = item.LegacyTime!.Trim();
                 else
                     item.StartMinutes = ItineraryService.ClampStart(minutes);
 
@@ -64,6 +65,50 @@ public static class TripMigrations
 
             if (InferDurations(day)) changed = true;
             ItineraryService.SortDay(day);
+        }
+
+        return changed;
+    }
+
+    /// <summary>
+    /// v2 allowed an item to have no time at all, which existed only to hold times the v1
+    /// parser could not read. That turned into a whole "unscheduled tray" concept in the UI for
+    /// the sake of a case that never actually occurs in the data, so v3 removes it: every item
+    /// has a time. Anything that lacked one lands at midday with its original wording preserved
+    /// in the notes rather than dropped.
+    ///
+    /// v3 also introduces per-item Version stamps, used to detect two people editing at once.
+    /// </summary>
+    private static bool ToV3_AlwaysScheduledAndVersioned(TripData trip)
+    {
+        var changed = false;
+
+        foreach (var item in trip.Itinerary.SelectMany(d => d.Items))
+        {
+            if (item.StartMinutesOrNull is null)
+            {
+                item.StartMinutes = ItineraryItem.DefaultStartMinutes;
+                changed = true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.LegacyTimeNote))
+            {
+                var note = item.LegacyTimeNote!.Trim();
+                item.Notes = string.IsNullOrWhiteSpace(item.Notes) ? note : $"{note} — {item.Notes}";
+                changed = true;
+            }
+
+            if (item.LegacyTimeNote is not null)
+            {
+                item.LegacyTimeNote = null;
+                changed = true;
+            }
+
+            if (item.Version < 1)
+            {
+                item.Version = 1;
+                changed = true;
+            }
         }
 
         return changed;
@@ -86,8 +131,8 @@ public static class TripMigrations
         const int min = 30, max = 180, fallback = 60;
 
         var scheduled = day.Items
-            .Where(i => i.IsScheduled)
-            .OrderBy(i => i.StartMinutes!.Value)
+            .Where(i => i.StartMinutesOrNull is not null)
+            .OrderBy(i => i.StartMinutes)
             .ToList();
 
         var changed = false;
@@ -100,7 +145,7 @@ public static class TripMigrations
             var next = i + 1 < scheduled.Count ? scheduled[i + 1] : null;
             var inferred = next is null
                 ? fallback
-                : Math.Clamp(next.StartMinutes!.Value - item.StartMinutes!.Value, min, max);
+                : Math.Clamp(next.StartMinutes - item.StartMinutes, min, max);
 
             if (item.DurationMinutes == inferred) continue;
 

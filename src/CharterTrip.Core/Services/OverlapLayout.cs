@@ -18,8 +18,7 @@ public static class OverlapLayout
     public static IReadOnlyList<PositionedItem> Arrange(IEnumerable<ItineraryItem> items)
     {
         var scheduled = items
-            .Where(i => i.IsScheduled)
-            .OrderBy(i => i.StartMinutes!.Value)
+            .OrderBy(i => i.StartMinutes)
             .ThenByDescending(i => i.DurationMinutes)
             .ToList();
 
@@ -31,7 +30,7 @@ public static class OverlapLayout
         foreach (var item in scheduled)
         {
             // A gap with nothing spanning it ends the cluster.
-            if (item.StartMinutes!.Value >= clusterEnd && cluster.Count > 0)
+            if (item.StartMinutes >= clusterEnd && cluster.Count > 0)
             {
                 Flush(cluster, columnEnds.Count, result);
                 cluster.Clear();
@@ -39,7 +38,7 @@ public static class OverlapLayout
                 clusterEnd = int.MinValue;
             }
 
-            var column = columnEnds.FindIndex(end => end <= item.StartMinutes!.Value);
+            var column = columnEnds.FindIndex(end => end <= item.StartMinutes);
             if (column < 0)
             {
                 column = columnEnds.Count;

@@ -33,6 +33,9 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
     private CancellationTokenSource? _debounce;
     private bool _disposed;
 
+    /// <summary>Timestamp of the last write we made, so we can spot writes we did not make.</summary>
+    private DateTime? _lastWriteWeMade;
+
     public JsonTripStore(IOptions<TripStoreOptions> options, ILogger<JsonTripStore> logger, IClock clock)
     {
         _options = options.Value;
@@ -101,6 +104,10 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
                         AtomicFileWriter.Write(path, JsonSerializer.Serialize(loaded, TripJson.Options));
                     }
 
+                    RememberOurWrite();
+                    {
+                    }
+
                     _logger.LogInformation("Loaded trip data from {Path} (revision {Revision}).", path, loaded.Revision);
                     return loaded;
                 }
@@ -122,6 +129,7 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
         try
         {
             AtomicFileWriter.Write(path, JsonSerializer.Serialize(seeded, TripJson.Options));
+            RememberOurWrite();
             _logger.LogInformation("No trip data found — wrote a fresh seed to {Path}.", path);
         }
         catch (Exception ex)
@@ -219,13 +227,59 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
                 _stateGate.Release();
             }
 
+            GuardAgainstForeignWrite();
+
             AtomicFileWriter.Write(_options.TripFilePath, json);
+            RememberOurWrite();
             _logger.LogDebug("Saved trip data (revision {Revision}).", _current.Revision);
         }
         finally
         {
             _fileGate.Release();
         }
+    }
+
+    /// <summary>
+    /// Notice when something outside this process has written trip.json — a hand edit, a
+    /// restored backup, or a second instance that should not exist.
+    ///
+    /// We hold the whole document in memory, so our next save would flatten whatever they did
+    /// without a trace. This cannot merge the two, but it refuses to destroy the evidence:
+    /// the foreign file is copied into backups/ first, and the incident is logged loudly.
+    /// </summary>
+    private void GuardAgainstForeignWrite()
+    {
+        var path = _options.TripFilePath;
+        if (_lastWriteWeMade is null || !File.Exists(path)) return;
+
+        DateTime onDisk;
+        try { onDisk = File.GetLastWriteTimeUtc(path); }
+        catch { return; }
+
+        if (onDisk == _lastWriteWeMade) return;
+
+        _logger.LogWarning(
+            "trip.json changed on disk at {OnDisk:o} but our last write was {Ours:o}. " +
+            "Something outside this process wrote the file. Archiving it before overwriting. " +
+            "If this app is running on more than one instance, stop that now — two writers will lose data.",
+            onDisk, _lastWriteWeMade);
+
+        try
+        {
+            Directory.CreateDirectory(_options.BackupDirectory);
+            var name = $"trip-external-{_clock.UtcNow:yyyyMMdd-HHmmss}.json";
+            File.Copy(path, Path.Combine(_options.BackupDirectory, name), overwrite: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Could not archive the externally modified file.");
+        }
+    }
+
+    private void RememberOurWrite()
+    {
+        try { _lastWriteWeMade = File.GetLastWriteTimeUtc(_options.TripFilePath); }
+        catch { _lastWriteWeMade = null; }
     }
 
     // ------------------------------------------------------------ notification

@@ -521,22 +521,6 @@ select.textfield { cursor: pointer; }
 }
 .planner-tab.is-active { border-color: var(--gold-dim); color: var(--gold-light); background: var(--panel-2); }
 
-/* unscheduled tray */
-.planner-tray {
-  border: 1px dashed var(--line); border-radius: var(--radius);
-  background: var(--ink-2); padding: 12px; margin-bottom: 16px;
-}
-.tray-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 9px; }
-.tray-items { display: flex; flex-wrap: wrap; gap: 8px; }
-.tray-card {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--panel); border: 1px solid var(--line-soft);
-  border-radius: var(--radius-sm); padding: 7px 10px; font-size: 13px;
-}
-.tray-title { font-weight: 600; }
-.tray-note { color: var(--text-faint); font-style: italic; font-size: 12px; }
-.tray-day { color: var(--text-faint); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
-
 /* board */
 .planner { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; }
 .planner-day { background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius); overflow: hidden; }
@@ -626,7 +610,24 @@ select.textfield { cursor: pointer; }
 .editor-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .editor-nudge { display: flex; flex-direction: column; gap: 6px; }
 .editor-nudge > div { display: flex; gap: 5px; flex-wrap: wrap; }
-.planner-editor footer { display: flex; gap: 8px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.planner-editor footer {
+  display: flex; align-items: center; gap: 8px; margin-top: auto;
+  padding-top: 12px; border-top: 1px solid var(--line-soft);
+}
+.planner-editor footer .spacer { flex: 1; }
+.planner-editor .btn:disabled { opacity: .45; cursor: default; }
+.planner-editor .btn:disabled:hover { background: var(--panel-2); border-color: var(--line); }
+
+/* Shown when someone else saved the same item while this form was open. */
+.conflict {
+  border: 1px solid var(--ruby); border-radius: var(--radius-sm);
+  background: rgba(201,79,90,.10); padding: 11px 12px;
+  display: flex; flex-direction: column; gap: 7px;
+}
+.conflict strong { color: #f0a3aa; }
+.conflict p { margin: 0; color: var(--text-dim); }
+.conflict ul { margin: 0; padding-left: 16px; color: var(--text-dim); display: flex; flex-direction: column; gap: 3px; }
+.conflict-actions { display: flex; gap: 7px; margin-top: 2px; }
 
 
 /* =============================================================== TEAMS == */

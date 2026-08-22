@@ -257,7 +257,9 @@
 
     private const int MinZoom = 40;
     private const int MaxZoom = 112;
-    private const double MinCardPixels = 22;
+    // Two stacked lines need about this much room. Anything shorter than roughly half an hour
+    // renders at this floor rather than becoming an unreadable sliver.
+    private const double MinCardPixels = 32;
 
     private static readonly int[] DurationChoices =
         [15, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360];
@@ -543,9 +545,9 @@
     /// <summary>A 30-minute card has room for a title and nothing else. Render to fit.</summary>
     private static string SizeClass(double height) => height switch
     {
-        >= 74 => "is-full",
-        >= 42 => "is-medium",
-        _ => "is-compact"
+        >= 80 => "is-full",     // time, activity, and the note
+        >= 46 => "is-medium",   // time and activity, comfortably
+        _ => "is-compact"       // time and activity, tight
     };
 
     private static string TagLabel(ItineraryTag tag) => tag switch

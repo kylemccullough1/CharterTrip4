@@ -548,7 +548,11 @@ select.textfield { cursor: pointer; }
   position: absolute; box-sizing: border-box; pointer-events: auto;
   background: var(--panel-2); border: 1px solid var(--line);
   border-left: 3px solid var(--tag, var(--gold-dim));
-  border-radius: var(--radius-sm); padding: 4px 8px; overflow: hidden;
+  border-radius: var(--radius-sm); padding: 4px 9px; overflow: hidden;
+  /* Always stacked: time on top, activity underneath. The size tiers below change what is
+     shown and how tightly, never the direction — mixing row and column layouts by height
+     was what made the board look inconsistent. */
+  display: flex; flex-direction: column; gap: 1px;
   cursor: pointer; touch-action: none; transition: border-color .15s, box-shadow .15s;
 }
 .planner-card:hover, .planner-card:focus-visible { border-color: var(--gold-dim); box-shadow: var(--shadow-sm); outline: none; }
@@ -558,15 +562,35 @@ select.textfield { cursor: pointer; }
    attribute is never overwritten — see the note in planner.js. */
 .planner-card.is-resizing { z-index: 30; height: var(--drag-h) !important; }
 
-.card-time { font-family: var(--display); font-size: 10.5px; font-weight: 700; color: var(--gold); letter-spacing: .03em; white-space: nowrap; }
-.card-title { font-size: 13px; font-weight: 600; line-height: 1.25; }
-.card-notes { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+.card-time {
+  flex: 0 0 auto;
+  font-family: var(--display); font-size: 10.5px; font-weight: 700; line-height: 1.25;
+  color: var(--gold); letter-spacing: .03em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.card-title {
+  flex: 0 0 auto;
+  font-size: 13px; font-weight: 600; line-height: 1.25; overflow: hidden;
+}
+.card-notes {
+  flex: 1 1 auto; min-height: 0;
+  font-size: 11.5px; color: var(--text-dim); line-height: 1.3; overflow: hidden;
+}
 
-/* shrink the content to whatever the duration allows */
+/* Roomy enough for a note. */
+.planner-card.is-full .card-notes { margin-top: 1px; }
+
+/* Two comfortable lines, no note. */
+.planner-card.is-medium { padding: 3px 9px; }
 .planner-card.is-medium .card-notes { display: none; }
-.planner-card.is-compact { padding: 2px 8px; display: flex; align-items: center; gap: 6px; }
-.planner-card.is-compact .card-time { font-size: 9.5px; }
-.planner-card.is-compact .card-title { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Two tight lines. Still stacked; the title just gets one line and an ellipsis. */
+.planner-card.is-compact { padding: 2px 8px; gap: 0; }
+.planner-card.is-compact .card-time { font-size: 9.5px; line-height: 1.15; }
+.planner-card.is-compact .card-title {
+  font-size: 11.5px; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .planner-card.is-compact .card-notes { display: none; }
 
 .card-resize {

@@ -35,6 +35,10 @@ function onPointerDown(event) {
     const person = event.target.closest?.('.person');
     if (!person) return;
 
+    // Team leads are fixed to their team; C# refuses the move anyway, but there is no point
+    // letting a card be dragged around only to snap back.
+    if (person.dataset.locked === 'true') return;
+
     // Never start a drag from a control or from the inline name editor — dragging and
     // selecting text inside an input are different intentions.
     if (event.target.closest?.('input, textarea, select, option, button, a')) return;

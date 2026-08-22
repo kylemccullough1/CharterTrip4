@@ -658,7 +658,8 @@ select.textfield { cursor: pointer; }
 }
 .person:hover { border-color: var(--line); }
 .person.is-dragging { opacity: .9; box-shadow: var(--shadow); border-color: var(--gold-dim); z-index: 40; position: relative; cursor: grabbing; }
-.person.is-lead { background: rgba(212,175,55,.08); }
+.person.is-lead { background: rgba(212,175,55,.08); cursor: default; }
+.person.is-lead:hover { border-color: transparent; }
 .person-name { flex: 1; min-width: 0; }
 .person-name .editable { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .person-name .inline-edit { width: 100%; padding: 1px 4px; font-size: 13.5px; }

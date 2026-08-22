@@ -22,11 +22,7 @@
                         @foreach (var person in Unassigned)
                         {
                             <div class="person is-loose" @key="person.Id" data-person-id="@person.Id">
-                                <span class="person-name">
-                                    <EditableText Value="@person.Name" ReadOnly="@(!CanEdit)"
-                                                  ValueChanged="@(v => RenamePersonAsync(person.Id, v))"
-                                                  Placeholder="Name" />
-                                </span>
+                                <span class="person-name">@person.Name</span>
                             </div>
                         }
                     </div>
@@ -66,17 +62,14 @@
                             {
                                 <div class="person @(TeamService.IsLead(team, person) ? "is-lead" : null)"
                                      @key="person.Id"
-                                     data-person-id="@person.Id">
+                                     data-person-id="@person.Id"
+                                     data-locked="@(TeamService.IsLead(team, person) ? "true" : null)">
 
-                                    <span class="person-name">
-                                        <EditableText Value="@person.Name" ReadOnly="@(!CanEdit)"
-                                                      ValueChanged="@(v => RenamePersonAsync(person.Id, v))"
-                                                      Placeholder="Name" />
-                                    </span>
+                                    <span class="person-name">@person.Name</span>
 
                                     @if (TeamService.IsLead(team, person))
                                     {
-                                        <span class="lead-tag" title="Team lead">lead</span>
+                                        <span class="lead-tag" title="Team lead — fixed to this team">lead</span>
                                     }
                                 </div>
                             }
@@ -104,15 +97,13 @@
     private IReadOnlyList<RosterPerson> Unassigned => TeamService.Unassigned(Trip);
 
     private string SubtitleText => CanEdit
-        ? "Drag a name onto another team. Click a name to rename it."
+        ? "Drag a name onto another team. Click a team name to rename the team."
         : "Who is on which team.";
 
 
     private Task RenameAsync(string teamId, string name) =>
         MutateAsync(t => TeamService.RenameTeam(t, teamId, name));
 
-    private Task RenamePersonAsync(string personId, string name) =>
-        MutateAsync(t => TeamService.RenamePerson(t, personId, name));
 
     private async Task MoveAsync(string personId, string? teamId)
     {

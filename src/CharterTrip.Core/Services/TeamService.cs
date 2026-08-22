@@ -35,6 +35,14 @@ public static class TeamService
             .ThenBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+    /// <summary>
+    /// A team lead is fixed. The team is named after them and they run it, so they cannot be
+    /// renamed or moved to another side. Enforced here rather than only hidden in the markup,
+    /// so a future page cannot break the structure by accident.
+    /// </summary>
+    public static bool IsLocked(TripData trip, RosterPerson person) =>
+        trip.Teams.Any(team => IsLead(team, person));
+
     /// <summary>The team lead, matched by name since that is how the roster records it.</summary>
     public static bool IsLead(Team team, RosterPerson person) =>
         !string.IsNullOrWhiteSpace(team.Lead) &&
@@ -58,7 +66,7 @@ public static class TeamService
     public static void MovePerson(TripData trip, string personId, string? teamId)
     {
         var person = FindPerson(trip, personId);
-        if (person is null) return;
+        if (person is null || IsLocked(trip, person)) return;
 
         if (string.IsNullOrWhiteSpace(teamId))
         {
@@ -69,23 +77,6 @@ public static class TeamService
         if (trip.Teams.Any(t => t.Id == teamId)) person.TeamId = teamId;
     }
 
-    /// <summary>
-    /// Rename a person. A team records its lead by name, so renaming a lead has to move that
-    /// reference too or the team silently loses track of who is leading it.
-    /// </summary>
-    public static void RenamePerson(TripData trip, string personId, string name)
-    {
-        var person = FindPerson(trip, personId);
-        if (person is null) return;
-
-        var trimmed = name.Trim();
-        if (trimmed.Length == 0 || trimmed == person.Name) return;
-
-        foreach (var team in trip.Teams.Where(t => string.Equals(t.Lead, person.Name, StringComparison.OrdinalIgnoreCase)))
-            team.Lead = trimmed;
-
-        person.Name = trimmed;
-    }
 
     public static void RenameTeam(TripData trip, string teamId, string name)
     {

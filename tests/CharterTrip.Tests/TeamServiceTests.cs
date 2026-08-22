@@ -137,32 +137,50 @@ public class TeamServiceTests
         Assert.Equal(2, jou.PlayerCount);  // the lead runs the team rather than playing for it
     }
 
-    [Fact]
-    public void Renaming_a_person_trims_and_refuses_a_blank()
-    {
-        var trip = Trip();
-        var cat = trip.Roster.Single(p => p.Name == "Cat Xiong");
-
-        TeamService.RenamePerson(trip, cat.Id, "  Catherine Xiong  ");
-        Assert.Equal("Catherine Xiong", cat.Name);
-
-        TeamService.RenamePerson(trip, cat.Id, "   ");
-        Assert.Equal("Catherine Xiong", cat.Name);
-    }
+    // -------------------------------------------------------------- leads
 
     [Fact]
-    public void Renaming_a_lead_keeps_the_team_pointing_at_them()
+    public void A_lead_cannot_be_moved_to_another_team()
     {
-        // The team stores its lead by name, so a rename has to move that reference too or the
-        // team quietly forgets who is leading it and the badge disappears.
+        // The team is named after its lead and they run it, so they are fixed to it.
         var trip = Trip();
         var jouJou = trip.Roster.Single(p => p.Name == "JouJou");
 
-        TeamService.RenamePerson(trip, jouJou.Id, "Jou Yang");
+        TeamService.MovePerson(trip, jouJou.Id, "em");
 
-        var team = TeamService.FindTeam(trip, "jou")!;
-        Assert.Equal("Jou Yang", team.Lead);
-        Assert.True(TeamService.IsLead(team, jouJou));
-        Assert.Equal(2, TeamService.Rosters(trip).Single(r => r.Team.Id == "jou").PlayerCount);
+        Assert.Equal("jou", jouJou.TeamId);
+        Assert.Contains("JouJou", Names(trip, "jou"));
+    }
+
+    [Fact]
+    public void A_lead_cannot_be_taken_off_a_team_either()
+    {
+        var trip = Trip();
+        var ali = trip.Roster.Single(p => p.Name == "Ali Hussain");
+
+        TeamService.MovePerson(trip, ali.Id, null);
+
+        Assert.Equal("ali", ali.TeamId);
+        Assert.DoesNotContain(TeamService.Unassigned(trip), p => p.Name == "Ali Hussain");
+    }
+
+    [Fact]
+    public void Everyone_else_still_moves_freely()
+    {
+        var trip = Trip();
+        var zach = trip.Roster.Single(p => p.Name == "Zach Montebon");
+
+        Assert.False(TeamService.IsLocked(trip, zach));
+        TeamService.MovePerson(trip, zach.Id, "kyle");
+        Assert.Equal("kyle", zach.TeamId);
+    }
+
+    [Fact]
+    public void IsLocked_only_applies_to_leads()
+    {
+        var trip = Trip();
+
+        Assert.True(TeamService.IsLocked(trip, trip.Roster.Single(p => p.Name == "Kyle McCullough")));
+        Assert.False(TeamService.IsLocked(trip, trip.Roster.Single(p => p.Name == "Evie Fox")));
     }
 }

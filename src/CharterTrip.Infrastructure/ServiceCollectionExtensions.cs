@@ -25,8 +25,6 @@ public static class ServiceCollectionExtensions
         services.AddHostedService<TripFlushHostedService>();
         services.AddHostedService<BackupHostedService>();
 
-        // TEMPORARY — see BackupScrubHostedService. Remove once it reports nothing left to find.
-        services.AddHostedService<BackupScrubHostedService>();
 
         return services;
     }

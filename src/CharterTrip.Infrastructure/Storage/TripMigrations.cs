@@ -12,7 +12,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 7;
+    public const int CurrentVersion = 8;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -25,6 +25,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 5) changed |= ToV5_VenueCorrections(trip);
         if (trip.SchemaVersion < 6) changed |= ToV6_ChecklistGoneAndRosterTrimmed(trip);
         if (trip.SchemaVersion < 7) changed |= ToV7_CountdownAndTagline(trip);
+        if (trip.SchemaVersion < 8) changed |= ToV8_ShortNames(trip);
 
         if (trip.SchemaVersion != CurrentVersion)
         {
@@ -203,6 +204,71 @@ public static class TripMigrations
         {
             trip.Trip.StartsAt = new DateTimeOffset(
                 startsAt.Year, startsAt.Month, startsAt.Day, 14, 0, 0, startsAt.Offset);
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    /// <summary>
+    /// The roster arrived as full names but the group knows each other by first names, so the
+    /// short forms are what belong on the teams board. Renaming was done in the UI and then the
+    /// UI was taken away, which left the deployed copy stuck on the long names — a migration is
+    /// the only route to it now.
+    ///
+    /// Keyed on the person id rather than the old name, so it does not depend on guessing what a
+    /// record currently says, and re-running it changes nothing.
+    /// </summary>
+    private static readonly Dictionary<string, string> ShortNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["p-ali-hussain"] = "Ali",
+        ["p-ana-torres"] = "Ana",
+        ["p-austin-nguyen"] = "Austin",
+        ["p-ben"] = "Ben",
+        ["p-brandon-pham"] = "Brandon",
+        ["p-cat-xiong"] = "Cat",
+        ["p-dillon-lam"] = "Dillon",
+        ["p-emily-ea"] = "Emily",
+        ["p-esther-niang"] = "Esther",
+        ["p-evie-fox"] = "Evie",
+        ["p-hao-dinh"] = "Hao",
+        ["p-jnguyen"] = "JNguyen",
+        ["p-joujou"] = "JouJou",
+        ["p-justin-brown"] = "JB",
+        ["p-keila-vanessa"] = "Keila",
+        ["p-kenny-duong"] = "Kenny",
+        ["p-kyle-mccullough"] = "Kyle",
+        ["p-kylie-jacelynn"] = "Kylie",
+        ["p-maria-riri"] = "Riri",
+        ["p-maria-saba"] = "Saba",
+        ["p-marilyn-elizondo"] = "Marilyn",
+        ["p-may"] = "May",
+        ["p-michael-lor"] = "Michael",
+        ["p-sage-hermes"] = "Sage",
+        ["p-zach-montebon"] = "Zach",
+    };
+
+    private static bool ToV8_ShortNames(TripData trip)
+    {
+        var changed = false;
+
+        foreach (var person in trip.Roster)
+        {
+            if (!ShortNames.TryGetValue(person.Id, out var name) || person.Name == name) continue;
+
+            // A team records its lead by name, so that reference has to move in step or the
+            // team loses track of who leads it and the badge disappears.
+            foreach (var team in trip.Teams.Where(t => string.Equals(t.Lead, person.Name, StringComparison.OrdinalIgnoreCase)))
+                team.Lead = name;
+
+            person.Name = name;
+            changed = true;
+        }
+
+        var jou = trip.Teams.FirstOrDefault(t => t.Id == "jou");
+        if (jou is not null && jou.Name == "Team Jou")
+        {
+            jou.Name = "Team JouJou";
             changed = true;
         }
 

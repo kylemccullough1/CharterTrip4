@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 7,
+  "schemaVersion": 8,
   "revision": 0,
   "updatedUtc": "2026-08-19T00:00:00+00:00",
   "trip": {
@@ -98,7 +98,7 @@
   "teams": [
     {
       "id": "jou",
-      "name": "Team Jou",
+      "name": "Team JouJou",
       "lead": "JouJou",
       "color": "#d4af37",
       "headband": ""
@@ -106,21 +106,21 @@
     {
       "id": "ali",
       "name": "Team Ali",
-      "lead": "Ali Hussain",
+      "lead": "Ali",
       "color": "#2e9e7e",
       "headband": ""
     },
     {
       "id": "kyle",
       "name": "Team Kyle",
-      "lead": "Kyle McCullough",
+      "lead": "Kyle",
       "color": "#c94f5a",
       "headband": ""
     },
     {
       "id": "em",
       "name": "Team Em",
-      "lead": "Emily Ea",
+      "lead": "Emily",
       "color": "#4a7fd6",
       "headband": ""
     }
@@ -382,79 +382,79 @@
   "roster": [
     {
       "id": "p-emily-ea",
-      "name": "Emily Ea",
+      "name": "Emily",
       "teamId": "em",
       "role": "admin"
     },
     {
       "id": "p-justin-brown",
-      "name": "Justin Brown",
+      "name": "JB",
       "teamId": "kyle",
       "role": "member"
     },
     {
       "id": "p-maria-saba",
-      "name": "Maria Saba",
+      "name": "Saba",
       "teamId": "em",
       "role": "member"
     },
     {
       "id": "p-michael-lor",
-      "name": "Michael Lor",
+      "name": "Michael",
       "teamId": "kyle",
       "role": "member"
     },
     {
       "id": "p-ali-hussain",
-      "name": "Ali Hussain",
+      "name": "Ali",
       "teamId": "ali",
       "role": "admin"
     },
     {
       "id": "p-ana-torres",
-      "name": "Ana Torres",
+      "name": "Ana",
       "teamId": "ali",
       "role": "member"
     },
     {
       "id": "p-austin-nguyen",
-      "name": "Austin Nguyen",
+      "name": "Austin",
       "teamId": "em",
       "role": "member"
     },
     {
       "id": "p-brandon-pham",
-      "name": "Brandon Pham",
+      "name": "Brandon",
       "teamId": "jou",
       "role": "member"
     },
     {
       "id": "p-cat-xiong",
-      "name": "Cat Xiong",
+      "name": "Cat",
       "teamId": "ali",
       "role": "member"
     },
     {
       "id": "p-dillon-lam",
-      "name": "Dillon Lam",
+      "name": "Dillon",
       "teamId": "em",
       "role": "member"
     },
     {
       "id": "p-esther-niang",
-      "name": "Esther Niang",
+      "name": "Esther",
       "teamId": "jou",
       "role": "member"
     },
     {
       "id": "p-evie-fox",
-      "name": "Evie Fox",
+      "name": "Evie",
       "teamId": "kyle",
       "role": "member"
     },
     {
       "id": "p-hao-dinh",
-      "name": "Hao Dinh",
+      "name": "Hao",
       "teamId": "jou",
       "role": "member"
     },
@@ -472,43 +472,43 @@
     },
     {
       "id": "p-keila-vanessa",
-      "name": "Keila Vanessa",
+      "name": "Keila",
       "teamId": "jou",
       "role": "member"
     },
     {
       "id": "p-kenny-duong",
-      "name": "Kenny Duong",
+      "name": "Kenny",
       "teamId": "ali",
       "role": "member"
     },
     {
       "id": "p-kylie-jacelynn",
-      "name": "Kylie Jacelynn",
+      "name": "Kylie",
       "teamId": "em",
       "role": "member"
     },
     {
       "id": "p-maria-riri",
-      "name": "Maria Riri",
+      "name": "Riri",
       "teamId": "ali",
       "role": "member"
     },
     {
       "id": "p-marilyn-elizondo",
-      "name": "Marilyn Elizondo",
+      "name": "Marilyn",
       "teamId": "em",
       "role": "member"
     },
     {
       "id": "p-sage-hermes",
-      "name": "Sage Hermes",
+      "name": "Sage",
       "teamId": "kyle",
       "role": "member"
     },
     {
       "id": "p-zach-montebon",
-      "name": "Zach Montebon",
+      "name": "Zach",
       "teamId": "jou",
       "role": "member"
     },
@@ -526,7 +526,7 @@
     },
     {
       "id": "p-kyle-mccullough",
-      "name": "Kyle McCullough",
+      "name": "Kyle",
       "teamId": "kyle",
       "role": "admin"
     }

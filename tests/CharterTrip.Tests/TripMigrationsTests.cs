@@ -246,4 +246,70 @@ public class TripMigrationsTests
         TripMigrations.Apply(trip);
         Assert.Equal(new DateTimeOffset(2026, 8, 28, 18, 30, 0, TimeSpan.FromHours(-5)), trip.Trip.StartsAt);
     }
+
+    // ---------------------------------------------------------- v8 short names
+
+    private static TripData LongNames() => new()
+    {
+        SchemaVersion = 7,
+        Teams =
+        [
+            new Team { Id = "jou",  Name = "Team Jou",  Lead = "JouJou" },
+            new Team { Id = "kyle", Name = "Team Kyle", Lead = "Kyle McCullough" }
+        ],
+        Roster =
+        [
+            new RosterPerson { Id = "p-kyle-mccullough", Name = "Kyle McCullough", TeamId = "kyle" },
+            new RosterPerson { Id = "p-maria-riri",      Name = "Maria Riri",      TeamId = "kyle" },
+            new RosterPerson { Id = "p-justin-brown",    Name = "Justin Brown",    TeamId = "kyle" }
+        ]
+    };
+
+    [Fact]
+    public void V8_shortens_the_roster_names()
+    {
+        var trip = LongNames();
+        Assert.True(TripMigrations.Apply(trip));
+
+        Assert.Equal(["Kyle", "Riri", "JB"], trip.Roster.Select(p => p.Name));
+    }
+
+    [Fact]
+    public void V8_keeps_a_team_pointing_at_its_lead_through_the_rename()
+    {
+        var trip = LongNames();
+        TripMigrations.Apply(trip);
+
+        Assert.Equal("Kyle", trip.Teams.Single(t => t.Id == "kyle").Lead);
+    }
+
+    [Fact]
+    public void V8_renames_Team_Jou_to_match_its_lead()
+    {
+        var trip = LongNames();
+        TripMigrations.Apply(trip);
+
+        Assert.Equal("Team JouJou", trip.Teams.Single(t => t.Id == "jou").Name);
+    }
+
+    [Fact]
+    public void V8_leaves_a_person_it_does_not_recognise_alone()
+    {
+        var trip = LongNames();
+        trip.Roster.Add(new RosterPerson { Id = "p-someone-new", Name = "Someone New", TeamId = "kyle" });
+
+        TripMigrations.Apply(trip);
+
+        Assert.Equal("Someone New", trip.Roster.Single(p => p.Id == "p-someone-new").Name);
+    }
+
+    [Fact]
+    public void V8_running_twice_changes_nothing_the_second_time()
+    {
+        var trip = LongNames();
+        TripMigrations.Apply(trip);
+
+        Assert.False(TripMigrations.Apply(trip));
+        Assert.Equal(["Kyle", "Riri", "JB"], trip.Roster.Select(p => p.Name));
+    }
 }

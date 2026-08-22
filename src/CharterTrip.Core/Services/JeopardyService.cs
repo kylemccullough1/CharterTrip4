@@ -42,6 +42,31 @@ public static class JeopardyService
         trip.Scores.RemoveAll(s => s.GameId == GameId);
     }
 
+    /// <summary>
+    /// Make sure every team and the host have a code, without touching anything else. Called when
+    /// the board is opened so the join screen is usable straight away — a full Reset would clear
+    /// the scores, which is not what loading a page should do.
+    /// </summary>
+    public static bool EnsureCodes(TripData trip, Random random)
+    {
+        var game = trip.Jeopardy.Game;
+        var changed = false;
+
+        foreach (var team in trip.Teams.Where(t => !game.BuzzerCodes.ContainsKey(t.Id)))
+        {
+            game.BuzzerCodes[team.Id] = NewCode(random);
+            changed = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(game.HostCode))
+        {
+            game.HostCode = NewCode(random);
+            changed = true;
+        }
+
+        return changed;
+    }
+
     private static string NewCode(Random random) =>
         new(Enumerable.Range(0, 4).Select(_ => CodeAlphabet[random.Next(CodeAlphabet.Length)]).ToArray());
 

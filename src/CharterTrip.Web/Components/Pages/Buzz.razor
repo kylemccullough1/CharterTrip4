@@ -1,0 +1,175 @@
+@page "/buzz"
+@page "/buzz/{Code}"
+@using CharterTrip.Core.Services
+@inherits TripAwareComponent
+@layout CharterTrip.Web.Components.Layout.BareLayout
+
+<PageTitle>Buzzer · Charter Trip</PageTitle>
+
+<div class="buzz-root">
+
+@if (string.IsNullOrWhiteSpace(Code) || (TeamId is null && !IsHost))
+{
+    <div class="buzz-enter">
+        <h1>Buzzer</h1>
+        <p class="muted">Type the code from the screen.</p>
+        <input class="buzz-code-input" inputmode="latin" autocapitalize="characters" maxlength="4"
+               placeholder="CODE" value="@_typed"
+               @oninput="e => _typed = (e.Value?.ToString() ?? string.Empty).ToUpperInvariant()"
+               @onkeydown="OnKey" />
+        <button class="btn btn-gold btn-lg btn-block" @onclick="Go">Connect</button>
+        @if (!string.IsNullOrWhiteSpace(Code))
+        {
+            <p class="buzz-bad">That code isn't live. The host may have reset the game.</p>
+        }
+    </div>
+}
+else if (IsHost)
+{
+    <div class="buzz-host">
+        <header>
+            <span class="buzz-role">Host</span>
+            <span class="muted tiny">@PhaseLabel</span>
+        </header>
+
+        @if (CurrentClue is { } clue)
+        {
+            <p class="buzz-cat">@CategoryName · @clue.Value</p>
+            @if (!string.IsNullOrWhiteSpace(clue.Clue)) { <p class="buzz-clue">@clue.Clue</p> }
+            <p class="buzz-answer-label">Answer</p>
+            <p class="buzz-answer">@clue.Response</p>
+            @if (!string.IsNullOrWhiteSpace(clue.ResponseImage))
+            {
+                <img class="buzz-answer-img" src="@clue.ResponseImage" alt="" />
+            }
+
+            @if (Game.Phase == JeopardyPhase.Judging)
+            {
+                <p class="buzz-buzzed">@TeamName(Game.LeadingBuzzTeamId) buzzed</p>
+                <div class="buzz-judge">
+                    <button class="btn btn-lg jeo-right" @onclick="CorrectAsync">Correct</button>
+                    <button class="btn btn-lg jeo-wrong" @onclick="WrongAsync">Wrong</button>
+                </div>
+            }
+            else
+            {
+                <p class="muted tiny">Waiting for a buzz…</p>
+                <button class="btn btn-ghost btn-block" @onclick="NobodyAsync">Nobody got it</button>
+            }
+        }
+        else if (Game.Phase == JeopardyPhase.Final)
+        {
+            <p class="buzz-cat">@Board.Final.Category · @Board.Final.Value</p>
+            <p class="buzz-clue">@Board.Final.Clue</p>
+            <p class="buzz-answer-label">Answer</p>
+            <p class="buzz-answer">@(string.IsNullOrWhiteSpace(Board.Final.Response) ? "— not written yet —" : Board.Final.Response)</p>
+        }
+        else
+        {
+            <p class="muted">No clue on screen. The answer appears here as soon as one is picked.</p>
+        }
+    </div>
+}
+else
+{
+    <div class="buzz-team" style="--team:@TeamColor">
+        <header>
+            <span class="buzz-role">@TeamName(TeamId)</span>
+            <span class="buzz-score">@JeopardyService.ScoreFor(Trip, TeamId!)</span>
+        </header>
+
+        @if (Game.Phase == JeopardyPhase.Final)
+        {
+            <p class="buzz-cat">@Board.Final.Category · @Board.Final.Value points</p>
+            <p class="buzz-clue">@Board.Final.Clue</p>
+            <textarea class="buzz-final-input" rows="6" placeholder="Your answer…"
+                      value="@FinalAnswer"
+                      @onchange="e => SubmitFinalAsync(e.Value?.ToString())"></textarea>
+            <p class="muted tiny">@(Submitted ? "Locked in — you can still change it until the host reveals." : "Not submitted yet.")</p>
+        }
+        else
+        {
+            <button class="buzz-button @BuzzClass" disabled="@(!CanBuzz)" @onclick="BuzzAsync">
+                @BuzzLabel
+            </button>
+            <p class="buzz-status">@StatusLine</p>
+        }
+    </div>
+}
+
+</div>
+
+@code {
+    [Parameter] public string? Code { get; set; }
+
+    protected override TripArea Watching => TripArea.All;
+
+    private string _typed = "";
+
+    private JeopardyBoard Board => Trip.Jeopardy;
+    private JeopardyGame Game => Trip.Jeopardy.Game;
+
+    private string? TeamId => Code is null ? null : JeopardyService.TeamForCode(Trip, Code);
+    private bool IsHost => Code is not null && JeopardyService.IsHostCode(Trip, Code);
+
+    private JeopardyClue? CurrentClue => JeopardyService.CurrentClue(Trip);
+    private string CategoryName => CurrentClue is null ? "" : JeopardyService.CategoryOf(Trip, CurrentClue.Id)?.Name ?? "";
+
+    private string TeamName(string? id) => Trip.Teams.FirstOrDefault(t => t.Id == id)?.Name ?? "—";
+    private string TeamColor => Trip.Teams.FirstOrDefault(t => t.Id == TeamId)?.Color ?? "#d4af37";
+
+    private bool LockedOut => TeamId is not null && Game.LockedOutTeamIds.Contains(TeamId);
+    private bool AlreadyBuzzed => TeamId is not null && Game.Buzzes.Any(b => b.TeamId == TeamId);
+    private bool CanBuzz => Game.BuzzersOpen && !LockedOut && !AlreadyBuzzed;
+
+    private bool Submitted => TeamId is not null && Game.FinalAnswers.ContainsKey(TeamId);
+    private string FinalAnswer => TeamId is not null && Game.FinalAnswers.TryGetValue(TeamId, out var a) ? a : "";
+
+    private string PhaseLabel => Game.Phase switch
+    {
+        JeopardyPhase.NotStarted => "not started",
+        JeopardyPhase.Board => Game.BuzzersOpen ? "buzz-off" : "picking",
+        JeopardyPhase.Clue => "buzzers open",
+        JeopardyPhase.Judging => "your call",
+        JeopardyPhase.Final => "final",
+        _ => "finished"
+    };
+
+    private string BuzzLabel => LockedOut ? "OUT" : AlreadyBuzzed ? "IN" : Game.BuzzersOpen ? "BUZZ" : "WAIT";
+
+    private string BuzzClass =>
+        LockedOut ? "is-out" : AlreadyBuzzed ? "is-in" : Game.BuzzersOpen ? "is-live" : "is-idle";
+
+    private string StatusLine
+    {
+        get
+        {
+            if (LockedOut) return "Wrong answer — you're out of this clue.";
+            if (AlreadyBuzzed) return Game.LeadingBuzzTeamId == TeamId ? "You're in! Answer it." : "Someone beat you to it.";
+            if (Game.Phase == JeopardyPhase.Board && Game.BuzzersOpen) return "Buzz to win the first pick.";
+            if (Game.BuzzersOpen) return "Buzzers are open.";
+            if (Game.Phase == JeopardyPhase.Judging) return $"{TeamName(Game.LeadingBuzzTeamId)} is answering.";
+            return "Wait for the next clue.";
+        }
+    }
+
+    private void OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") Go();
+    }
+
+    private void Go()
+    {
+        if (_typed.Trim().Length > 0) Code = _typed.Trim();
+    }
+
+    private Task BuzzAsync() =>
+        MutateAsync(t => JeopardyService.Buzz(t, TeamId!, DateTimeOffset.UtcNow));
+
+    private Task SubmitFinalAsync(string? answer) =>
+        MutateAsync(t => JeopardyService.SubmitFinalAnswer(t, TeamId!, answer ?? string.Empty));
+
+    private Task CorrectAsync() => MutateAsync(t => JeopardyService.JudgeCorrect(t, DateTimeOffset.UtcNow));
+    private Task WrongAsync() => MutateAsync(t => JeopardyService.JudgeWrong(t, DateTimeOffset.UtcNow));
+    private Task NobodyAsync() => MutateAsync(JeopardyService.NobodyGotIt);
+}

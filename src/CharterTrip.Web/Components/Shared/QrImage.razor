@@ -1,0 +1,32 @@
+@using QRCoder
+
+@* A QR code rendered inline as a data URI. PngByteQRCode is pure managed code — no
+   System.Drawing, no native dependency — so it works the same on Linux App Service. *@
+<img class="qr @CssClass" src="@DataUri" alt="@Alt" width="@Size" height="@Size" />
+
+@code {
+    [Parameter, EditorRequired] public string Content { get; set; } = "";
+    [Parameter] public int Size { get; set; } = 180;
+    [Parameter] public string Alt { get; set; } = "QR code";
+    [Parameter] public string? CssClass { get; set; }
+
+    private string? _cachedFor;
+    private string _dataUri = "";
+
+    private string DataUri
+    {
+        get
+        {
+            // Generating is cheap but not free, and the board re-renders on every buzz.
+            if (_cachedFor == Content) return _dataUri;
+
+            using var generator = new QRCodeGenerator();
+            using var data = generator.CreateQrCode(Content, QRCodeGenerator.ECCLevel.M);
+            var png = new PngByteQRCode(data).GetGraphic(10);
+
+            _dataUri = $"data:image/png;base64,{Convert.ToBase64String(png)}";
+            _cachedFor = Content;
+            return _dataUri;
+        }
+    }
+}

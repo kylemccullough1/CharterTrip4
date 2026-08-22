@@ -69,18 +69,34 @@ public class SeedDataTests
     public void Jeopardy_board_is_five_by_five()
     {
         Assert.Equal(5, Seed.Jeopardy.Categories.Count);
-        Assert.Equal(5, Seed.Jeopardy.Values.Count);
-        Assert.Equal(25, Seed.Jeopardy.Clues.Count);
 
         foreach (var category in Seed.Jeopardy.Categories)
-            foreach (var value in Seed.Jeopardy.Values)
-                Assert.Single(Seed.Jeopardy.Clues, c => c.Category == category && c.Value == value);
+            Assert.Equal([5, 10, 15, 20, 25], category.Clues.Select(c => c.Value));
+    }
+
+    [Fact]
+    public void Every_jeopardy_clue_has_content_a_response_and_a_unique_id()
+    {
+        var clues = Seed.Jeopardy.Categories.SelectMany(c => c.Clues).ToList();
+
+        Assert.Equal(25, clues.Count);
+        Assert.All(clues, c => Assert.False(c.IsEmpty, $"{c.Id} has nothing to show"));
+        Assert.All(clues, c => Assert.False(string.IsNullOrWhiteSpace(c.Response), $"{c.Id} has no answer"));
+        Assert.Equal(25, clues.Select(c => c.Id).Distinct().Count());
+    }
+
+    [Fact]
+    public void Final_jeopardy_is_set_and_worth_thirty()
+    {
+        Assert.Equal(30, Seed.Jeopardy.Final.Value);
+        Assert.False(string.IsNullOrWhiteSpace(Seed.Jeopardy.Final.Clue));
     }
 
     [Fact]
     public void Jeopardy_carries_the_two_image_clues()
     {
-        Assert.Equal(2, Seed.Jeopardy.Clues.Count(c => !string.IsNullOrWhiteSpace(c.ImageUrl)));
+        var clues = Seed.Jeopardy.Categories.SelectMany(c => c.Clues).ToList();
+        Assert.Equal(2, clues.Count(c => !string.IsNullOrWhiteSpace(c.ClueImage) || !string.IsNullOrWhiteSpace(c.ResponseImage)));
     }
 
     [Fact]

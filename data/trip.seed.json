@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 8,
+  "schemaVersion": 9,
   "revision": 0,
   "updatedUtc": "2026-08-19T00:00:00+00:00",
   "trip": {
@@ -667,224 +667,254 @@
     }
   ],
   "jeopardy": {
+    "title": "4th Annual Charter Trip Jeopardy",
     "categories": [
-      "KDPhi",
-      "Lambdas",
-      "Parties",
-      "Pictures",
-      "Miscellaneous"
-    ],
-    "values": [
-      400,
-      800,
-      1200,
-      1600,
-      2000
-    ],
-    "clues": [
       {
-        "category": "KDPhi",
-        "value": 400,
-        "clue": "The KDPhi Interest Group",
-        "response": "What is Ladies Involved in Leadership, Academics, Culture, and Service?",
-        "draft": false,
-        "used": false
+        "name": "KDPhi",
+        "clues": [
+          {
+            "id": "j-kdphi-5",
+            "value": 5,
+            "clue": "The KDPhi Interest Group",
+            "response": "What is Ladies Involved in Leadership, Academics, Culture, and Service?",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-kdphi-10",
+            "value": 10,
+            "clue": "",
+            "response": "What is Kyle's favorite bridge?",
+            "clueImage": "https://shawnee-steel.com/wp-content/gallery/34th-street/OK-I35-Moore-Bridge.jpg",
+            "responseImage": ""
+          },
+          {
+            "id": "j-kdphi-15",
+            "value": 15,
+            "clue": "“I'm the DOM”",
+            "response": "What was written on Evie's white lies party shirt?",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-kdphi-20",
+            "value": 20,
+            "clue": "The Theme of the LILACS Bid Packet",
+            "response": "What was Head in The Clouds?",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-kdphi-25",
+            "value": 25,
+            "clue": "Iowa, Texas, and Colorado",
+            "response": "What were the 3 states outside of Oklahoma at least half of the girls have traveled to together?",
+            "clueImage": "",
+            "responseImage": ""
+          }
+        ]
       },
       {
-        "category": "KDPhi",
-        "value": 800,
-        "clue": "",
-        "response": "What is Kyle's favorite bridge?",
-        "draft": false,
-        "used": false,
-        "imageUrl": "https://shawnee-steel.com/wp-content/gallery/34th-street/OK-I35-Moore-Bridge.jpg?t=1625790073"
+        "name": "Lambdas",
+        "clues": [
+          {
+            "id": "j-lambdas-5",
+            "value": 5,
+            "clue": "The LPhiE Interest Group",
+            "response": "What is Network Of Visionary Academics?",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-lambdas-10",
+            "value": 10,
+            "clue": "Tommy Nguyen During PTYC",
+            "response": "Who broke Brandon's leg?",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-lambdas-15",
+            "value": 15,
+            "clue": "2L Sprite Bottle and a Bucket",
+            "response": "What did we use to build gravity bongs?",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-lambdas-20",
+            "value": 20,
+            "clue": "At Cat and Jou's 2-Bed Progress Apartment",
+            "response": "Where did Mikey get convinced to join NOVA?",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-lambdas-25",
+            "value": 25,
+            "clue": "Brandon, Mikey, Kenny",
+            "response": "Who were the first 3 Shave-A-Lambda victims?",
+            "clueImage": "",
+            "responseImage": ""
+          }
+        ]
       },
       {
-        "category": "KDPhi",
-        "value": 1200,
-        "clue": "\"I'm the DOM\"",
-        "response": "What was written on Evie's white lies party shirt?",
-        "draft": false,
-        "used": false
+        "name": "Parties",
+        "clues": [
+          {
+            "id": "j-parties-5",
+            "value": 5,
+            "clue": "Name three themed parties?",
+            "response": "Meme, bikibottom, gender swap",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-parties-10",
+            "value": 10,
+            "clue": "Buffalo Wild Wings Bag",
+            "response": "In her freshman year, what container was Sage known to bring her mixed drinks in?",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-parties-15",
+            "value": 15,
+            "clue": "Where was Lambda's Gamma class probate party hosted?",
+            "response": "Sage's House",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-parties-20",
+            "value": 20,
+            "clue": "Which Lambda got arrested at an OU Lambda party?",
+            "response": "Zach Montebon",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-parties-25",
+            "value": 25,
+            "clue": "Which KDPhi got arrested at the second Lambda House?",
+            "response": "Kayla Pham",
+            "clueImage": "",
+            "responseImage": ""
+          }
+        ]
       },
       {
-        "category": "KDPhi",
-        "value": 1600,
-        "clue": "The theme of the LILACS bid packet",
-        "response": "What is Head in the Clouds?",
-        "draft": false,
-        "used": false
+        "name": "Pictures",
+        "clues": [
+          {
+            "id": "j-pictures-5",
+            "value": 5,
+            "clue": "Groupme Photo",
+            "response": "Groupme Photo",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-pictures-10",
+            "value": 10,
+            "clue": "Baby Cage Video",
+            "response": "Baby Cage!",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-pictures-15",
+            "value": 15,
+            "clue": "DCM Friendsgiving Photo",
+            "response": "What is DCM Friendsgiving?",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-pictures-20",
+            "value": 20,
+            "clue": "Meech Ali Austin Shadow Photo",
+            "response": "Who are Meech, Ali, and Austin?",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-pictures-25",
+            "value": 25,
+            "clue": "Ali's Lambda Sign Photo Blurred",
+            "response": "What is happening here",
+            "clueImage": "",
+            "responseImage": ""
+          }
+        ]
       },
       {
-        "category": "KDPhi",
-        "value": 2000,
-        "clue": "Iowa, Texas, and Colorado",
-        "response": "What are the 3 states outside of Oklahoma at least half of the girls have traveled to together?",
-        "draft": false,
-        "used": false
-      },
-      {
-        "category": "Lambdas",
-        "value": 400,
-        "clue": "The LPhiE Interest Group",
-        "response": "What is Network Of Visionary Academics?",
-        "draft": false,
-        "used": false
-      },
-      {
-        "category": "Lambdas",
-        "value": 800,
-        "clue": "Tommy Nguyen during PTYC",
-        "response": "Who broke Brandon's leg?",
-        "draft": false,
-        "used": false
-      },
-      {
-        "category": "Lambdas",
-        "value": 1200,
-        "clue": "2L Sprite bottle and a bucket",
-        "response": "What did we use to build gravity bongs?",
-        "draft": false,
-        "used": false
-      },
-      {
-        "category": "Lambdas",
-        "value": 1600,
-        "clue": "At Cat and Jou's 2-bed progress apartment",
-        "response": "Where did Mikey get convinced to join NOVA?",
-        "draft": false,
-        "used": false
-      },
-      {
-        "category": "Lambdas",
-        "value": 2000,
-        "clue": "Brandon, Mikey, Kenny",
-        "response": "Who were the first 3 Shave-A-Lambda victims?",
-        "draft": false,
-        "used": false
-      },
-      {
-        "category": "Parties",
-        "value": 400,
-        "clue": "Doodlebob, Sexy Patrick, and Patricia Star - plus Ana in a yellow wig",
-        "response": "What were the Bikini Bottom birthday people dressed as?",
-        "draft": true,
-        "used": false
-      },
-      {
-        "category": "Parties",
-        "value": 800,
-        "clue": "A Buffalo Wild Wings bag",
-        "response": "In her freshman year, what container was Sage known to bring her mixed drinks in?",
-        "draft": false,
-        "used": false
-      },
-      {
-        "category": "Parties",
-        "value": 1200,
-        "clue": "OU's Lambdas' New Year",
-        "response": "Where did Zach get arrested?",
-        "draft": false,
-        "used": false
-      },
-      {
-        "category": "Parties",
-        "value": 1600,
-        "clue": "",
-        "response": "Whose birthdays were celebrated at the gender swap party?",
-        "draft": true,
-        "used": false
-      },
-      {
-        "category": "Parties",
-        "value": 2000,
-        "clue": "",
-        "response": "Where was the Lambda Gamma class probate party hosted?",
-        "draft": true,
-        "used": false
-      },
-      {
-        "category": "Pictures",
-        "value": 400,
-        "clue": "Groupme photo",
-        "response": "What is the Groupme photo?",
-        "draft": false,
-        "used": false
-      },
-      {
-        "category": "Pictures",
-        "value": 800,
-        "clue": "Baby cage video",
-        "response": "What is Baby Cage?",
-        "draft": false,
-        "used": false
-      },
-      {
-        "category": "Pictures",
-        "value": 1200,
-        "clue": "DCM Friendsgiving photo",
-        "response": "What is DCM Friendsgiving?",
-        "draft": false,
-        "used": false
-      },
-      {
-        "category": "Pictures",
-        "value": 1600,
-        "clue": "Meech, Ali, Austin shadow photo",
-        "response": "Who are Meech, Ali, and Austin?",
-        "draft": false,
-        "used": false
-      },
-      {
-        "category": "Pictures",
-        "value": 2000,
-        "clue": "",
-        "response": "Who is Ali throwing up the sign after everclear?",
-        "draft": true,
-        "used": false
-      },
-      {
-        "category": "Miscellaneous",
-        "value": 400,
-        "clue": "Fall 2022",
-        "response": "What semester did the KDPhi / Lambda team win the ODPhi Dodge for the Kause volleyball tournament?",
-        "draft": true,
-        "used": false
-      },
-      {
-        "category": "Miscellaneous",
-        "value": 800,
-        "clue": "",
-        "response": "What is the break-in through Ana's window during the party?",
-        "draft": true,
-        "used": false
-      },
-      {
-        "category": "Miscellaneous",
-        "value": 1200,
-        "clue": "The mural in the basement of the church house",
-        "response": "What is the mural that depicted an angel and Jesus on the cross?",
-        "draft": false,
-        "used": false,
-        "imageUrl": "https://photos.zillowstatic.com/fp/086eeec8b9f357f0f57495e03edbc53d-uncropped_scaled_within_1344_1008.jpg"
-      },
-      {
-        "category": "Miscellaneous",
-        "value": 1600,
-        "clue": "",
-        "response": "Who was the first brother to graduate?",
-        "draft": true,
-        "used": false
-      },
-      {
-        "category": "Miscellaneous",
-        "value": 2000,
-        "clue": "Section 218",
-        "response": "What graduation seating section do we all sit in?",
-        "draft": false,
-        "used": false
+        "name": "Miscellaneous",
+        "clues": [
+          {
+            "id": "j-miscellaneous-5",
+            "value": 5,
+            "clue": "Who's window got broken into during a kickback?",
+            "response": "Ana!!!!!!",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-miscellaneous-10",
+            "value": 10,
+            "clue": "What did the mural in the basement show?",
+            "response": "an angel and Jesus",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-miscellaneous-15",
+            "value": 15,
+            "clue": "What was the street name of the Lambda/KDPhi House?",
+            "response": "Duncan St.",
+            "clueImage": "",
+            "responseImage": "https://photos.zillowstatic.com/fp/086eeec8b9f357f0f57495e03edbc53d-uncropped_scaled_within_1344_1008.jpg"
+          },
+          {
+            "id": "j-miscellaneous-20",
+            "value": 20,
+            "clue": "What graduation seating section do we all sit at?",
+            "response": "Section 218",
+            "clueImage": "",
+            "responseImage": ""
+          },
+          {
+            "id": "j-miscellaneous-25",
+            "value": 25,
+            "clue": "What semester did the kdphi lambda team win the odphi dodge for the kause volleyball tournament?",
+            "response": "Fall 2022",
+            "clueImage": "",
+            "responseImage": ""
+          }
+        ]
       }
-    ]
+    ],
+    "final": {
+      "category": "Final Jeopardy",
+      "value": 30,
+      "clue": "Name every charter member, in order.",
+      "response": ""
+    },
+    "game": {
+      "phase": "notStarted",
+      "usedClueIds": [],
+      "currentClueId": null,
+      "pickingTeamId": null,
+      "buzzes": [],
+      "lockedOutTeamIds": [],
+      "buzzersOpen": false,
+      "finalAnswers": {},
+      "finalCorrectTeamIds": [],
+      "finalRevealed": false,
+      "buzzerCodes": {},
+      "hostCode": ""
+    }
   },
   "mystery": {
     "title": "Murder at West Egg Manor",

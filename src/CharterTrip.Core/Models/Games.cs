@@ -41,32 +41,4 @@ public sealed class Superlative
     public string Winner { get; set; } = "";
 }
 
-public sealed class JeopardyBoard
-{
-    public List<string> Categories { get; set; } = [];
-    public List<int> Values { get; set; } = [];
-    public List<JeopardyClue> Clues { get; set; } = [];
-}
 
-public sealed class JeopardyClue
-{
-    public string Category { get; set; } = "";
-    public int Value { get; set; }
-
-    /// <summary>What goes on the board — in Jeopardy terms this is the "answer".</summary>
-    public string Clue { get; set; } = "";
-
-    /// <summary>The "What is ...?" the team has to say.</summary>
-    public string Response { get; set; } = "";
-
-    public string? ImageUrl { get; set; }
-
-    /// <summary>Reconstructed from the meeting notes rather than the finished board — verify before playing.</summary>
-    public bool Draft { get; set; }
-
-    public bool Used { get; set; }
-
-    /// <summary>Computed, so it is not persisted.</summary>
-    [JsonIgnore]
-    public string Key => $"{Category}-{Value}";
-}

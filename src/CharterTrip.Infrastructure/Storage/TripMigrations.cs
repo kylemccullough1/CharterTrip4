@@ -1,5 +1,6 @@
 using CharterTrip.Core.Models;
 using CharterTrip.Core.Services;
+using CharterTrip.Infrastructure.Seed;
 
 namespace CharterTrip.Infrastructure.Storage;
 
@@ -12,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 8;
+    public const int CurrentVersion = 9;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -26,6 +27,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 6) changed |= ToV6_ChecklistGoneAndRosterTrimmed(trip);
         if (trip.SchemaVersion < 7) changed |= ToV7_CountdownAndTagline(trip);
         if (trip.SchemaVersion < 8) changed |= ToV8_ShortNames(trip);
+        if (trip.SchemaVersion < 9) changed |= ToV9_JeopardyBoard(trip);
 
         if (trip.SchemaVersion != CurrentVersion)
         {
@@ -273,6 +275,24 @@ public static class TripMigrations
         }
 
         return changed;
+    }
+
+    /// <summary>
+    /// The Jeopardy board was reshaped: categories now own an ordered list of clues rather than
+    /// the board holding a flat list keyed by category and dollar value, values run 5-25 in trip
+    /// points instead of 400-2000 in dollars, and there is live game state alongside the content.
+    ///
+    /// The old shape cannot be salvaged into the new one — the clue text itself was rewritten in
+    /// the host's editor — so this takes the board from the seed wholesale. Safe because nothing
+    /// on the deployed copy has ever been edited through the app: there was no Jeopardy page.
+    /// </summary>
+    private static bool ToV9_JeopardyBoard(TripData trip)
+    {
+        if (trip.Jeopardy.Categories.Count > 0 && trip.Jeopardy.Categories[0].Clues.Count > 0)
+            return false;
+
+        trip.Jeopardy = SeedLoader.Load().Jeopardy;
+        return true;
     }
 
     private static bool ClearLegacy(ItineraryItem item)

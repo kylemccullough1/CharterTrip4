@@ -405,10 +405,9 @@
         switch (outcome)
         {
             case SaveOutcome.Saved:
-                var saved = ItineraryService.Locate(Trip, _draft.ItemId).Item;
-                if (saved is not null) _draft.BaseVersion = saved.Version;
-                _pristine = _draft.Copy();
-                _conflict = null;
+                // Saving is the end of the interaction — leaving the panel open over the grid
+                // just hides the change you came to make.
+                CloseEditor();
                 Toasts.Show("Saved", CharterTrip.Web.Services.ToastKind.Good);
                 break;
 

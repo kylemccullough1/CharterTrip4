@@ -498,18 +498,21 @@ select.textfield { cursor: pointer; }
 .planner-day-head h3 { font-family: var(--display); font-size: 15px; letter-spacing: .12em; text-transform: uppercase; margin: 0; }
 .planner-day-actions { display: flex; gap: 4px; }
 
-/* canvas: the gutter is carved out of the left padding */
-.planner-canvas { position: relative; padding: 10px 10px 10px 58px; }
+/* The canvas is padding only. Everything positioned lives in the track, which is exactly
+   TotalPixels tall, so a card's top in pixels means the same thing as its time. The generous
+   top padding is what keeps the first hour label from sitting up inside the day header. */
+.planner-canvas { position: relative; padding: 15px 10px 15px 58px; }
+.planner-track { position: relative; }
 
-.planner-hour { position: absolute; left: 0; right: 10px; height: 0; border-top: 1px solid var(--line-soft); pointer-events: none; }
+.planner-hour { position: absolute; left: -52px; right: 0; height: 0; border-top: 1px solid var(--line-soft); pointer-events: none; }
 .planner-hour-label {
-  position: absolute; left: 8px; top: -8px; width: 46px; text-align: right;
-  font-size: 10.5px; color: var(--text-faint); letter-spacing: .04em; background: var(--panel); padding-right: 2px;
+  position: absolute; left: 0; top: -7px; width: 44px; text-align: right;
+  font-size: 10.5px; color: var(--text-faint); letter-spacing: .04em; background: var(--panel); padding-right: 3px;
 }
 
 /* collapsed empty stretch */
 .planner-gap {
-  position: absolute; left: 58px; right: 10px;
+  position: absolute; left: 0; right: 0;
   display: flex; align-items: center; justify-content: center;
   background: repeating-linear-gradient(135deg, transparent 0 7px, rgba(212,175,55,.05) 7px 14px);
   border: 1px dashed var(--line); border-radius: var(--radius-sm);
@@ -519,7 +522,7 @@ select.textfield { cursor: pointer; }
 
 /* an opened stretch keeps a quiet way back */
 .planner-gap-open {
-  position: absolute; left: 58px; right: 10px;
+  position: absolute; left: 0; right: 0;
   background: none; border: 1px dashed var(--line-soft); border-radius: var(--radius-sm);
   color: transparent; font-size: 10.5px; cursor: pointer; display: flex;
   align-items: flex-start; justify-content: center; padding-top: 3px;
@@ -529,7 +532,7 @@ select.textfield { cursor: pointer; }
 /* cards */
 /* The lane layer spans the whole canvas, so left as-is it would swallow every click
    aimed at the collapsed-hour bands sitting underneath. Only the cards are clickable. */
-.planner-lanes { position: absolute; left: 58px; right: 10px; top: 10px; bottom: 10px; pointer-events: none; }
+.planner-lanes { position: absolute; inset: 0; pointer-events: none; }
 .planner-card {
   position: absolute; box-sizing: border-box; pointer-events: auto;
   background: var(--panel-2); border: 1px solid var(--line);
@@ -1013,8 +1016,9 @@ select.textfield { cursor: pointer; }
   }
 
   /* bigger hit targets, and room for them */
-  .planner-canvas { padding-left: 52px; }
-  .planner-lanes, .planner-gap, .planner-gap-open { left: 52px; right: 8px; }
+  .planner-canvas { padding-left: 52px; padding-right: 8px; }
+  .planner-hour { left: -46px; }
+  .planner-hour-label { width: 38px; }
   .card-resize { height: 14px; }
   .card-resize::after { opacity: 1; }
 }

@@ -27,8 +27,13 @@ public sealed record TimelineSettings
 
     public double CollapsedBandPixels { get; init; } = 38;
 
-    /// <summary>Never render a day shorter than this, or a one-item day looks broken.</summary>
-    public int MinWindowMinutes { get; init; } = 4 * 60;
+    /// <summary>
+    /// Never draw a grid shorter than this. Expressed in pixels rather than minutes because the
+    /// worry is a day rendering as an unreadable sliver, and how many minutes that takes depends
+    /// on the zoom. Stated in minutes it also padded days that were perfectly legible already —
+    /// a three-and-a-half hour Sunday would gain half an hour of blank track for no reason.
+    /// </summary>
+    public double MinTrackPixels { get; init; } = 180;
 
     public static readonly TimelineSettings Default = new();
 }
@@ -91,12 +96,16 @@ public sealed class DayTimeline
         }
         else
         {
+            // The start floors to the hour so the top label lines up. The end does NOT round up:
+            // rounding it left a day finishing at 12:45am with a quarter hour of empty track,
+            // so how much blank space sat under the last card varied day to day for no reason
+            // the reader could see.
             start = day.WindowStartMinutes ?? FloorToHour(scheduled.Min(i => i.StartMinutes));
-            end = day.WindowEndMinutes ?? CeilingToHour(scheduled.Max(i => i.EndMinutes));
+            end = day.WindowEndMinutes ?? scheduled.Max(i => i.EndMinutes);
         }
 
-        if (end - start < settings.MinWindowMinutes)
-            end = start + settings.MinWindowMinutes;
+        var minMinutes = (int)Math.Ceiling(settings.MinTrackPixels * 60 / settings.PxPerHour);
+        if (end - start < minMinutes) end = start + minMinutes;
 
         return (start, end);
     }

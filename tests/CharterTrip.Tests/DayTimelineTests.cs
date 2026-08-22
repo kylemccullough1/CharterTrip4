@@ -10,7 +10,7 @@ public class DayTimelineTests
         PxPerHour = 64,
         CollapseThresholdMinutes = 180,
         CollapsedBandPixels = 38,
-        MinWindowMinutes = 240
+        MinTrackPixels = 180
     };
 
     private static ItineraryDay Day(params (int Start, int Duration)[] items) => new()
@@ -30,20 +30,56 @@ public class DayTimelineTests
     // ---------------------------------------------------------------- window
 
     [Fact]
-    public void Window_fits_the_scheduled_items_rounded_out_to_whole_hours()
+    public void Window_floors_the_start_to_an_hour_but_ends_on_the_last_event()
     {
-        var timeline = DayTimeline.Build(Day((10 * 60 + 30, 60), (13 * 60, 45)), Settings);
+        // Long enough that the four-hour minimum window does not come into it.
+        var timeline = DayTimeline.Build(Day((10 * 60 + 30, 60), (15 * 60, 45)), Settings);
 
-        Assert.Equal(10 * 60, timeline.StartMinutes);       // floored
-        Assert.Equal(14 * 60, timeline.EndMinutes);         // 13:45 ceilinged
+        Assert.Equal(10 * 60, timeline.StartMinutes);           // floored, so the label lines up
+        Assert.Equal(15 * 60 + 45, timeline.EndMinutes);        // exactly where the day finishes
     }
 
     [Fact]
-    public void Window_never_collapses_below_the_minimum()
+    public void No_empty_track_is_left_under_the_last_card()
+    {
+        // Whatever the day looks like, the grid stops where the last thing stops — otherwise the
+        // blank space beneath the final card changes from day to day.
+        foreach (var day in new[]
+                 {
+                     Day((10 * 60, 60)),                                  // ends on the hour
+                     Day((10 * 60, 45)),                                  // ends mid-hour
+                     Day((10 * 60, 60), (14 * 60, 20)),                   // ends on an odd minute
+                     Day((23 * 60, 105))                                  // runs past midnight
+                 })
+        {
+            var timeline = DayTimeline.Build(day, Settings);
+            var last = day.Items.Max(i => i.EndMinutes);
+
+            // Either the day ends at the last event, or the four-hour minimum stretched it.
+            var stretched = timeline.TotalPixels >= Settings.MinTrackPixels
+                            && timeline.EndMinutes > last;
+            Assert.True(timeline.EndMinutes == last || stretched,
+                $"window ended at {timeline.EndMinutes}, last event at {last}");
+        }
+    }
+
+    [Fact]
+    public void A_very_short_day_is_stretched_to_stay_legible()
     {
         var timeline = DayTimeline.Build(Day((12 * 60, 30)), Settings);
 
-        Assert.Equal(Settings.MinWindowMinutes, timeline.EndMinutes - timeline.StartMinutes);
+        Assert.True(timeline.TotalPixels >= Settings.MinTrackPixels);
+    }
+
+    [Fact]
+    public void A_day_that_is_already_tall_enough_is_not_padded()
+    {
+        // Three and a half hours clears the floor comfortably, so the grid should stop dead
+        // on the last event rather than gaining blank track.
+        var day = Day((9 * 60, 60), (10 * 60, 60), (11 * 60, 30), (11 * 60 + 30, 30), (12 * 60, 30));
+        var timeline = DayTimeline.Build(day, Settings);
+
+        Assert.Equal(12 * 60 + 30, timeline.EndMinutes);
     }
 
     [Fact]
@@ -181,9 +217,8 @@ public class DayTimelineTests
 
         Assert.Equal(23 * 60, timeline.StartMinutes);
 
-        // The event itself only runs to 1am, but a two-hour day is stretched to the
-        // four-hour minimum, so the window runs to 3am rather than stopping at 1am.
-        Assert.Equal(27 * 60, timeline.EndMinutes);
-        Assert.Equal(4 * 64, timeline.TotalPixels);
+        // Two hours is under the legibility floor, so the window is stretched past the event.
+        Assert.True(timeline.EndMinutes > 25 * 60);
+        Assert.True(timeline.TotalPixels >= Settings.MinTrackPixels);
     }
 }

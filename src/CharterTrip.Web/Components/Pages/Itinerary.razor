@@ -82,7 +82,11 @@
                             }
                         </header>
 
-                        <div class="planner-canvas" style="height:@Px(timeline.TotalPixels)">
+                        @* The canvas supplies padding; the track is exactly TotalPixels tall so
+                           ToPixels maps 1:1 onto it. Sizing the padded box itself left every card
+                           on a scale 20px taller than the box holding them. *@
+                        <div class="planner-canvas">
+                        <div class="planner-track" style="height:@Px(timeline.TotalPixels)">
 
                             @foreach (var mark in timeline.HourMarks())
                             {
@@ -141,6 +145,7 @@
                                     </article>
                                 }
                             </div>
+                        </div>
                         </div>
                     </section>
                 }

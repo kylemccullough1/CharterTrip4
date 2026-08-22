@@ -72,28 +72,6 @@
             </div>
         </div>
 
-        <div class="carousel-ui">
-            <button class="car-btn" aria-label="Previous photo" @onclick="() => Advance(-1)">‹</button>
-            <div class="car-mid">
-                <p class="slide-caption">
-                    <b>@CurrentSlide.Caption</b>
-                    @if (!string.IsNullOrWhiteSpace(CurrentSlide.Sub))
-                    {
-                        <span> · @CurrentSlide.Sub</span>
-                    }
-                </p>
-                <div class="dots">
-                    @for (var i = 0; i < Slides.Count; i++)
-                    {
-                        var index = i;
-                        <button class="dot @(index == _slideIndex ? "on" : null)"
-                                aria-label="@($"Photo {index + 1}")"
-                                @onclick="() => Show(index)"></button>
-                    }
-                </div>
-            </div>
-            <button class="car-btn" aria-label="Next photo" @onclick="() => Advance(1)">›</button>
-        </div>
     </section>
 
     <SectionCard Title="The weekend at a glance"
@@ -179,7 +157,6 @@
     private TripSummary.Countdown _countdown;
 
     private List<CarouselSlide> Slides => Trip.Slides;
-    private CarouselSlide CurrentSlide => Slides.Count > 0 ? Slides[_slideIndex] : new CarouselSlide();
     private IReadOnlyList<(Team Team, int Total)> Standings => TripSummary.Standings(Trip);
     private bool AnyScores => Trip.Scores.Count > 0;
 
@@ -188,9 +165,9 @@
         base.OnInitialized();
         _countdown = TripSummary.ToStart(Trip.Trip, DateTimeOffset.UtcNow);
 
-        // Rotating on the server costs one tiny render per client every 6.5s. With a couple of
-        // dozen people that is nothing, and it keeps the caption in step with the image without
-        // any JavaScript. If this ever becomes a crowd, move it to a CSS animation.
+        // Crossfades the hero background. This costs one small render per connected client
+        // every 6.5s, which is nothing for a couple of dozen people but is pure decoration —
+        // if it ever matters, this is a CSS animation waiting to happen.
         _timer = new Timer(_ => _ = InvokeAsync(() => { Advance(1); StateHasChanged(); }),
                            null, TimeSpan.FromSeconds(6.5), TimeSpan.FromSeconds(6.5));
     }
@@ -200,8 +177,6 @@
         if (Slides.Count == 0) return;
         _slideIndex = ((_slideIndex + delta) % Slides.Count + Slides.Count) % Slides.Count;
     }
-
-    private void Show(int index) => _slideIndex = index;
 
     public override void Dispose()
     {

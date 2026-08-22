@@ -440,25 +440,6 @@ select.textfield { cursor: pointer; }
 .hb-lead .hb-pts { color: var(--gold); }
 .hb-foot { margin: 12px 0 0; font-size: 12.5px; color: var(--text-dim); }
 
-/* carousel controls */
-.carousel-ui {
-  position: absolute; z-index: 3; left: 0; right: 0; bottom: 16px;
-  max-width: 1360px; margin: 0 auto; padding: 0 20px;
-  display: flex; align-items: center; gap: 12px;
-}
-.car-btn {
-  width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
-  background: rgba(10,12,16,.6); border: 1px solid var(--line);
-  color: var(--text-dim); font-size: 18px; line-height: 1; flex: 0 0 auto;
-}
-.car-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
-.car-mid { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
-.slide-caption { margin: 0; font-size: 12.5px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.slide-caption b { color: var(--text); font-weight: 600; }
-.dots { display: flex; gap: 6px; flex: 0 0 auto; }
-.dot { width: 7px; height: 7px; padding: 0; border-radius: 50%; border: 0; cursor: pointer; background: rgba(255,255,255,.28); }
-.dot.on { background: var(--gold); width: 20px; border-radius: 999px; }
-
 /* slide manager */
 .slide-list { display: flex; flex-direction: column; gap: 10px; }
 .slide-row { display: flex; align-items: center; gap: 12px; padding: 8px; border: 1px solid var(--line-soft); border-radius: var(--radius-sm); }
@@ -1060,8 +1041,6 @@ select.textfield { cursor: pointer; }
   }
   .dropdown-item { padding: 9px 12px; font-size: 14px; }
   .hero-inner { padding: 36px 18px 108px; }
-  .carousel-ui { flex-wrap: wrap; }
-  .car-mid { order: -1; flex: 1 1 100%; }
   .glance-list li { grid-template-columns: 66px 1fr; }
   .glance-list .tag { grid-column: 2; justify-self: start; }
   .cast-row { flex-wrap: wrap; }
@@ -1080,7 +1059,7 @@ select.textfield { cursor: pointer; }
 }
 
 @media print {
-  .topbar, .footer, .carousel-ui, .itin-move, .btn, .icon-btn, .team-photo-actions { display: none !important; }
+  .topbar, .footer, .itin-move, .btn, .icon-btn, .team-photo-actions { display: none !important; }
   body { background: #fff; color: #000; }
   .card, .table, .itin-item { border-color: #ccc; background: #fff; color: #000; }
 }

@@ -231,6 +231,16 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .
   font-size: 12px; line-height: 1; padding: 0;
 }
 .mini-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
+
+/* Same look as .mini-btn but sized by its text. .mini-btn is a fixed 24px square with no
+   padding, which is right for a single glyph and crushes anything longer. */
+.pill-btn {
+  height: 28px; padding: 0 11px; border-radius: 999px; cursor: pointer;
+  background: transparent; border: 1px solid var(--line); color: var(--text-dim);
+  font-family: inherit; font-size: 12px; line-height: 1; white-space: nowrap;
+}
+.pill-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
+.pill-btn:disabled { opacity: .4; cursor: default; }
 .mini-btn.btn-danger-ghost:hover { color: #fff; background: var(--ruby); border-color: var(--ruby); }
 
 /* --------------------------------------------------------- form fields -- */

@@ -248,10 +248,10 @@
                     <div class="editor-nudge">
                         <span class="muted tiny">Shift the start</span>
                         <div>
-                            <button class="mini-btn" @onclick="() => NudgeStartAsync(editing.Id, -15)">−15m</button>
-                            <button class="mini-btn" @onclick="() => NudgeStartAsync(editing.Id, 15)">+15m</button>
-                            <button class="mini-btn" @onclick="() => MoveDayAsync(editing.Id, -1)">« day</button>
-                            <button class="mini-btn" @onclick="() => MoveDayAsync(editing.Id, 1)">day »</button>
+                            <button class="pill-btn" @onclick="() => NudgeStartAsync(editing.Id, -15)">−15 min</button>
+                            <button class="pill-btn" @onclick="() => NudgeStartAsync(editing.Id, 15)">+15 min</button>
+                            <button class="pill-btn" @onclick="() => MoveDayAsync(editing.Id, -1)">« Prev day</button>
+                            <button class="pill-btn" @onclick="() => MoveDayAsync(editing.Id, 1)">Next day »</button>
                         </div>
                     </div>
 

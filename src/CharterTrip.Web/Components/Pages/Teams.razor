@@ -48,13 +48,6 @@
                                                   Placeholder="Team name" />
                                 </h3>
                             </div>
-                            <p class="muted tiny">
-                                @roster.PlayerCount @(roster.PlayerCount == 1 ? "player" : "players")
-                                @if (!string.IsNullOrWhiteSpace(team.Lead))
-                                {
-                                    <span> · led by @team.Lead</span>
-                                }
-                            </p>
                         </header>
 
                         <div class="team-people">

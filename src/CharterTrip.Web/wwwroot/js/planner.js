@@ -82,8 +82,12 @@ function onPointerMove(event) {
     event.preventDefault();
 
     if (drag.mode === 'resize') {
-        drag.card.style.height = Math.max(MIN_HEIGHT_PX, drag.originHeight + dy) + 'px';
+        // Write a custom property that CSS applies only while .is-resizing, rather than
+        // overwriting style.height. Blazor renders height in the style attribute and diffs
+        // against its own last output, so anything JS clears there is gone for good.
+        drag.card.style.setProperty('--drag-h', Math.max(MIN_HEIGHT_PX, drag.originHeight + dy) + 'px');
     } else {
+        // Blazor never renders transform, so this one is ours to set and clear freely.
         drag.card.style.transform = `translate(${dx}px, ${dy}px)`;
     }
 }
@@ -93,13 +97,14 @@ async function onPointerUp(event) {
     if (!drag) return;
 
     state.drag = null;
-    drag.card.classList.remove('is-dragging', 'is-resizing');
 
-    // Hand the styles back to Blazor — it owns them once the server re-renders.
-    drag.card.style.transform = '';
-    drag.card.style.height = '';
-
+    // A plain click never set anything, so it must not clear anything either. This ran before
+    // the check once, and every click on a card silently stripped its height.
     if (!drag.moved) return;
+
+    drag.card.classList.remove('is-dragging', 'is-resizing');
+    drag.card.style.transform = '';
+    drag.card.style.removeProperty('--drag-h');
 
     // Swallow the click this drag is about to generate, or the editor pops open on every drop.
     state.suppressClick = true;

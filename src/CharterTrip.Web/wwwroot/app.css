@@ -554,7 +554,9 @@ select.textfield { cursor: pointer; }
 .planner-card:hover, .planner-card:focus-visible { border-color: var(--gold-dim); box-shadow: var(--shadow-sm); outline: none; }
 .planner-card.is-editing { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold-dim); }
 .planner-card.is-dragging { opacity: .85; box-shadow: var(--shadow); z-index: 30; cursor: grabbing; }
-.planner-card.is-resizing { z-index: 30; }
+/* Live resize feedback. Uses a custom property so the height Blazor renders in the style
+   attribute is never overwritten — see the note in planner.js. */
+.planner-card.is-resizing { z-index: 30; height: var(--drag-h) !important; }
 
 .card-time { font-family: var(--display); font-size: 10.5px; font-weight: 700; color: var(--gold); letter-spacing: .03em; white-space: nowrap; }
 .card-title { font-size: 13px; font-weight: 600; line-height: 1.25; }

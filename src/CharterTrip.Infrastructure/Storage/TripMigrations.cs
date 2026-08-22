@@ -12,7 +12,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 6;
+    public const int CurrentVersion = 7;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -24,6 +24,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 4) changed |= ToV4_LogisticsRemoved(trip);
         if (trip.SchemaVersion < 5) changed |= ToV5_VenueCorrections(trip);
         if (trip.SchemaVersion < 6) changed |= ToV6_ChecklistGoneAndRosterTrimmed(trip);
+        if (trip.SchemaVersion < 7) changed |= ToV7_CountdownAndTagline(trip);
 
         if (trip.SchemaVersion != CurrentVersion)
         {
@@ -184,6 +185,28 @@ public static class TripMigrations
         // True regardless, so the version bump forces the checklist key out of the file rather
         // than leaving it there until someone happens to make an edit.
         return true || removed > 0;
+    }
+
+    /// <summary>
+    /// The home page counts down to Trip.StartsAt, which was still 4pm — the original check-in
+    /// time. v5 corrected the words on the venue page but not the timestamp behind the counter,
+    /// so the countdown was quietly running two hours late.
+    ///
+    /// Also clears the tagline, which no longer has anywhere to appear.
+    /// </summary>
+    private static bool ToV7_CountdownAndTagline(TripData trip)
+    {
+        var changed = false;
+        var startsAt = trip.Trip.StartsAt;
+
+        if (startsAt != default && startsAt.Hour == 16)
+        {
+            trip.Trip.StartsAt = new DateTimeOffset(
+                startsAt.Year, startsAt.Month, startsAt.Day, 14, 0, 0, startsAt.Offset);
+            changed = true;
+        }
+
+        return changed;
     }
 
     private static bool ClearLegacy(ItineraryItem item)

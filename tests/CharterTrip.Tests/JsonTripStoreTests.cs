@@ -33,7 +33,7 @@ public class JsonTripStoreTests
         await using var fx = new StoreFixture();
         var before = fx.Store.Current.Revision;
 
-        await fx.Store.MutateAsync(t => t.Trip.Tagline = "changed", TripArea.Trip);
+        await fx.Store.MutateAsync(t => t.Trip.Kicker = "changed", TripArea.Trip);
 
         Assert.Equal(before + 1, fx.Store.Current.Revision);
     }
@@ -46,7 +46,7 @@ public class JsonTripStoreTests
         var seen = new List<TripChanged>();
         fx.Store.Changed += c => { seen.Add(c); return Task.CompletedTask; };
 
-        await fx.Store.MutateAsync(t => t.Trip.Tagline = "x", TripArea.Trip);
+        await fx.Store.MutateAsync(t => t.Trip.Kicker = "x", TripArea.Trip);
 
         var change = Assert.Single(seen);
         Assert.Equal(TripArea.Trip, change.Area);
@@ -64,7 +64,7 @@ public class JsonTripStoreTests
         fx.Store.Changed += _ => throw new InvalidOperationException("component was disposed mid-render");
         fx.Store.Changed += _ => { reachedSecond = true; return Task.CompletedTask; };
 
-        await fx.Store.MutateAsync(t => t.Trip.Tagline = "x", TripArea.Trip);
+        await fx.Store.MutateAsync(t => t.Trip.Kicker = "x", TripArea.Trip);
 
         Assert.True(reachedSecond);
     }
@@ -94,7 +94,7 @@ public class JsonTripStoreTests
     {
         await using var fx = new StoreFixture(debounceMs: 10_000);
 
-        await fx.Store.MutateAsync(t => t.Trip.Tagline = "typed one character at a time", TripArea.Trip);
+        await fx.Store.MutateAsync(t => t.Trip.Kicker = "typed one character at a time", TripArea.Trip);
 
         // The debounce window is still open, so disk should still hold the seed value.
         var onDiskBefore = await File.ReadAllTextAsync(fx.TripFilePath);
@@ -111,10 +111,10 @@ public class JsonTripStoreTests
     {
         await using var fx = new StoreFixture(debounceMs: 10_000);
 
-        await fx.Store.MutateAsync(t => t.Trip.Tagline = "saved on shutdown", TripArea.Trip);
+        await fx.Store.MutateAsync(t => t.Trip.Kicker = "saved on shutdown", TripArea.Trip);
         var reloaded = await fx.RestartAsync();   // disposes, which must flush
 
-        Assert.Equal("saved on shutdown", reloaded.Current.Trip.Tagline);
+        Assert.Equal("saved on shutdown", reloaded.Current.Trip.Kicker);
     }
 
     [Fact]
@@ -122,7 +122,7 @@ public class JsonTripStoreTests
     {
         await using var fx = new StoreFixture();
 
-        await fx.Store.MutateAsync(t => t.Trip.Tagline = "x", TripArea.Trip);
+        await fx.Store.MutateAsync(t => t.Trip.Kicker = "x", TripArea.Trip);
         await fx.Store.FlushAsync();
 
         Assert.Empty(Directory.GetFiles(fx.DataRoot, "*.tmp"));
@@ -148,7 +148,7 @@ public class JsonTripStoreTests
     public async Task A_write_from_outside_the_process_is_archived_before_being_overwritten()
     {
         await using var fx = new StoreFixture();
-        await fx.Store.MutateAsync(t => t.Trip.Tagline = "ours", TripArea.Trip);
+        await fx.Store.MutateAsync(t => t.Trip.Kicker = "ours", TripArea.Trip);
         await fx.Store.FlushAsync();
 
         // Somebody edits trip.json by hand, or a second instance writes it.
@@ -156,7 +156,7 @@ public class JsonTripStoreTests
         File.WriteAllText(fx.TripFilePath, foreign);
         File.SetLastWriteTimeUtc(fx.TripFilePath, DateTime.UtcNow.AddSeconds(5));
 
-        await fx.Store.MutateAsync(t => t.Trip.Tagline = "ours again", TripArea.Trip);
+        await fx.Store.MutateAsync(t => t.Trip.Kicker = "ours again", TripArea.Trip);
         await fx.Store.FlushAsync();
 
         var archived = Directory.GetFiles(Path.Combine(fx.DataRoot, "backups"), "trip-external-*.json");
@@ -174,7 +174,7 @@ public class JsonTripStoreTests
 
         for (var i = 0; i < 5; i++)
         {
-            await fx.Store.MutateAsync(t => t.Trip.Tagline = $"pass {i}", TripArea.Trip);
+            await fx.Store.MutateAsync(t => t.Trip.Kicker = $"pass {i}", TripArea.Trip);
             await fx.Store.FlushAsync();
         }
 

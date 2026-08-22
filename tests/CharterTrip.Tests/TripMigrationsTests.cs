@@ -217,4 +217,33 @@ public class TripMigrationsTests
         Assert.Equal("Friday 3:30 PM", trip.Venue.CheckIn);
         Assert.Equal("Sunday 11:00 AM", trip.Venue.CheckOut);
     }
+
+    // ------------------------------------------------------------ v7 countdown
+
+    [Fact]
+    public void V7_moves_the_countdown_target_to_2pm()
+    {
+        var trip = new TripData
+        {
+            SchemaVersion = 6,
+            Trip = { StartsAt = new DateTimeOffset(2026, 8, 28, 16, 0, 0, TimeSpan.FromHours(-5)) }
+        };
+
+        Assert.True(TripMigrations.Apply(trip));
+        Assert.Equal(14, trip.Trip.StartsAt.Hour);
+        Assert.Equal(new DateTimeOffset(2026, 8, 28, 14, 0, 0, TimeSpan.FromHours(-5)), trip.Trip.StartsAt);
+    }
+
+    [Fact]
+    public void V7_leaves_a_start_time_that_is_not_the_old_4pm_alone()
+    {
+        var trip = new TripData
+        {
+            SchemaVersion = 6,
+            Trip = { StartsAt = new DateTimeOffset(2026, 8, 28, 18, 30, 0, TimeSpan.FromHours(-5)) }
+        };
+
+        TripMigrations.Apply(trip);
+        Assert.Equal(new DateTimeOffset(2026, 8, 28, 18, 30, 0, TimeSpan.FromHours(-5)), trip.Trip.StartsAt);
+    }
 }

@@ -5,7 +5,14 @@ namespace CharterTrip.Core.Services;
 /// <summary>A team with the people currently on it.</summary>
 public sealed record TeamRoster(Team Team, IReadOnlyList<RosterPerson> Members)
 {
+    /// <summary>Everyone on the team, lead included.</summary>
     public int Count => Members.Count;
+
+    /// <summary>
+    /// Everyone except the lead. The lead runs the team rather than playing for it, so this is
+    /// the number that matters when checking the sides are fair.
+    /// </summary>
+    public int PlayerCount => Members.Count(p => !TeamService.IsLead(Team, p));
 }
 
 /// <summary>
@@ -62,6 +69,24 @@ public static class TeamService
         if (trip.Teams.Any(t => t.Id == teamId)) person.TeamId = teamId;
     }
 
+    /// <summary>
+    /// Rename a person. A team records its lead by name, so renaming a lead has to move that
+    /// reference too or the team silently loses track of who is leading it.
+    /// </summary>
+    public static void RenamePerson(TripData trip, string personId, string name)
+    {
+        var person = FindPerson(trip, personId);
+        if (person is null) return;
+
+        var trimmed = name.Trim();
+        if (trimmed.Length == 0 || trimmed == person.Name) return;
+
+        foreach (var team in trip.Teams.Where(t => string.Equals(t.Lead, person.Name, StringComparison.OrdinalIgnoreCase)))
+            team.Lead = trimmed;
+
+        person.Name = trimmed;
+    }
+
     public static void RenameTeam(TripData trip, string teamId, string name)
     {
         var team = FindTeam(trip, teamId);
@@ -77,10 +102,4 @@ public static class TeamService
     public static Team? FindTeam(TripData trip, string teamId) =>
         trip.Teams.FirstOrDefault(t => t.Id == teamId);
 
-    /// <summary>Largest and smallest team sizes, for flagging a lopsided split.</summary>
-    public static (int Smallest, int Largest) Spread(TripData trip)
-    {
-        var counts = Rosters(trip).Select(r => r.Count).ToList();
-        return counts.Count == 0 ? (0, 0) : (counts.Min(), counts.Max());
-    }
 }

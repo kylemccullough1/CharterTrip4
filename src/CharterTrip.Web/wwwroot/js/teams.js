@@ -35,8 +35,9 @@ function onPointerDown(event) {
     const person = event.target.closest?.('.person');
     if (!person) return;
 
-    // The team picker is a control in its own right; leave it alone.
-    if (event.target.closest?.('select, option, button, a, input')) return;
+    // Never start a drag from a control or from the inline name editor — dragging and
+    // selecting text inside an input are different intentions.
+    if (event.target.closest?.('input, textarea, select, option, button, a')) return;
 
     state.drag = {
         person,

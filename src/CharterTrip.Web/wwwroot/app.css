@@ -659,7 +659,9 @@ select.textfield { cursor: pointer; }
 .person:hover { border-color: var(--line); }
 .person.is-dragging { opacity: .9; box-shadow: var(--shadow); border-color: var(--gold-dim); z-index: 40; position: relative; cursor: grabbing; }
 .person.is-lead { background: rgba(212,175,55,.08); }
-.person-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person-name { flex: 1; min-width: 0; }
+.person-name .editable { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person-name .inline-edit { width: 100%; padding: 1px 4px; font-size: 13.5px; }
 
 .lead-tag {
   font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase;
@@ -667,18 +669,6 @@ select.textfield { cursor: pointer; }
   padding: 1px 6px; flex: 0 0 auto;
 }
 
-/* The reliable way to move somebody: works on a phone and from the keyboard. */
-.person-pick {
-  flex: 0 0 auto; width: 26px; opacity: 0;
-  background: transparent; border: 1px solid var(--line); border-radius: 6px;
-  color: var(--text-dim); font: inherit; font-size: 11px; padding: 2px;
-  cursor: pointer; transition: opacity .15s, width .15s;
-}
-.person:hover .person-pick, .person-pick:focus { opacity: 1; width: 104px; }
-
-/* No hover on touch, so the picker is always out — and wide enough that the team name is not
-   fighting the select's own chevron for the last few pixels. */
-@media (hover: none) { .person-pick { opacity: 1; width: 118px; padding-right: 4px; } }
 
 .empty-team { padding: 10px 4px; text-align: center; }
 

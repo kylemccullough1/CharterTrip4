@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 6,
+  "schemaVersion": 7,
   "revision": 0,
   "updatedUtc": "2026-08-19T00:00:00+00:00",
   "trip": {
@@ -9,8 +9,7 @@
     "venue": "Braun Manor",
     "city": "Denison, TX",
     "dates": "August 28-30, 2026",
-    "tagline": "One weekend. Four teams. One trophy.",
-    "startsAt": "2026-08-28T16:00:00-05:00",
+    "startsAt": "2026-08-28T14:00:00-05:00",
     "endsAt": "2026-08-30T12:00:00-05:00",
     "committee": [
       "Jou",

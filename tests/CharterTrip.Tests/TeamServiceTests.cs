@@ -129,9 +129,40 @@ public class TeamServiceTests
     }
 
     [Fact]
-    public void Spread_reports_the_smallest_and_largest_team()
+    public void The_lead_does_not_count_as_a_player()
     {
-        var trip = Trip();                       // 3 / 2 / 2 / 2
-        Assert.Equal((2, 3), TeamService.Spread(trip));
+        var jou = TeamService.Rosters(Trip()).Single(r => r.Team.Id == "jou");
+
+        Assert.Equal(3, jou.Count);        // JouJou, Brandon, Zach
+        Assert.Equal(2, jou.PlayerCount);  // the lead runs the team rather than playing for it
+    }
+
+    [Fact]
+    public void Renaming_a_person_trims_and_refuses_a_blank()
+    {
+        var trip = Trip();
+        var cat = trip.Roster.Single(p => p.Name == "Cat Xiong");
+
+        TeamService.RenamePerson(trip, cat.Id, "  Catherine Xiong  ");
+        Assert.Equal("Catherine Xiong", cat.Name);
+
+        TeamService.RenamePerson(trip, cat.Id, "   ");
+        Assert.Equal("Catherine Xiong", cat.Name);
+    }
+
+    [Fact]
+    public void Renaming_a_lead_keeps_the_team_pointing_at_them()
+    {
+        // The team stores its lead by name, so a rename has to move that reference too or the
+        // team quietly forgets who is leading it and the badge disappears.
+        var trip = Trip();
+        var jouJou = trip.Roster.Single(p => p.Name == "JouJou");
+
+        TeamService.RenamePerson(trip, jouJou.Id, "Jou Yang");
+
+        var team = TeamService.FindTeam(trip, "jou")!;
+        Assert.Equal("Jou Yang", team.Lead);
+        Assert.True(TeamService.IsLead(team, jouJou));
+        Assert.Equal(2, TeamService.Rosters(trip).Single(r => r.Team.Id == "jou").PlayerCount);
     }
 }

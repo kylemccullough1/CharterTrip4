@@ -10,10 +10,6 @@
 <div class="page">
 
     <SectionCard Title="Teams" Subtitle="@SubtitleText">
-        <Actions>
-            <span class="muted tiny">@Trip.Roster.Count people · @Spread</span>
-        </Actions>
-
         <ChildContent>
             @if (Unassigned.Count > 0)
             {
@@ -26,19 +22,11 @@
                         @foreach (var person in Unassigned)
                         {
                             <div class="person is-loose" @key="person.Id" data-person-id="@person.Id">
-                                <span class="person-name">@person.Name</span>
-                                @if (CanEdit)
-                                {
-                                    <select class="person-pick" aria-label="@($"Team for {person.Name}")"
-                                            value=""
-                                            @onchange="e => MoveAsync(person.Id, e.Value?.ToString())">
-                                        <option value="" selected>—</option>
-                                        @foreach (var team in Trip.Teams)
-                                        {
-                                            <option value="@team.Id">@team.Name</option>
-                                        }
-                                    </select>
-                                }
+                                <span class="person-name">
+                                    <EditableText Value="@person.Name" ReadOnly="@(!CanEdit)"
+                                                  ValueChanged="@(v => RenamePersonAsync(person.Id, v))"
+                                                  Placeholder="Name" />
+                                </span>
                             </div>
                         }
                     </div>
@@ -65,7 +53,7 @@
                                 </h3>
                             </div>
                             <p class="muted tiny">
-                                @roster.Count @(roster.Count == 1 ? "person" : "people")
+                                @roster.PlayerCount @(roster.PlayerCount == 1 ? "player" : "players")
                                 @if (!string.IsNullOrWhiteSpace(team.Lead))
                                 {
                                     <span> · led by @team.Lead</span>
@@ -80,24 +68,15 @@
                                      @key="person.Id"
                                      data-person-id="@person.Id">
 
-                                    <span class="person-name">@person.Name</span>
+                                    <span class="person-name">
+                                        <EditableText Value="@person.Name" ReadOnly="@(!CanEdit)"
+                                                      ValueChanged="@(v => RenamePersonAsync(person.Id, v))"
+                                                      Placeholder="Name" />
+                                    </span>
 
                                     @if (TeamService.IsLead(team, person))
                                     {
                                         <span class="lead-tag" title="Team lead">lead</span>
-                                    }
-
-                                    @if (CanEdit)
-                                    {
-                                        <select class="person-pick" aria-label="@($"Team for {person.Name}")"
-                                                value="@team.Id"
-                                                @onchange="e => MoveAsync(person.Id, e.Value?.ToString())">
-                                            @foreach (var other in Trip.Teams)
-                                            {
-                                                <option value="@other.Id" selected="@(other.Id == team.Id)">@other.Name</option>
-                                            }
-                                            <option value="">Not on a team</option>
-                                        </select>
                                     }
                                 </div>
                             }
@@ -125,22 +104,15 @@
     private IReadOnlyList<RosterPerson> Unassigned => TeamService.Unassigned(Trip);
 
     private string SubtitleText => CanEdit
-        ? "Drag a name onto another team, or use the picker beside it. Click a team name to rename it."
+        ? "Drag a name onto another team. Click a name to rename it."
         : "Who is on which team.";
 
-    private string Spread
-    {
-        get
-        {
-            var (smallest, largest) = TeamService.Spread(Trip);
-            return largest - smallest > 1
-                ? $"uneven — {smallest} to {largest} per team"
-                : "evenly split";
-        }
-    }
 
     private Task RenameAsync(string teamId, string name) =>
         MutateAsync(t => TeamService.RenameTeam(t, teamId, name));
+
+    private Task RenamePersonAsync(string personId, string name) =>
+        MutateAsync(t => TeamService.RenamePerson(t, personId, name));
 
     private async Task MoveAsync(string personId, string? teamId)
     {

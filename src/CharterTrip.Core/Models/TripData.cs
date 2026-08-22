@@ -40,7 +40,6 @@ public sealed class TripInfo
     public string Venue { get; set; } = "";
     public string City { get; set; } = "";
     public string Dates { get; set; } = "";
-    public string Tagline { get; set; } = "";
     public DateTimeOffset StartsAt { get; set; }
     public DateTimeOffset EndsAt { get; set; }
 

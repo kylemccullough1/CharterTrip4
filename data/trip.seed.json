@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "revision": 0,
   "updatedUtc": "2026-08-19T00:00:00+00:00",
   "trip": {
@@ -22,9 +22,8 @@
   "venue": {
     "name": "Braun Manor",
     "city": "Denison, TX",
-    "checkIn": "Friday 4:00 PM",
-    "checkOut": "Sunday 12:00 PM (pushed back - thanks Kyle)",
-    "byo": "BYOB / BYOTP / BYOPT / BYOL",
+    "checkIn": "Friday 2:00 PM",
+    "checkOut": "Sunday 12:00 PM",
     "inside": [
       "8 bedrooms",
       "4 bathrooms",
@@ -33,14 +32,9 @@
       "Towels provided"
     ],
     "outside": [
-      "Swimming pool (no hot tub)",
+      "Swimming pool",
       "Pond - catch & release fishing allowed",
       "Grill"
-    ],
-    "notIncluded": [
-      "Beer / liquor",
-      "Paper towels",
-      "Toilet paper"
     ],
     "stores": [
       {

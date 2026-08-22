@@ -55,10 +55,8 @@ public sealed class VenueInfo
     public string City { get; set; } = "";
     public string CheckIn { get; set; } = "";
     public string CheckOut { get; set; } = "";
-    public string Byo { get; set; } = "";
     public List<string> Inside { get; set; } = [];
     public List<string> Outside { get; set; } = [];
-    public List<string> NotIncluded { get; set; } = [];
     public List<NearbyPlace> Stores { get; set; } = [];
     public List<NearbyPlace> Parks { get; set; } = [];
 }

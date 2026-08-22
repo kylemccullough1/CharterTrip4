@@ -12,7 +12,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 4;
+    public const int CurrentVersion = 5;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -22,6 +22,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 2) changed |= ToV2_StructuredItineraryTimes(trip);
         if (trip.SchemaVersion < 3) changed |= ToV3_AlwaysScheduledAndVersioned(trip);
         if (trip.SchemaVersion < 4) changed |= ToV4_LogisticsRemoved(trip);
+        if (trip.SchemaVersion < 5) changed |= ToV5_VenueCorrections(trip);
 
         if (trip.SchemaVersion != CurrentVersion)
         {
@@ -126,6 +127,45 @@ public static class TripMigrations
     /// make an edit. It also triggers the usual pre-migration archive.
     /// </summary>
     private static bool ToV4_LogisticsRemoved(TripData trip) => true;
+
+    /// <summary>
+    /// Corrections to the venue details. These are stored values with no editing screen behind
+    /// them, so a migration is the only way to reach the copy running on Azure.
+    ///
+    /// Each change is conditional on finding the old text, which keeps this idempotent and means
+    /// it would leave a hand-edited value alone rather than stamping over it.
+    /// </summary>
+    private static bool ToV5_VenueCorrections(TripData trip)
+    {
+        var changed = false;
+        var venue = trip.Venue;
+
+        // Check-in is 2pm, matching the itinerary rather than the original booking note.
+        if (venue.CheckIn.Contains("4:00 PM", StringComparison.OrdinalIgnoreCase))
+        {
+            venue.CheckIn = "Friday 2:00 PM";
+            changed = true;
+        }
+
+        // Drop the "(pushed back - thanks Kyle)" aside from the checkout time.
+        var aside = venue.CheckOut.IndexOf('(');
+        if (aside > 0)
+        {
+            venue.CheckOut = venue.CheckOut[..aside].TrimEnd();
+            changed = true;
+        }
+
+        for (var i = 0; i < venue.Outside.Count; i++)
+        {
+            if (!venue.Outside[i].StartsWith("Swimming pool", StringComparison.OrdinalIgnoreCase)) continue;
+            if (venue.Outside[i] == "Swimming pool") continue;
+
+            venue.Outside[i] = "Swimming pool";
+            changed = true;
+        }
+
+        return changed;
+    }
 
     private static bool ClearLegacy(ItineraryItem item)
     {

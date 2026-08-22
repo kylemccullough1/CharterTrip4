@@ -167,4 +167,54 @@ public class TripMigrationsTests
 
         Assert.All(trip.Itinerary.SelectMany(d => d.Items), i => Assert.NotNull(i.StartMinutesOrNull));
     }
+
+    // ------------------------------------------------------------ v5 venue
+
+    private static TripData WithVenue(string checkIn, string checkOut, params string[] outside) => new()
+    {
+        SchemaVersion = 4,
+        Venue = new VenueInfo { CheckIn = checkIn, CheckOut = checkOut, Outside = [.. outside] }
+    };
+
+    [Fact]
+    public void V5_moves_check_in_to_2pm_and_drops_the_checkout_aside()
+    {
+        var trip = WithVenue("Friday 4:00 PM", "Sunday 12:00 PM (pushed back - thanks Kyle)");
+        Assert.True(TripMigrations.Apply(trip));
+
+        Assert.Equal("Friday 2:00 PM", trip.Venue.CheckIn);
+        Assert.Equal("Sunday 12:00 PM", trip.Venue.CheckOut);
+    }
+
+    [Fact]
+    public void V5_shortens_the_swimming_pool_line()
+    {
+        var trip = WithVenue("Friday 4:00 PM", "Sunday 12:00 PM",
+            "Swimming pool (no hot tub)", "Pond - catch & release fishing allowed", "Grill");
+
+        TripMigrations.Apply(trip);
+
+        Assert.Equal(["Swimming pool", "Pond - catch & release fishing allowed", "Grill"], trip.Venue.Outside);
+    }
+
+    [Fact]
+    public void V5_leaves_values_that_have_already_been_corrected()
+    {
+        var trip = WithVenue("Friday 2:00 PM", "Sunday 12:00 PM", "Swimming pool");
+        trip.SchemaVersion = TripMigrations.CurrentVersion;
+
+        Assert.False(TripMigrations.Apply(trip));
+        Assert.Equal("Friday 2:00 PM", trip.Venue.CheckIn);
+        Assert.Equal(["Swimming pool"], trip.Venue.Outside);
+    }
+
+    [Fact]
+    public void V5_does_not_stamp_over_a_hand_edited_check_in()
+    {
+        var trip = WithVenue("Friday 3:30 PM", "Sunday 11:00 AM", "Swimming pool");
+        TripMigrations.Apply(trip);
+
+        Assert.Equal("Friday 3:30 PM", trip.Venue.CheckIn);
+        Assert.Equal("Sunday 11:00 AM", trip.Venue.CheckOut);
+    }
 }

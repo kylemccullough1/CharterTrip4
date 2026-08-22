@@ -49,30 +49,9 @@
                     }
                 </ul>
             </div>
-            <div class="card">
-                <h4>Not included</h4>
-                <ul class="plain">
-                    @foreach (var line in Place.NotIncluded) { <li>@line</li> }
-                </ul>
-                <p class="muted tiny">@Place.Byo</p>
-            </div>
         </div>
     </SectionCard>
 
-    <SectionCard Title="The committee" Subtitle="@($"JAKE — {string.Join(", ", Trip.Trip.Committee)}")">
-        <div class="note-grid">
-            <div class="card">
-                <h4>Money</h4>
-                <p class="muted tiny">
-                    If cost is a problem for anyone, message one of the four of us and we will work it out.
-                </p>
-            </div>
-            <div class="card">
-                <h4>Sunday</h4>
-                <p>New committee members get picked before checkout. Volunteer or get volunteered.</p>
-            </div>
-        </div>
-    </SectionCard>
 </div>
 
 @code {

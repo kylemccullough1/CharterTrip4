@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -19,7 +20,15 @@ public static class TripJson
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
             WriteIndented = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+
+            // Without this the default encoder escapes &, ' and every non-ASCII character, so
+            // "catch & release" is stored as "catch \u0026 release". It is valid JSON and the app
+            // never noticed, but it broke the one promise this class makes: the file on disk did
+            // not look like the seed in git, and neither was pleasant to read in a diff. Safe
+            // here because this JSON is only ever read back by the app — Blazor does its own
+            // encoding on the way to the page.
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
         options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
         return options;

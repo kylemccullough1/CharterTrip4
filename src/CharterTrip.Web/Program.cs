@@ -42,14 +42,27 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Azure pings this to decide whether the app is alive; it also proves the data file loaded.
-app.MapGet("/healthz", (ITripStore store) => Results.Ok(new
+// Azure pings this to decide whether the app is alive, but "alive" is the easy half. An app
+// whose data directory does not survive deployment serves a flawless site built from the seed
+// and loses every edit on the next restart, so the store's own view of itself is reported too:
+// `seeded` still true after the site has been in use means trip.json is not being kept.
+//
+// Deliberately still a 200 — the deploy workflow smoke-tests this endpoint, and a data-root
+// problem should not be able to block shipping a fix during the trip.
+app.MapGet("/healthz", (ITripStore store) =>
 {
-    status = "healthy",
-    revision = store.Current.Revision,
-    people = store.Current.Roster.Count,
-    updatedUtc = store.Current.UpdatedUtc
-}));
+    var status = store.Status;
+    return Results.Ok(new
+    {
+        status = status.CanPersist && !status.Seeded ? "healthy" : "degraded",
+        revision = store.Current.Revision,
+        people = store.Current.Roster.Count,
+        updatedUtc = store.Current.UpdatedUtc,
+        dataPath = status.DataPath,
+        seeded = status.Seeded,
+        canPersist = status.CanPersist
+    });
+});
 
 // Touch the store during startup so a broken data file fails loudly here rather than on
 // the first page request.

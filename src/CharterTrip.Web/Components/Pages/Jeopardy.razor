@@ -8,14 +8,117 @@
 
 <PageTitle>Jeopardy · Charter Trip 2026</PageTitle>
 
-<div class="jeo-root @(Game.Phase == JeopardyPhase.NotStarted ? "is-title" : null)">
+<div class="jeo-root @(IsTitleCard ? "is-title" : null)">
 
-@if (Game.Phase == JeopardyPhase.NotStarted)
+@if (IsEditingBoard)
+{
+    <section class="jeo-editor">
+
+        <header class="jeo-editor-head">
+            <div>
+                <p class="jeo-kicker">Editing the board</p>
+                <h2 class="jeo-editor-title">
+                    <EditableText Value="@Board.Title" ValueChanged="SetBoardTitleAsync"
+                                  Placeholder="Board title" />
+                </h2>
+            </div>
+            <button class="btn btn-gold" @onclick="() => _editingBoard = false">Done</button>
+        </header>
+
+        <p class="jeo-hint">
+            Click any line to change it; edits save as soon as you leave the field.
+            A clue with no text and no image stays greyed out on the board.
+        </p>
+
+        @for (var i = 0; i < Board.Categories.Count; i++)
+        {
+            var index = i;                       // the loop variable is shared; the handlers are not
+            var category = Board.Categories[i];
+
+            <section class="jeo-editor-cat" @key="category">
+                <h3 class="jeo-editor-catname">
+                    <EditableText Value="@category.Name"
+                                  ValueChanged="@(v => SetCategoryNameAsync(index, v))"
+                                  Placeholder="Category" />
+                </h3>
+
+                @foreach (var clue in category.Clues)
+                {
+                    <div class="jeo-editor-clue @(clue.IsEmpty ? "is-empty" : null)" @key="clue.Id">
+                        <input class="inline-edit jeo-editor-value" type="number" min="0" step="5"
+                               aria-label="Points" value="@clue.Value"
+                               @onchange="@(e => SetClueValueAsync(clue.Id, e.Value?.ToString()))" />
+
+                        <div class="jeo-editor-fields">
+                            <div class="jeo-editor-field">
+                                <span class="jeo-editor-label">Clue</span>
+                                <EditableText Value="@clue.Clue" Multiline="true"
+                                              ValueChanged="@(v => EditClueAsync(clue.Id, c => c.Clue = v))"
+                                              Placeholder="what goes up on the board" />
+                            </div>
+                            <div class="jeo-editor-field">
+                                <span class="jeo-editor-label">Answer</span>
+                                <EditableText Value="@clue.Response" Multiline="true"
+                                              ValueChanged="@(v => EditClueAsync(clue.Id, c => c.Response = v))"
+                                              Placeholder="what the host is looking for" />
+                            </div>
+                            <div class="jeo-editor-field is-aside">
+                                <span class="jeo-editor-label">Clue image</span>
+                                <EditableText Value="@clue.ClueImage" CssClass="jeo-editor-url"
+                                              ValueChanged="@(v => EditClueAsync(clue.Id, c => c.ClueImage = v))"
+                                              Placeholder="image URL, optional" />
+                            </div>
+                            <div class="jeo-editor-field is-aside">
+                                <span class="jeo-editor-label">Answer image</span>
+                                <EditableText Value="@clue.ResponseImage" CssClass="jeo-editor-url"
+                                              ValueChanged="@(v => EditClueAsync(clue.Id, c => c.ResponseImage = v))"
+                                              Placeholder="image URL, optional" />
+                            </div>
+                        </div>
+                    </div>
+                }
+            </section>
+        }
+
+        <section class="jeo-editor-cat is-final">
+            <h3 class="jeo-editor-catname">
+                <EditableText Value="@Board.Final.Category"
+                              ValueChanged="@(v => EditFinalAsync(f => f.Category = v))"
+                              Placeholder="Final Jeopardy" />
+            </h3>
+
+            <div class="jeo-editor-clue">
+                <input class="inline-edit jeo-editor-value" type="number" min="0" step="5"
+                       aria-label="Final points" value="@Board.Final.Value"
+                       @onchange="@(e => SetFinalValueAsync(e.Value?.ToString()))" />
+
+                <div class="jeo-editor-fields">
+                    <div class="jeo-editor-field">
+                        <span class="jeo-editor-label">Clue</span>
+                        <EditableText Value="@Board.Final.Clue" Multiline="true"
+                                      ValueChanged="@(v => EditFinalAsync(f => f.Clue = v))"
+                                      Placeholder="the final clue" />
+                    </div>
+                    <div class="jeo-editor-field">
+                        <span class="jeo-editor-label">Answer</span>
+                        <EditableText Value="@Board.Final.Response" Multiline="true"
+                                      ValueChanged="@(v => EditFinalAsync(f => f.Response = v))"
+                                      Placeholder="what the host is looking for" />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="jeo-title-actions">
+            <button class="btn btn-gold" @onclick="() => _editingBoard = false">Done editing</button>
+        </div>
+    </section>
+}
+else if (Game.Phase == JeopardyPhase.NotStarted)
 {
     <section class="jeo-title">
         <p class="jeo-kicker">4th Annual Charter Trip</p>
         <h1>JEOPARDY</h1>
-        <p class="jeo-sub">@Board.Categories.Count categories · @PlayableCount clues · Final worth @Board.Final.Value</p>
 
         <div class="jeo-join">
             @foreach (var team in Trip.Teams)
@@ -39,7 +142,9 @@
         {
             <div class="jeo-title-actions">
                 <button class="btn btn-gold btn-lg" @onclick="BeginAsync">Start the game</button>
+                <button class="btn btn-ghost btn-sm" @onclick="() => _editingBoard = true">Edit questions</button>
                 <button class="btn btn-ghost btn-sm" @onclick="NewCodesAsync">New codes</button>
+                <button class="mini-btn" title="@(Muted ? "Unmute" : "Mute")" @onclick="ToggleMuteAsync">@(Muted ? "🔇" : "🔊")</button>
             </div>
         }
     </section>
@@ -242,14 +347,18 @@ else
     private JeopardyPhase _lastPhase = JeopardyPhase.NotStarted;
     private string? _lastClueId;
     private bool _showAnswer;
+    private bool _editingBoard;
 
     private JeopardyBoard Board => Trip.Jeopardy;
     private JeopardyGame Game => Trip.Jeopardy.Game;
     private bool Muted { get; set; }
     private bool ShowAnswer => _showAnswer || Game.Phase == JeopardyPhase.Judging;
 
+    // Only ever reachable from the title card, so a stale flag cannot hijack a game in progress.
+    private bool IsEditingBoard => _editingBoard && CanEdit && Game.Phase == JeopardyPhase.NotStarted;
+    private bool IsTitleCard => Game.Phase == JeopardyPhase.NotStarted && !IsEditingBoard;
+
     private string? BuzzedFirst => Game.LeadingBuzzTeamId;
-    private int PlayableCount => Board.Categories.SelectMany(c => c.Clues).Count(c => !c.IsEmpty);
 
     private string JoinHost => new Uri(Nav.BaseUri).Authority;
     private string BuzzUrl(string code) => Nav.ToAbsoluteUri($"/buzz/{code}").ToString();
@@ -328,6 +437,38 @@ else
         _confirm?.Show("Reset the whole game? Every clue comes back and the Jeopardy points leave the standings.",
             () => MutateAsync(t => JeopardyService.Reset(t, Random.Shared)), "Reset");
 
+    // ---------------------------------------------------------------- editing
+
+    private Task SetBoardTitleAsync(string value) => MutateAsync(t => t.Jeopardy.Title = value);
+
+    private Task SetCategoryNameAsync(int index, string value) => MutateAsync(t =>
+    {
+        if (index >= 0 && index < t.Jeopardy.Categories.Count)
+            t.Jeopardy.Categories[index].Name = value;
+    });
+
+    /// <summary>
+    /// Every clue field is written through here. The clue is looked up by id inside the mutation
+    /// rather than captured from the render, so an edit still lands on the right clue if the
+    /// board changed underneath the page.
+    /// </summary>
+    private Task EditClueAsync(string clueId, Action<JeopardyClue> apply) => MutateAsync(t =>
+    {
+        if (JeopardyService.FindClue(t, clueId) is { } clue) apply(clue);
+    });
+
+    private Task EditFinalAsync(Action<JeopardyFinal> apply) => MutateAsync(t => apply(t.Jeopardy.Final));
+
+    /// <summary>A cleared or nonsense points box leaves the value alone rather than zeroing it.</summary>
+    private Task SetClueValueAsync(string clueId, string? raw) =>
+        ParseValue(raw) is { } value ? EditClueAsync(clueId, c => c.Value = value) : Task.CompletedTask;
+
+    private Task SetFinalValueAsync(string? raw) =>
+        ParseValue(raw) is { } value ? EditFinalAsync(f => f.Value = value) : Task.CompletedTask;
+
+    private static int? ParseValue(string? raw) =>
+        int.TryParse(raw, out var value) && value >= 0 ? value : null;
+
     // ----------------------------------------------------------------- audio
 
     private async Task Unlock()
@@ -348,6 +489,25 @@ else
     /// </summary>
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            // Loaded here rather than on the first cue: the join screen needs music before
+            // anybody has pressed anything. Opening the page mid-game adopts the current phase
+            // silently, so a second screen joining does not replay cues everyone already heard.
+            try
+            {
+                _audio = await JS.InvokeAsync<IJSObjectReference>("import", "./js/jeopardy-audio.js");
+                _lastPhase = Game.Phase;
+                _lastClueId = Game.CurrentClueId;
+
+                if (Game.Phase == JeopardyPhase.NotStarted)
+                    await _audio.InvokeVoidAsync("armLobby");
+            }
+            catch (JSDisconnectedException) { }
+
+            return;
+        }
+
         if (_audio is null) return;
 
         var phase = Game.Phase;
@@ -360,6 +520,10 @@ else
 
             if (phase != _lastPhase)
             {
+                // The vamp belongs to the join screen; every other phase brings its own sound.
+                await _audio.InvokeVoidAsync(
+                    phase == JeopardyPhase.NotStarted ? "armLobby" : "stopLobby");
+
                 switch (phase)
                 {
                     case JeopardyPhase.Clue: await _audio.InvokeVoidAsync("startThink"); break;

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using CharterTrip.Core.Abstractions;
 using CharterTrip.Core.Models;
 using CharterTrip.Infrastructure.Seed;
@@ -33,6 +34,9 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
     private CancellationTokenSource? _debounce;
     private bool _disposed;
 
+    /// <summary>Set once by LoadOrSeed; nothing afterwards changes where the data came from.</summary>
+    private bool _seeded;
+
     /// <summary>Timestamp of the last write we made, so we can spot writes we did not make.</summary>
     private DateTime? _lastWriteWeMade;
 
@@ -45,6 +49,11 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
     }
 
     public TripData Current => _current;
+
+    public TripStoreStatus Status => new(
+        Path.GetFullPath(_options.TripFilePath),
+        _seeded,
+        DataDirectoryIsWritable());
 
     public event Func<TripChanged, Task>? Changed;
 
@@ -89,6 +98,17 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
             try
             {
                 var json = File.ReadAllText(path);
+
+                // Some historical shapes cannot be deserialized at all. Repair those first —
+                // otherwise one section the reader chokes on quarantines the whole trip.
+                var node = JsonNode.Parse(json);
+                if (LegacyJsonShapes.Normalize(node))
+                {
+                    json = node!.ToJsonString(TripJson.Options);
+                    _logger.LogInformation(
+                        "Rewrote a pre-v9 section of {Path} so the rest of the file could be read.", path);
+                }
+
                 var loaded = JsonSerializer.Deserialize<TripData>(json, TripJson.Options);
                 if (loaded is not null)
                 {
@@ -125,6 +145,7 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
         var seeded = SeedLoader.Load();
         TripMigrations.Apply(seeded);
         seeded.UpdatedUtc = _clock.UtcNow;
+        _seeded = true;
 
         try
         {
@@ -158,6 +179,27 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
     }
 
     /// <summary>Never delete a file we failed to parse — rename it so it can be inspected.</summary>
+    /// <summary>
+    /// Can we actually save? Asked by <see cref="Status"/> rather than assumed, because the
+    /// interesting deployment failure is a data directory that reads fine and silently discards
+    /// every write — the site looks perfect until it restarts.
+    /// </summary>
+    private bool DataDirectoryIsWritable()
+    {
+        try
+        {
+            Directory.CreateDirectory(_options.DataRoot);
+            var probe = Path.Combine(_options.DataRoot, ".write-probe");
+            File.WriteAllText(probe, "");
+            File.Delete(probe);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private void QuarantineUnreadableFile(string path)
     {
         try

@@ -69,6 +69,7 @@ src/CharterTrip.Core/            models + rules; references nothing
 src/CharterTrip.Infrastructure/  the JSON store, backups, photos
 src/CharterTrip.Web/             Blazor Server UI
 tests/CharterTrip.Tests/         xUnit
+tools/CharterTrip.SeedRefresh/   rebuilds the seed from a live trip.json
 data/trip.seed.json              the starting dataset (embedded into the build)
 docs/                            ARCHITECTURE.md, DEPLOY.md
 ```
@@ -86,6 +87,16 @@ after a short debounce, with rolling backups.
 | Azure | `/home/data/trip.json` |
 
 Delete your local `App_Data` folder to start over from `data/trip.seed.json`.
+
+The seed is the floor the app lands on when there is no data file, so it is worth keeping close to
+the real trip rather than frozen at the first commit:
+
+```bash
+dotnet run --project tools/CharterTrip.SeedRefresh -- <path-to-a-live-trip.json>
+```
+
+It keeps everything the host wrote and drops everything the weekend produced — scores, buzzer
+codes, mystery round state. See **Keeping the seed current** in `docs/DEPLOY.md`.
 
 > **One process only.** The app assumes a single instance owns the file. On Azure, keep it at one
 > instance with autoscale off, or edits will be lost.

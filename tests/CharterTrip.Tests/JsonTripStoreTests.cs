@@ -1,9 +1,71 @@
+using System.Text.Json.Nodes;
 using CharterTrip.Core.Abstractions;
+using CharterTrip.Infrastructure.Storage;
 
 namespace CharterTrip.Tests;
 
 public class JsonTripStoreTests
 {
+    /// <summary>
+    /// A pre-v9 board listed its categories as bare names, which threw inside the deserializer
+    /// before any migration could run. The store treated that as an unreadable file: it
+    /// quarantined the whole trip and started again from the seed, so an afternoon of itinerary
+    /// edits went with a board that was going to be replaced anyway.
+    /// </summary>
+    [Fact]
+    public async Task A_pre_v9_board_does_not_take_the_rest_of_the_trip_with_it()
+    {
+        await using var fx = new StoreFixture();
+
+        // Dispose first: the running store would otherwise write v9 back over the staged file.
+        await fx.Store.DisposeAsync();
+
+        var trip = JsonNode.Parse(await File.ReadAllTextAsync(fx.TripFilePath))!.AsObject();
+        trip["schemaVersion"] = 8;
+        trip["itinerary"]![0]!["items"]![0]!["title"] = "An edit worth keeping";
+        trip["jeopardy"] = new JsonObject
+        {
+            ["categories"] = new JsonArray("KDPhi", "Lambdas"),
+            ["values"] = new JsonArray(400, 800),
+            ["clues"] = new JsonArray(new JsonObject
+            {
+                ["category"] = "KDPhi",
+                ["value"] = 400,
+                ["clue"] = "The KDPhi Interest Group",
+                ["response"] = "What is LILACS?"
+            })
+        };
+        await File.WriteAllTextAsync(fx.TripFilePath, trip.ToJsonString());
+
+        var reloaded = await fx.RestartAsync();
+
+        Assert.Empty(Directory.GetFiles(fx.DataRoot, "*.unreadable-*"));
+        Assert.Equal("An edit worth keeping", reloaded.Current.Itinerary[0].Items[0].Title);
+        Assert.Equal(25, reloaded.Current.Roster.Count);
+
+        // The board is the one thing that is meant to be replaced, and now actually is.
+        Assert.Equal(TripMigrations.CurrentVersion, reloaded.Current.SchemaVersion);
+        Assert.NotEmpty(reloaded.Current.Jeopardy.Categories);
+        Assert.NotEmpty(reloaded.Current.Jeopardy.Categories[0].Clues);
+    }
+
+    /// <summary>
+    /// The status is what tells a deployed app apart from a deployed app whose data directory is
+    /// thrown away on every push: both serve a complete site, and only one of them keeps edits.
+    /// </summary>
+    [Fact]
+    public async Task Status_reports_seeding_on_a_first_run_and_not_after()
+    {
+        await using var fx = new StoreFixture();
+
+        Assert.True(fx.Store.Status.Seeded);
+        Assert.True(fx.Store.Status.CanPersist);
+        Assert.Equal(Path.GetFullPath(fx.TripFilePath), fx.Store.Status.DataPath);
+
+        var reloaded = await fx.RestartAsync();
+        Assert.False(reloaded.Status.Seeded);
+    }
+
     [Fact]
     public async Task Writes_a_seeded_file_on_first_run()
     {

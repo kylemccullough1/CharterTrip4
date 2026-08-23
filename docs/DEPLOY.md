@@ -138,6 +138,27 @@ days' time is a bad evening:
 
 If it reset, `Trip__DataRoot` is not pointing at `/home/data`. Fix step 2.
 
+You do not have to wait for a deploy to find out. `/healthz` reports what the store thinks of
+itself:
+
+```bash
+curl -s https://<your-app>.azurewebsites.net/healthz
+```
+
+```json
+{ "status": "healthy", "revision": 41, "dataPath": "/home/data/trip.json",
+  "seeded": false, "canPersist": true }
+```
+
+- **`seeded: true`** on a site that has been in use — the app could not find its file and started
+  from the built-in seed. Every edit made since the last restart is the only data it has.
+- **`canPersist: false`** — the data directory is read-only. Nothing is being saved at all.
+- **`dataPath`** not under `/home` — the directory is disposable and will be wiped on the next
+  push. This is the usual cause of the other two.
+
+`status` is `degraded` whenever any of those is true. It still returns 200 on purpose, so a data
+problem can never block deploying the fix for it.
+
 ---
 
 ## Turning on HTTPS-only
@@ -153,6 +174,34 @@ HSTS in production.
 - Or `https://<app>.scm.azurewebsites.net/newui/fileManager` and browse to `data`
 
 Backups are alongside it in `/home/data/backups/`.
+
+## Keeping the seed current
+
+`data/trip.seed.json` is what the app starts from when it finds no data file — a first run, a new
+environment, or a data directory that did not survive a deploy. It is a floor, not a backup: the
+further it drifts from the real trip, the more a bad day costs.
+
+So refresh it as the weekend gets planned. Download `trip.json` as above, then:
+
+```bash
+dotnet run --project tools/CharterTrip.SeedRefresh -- ~/Downloads/trip.json
+```
+
+That rewrites `data/trip.seed.json`, keeping everything the host wrote — itinerary, roster, teams,
+the Jeopardy board, the mystery cast and their secrets — and dropping everything the weekend
+produced: scores, buzzer codes, used clues, which round the mystery is on. A seed that restored a
+half-played game would put a scoreboard nobody earned back on the wall.
+
+Nothing is written unless the file parses, so a bad download leaves the existing seed alone. Check
+the result before committing:
+
+```bash
+dotnet test tests/CharterTrip.Tests
+```
+
+`SeedDataTests` asserts the invariants the app relies on — 25 people all on teams, three itinerary
+days, a full 5×5 board, a mystery role for everyone. A seed that breaks one of those fails here
+rather than on the projector.
 
 ## Costs
 
@@ -182,7 +231,8 @@ Then in the Portal set **Configuration → General settings → Startup Command*
 
 | Symptom | Cause |
 | --- | --- |
-| Data resets on every deploy | `Trip__DataRoot` is not `/home/data` |
+| Data resets on every deploy | `Trip__DataRoot` is not `/home/data` — check `dataPath` on `/healthz` |
+| Itinerary edits revert after a push | Same cause. `/healthz` shows `seeded: true` and a low `revision` |
 | Edits randomly disappear | More than one instance is running — go back to step 3 |
 | 503 on first hit after a quiet period | F1 free tier cold start. Upgrade to B1 + Always On. |
 | Deploy succeeds, site 500s | Check **Log stream** in the Portal; usually a bad app setting |

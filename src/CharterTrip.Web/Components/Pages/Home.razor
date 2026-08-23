@@ -34,7 +34,6 @@
             <div class="hero-board">
                 <div class="hero-board-head">
                     <span class="hb-label">@(AnyScores ? "Current standings" : "Standings — no points yet")</span>
-                    <a class="hb-link" href="/teams">Full scoreboard →</a>
                 </div>
                 <div class="hb-rows">
                     @{ var top = Standings.Count > 0 ? Math.Max(1, Standings[0].Total) : 1; }
@@ -51,19 +50,13 @@
                         </div>
                     }
                 </div>
-                <p class="hb-foot muted">
-                    @if (AnyScores)
-                    {
-                        <text>
-                            <b>@Standings[0].Team.Name</b> leads by
-                            <b>@(Standings[0].Total - (Standings.Count > 1 ? Standings[1].Total : 0))</b> points
-                        </text>
-                    }
-                    else
-                    {
-                        <text>Scoring arrives with the games pages in phase 2.</text>
-                    }
-                </p>
+                @if (AnyScores)
+                {
+                    <p class="hb-foot muted">
+                        <b>@Standings[0].Team.Name</b> leads by
+                        <b>@(Standings[0].Total - (Standings.Count > 1 ? Standings[1].Total : 0))</b> points
+                    </p>
+                }
             </div>
 
             <div class="hero-cd">

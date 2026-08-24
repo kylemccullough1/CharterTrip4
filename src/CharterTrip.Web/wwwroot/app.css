@@ -357,14 +357,53 @@ select.textfield { cursor: pointer; }
   border-bottom: 1px solid var(--line-soft);
 }
 .carousel, .slides { position: absolute; inset: 0; }
+
+/* The motion lives here, on the wrapper, so every layer underneath shares one timeline and a
+   crossfade never has to reconcile two different scales.
+ *
+ * Two motions, not one, and deliberately on periods that do not divide into each other: a 23s
+ * breath and a 37s drift. A single symmetric loop is the thing that reads as mechanical — you
+ * catch the repeat and then you cannot stop seeing it. Against each other these two only line
+ * back up after fourteen minutes, so there is no beat to catch.
+ *
+ * `translate` is the standalone property rather than a second transform, so the drift composes
+ * with the scale instead of overwriting it. */
+.slides {
+  animation:
+    breathe 23s cubic-bezier(.42, .06, .58, .94) infinite,
+    drift 37s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1.045); }
+  50%      { transform: scale(1.10); }
+}
+
+@keyframes drift {
+  0%, 100% { translate: -0.7% -0.35%; }
+  33%      { translate: 0.8%  0.45%; }
+  66%      { translate: 0.35% -0.8%; }
+}
+
 .slide {
   position: absolute; inset: 0;
   background-size: cover; background-position: center;
-  opacity: 0; transition: opacity 1.2s ease;
-  transform: scale(1.04);
+  opacity: 0;
 }
-.slide.active { opacity: 1; animation: kenburns 12s ease-out forwards; }
-@keyframes kenburns { from { transform: scale(1.04); } to { transform: scale(1.12); } }
+
+/* The layer being replaced holds full opacity underneath while its replacement fades in over
+   the top. Fading both at once dips the composite — unnoticeable between two different images,
+   and a distinct flash between two identical ones, which is what a single team colour is. */
+.slide.is-under { opacity: 1; z-index: 1; }
+.slide.is-active { opacity: 1; z-index: 2; }
+.slide.is-active.is-fading { animation: slide-in 4.6s ease-in-out both; }
+
+@keyframes slide-in { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .slides { animation: none; }
+  .slide.is-active.is-fading { animation: none; }
+}
 
 .hero-scrim {
   position: absolute; inset: 0;
@@ -435,13 +474,19 @@ select.textfield { cursor: pointer; }
 .hb-row { display: contents; }
 .hb-rank { color: var(--text-faint); font-size: 12px; text-align: center; }
 .hb-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }
-.hb-name { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Team names are shouted wherever they appear. The Teams page has always done this, and a
+   roster typed in as "team em" should not read one way there and another way here. */
+.hb-name {
+  color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-transform: uppercase; letter-spacing: .05em; font-size: 12.5px;
+}
 .hb-bar { display: block; height: 6px; border-radius: 999px; background: rgba(255,255,255,.07); overflow: hidden; }
 .hb-bar i { display: block; height: 100%; border-radius: 999px; transition: width .4s; }
 .hb-pts { font-family: var(--display); font-weight: 700; font-size: 15px; min-width: 44px; text-align: right; }
 .hb-lead .hb-name { color: var(--text); font-weight: 600; }
 .hb-lead .hb-pts { color: var(--gold); }
 .hb-foot { margin: 12px 0 0; font-size: 12.5px; color: var(--text-dim); }
+.hb-foot b:first-child { text-transform: uppercase; letter-spacing: .05em; }
 
 /* slide manager */
 .slide-list { display: flex; flex-direction: column; gap: 10px; }
@@ -762,15 +807,32 @@ select.textfield { cursor: pointer; }
   background: var(--panel); border: 1px solid var(--line-soft);
   border-left: 4px solid var(--team, var(--gold-dim)); border-radius: var(--radius-sm);
 }
-.jeo-score.is-picking { border-color: var(--gold-dim); background: var(--panel-2); }
-.jeo-score.is-buzzed { box-shadow: 0 0 0 2px var(--gold); }
-.jeo-score-name { font-size: 13px; }
+/* The highlight is how you find your own team on a crowded bar from across the room, so it wears
+   that team's colour rather than the house gold — which looked the same for whoever was picking. */
+.jeo-score.is-picking {
+  border-color: var(--team, var(--gold-dim));
+  background: color-mix(in srgb, var(--team, #d4af37) 12%, var(--panel-2));
+  box-shadow: 0 0 22px color-mix(in srgb, var(--team, #d4af37) 40%, transparent);
+}
+.jeo-score.is-buzzed {
+  box-shadow:
+    0 0 0 2px var(--team, var(--gold)),
+    0 0 26px color-mix(in srgb, var(--team, #d4af37) 55%, transparent);
+}
+.jeo-score-name { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
 .jeo-score-value { font-family: var(--display); font-size: 22px; font-variant-numeric: tabular-nums; }
-.jeo-score-tag { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+.jeo-score-tag { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--team, var(--gold)); }
 .jeo-score-tag.is-out { color: #e0808a; }
 
 /* the board */
-.jeo-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; flex: 1; }
+/* The cells grow slightly on hover, and the board runs edge to edge for the television — so
+   without room to grow into, hovering the last column (Miscellaneous) pushed past the viewport
+   and threw a horizontal scrollbar across the bottom of the screen. The padding gives the
+   transform somewhere to go; the clip is there so no future hover effect can do it again. */
+.jeo-board {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; flex: 1;
+  padding: 4px; overflow-x: clip;
+}
 .jeo-col { display: flex; flex-direction: column; gap: 8px; }
 .jeo-cat {
   background: linear-gradient(180deg, var(--panel-2), var(--panel));
@@ -789,13 +851,31 @@ select.textfield { cursor: pointer; }
 .jeo-cell:disabled { cursor: default; }
 .jeo-cell.is-used, .jeo-cell.is-empty { background: var(--ink-2); border-color: var(--line-soft); color: transparent; }
 .jeo-turn { text-align: center; font-size: 15px; color: var(--text-dim); margin: 0; }
+.jeo-turn b { text-transform: uppercase; letter-spacing: .06em; }
 
 /* a clue on screen */
-.jeo-clue, .jeo-final, .jeo-buzzoff {
+/* It takes the whole screen and grows into it, the way a tile opens on the show. Cutting
+   straight to the text made a $2000 clue land with exactly as much weight as a $200 one. */
+.jeo-clue, .jeo-final {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 18px; text-align: center; padding: 30px 20px;
   background: linear-gradient(180deg, var(--panel), var(--ink-2));
   border: 1px solid var(--line); border-radius: var(--radius);
+  min-height: calc(100vh - var(--topbar-h) - 92px);
+  animation: jeo-open .42s cubic-bezier(.16, .84, .34, 1) both;
+}
+
+@keyframes jeo-open {
+  from { opacity: 0; transform: scale(.22); }
+  60%  { opacity: 1; }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* The clue text is the thing being read from the back of a room, so it gets the space. */
+.jeo-clue .jeo-clue-text { font-size: clamp(26px, 4.4vw, 62px); max-width: 20ch; }
+
+@media (prefers-reduced-motion: reduce) {
+  .jeo-clue, .jeo-final { animation: none; }
 }
 .jeo-clue-head { font-family: var(--display); font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: var(--gold); margin: 0; }
 .jeo-clue-text { font-size: clamp(22px, 3.4vw, 44px); line-height: 1.25; max-width: 22ch; margin: 0; font-weight: 600; }
@@ -1085,15 +1165,6 @@ select.textfield { cursor: pointer; }
 /* ============================================================== FOOTER == */
 .footer { border-top: 1px solid var(--line-soft); margin-top: 40px; padding: 30px 20px 44px; }
 .footer-inner { max-width: 1360px; margin: 0 auto; text-align: center; }
-.deco-rule { height: 14px; margin-bottom: 18px;
-  background:
-    radial-gradient(circle at 50% 50%, var(--gold) 0 3px, transparent 3px),
-    linear-gradient(90deg, transparent, var(--gold-dim) 30%, var(--gold-dim) 70%, transparent);
-  background-repeat: no-repeat;
-  background-size: 100% 100%, 100% 1px;
-  background-position: center, center;
-  opacity: .55;
-}
 .footer p { font-size: 13px; margin: 0 0 4px; }
 .footer .tiny { font-size: 11.5px; }
 
@@ -1306,4 +1377,209 @@ pre.code {
   background: var(--ink-2); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px;
   color: var(--gold-light); white-space: pre;
+}
+
+/* ---------------------------------------------------------- clue media field -- */
+/* Upload or paste, with the picture itself as the confirmation that it worked. */
+.mediafield { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.mediafield-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.mediafield-thumb {
+  width: 44px; height: 44px; object-fit: cover; flex: 0 0 auto;
+  border-radius: var(--radius-sm); border: 1px solid var(--line);
+  background: var(--ink-2); display: block;
+}
+
+/* The real input is driven by the label wrapped around it, which is the only way to get a
+   file picker that looks like the rest of the buttons. */
+.mediafield-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.mediafield label.btn { cursor: pointer; }
+.mediafield label.btn.is-busy { cursor: progress; opacity: .7; }
+
+.mediafield-error { font-size: 11.5px; color: #e8b04b; }
+
+/* ------------------------------------------- jeopardy: final and the win -- */
+
+/* Final Jeopardy titles. The one screen in the game that gets an entrance, because the round
+   plays by exactly the same rules as every other clue and needs something to say otherwise. */
+.jeo-finalintro {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; text-align: center; padding: 40px 20px;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(212,175,55,.10), transparent 62%), var(--ink-2);
+  border: 1px solid var(--gold-dim); border-radius: var(--radius);
+  animation: fi-in .7s ease-out both;
+}
+@keyframes fi-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.jeo-fi-diamond { width: 92px; height: 92px; color: var(--gold); animation: fi-spin 5s ease-in-out infinite; }
+.jeo-fi-diamond svg { width: 100%; height: 100%; display: block; }
+.jeo-fi-diamond path { fill: none; stroke: currentColor; stroke-width: 4; }
+@keyframes fi-spin {
+  0%, 100% { transform: rotate(0deg) scale(1); opacity: .85; }
+  50%      { transform: rotate(180deg) scale(1.12); opacity: 1; }
+}
+
+.jeo-fi-kicker { animation: fi-in .7s .15s ease-out both; }
+.jeo-fi-title {
+  font-family: var(--display); font-size: clamp(38px, 8vw, 96px); letter-spacing: .12em;
+  margin: 0; line-height: 1; color: var(--gold-light);
+  text-shadow: 0 0 40px rgba(212,175,55,.35);
+  animation: fi-in .7s .25s ease-out both;
+}
+.jeo-fi-cat { font-size: clamp(15px, 2vw, 22px); color: var(--text-dim); margin: 0; animation: fi-in .7s .35s ease-out both; }
+
+.jeo-fi-rules {
+  list-style: none; padding: 0; margin: 10px 0 0; max-width: 54ch;
+  display: flex; flex-direction: column; gap: 9px;
+  font-size: clamp(14px, 1.6vw, 18px); color: var(--text-dim); text-align: left;
+  animation: fi-in .7s .45s ease-out both;
+}
+.jeo-fi-rules li { padding-left: 20px; position: relative; }
+.jeo-fi-rules li::before { content: '◆'; position: absolute; left: 0; color: var(--gold-dim); font-size: .8em; }
+.jeo-fi-rules b { color: var(--text); }
+
+/* the answer, once it is settled */
+.jeo-clue.is-final { border-color: var(--gold-dim); }
+.jeo-reveal { display: flex; flex-direction: column; align-items: center; gap: 8px; animation: fi-in .45s ease-out both; }
+.jeo-reveal-label { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--text-faint); margin: 0; }
+.jeo-reveal-who { font-size: clamp(15px, 1.8vw, 21px); margin: 4px 0 0; }
+
+/* the winner */
+.jeo-win {
+  position: relative; flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; text-align: center; padding: 40px 20px; overflow: hidden;
+}
+.jeo-win-name {
+  font-family: var(--display); font-size: clamp(40px, 9vw, 108px); letter-spacing: .08em;
+  margin: 0; line-height: 1; color: var(--team, var(--gold));
+  text-shadow: 0 0 60px color-mix(in srgb, var(--team, #d4af37) 45%, transparent);
+  animation: win-pop .9s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+@keyframes win-pop {
+  from { opacity: 0; transform: scale(.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Twelve diamonds thrown outward from behind the name. Cheap, and it reads from the back of
+   the room, which is the whole job. */
+.jeo-win-burst { position: absolute; inset: 0; pointer-events: none; }
+.jeo-win-burst span {
+  position: absolute; top: 50%; left: 50%; width: 13px; height: 13px; margin: -7px 0 0 -7px;
+  background: var(--gold); opacity: 0;
+  transform: rotate(45deg);
+  animation: win-fly 1.9s ease-out both;
+  animation-delay: calc(var(--i) * 55ms);
+}
+@keyframes win-fly {
+  0%   { opacity: 0; transform: rotate(45deg) translate(0, 0) scale(.4); }
+  18%  { opacity: 1; }
+  100% { opacity: 0; transform: rotate(405deg) translate(0, -46vh) scale(1.1); }
+}
+.jeo-win-burst span:nth-child(even) { background: var(--gold-light); }
+/* Fan them around the circle rather than firing them all straight up. */
+.jeo-win-burst span:nth-child(1)  { rotate: 0deg; }
+.jeo-win-burst span:nth-child(2)  { rotate: 30deg; }
+.jeo-win-burst span:nth-child(3)  { rotate: 60deg; }
+.jeo-win-burst span:nth-child(4)  { rotate: 90deg; }
+.jeo-win-burst span:nth-child(5)  { rotate: 120deg; }
+.jeo-win-burst span:nth-child(6)  { rotate: 150deg; }
+.jeo-win-burst span:nth-child(7)  { rotate: 180deg; }
+.jeo-win-burst span:nth-child(8)  { rotate: 210deg; }
+.jeo-win-burst span:nth-child(9)  { rotate: 240deg; }
+.jeo-win-burst span:nth-child(10) { rotate: 270deg; }
+.jeo-win-burst span:nth-child(11) { rotate: 300deg; }
+.jeo-win-burst span:nth-child(12) { rotate: 330deg; }
+
+.jeo-final-card.is-winner {
+  border-color: var(--team); box-shadow: 0 0 0 1px var(--team), 0 10px 40px rgba(0,0,0,.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jeo-finalintro, .jeo-fi-diamond, .jeo-fi-kicker, .jeo-fi-title, .jeo-fi-cat,
+  .jeo-fi-rules, .jeo-reveal, .jeo-win-name, .jeo-win-burst span { animation: none; }
+  .jeo-win-burst { display: none; }
+}
+
+/* --------------------------------------------- the board, on a phone ----- */
+/* The team that won the pick chooses from their own phone, so the board has to fit in a hand. */
+.buzz-board { display: flex; gap: 5px; width: 100%; }
+.buzz-board-col { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.buzz-board-cat {
+  font-size: 8.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--gold-light);
+  text-align: center; min-height: 26px; display: flex; align-items: center; justify-content: center;
+  line-height: 1.1; overflow: hidden;
+}
+.buzz-board-cell {
+  min-height: 46px; border-radius: 7px; cursor: pointer;
+  background: var(--panel-2); border: 1px solid var(--line);
+  font-family: var(--display); font-size: 17px; color: var(--gold);
+}
+.buzz-board-cell:disabled, .buzz-board-cell.is-used {
+  background: var(--ink-2); border-color: var(--line-soft); color: var(--text-faint); cursor: default;
+}
+
+/* ------------------------------------------- jeopardy: the opening race -- */
+/* The board stays up while everyone hammers their buzzers — the race is about this board, so
+   replacing it with a panel was showing the room the wrong thing at the one moment they were
+   all looking. The cells go quiet until the race is settled. */
+.jeo-board.is-racing .jeo-cell { opacity: .5; }
+.jeo-board.is-racing .jeo-cat { opacity: .75; }
+
+.jeo-race {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-size: clamp(15px, 2vw, 22px); margin: 0;
+}
+.jeo-race b { font-family: var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--gold-light); }
+.jeo-race-dot {
+  width: 11px; height: 11px; border-radius: 50%; background: var(--ruby);
+  animation: race-pulse 1s ease-in-out infinite;
+}
+@keyframes race-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(201,79,90,.55); }
+  70%      { opacity: .7; transform: scale(1.1); box-shadow: 0 0 0 11px rgba(201,79,90,0); }
+}
+
+/* The winner of the race gets the screen for a few seconds. */
+.jeo-pickcard {
+  position: fixed; inset: 0; z-index: 40; pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(10,12,16,.72); backdrop-filter: blur(3px);
+  animation: pc-fade .3s ease-out both, pc-out .5s ease-in 2.9s both;
+}
+@keyframes pc-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pc-out  { to { opacity: 0; } }
+
+.jeo-pickcard-inner {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+  padding: 34px 54px; border-radius: var(--radius);
+  border: 1px solid var(--team, var(--gold));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--team, #d4af37) 16%, var(--panel)), var(--ink-2));
+  box-shadow: 0 0 90px color-mix(in srgb, var(--team, #d4af37) 30%, transparent);
+  animation: pc-pop .55s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+@keyframes pc-pop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
+
+.jeo-pickcard-name {
+  font-family: var(--display); font-size: clamp(34px, 7vw, 78px); line-height: 1;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--team, var(--gold));
+}
+.jeo-pickcard-line {
+  font-family: var(--display); font-size: clamp(14px, 2vw, 22px);
+  letter-spacing: .26em; text-transform: uppercase; color: var(--text);
+}
+.jeo-pickcard-time { font-size: 13px; color: var(--text-dim); }
+.jeo-pickcard-hint { font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold-dim); margin-top: 8px; }
+
+/* who took the clue, in their own colour and shouted like everything else on this screen */
+.jeo-reveal-who {
+  display: flex; align-items: baseline; justify-content: center; gap: 10px; flex-wrap: wrap;
+  font-family: var(--display); letter-spacing: .08em; text-transform: uppercase;
+  font-size: clamp(17px, 2.3vw, 30px);
+}
+.jeo-reveal-team { color: var(--team, var(--gold)); font-weight: 700; }
+.jeo-reveal-who.muted { color: var(--text-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  .jeo-race-dot, .jeo-pickcard, .jeo-pickcard-inner { animation: none; }
 }

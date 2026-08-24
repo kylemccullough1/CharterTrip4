@@ -45,6 +45,9 @@ public sealed class JeopardyFinal
     public string Response { get; set; } = "";
 }
 
+/// <summary>
+/// Serialized by name, so these may be reordered or added to without breaking a saved game.
+/// </summary>
 public enum JeopardyPhase
 {
     /// <summary>Title card. Nothing has started.</summary>
@@ -55,9 +58,17 @@ public enum JeopardyPhase
     Clue,
     /// <summary>Somebody buzzed; the host says right or wrong.</summary>
     Judging,
-    /// <summary>Board is exhausted; the final clue is showing.</summary>
+    /// <summary>
+    /// The clue is settled and its answer is on the wall. Everything waits here until the host
+    /// moves on, because the answer is the part of a quiz people actually want to hear, and
+    /// snapping back to the board the instant a team is marked right skips it.
+    /// </summary>
+    Revealed,
+    /// <summary>Board is exhausted. The Final Jeopardy titles and its rules are on screen.</summary>
+    FinalIntro,
+    /// <summary>The final clue is showing and the buzzers are live.</summary>
     Final,
-    /// <summary>Final answers are in and revealed.</summary>
+    /// <summary>The game is over and the winner is up.</summary>
     Finished
 }
 
@@ -82,16 +93,21 @@ public sealed class JeopardyGame
 
     public bool BuzzersOpen { get; set; }
 
+    /// <summary>
+    /// Who got the clue that is currently revealed, or null if nobody did. Only meaningful in
+    /// <see cref="JeopardyPhase.Revealed"/>: once the buzzes are cleared there is otherwise no
+    /// record of who won it, and "nobody got it" and "Team Ali got it" are different screens.
+    /// </summary>
+    public string? RevealedWinnerTeamId { get; set; }
+
     /// <summary>When the buzzers opened, so a buzz can be reported as a reaction time.</summary>
     public DateTimeOffset? BuzzOpenedAt { get; set; }
 
-    /// <summary>What each team wrote for the final clue.</summary>
-    public Dictionary<string, string> FinalAnswers { get; set; } = [];
-
-    /// <summary>Teams the host marked correct on the final.</summary>
-    public List<string> FinalCorrectTeamIds { get; set; } = [];
-
-    public bool FinalRevealed { get; set; }
+    // Final Jeopardy used to collect a written answer per team and reveal them together, which
+    // needed FinalAnswers / FinalCorrectTeamIds / FinalRevealed here. It is now played exactly
+    // like any other clue — buzz in, answer aloud, wrong costs you the points — so that state is
+    // gone. Teams still write while they confer, but on their own phone and nowhere else, so
+    // there is nothing to store. Older saved games simply drop the fields on load.
 
     /// <summary>Short code each team types on their phone. Regenerated on reset.</summary>
     public Dictionary<string, string> BuzzerCodes { get; set; } = [];

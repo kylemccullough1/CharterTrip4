@@ -1,0 +1,38 @@
+@* One clue attachment, rendered as whatever it turns out to be.
+
+   Both places that show clue media — the board and the host's answer sheet — went through an
+   <img> before video existed. Sharing this is what stops them drifting into two different
+   answers about which files play. *@
+
+@switch (TripMedia.KindOf(Src))
+{
+    case MediaKind.Video:
+        @*  Autoplay when a clue goes live, so a video clue starts the moment it is on the wall
+            rather than waiting for someone to find the play button in front of the room.
+
+            Sound survives it because picking the clue is itself a click: browsers allow
+            autoplay with audio once the page has been interacted with, and by the time a clue
+            is up the host has clicked a great deal. If a browser refuses anyway the controls
+            are right there, which is exactly where this started.
+
+            playsinline stops iOS taking the video fullscreen over the top of the board. *@
+        <video class="@CssClass" src="@Src" controls playsinline
+               autoplay="@Autoplay" preload="@(Autoplay ? "auto" : "metadata")"></video>
+        break;
+
+    case MediaKind.Image:
+        <img class="@CssClass" src="@Src" alt="@Alt" />
+        break;
+}
+
+@code {
+    [Parameter, EditorRequired] public string? Src { get; set; }
+
+    [Parameter] public string? CssClass { get; set; }
+
+    /// <summary>Empty by default: a clue picture is the clue, and naming it gives the answer away.</summary>
+    [Parameter] public string Alt { get; set; } = "";
+
+    /// <summary>Start a video as soon as it is on screen. For a clue going live, not for a thumbnail.</summary>
+    [Parameter] public bool Autoplay { get; set; }
+}

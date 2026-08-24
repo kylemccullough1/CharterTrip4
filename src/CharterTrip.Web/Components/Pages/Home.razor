@@ -9,12 +9,19 @@
 
     <section class="hero">
         <div class="carousel">
+            @* The breathing lives on the wrapper, not the individual slides, so every layer is
+               at exactly the same scale during a crossfade. On the slides it made the fade and
+               the breath fight each other for the transform. *@
             <div class="slides">
-                @for (var i = 0; i < Slides.Count; i++)
+                @for (var i = 0; i < Palette.Count; i++)
                 {
-                    <div class="slide @(i == _slideIndex ? "active" : null)"
-                         style="background-image: url('@DecoArt.SlideDataUri(Slides[i].Hue)')"
-                         @key="Slides[i].Id"></div>
+                    @* The outgoing slide stays fully opaque underneath while the incoming one
+                       fades in over the top. Fading both at once dips the composite — which is
+                       invisible between two different pictures and reads as a flash between two
+                       identical ones, which is exactly what a single team colour produces. *@
+                    <div class="slide @SlideClass(i)"
+                         style="background-image: url('@DecoArt.SlideDataUri(Palette[i])')"
+                         @key="i"></div>
                 }
             </div>
         </div>
@@ -34,6 +41,10 @@
             <div class="hero-board">
                 <div class="hero-board-head">
                     <span class="hb-label">@(AnyScores ? "Current standings" : "Standings — no points yet")</span>
+                    @if (CanEdit && AnyScores)
+                    {
+                        <button class="btn btn-ghost btn-xs" @onclick="ConfirmResetPoints">Reset points</button>
+                    }
                 </div>
                 <div class="hb-rows">
                     @{ var top = Standings.Count > 0 ? Math.Max(1, Standings[0].Total) : 1; }
@@ -96,6 +107,8 @@
 
 </div>
 
+<ConfirmDialog @ref="_confirm" />
+
 @code {
     /// <summary>
     /// The glance list wants one short label per row: just the start time.
@@ -106,29 +119,94 @@
     protected override TripArea Watching => TripArea.All;
 
     private int _slideIndex;
+    private int _previousIndex = -1;
     private Timer? _timer;
     private TripSummary.Countdown _countdown;
+    private ConfirmDialog? _confirm;
 
     private List<CarouselSlide> Slides => Trip.Slides;
     private IReadOnlyList<(Team Team, int Total)> Standings => TripSummary.Standings(Trip);
     private bool AnyScores => Trip.Scores.Count > 0;
+
+    /// <summary>
+    /// The colours the hero moves through.
+    ///
+    /// Once anyone is on the board there is exactly one — the leader's — because the point of
+    /// colouring it at all is to say who is winning from across the room, and a single entry
+    /// means nothing cycles and nothing crossfades.
+    ///
+    /// Before that it walks the teams, with a blend between each pair. Cutting straight from one
+    /// team colour to the next was a noticeable step even across a long fade; going by halves
+    /// turns it into a drift.
+    /// </summary>
+    private IReadOnlyList<string> Palette
+    {
+        get
+        {
+            if (AnyScores && Standings.Count > 0) return [Standings[0].Team.Color];
+            if (Trip.Teams.Count == 0) return ["#d4af37"];
+
+            var ramp = new List<string>();
+            for (var i = 0; i < Trip.Teams.Count; i++)
+            {
+                var from = Trip.Teams[i].Color;
+                var to = Trip.Teams[(i + 1) % Trip.Teams.Count].Color;
+
+                ramp.Add(from);
+                ramp.Add(DecoArt.Mix(from, to, 0.5));
+            }
+
+            return ramp;
+        }
+    }
+
+    /// <summary>
+    /// One layer is on top fading in, the one it is replacing sits opaque beneath it, and every
+    /// other layer is hidden. A single-colour palette is always just "on top", never fading.
+    /// </summary>
+    private string? SlideClass(int index)
+    {
+        if (index == _slideIndex) return Palette.Count > 1 ? "is-active is-fading" : "is-active";
+        return index == _previousIndex ? "is-under" : null;
+    }
+
+    private void ConfirmResetPoints() =>
+        _confirm?.Show(
+            "Clear every point from the weekend standings? Jeopardy, the games, all of it. " +
+            "This cannot be undone.",
+            () => MutateAsync(t => t.Scores.Clear()),
+            "Reset the points",
+            "Reset standings");
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
         _countdown = TripSummary.ToStart(Trip.Trip, DateTimeOffset.UtcNow);
 
-        // Crossfades the hero background. This costs one small render per connected client
-        // every 6.5s, which is nothing for a couple of dozen people but is pure decoration —
-        // if it ever matters, this is a CSS animation waiting to happen.
-        _timer = new Timer(_ => _ = InvokeAsync(() => { Advance(1); StateHasChanged(); }),
-                           null, TimeSpan.FromSeconds(6.5), TimeSpan.FromSeconds(6.5));
+        // Crossfades the hero background. This costs one small render per connected client every
+        // few seconds, which is nothing for a couple of dozen people but is pure decoration — if
+        // it ever matters, this is a CSS animation waiting to happen.
+        //
+        // Kept running even when there is nothing to cycle — resetting the points turns one
+        // colour back into eight, and a timer that was never started would leave the hero stuck.
+        // Advance simply does nothing while the palette holds a single colour.
+        _timer = new Timer(_ => _ = InvokeAsync(() => { Advance(); StateHasChanged(); }),
+                           null, SlideInterval, SlideInterval);
     }
 
-    private void Advance(int delta)
+    /// <summary>
+    /// Long enough that the fade underneath it is still moving when the next one starts, which
+    /// is what makes the colour feel like it is drifting rather than stepping.
+    /// </summary>
+    private static readonly TimeSpan SlideInterval = TimeSpan.FromSeconds(8);
+
+    private void Advance()
     {
-        if (Slides.Count == 0) return;
-        _slideIndex = ((_slideIndex + delta) % Slides.Count + Slides.Count) % Slides.Count;
+        var count = Palette.Count;
+        if (count <= 1) return;
+
+        _previousIndex = _slideIndex;
+        _slideIndex = (_slideIndex + 1) % count;
     }
 
     public override void Dispose()

@@ -2,6 +2,8 @@
 @page "/buzz/{Code}"
 @using CharterTrip.Core.Services
 @inherits TripAwareComponent
+@implements IAsyncDisposable
+@inject IJSRuntime JS
 @layout CharterTrip.Web.Components.Layout.BareLayout
 
 <PageTitle>Buzzer · Charter Trip</PageTitle>
@@ -32,18 +34,30 @@ else if (IsHost)
             <span class="muted tiny">@PhaseLabel</span>
         </header>
 
-        @if (CurrentClue is { } clue)
+        @* The answer lives here and nowhere else. The big screen is pointed at the room, so
+           everything that would spoil a clue — the response, and the Correct/Wrong call — is on
+           this phone only. *@
+        @if (InPlay is { } clue)
         {
-            <p class="buzz-cat">@CategoryName · @clue.Value</p>
+            <p class="buzz-cat">@ClueHead(clue)</p>
             @if (!string.IsNullOrWhiteSpace(clue.Clue)) { <p class="buzz-clue">@clue.Clue</p> }
             <p class="buzz-answer-label">Answer</p>
             <p class="buzz-answer">@clue.Response</p>
             @if (!string.IsNullOrWhiteSpace(clue.ResponseImage))
             {
-                <img class="buzz-answer-img" src="@clue.ResponseImage" alt="" />
+                <MediaView Src="@clue.ResponseImage" CssClass="buzz-answer-img" />
             }
 
-            @if (Game.Phase == JeopardyPhase.Judging)
+            @if (Game.Phase == JeopardyPhase.Revealed)
+            {
+                <p class="buzz-buzzed">
+                    @(Game.RevealedWinnerTeamId is { } w ? $"{TeamName(w)} got it" : "Nobody got it")
+                </p>
+                <button class="btn btn-gold btn-lg btn-block" @onclick="ContinueAsync">
+                    @(clue.IsFinal ? "See who won" : "Next clue")
+                </button>
+            }
+            else if (Game.Phase == JeopardyPhase.Judging)
             {
                 <p class="buzz-buzzed">@TeamName(Game.LeadingBuzzTeamId) buzzed</p>
                 <div class="buzz-judge">
@@ -57,12 +71,13 @@ else if (IsHost)
                 <button class="btn btn-ghost btn-block" @onclick="NobodyAsync">Nobody got it</button>
             }
         }
-        else if (Game.Phase == JeopardyPhase.Final)
+        else if (Game.Phase == JeopardyPhase.FinalIntro)
         {
-            <p class="buzz-cat">@Board.Final.Category · @Board.Final.Value</p>
+            <p class="buzz-cat">Final Jeopardy</p>
             <p class="buzz-clue">@Board.Final.Clue</p>
             <p class="buzz-answer-label">Answer</p>
             <p class="buzz-answer">@(string.IsNullOrWhiteSpace(Board.Final.Response) ? "— not written yet —" : Board.Final.Response)</p>
+            <button class="btn btn-gold btn-lg btn-block" @onclick="StartFinalAsync">Show the final clue</button>
         }
         else
         {
@@ -78,14 +93,29 @@ else
             <span class="buzz-score">@JeopardyService.ScoreFor(Trip, TeamId!)</span>
         </header>
 
-        @if (Game.Phase == JeopardyPhase.Final)
+        @* It is this team's turn to choose, so the board comes to them. Picking used to mean
+           somebody walking to the laptop, which is slow and hands the remote to whoever is
+           standing nearest rather than to whoever won it. *@
+        @if (MyPick)
         {
-            <p class="buzz-cat">@Board.Final.Category · @Board.Final.Value points</p>
-            <p class="buzz-clue">@Board.Final.Clue</p>
-            <textarea class="buzz-final-input" rows="6" placeholder="Your answer…"
-                      value="@FinalAnswer"
-                      @onchange="e => SubmitFinalAsync(e.Value?.ToString())"></textarea>
-            <p class="muted tiny">@(Submitted ? "Locked in — you can still change it until the host reveals." : "Not submitted yet.")</p>
+            <p class="buzz-cat">Your pick</p>
+            <div class="buzz-board">
+                @foreach (var category in Board.Categories)
+                {
+                    <div class="buzz-board-col">
+                        <span class="buzz-board-cat">@category.Name</span>
+                        @foreach (var clue in category.Clues)
+                        {
+                            var used = JeopardyService.IsUsed(Trip, clue.Id);
+                            <button class="buzz-board-cell @(used || clue.IsEmpty ? "is-used" : null)"
+                                    disabled="@(used || clue.IsEmpty)"
+                                    @onclick="() => PickAsync(clue.Id)">
+                                @(used || clue.IsEmpty ? "·" : clue.Value.ToString())
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
         }
         else
         {
@@ -93,6 +123,17 @@ else
                 @BuzzLabel
             </button>
             <p class="buzz-status">@StatusLine</p>
+
+            @* A place to work the final out together before ringing in. Deliberately local to
+               this phone: nothing is sent, nothing is stored, and the host never sees it. The
+               final is answered out loud like every other clue. *@
+            @if (FinalInPlay)
+            {
+                <textarea class="buzz-final-input" rows="4"
+                          placeholder="Notepad — work it out with your team, then buzz…"
+                          @bind="_notepad" @bind:event="oninput"></textarea>
+                <p class="muted tiny">Just for you — this stays on your phone.</p>
+            }
         }
     </div>
 }
@@ -106,14 +147,40 @@ else
 
     private string _typed = "";
 
+    /// <summary>The final's scratchpad. Never left this browser, by design.</summary>
+    private string _notepad = "";
+
+    private IJSObjectReference? _audio;
+
     private JeopardyBoard Board => Trip.Jeopardy;
     private JeopardyGame Game => Trip.Jeopardy.Game;
 
     private string? TeamId => Code is null ? null : JeopardyService.TeamForCode(Trip, Code);
     private bool IsHost => Code is not null && JeopardyService.IsHostCode(Trip, Code);
 
-    private JeopardyClue? CurrentClue => JeopardyService.CurrentClue(Trip);
-    private string CategoryName => CurrentClue is null ? "" : JeopardyService.CategoryOf(Trip, CurrentClue.Id)?.Name ?? "";
+    private ClueInPlay? InPlay => JeopardyService.InPlay(Trip);
+
+    /// <summary>This team won the pick and the board is waiting on them.</summary>
+    private bool MyPick =>
+        TeamId is not null
+        && Game.Phase == JeopardyPhase.Board
+        && !Game.BuzzersOpen
+        && Game.PickingTeamId == TeamId;
+
+    private bool FinalInPlay => Game.Phase == JeopardyPhase.Final || InPlay is { IsFinal: true };
+
+    /// <summary>Matches the board's heading, so the host's phone and the wall agree.</summary>
+    private static string ClueHead(ClueInPlay clue)
+    {
+        var category = clue.Category.Trim();
+
+        if (!clue.IsFinal)
+            return $"{category} · {clue.Value}";
+
+        return category.Length == 0 || category.Contains("final", StringComparison.OrdinalIgnoreCase)
+            ? $"Final Jeopardy · {clue.Value}"
+            : $"Final Jeopardy · {category} · {clue.Value}";
+    }
 
     private string TeamName(string? id) => Trip.Teams.FirstOrDefault(t => t.Id == id)?.Name ?? "—";
     private string TeamColor => Trip.Teams.FirstOrDefault(t => t.Id == TeamId)?.Color ?? "#d4af37";
@@ -122,16 +189,15 @@ else
     private bool AlreadyBuzzed => TeamId is not null && Game.Buzzes.Any(b => b.TeamId == TeamId);
     private bool CanBuzz => Game.BuzzersOpen && !LockedOut && !AlreadyBuzzed;
 
-    private bool Submitted => TeamId is not null && Game.FinalAnswers.ContainsKey(TeamId);
-    private string FinalAnswer => TeamId is not null && Game.FinalAnswers.TryGetValue(TeamId, out var a) ? a : "";
-
     private string PhaseLabel => Game.Phase switch
     {
         JeopardyPhase.NotStarted => "not started",
         JeopardyPhase.Board => Game.BuzzersOpen ? "buzz-off" : "picking",
         JeopardyPhase.Clue => "buzzers open",
         JeopardyPhase.Judging => "your call",
-        JeopardyPhase.Final => "final",
+        JeopardyPhase.Revealed => "answer up",
+        JeopardyPhase.FinalIntro => "final titles",
+        JeopardyPhase.Final => "final — buzzers open",
         _ => "finished"
     };
 
@@ -147,8 +213,12 @@ else
             if (LockedOut) return "Wrong answer — you're out of this clue.";
             if (AlreadyBuzzed) return Game.LeadingBuzzTeamId == TeamId ? "You're in! Answer it." : "Someone beat you to it.";
             if (Game.Phase == JeopardyPhase.Board && Game.BuzzersOpen) return "Buzz to win the first pick.";
+            if (Game.Phase == JeopardyPhase.FinalIntro) return "Final Jeopardy is next.";
+            if (FinalInPlay && Game.BuzzersOpen) return "Final Jeopardy — buzz when your team has it.";
             if (Game.BuzzersOpen) return "Buzzers are open.";
             if (Game.Phase == JeopardyPhase.Judging) return $"{TeamName(Game.LeadingBuzzTeamId)} is answering.";
+            if (Game.Phase == JeopardyPhase.Revealed) return "Answer's up on the screen.";
+            if (Game.Phase == JeopardyPhase.Board) return $"{TeamName(Game.PickingTeamId)} is picking.";
             return "Wait for the next clue.";
         }
     }
@@ -163,13 +233,55 @@ else
         if (_typed.Trim().Length > 0) Code = _typed.Trim();
     }
 
-    private Task BuzzAsync() =>
-        MutateAsync(t => JeopardyService.Buzz(t, TeamId!, DateTimeOffset.UtcNow));
+    private async Task BuzzAsync()
+    {
+        // The phone is the buzzer, so it should sound like one. Fired before the mutation and
+        // not off any server state: the point is that the thumb gets an answer instantly, even
+        // if the buzz turns out to be second and changes nothing at all.
+        await Cue("buzz");
+        await MutateAsync(t => JeopardyService.Buzz(t, TeamId!, DateTimeOffset.UtcNow));
+    }
 
-    private Task SubmitFinalAsync(string? answer) =>
-        MutateAsync(t => JeopardyService.SubmitFinalAnswer(t, TeamId!, answer ?? string.Empty));
+    private async Task PickAsync(string clueId)
+    {
+        await Cue("pick");
+        await MutateAsync(t => JeopardyService.PickClue(t, clueId, DateTimeOffset.UtcNow));
+    }
+
+    /// <summary>
+    /// One sound on this phone.
+    ///
+    /// The module is loaded on the first cue rather than up front, because a browser will not
+    /// make noise until the page has been touched — and on this page the first touch is always
+    /// the button that wants the sound.
+    /// </summary>
+    private async Task Cue(string name)
+    {
+        try
+        {
+            _audio ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/jeopardy-audio.js");
+            await _audio.InvokeVoidAsync("unlock");
+            await _audio.InvokeVoidAsync(name);
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { /* no audio on this device; the buzz still counts */ }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_audio is not null)
+        {
+            try { await _audio.InvokeVoidAsync("dispose"); } catch (JSDisconnectedException) { }
+            try { await _audio.DisposeAsync(); } catch (JSDisconnectedException) { }
+        }
+        Dispose();
+    }
 
     private Task CorrectAsync() => MutateAsync(t => JeopardyService.JudgeCorrect(t, DateTimeOffset.UtcNow));
     private Task WrongAsync() => MutateAsync(t => JeopardyService.JudgeWrong(t, DateTimeOffset.UtcNow));
     private Task NobodyAsync() => MutateAsync(JeopardyService.NobodyGotIt);
+    private Task ContinueAsync() => MutateAsync(JeopardyService.Continue);
+
+    private Task StartFinalAsync() =>
+        MutateAsync(t => JeopardyService.StartFinal(t, DateTimeOffset.UtcNow));
 }

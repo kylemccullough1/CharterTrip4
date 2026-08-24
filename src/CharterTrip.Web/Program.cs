@@ -1,6 +1,8 @@
+using Microsoft.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using CharterTrip.Core.Abstractions;
+using CharterTrip.Core.Services;
 using CharterTrip.Infrastructure;
 using CharterTrip.Infrastructure.Storage;
 using CharterTrip.Web.Auth;
@@ -27,6 +29,7 @@ builder.Services.PostConfigure<TripStoreOptions>(options =>
 // asks TripPermissions whether it may edit.
 builder.Services.AddScoped<ICurrentUser, AlwaysAdminUser>();
 builder.Services.AddScoped<CharterTrip.Web.Services.ToastService>();
+builder.Services.AddScoped<CharterTrip.Web.Services.MediaAttachments>();
 
 var app = builder.Build();
 
@@ -81,6 +84,44 @@ app.MapGet("/admin/trip.json", (ITripStore store) =>
     var json = JsonSerializer.Serialize(store.Current, TripJson.Options);
     var name = $"trip-r{store.Current.Revision}-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}.json";
     return Results.File(Encoding.UTF8.GetBytes(json), "application/json", name);
+});
+
+// Clue pictures and videos are far too big to live inside trip.json, so they are files beside it
+// and the trip only stores the path. This is the route that serves them.
+//
+// An id is a fresh guid and its bytes never change, so the response is immutable for a year: the
+// board can put the same clue on twenty phones without twenty fetches. Replacing a clue's media
+// mints a new id, so nothing goes stale.
+//
+// Range processing is not a nicety here. Safari refuses to play a video at all from a response
+// that does not accept ranges, which would mean clue videos working on the host's laptop during
+// setup and on nobody's phone at the party. The id doubles as the ETag because it identifies the
+// bytes exactly — a different id is a different file, always.
+app.MapGet(TripMedia.UrlPrefix + "{id}", async (string id, IPhotoStore media, HttpContext http, CancellationToken ct) =>
+{
+    var stream = await media.OpenAsync(id, ct);
+    if (stream is null) return Results.NotFound();
+
+    http.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+
+    var contentType = Path.GetExtension(id).ToLowerInvariant() switch
+    {
+        ".png" => "image/png",
+        ".webp" => "image/webp",
+        ".gif" => "image/gif",
+        ".mp4" => "video/mp4",
+        ".webm" => "video/webm",
+        ".mov" => "video/quicktime",
+        ".m4v" => "video/x-m4v",
+        ".ogv" => "video/ogg",
+        _ => "image/jpeg"
+    };
+
+    return Results.File(
+        stream,
+        contentType,
+        entityTag: new EntityTagHeaderValue($"\"{id}\""),
+        enableRangeProcessing: true);
 });
 
 // Touch the store during startup so a broken data file fails loudly here rather than on

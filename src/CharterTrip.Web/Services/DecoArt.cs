@@ -16,10 +16,70 @@ public static class DecoArt
         ("#182742", "#8fb6f0", "#1d3763")    // sapphire
     ];
 
+    /// <summary>
+    /// The same slide, drawn in one team's colour.
+    ///
+    /// The hero is the first thing anyone sees, and having it glow in the colour of whoever is
+    /// winning does more for a weekend-long contest than four fixed palettes ever did. The base
+    /// and edge are derived from the one colour rather than picked, so any team colour works —
+    /// including whatever somebody types into the colour box on the Teams page.
+    /// </summary>
+    public static string SlideDataUri(string teamColor)
+    {
+        var (r, g, b) = ParseHex(teamColor);
+
+        // The ink is the colour itself; the ground is the same hue taken down almost to black,
+        // which is what keeps the gold rule and the white text readable over the top of it.
+        var ink = Hex(r, g, b);
+        var baseColor = Hex(Scale(r, .13), Scale(g, .13), Scale(b, .16));
+        var edge = Hex(Scale(r, .26), Scale(g, .26), Scale(b, .30));
+
+        // Unique per colour so two slides on the page cannot share gradient ids.
+        return Render(baseColor, ink, edge, $"t{Math.Abs(teamColor.GetHashCode()):x}");
+    }
+
     public static string SlideDataUri(int hue)
     {
         var (baseColor, ink, edge) = Palettes[Math.Abs(hue) % Palettes.Length];
-        var id = $"d{Math.Abs(hue) % Palettes.Length}";
+        return Render(baseColor, ink, edge, $"d{Math.Abs(hue) % Palettes.Length}");
+    }
+
+    /// <summary>
+    /// A colour part way between two others, so the hero can drift from one team's colour to the
+    /// next instead of cutting between them.
+    /// </summary>
+    public static string Mix(string from, string to, double amount)
+    {
+        var (r1, g1, b1) = ParseHex(from);
+        var (r2, g2, b2) = ParseHex(to);
+        var t = Math.Clamp(amount, 0, 1);
+
+        return Hex(
+            (int)Math.Round(r1 + (r2 - r1) * t),
+            (int)Math.Round(g1 + (g2 - g1) * t),
+            (int)Math.Round(b1 + (b2 - b1) * t));
+    }
+
+    private static (int R, int G, int B) ParseHex(string color)
+    {
+        var hex = color.TrimStart('#');
+        if (hex.Length == 3)
+            hex = string.Concat(hex.Select(c => new string(c, 2)));
+
+        return hex.Length == 6
+               && int.TryParse(hex[..2], System.Globalization.NumberStyles.HexNumber, null, out var r)
+               && int.TryParse(hex[2..4], System.Globalization.NumberStyles.HexNumber, null, out var g)
+               && int.TryParse(hex[4..], System.Globalization.NumberStyles.HexNumber, null, out var b)
+            ? (r, g, b)
+            : (212, 175, 55);            // the house gold, for anything unparseable
+    }
+
+    private static int Scale(int channel, double by) => (int)Math.Clamp(channel * by, 0, 255);
+
+    private static string Hex(int r, int g, int b) => $"#{r:x2}{g:x2}{b:x2}";
+
+    private static string Render(string baseColor, string ink, string edge, string id)
+    {
 
         var svg =
             $"""

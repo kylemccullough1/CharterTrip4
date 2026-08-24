@@ -192,7 +192,20 @@ If you need the raw file instead:
 - Portal → your Web App → **Development Tools** → **SSH**, then `cat /home/data/trip.json`
 - Or `https://<app>.scm.azurewebsites.net/newui/fileManager` and browse to `data`
 
-Backups are alongside it in `/home/data/backups/`.
+Backups are alongside it in `/home/data/backups/`, and uploaded images in `/home/data/photos/`.
+
+> **Clue media is not in the trip file.** A photo or video uploaded onto a Jeopardy clue is
+> written to `/home/data/photos/` and the clue keeps only the path `/photos/<id>.jpg`. So
+> downloading `trip.json` gets you the *references*, not the files — importing it somewhere
+> without them gives you clues with broken images. To move a trip complete with its media, copy
+> the `photos` folder across too.
+
+**Video and disk.** Pictures are resized to 1600px in the browser and land at a couple of hundred
+KB each. Video is not resized — it is stored as it arrives, capped at 64 MB per clip. A board with
+a few video clues can therefore be a few hundred MB, which is worth knowing before the **F1 Free**
+tier's 1 GB quota becomes the reason the site stops saving mid-weekend. `du -sh /home/data` over
+SSH is the check. Trimming clips before uploading is the cheap fix, and makes them play more
+smoothly on venue wifi anyway.
 
 > Editing `/home/data/trip.json` by hand while the site is running does **not** work: the app
 > holds the whole trip in memory and its next save flattens your edit (after copying it to

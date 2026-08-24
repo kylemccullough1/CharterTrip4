@@ -27,7 +27,7 @@
 
         <p class="jeo-hint">
             Click any line to change it; edits save as soon as you leave the field.
-            A clue with no text and no image stays greyed out on the board.
+            A clue with no text and nothing attached stays greyed out on the board.
         </p>
 
         @for (var i = 0; i < Board.Categories.Count; i++)
@@ -63,16 +63,14 @@
                                               Placeholder="what the host is looking for" />
                             </div>
                             <div class="jeo-editor-field is-aside">
-                                <span class="jeo-editor-label">Clue image</span>
-                                <EditableText Value="@clue.ClueImage" CssClass="jeo-editor-url"
-                                              ValueChanged="@(v => EditClueAsync(clue.Id, c => c.ClueImage = v))"
-                                              Placeholder="image URL, optional" />
+                                <span class="jeo-editor-label">Clue image / video</span>
+                                <MediaField Value="@clue.ClueImage" Label="Clue image"
+                                            ValueChanged="@(v => EditClueAsync(clue.Id, c => c.ClueImage = v))" />
                             </div>
                             <div class="jeo-editor-field is-aside">
-                                <span class="jeo-editor-label">Answer image</span>
-                                <EditableText Value="@clue.ResponseImage" CssClass="jeo-editor-url"
-                                              ValueChanged="@(v => EditClueAsync(clue.Id, c => c.ResponseImage = v))"
-                                              Placeholder="image URL, optional" />
+                                <span class="jeo-editor-label">Answer image / video</span>
+                                <MediaField Value="@clue.ResponseImage" Label="Answer image"
+                                            ValueChanged="@(v => EditClueAsync(clue.Id, c => c.ResponseImage = v))" />
                             </div>
                         </div>
                     </div>
@@ -179,136 +177,138 @@ else
         }
     </header>
 
-    @if (Game.Phase == JeopardyPhase.Board && Game.BuzzersOpen)
+    @if (Game.Phase == JeopardyPhase.FinalIntro)
     {
-        <section class="jeo-buzzoff">
-            <h2>Buzz in to pick first</h2>
-            <p class="muted">Fastest team chooses the opening clue.</p>
-            <ol class="jeo-buzzlist">
-                @foreach (var buzz in Game.Buzzes)
-                {
-                    <li><b>@TeamName(buzz.TeamId)</b> <span class="muted">@Reaction(buzz.Milliseconds)</span></li>
-                }
-            </ol>
-            @if (CanEdit && Game.Buzzes.Count > 0)
+        @* The one moment in the game that gets its own titles. The rules are on the wall because
+           the final plays by the same ones as everything else and nobody will remember that. *@
+        <section class="jeo-finalintro">
+            <div class="jeo-fi-diamond" aria-hidden="true">
+                <svg viewBox="0 0 100 100"><path d="M50 4 L92 50 L50 96 L8 50 Z" /></svg>
+            </div>
+            <p class="jeo-kicker jeo-fi-kicker">The board is spent</p>
+            <h1 class="jeo-fi-title">FINAL JEOPARDY</h1>
+            <p class="jeo-fi-cat">@Board.Final.Category · @Board.Final.Value points</p>
+
+            <ul class="jeo-fi-rules">
+                <li>Same as every other clue — <b>buzz in</b> to answer.</li>
+                <li>Get it right and you take <b>@Board.Final.Value</b>. First one to do it wins the game.</li>
+                <li>Get it wrong and you <b>lose @Board.Final.Value</b>, and the rest get their shot.</li>
+                <li>Talk to your team first. There's a notepad on your phone to write it down.</li>
+            </ul>
+
+            @if (CanEdit)
             {
-                <button class="btn btn-gold" @onclick="SettleAsync">@TeamName(Game.Buzzes[0].TeamId) picks first</button>
+                <div class="jeo-title-actions">
+                    <button class="btn btn-gold btn-lg" @onclick="StartFinalAsync">Show the final clue</button>
+                </div>
             }
         </section>
     }
-    else if (Game.Phase is JeopardyPhase.Clue or JeopardyPhase.Judging)
+    else if (InPlay is { } inPlay)
     {
-        var clue = JeopardyService.CurrentClue(Trip);
-        <section class="jeo-clue">
-            <p class="jeo-clue-head">@CategoryName(clue?.Id) · @clue?.Value</p>
+        @* One section for a clue, the final, and the answer afterwards. They are the same thing
+           now, so they are the same markup — the phase only decides what is added underneath.
 
-            @if (!string.IsNullOrWhiteSpace(clue?.ClueImage))
+           Nothing the host needs to keep to themselves appears here. The answer is on their
+           phone until it is settled, and so is the Correct/Wrong call, because this screen is
+           pointed at the room. *@
+        var revealed = Game.Phase == JeopardyPhase.Revealed;
+
+        @* Keyed on the clue so each new one is a new element, which is what replays the expand
+           animation. The reveal keeps the same key on purpose — the answer appearing under a
+           clue that is already up should not throw the whole panel back at the room. *@
+        <section class="jeo-clue @(inPlay.IsFinal ? "is-final" : null) @(revealed ? "is-revealed" : null)"
+                 @key="inPlay.Id">
+            <p class="jeo-clue-head">@ClueHead(inPlay)</p>
+
+            @if (!string.IsNullOrWhiteSpace(inPlay.ClueImage))
             {
-                <img class="jeo-clue-img" src="@clue.ClueImage" alt="" />
+                <MediaView Src="@inPlay.ClueImage" CssClass="jeo-clue-img" Autoplay="true" />
             }
-            @if (!string.IsNullOrWhiteSpace(clue?.Clue))
+            @if (!string.IsNullOrWhiteSpace(inPlay.Clue))
             {
-                <p class="jeo-clue-text">@clue.Clue</p>
+                <p class="jeo-clue-text">@inPlay.Clue</p>
             }
 
-            @if (Game.Phase == JeopardyPhase.Judging)
+            @if (revealed)
+            {
+                <div class="jeo-reveal">
+                    <p class="jeo-reveal-label">Answer</p>
+                    <p class="jeo-answer">@inPlay.Response</p>
+                    @if (!string.IsNullOrWhiteSpace(inPlay.ResponseImage))
+                    {
+                        <MediaView Src="@inPlay.ResponseImage" CssClass="jeo-clue-img" Autoplay="true" />
+                    }
+
+                    @if (Game.RevealedWinnerTeamId is { } winner)
+                    {
+                        <p class="jeo-reveal-who" style="--team:@TeamColor(winner)">
+                            <b class="jeo-reveal-team">@TeamName(winner)</b>
+                            <span>takes @inPlay.Value</span>
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="jeo-reveal-who muted">Nobody got it.</p>
+                    }
+                </div>
+
+                @if (CanEdit)
+                {
+                    <div class="jeo-title-actions">
+                        <button class="btn btn-gold btn-lg" @onclick="ContinueAsync">
+                            @(inPlay.IsFinal ? "See who won" : "Next clue")
+                        </button>
+                    </div>
+                }
+            }
+            else if (Game.Phase == JeopardyPhase.Judging)
             {
                 <div class="jeo-buzzed">
                     <span class="jeo-buzzed-team" style="--team:@TeamColor(BuzzedFirst)">@TeamName(BuzzedFirst)</span>
                     <span class="muted">buzzed in @Reaction(Game.Buzzes.FirstOrDefault()?.Milliseconds ?? 0)</span>
                 </div>
-                @if (CanEdit)
-                {
-                    <div class="jeo-judge">
-                        <button class="btn btn-lg jeo-right" @onclick="CorrectAsync">Correct</button>
-                        <button class="btn btn-lg jeo-wrong" @onclick="WrongAsync">Wrong</button>
-                    </div>
-                }
             }
             else
             {
                 <p class="jeo-open">Buzzers are open@(Game.LockedOutTeamIds.Count > 0 ? $" — {Game.LockedOutTeamIds.Count} locked out" : "")</p>
-                @if (CanEdit)
-                {
-                    <button class="btn btn-ghost" @onclick="NobodyAsync">Nobody got it — show the answer</button>
-                }
-            }
-
-            @if (CanEdit && ShowAnswer)
-            {
-                <p class="jeo-answer">@clue?.Response</p>
-            }
-        </section>
-    }
-    else if (Game.Phase == JeopardyPhase.Final)
-    {
-        <section class="jeo-final">
-            <p class="jeo-clue-head">@Board.Final.Category · @Board.Final.Value points</p>
-            <p class="jeo-clue-text">@Board.Final.Clue</p>
-
-            <div class="jeo-final-grid">
-                @foreach (var team in Trip.Teams)
-                {
-                    <div class="jeo-final-card" style="--team:@team.Color">
-                        <span class="jeo-join-team">@team.Name</span>
-                        @if (Game.FinalRevealed)
-                        {
-                            <p class="jeo-final-answer">@(Answered(team.Id) ? Game.FinalAnswers[team.Id] : "— nothing submitted —")</p>
-                            @if (CanEdit)
-                            {
-                                <div class="jeo-judge is-small">
-                                    <button class="btn btn-sm jeo-right" @onclick="() => MarkFinalAsync(team.Id, true)">+@Board.Final.Value</button>
-                                    <button class="btn btn-sm jeo-wrong" @onclick="() => MarkFinalAsync(team.Id, false)">0</button>
-                                </div>
-                            }
-                            @if (Game.FinalCorrectTeamIds.Contains(team.Id))
-                            {
-                                <span class="jeo-score-tag">scored</span>
-                            }
-                        }
-                        else
-                        {
-                            <p class="jeo-final-answer">@(Answered(team.Id) ? "answer locked in" : "still writing…")</p>
-                        }
-                    </div>
-                }
-            </div>
-
-            @if (CanEdit)
-            {
-                <div class="jeo-title-actions">
-                    @if (!Game.FinalRevealed)
-                    {
-                        <button class="btn btn-gold btn-lg" @onclick="RevealAsync">Reveal answers</button>
-                    }
-                    else
-                    {
-                        <button class="btn btn-gold btn-lg" @onclick="FinishAsync">Finish the game</button>
-                    }
-                </div>
             }
         </section>
     }
     else if (Game.Phase == JeopardyPhase.Finished)
     {
-        <section class="jeo-title">
+        <section class="jeo-win">
+            <div class="jeo-win-burst" aria-hidden="true">
+                @for (var i = 0; i < 12; i++)
+                {
+                    <span style="--i:@i"></span>
+                }
+            </div>
+
             <p class="jeo-kicker">Final scores</p>
-            <h1>@Winner</h1>
+            <h1 class="jeo-win-name" style="--team:@WinnerColor">@Winner</h1>
+
             <div class="jeo-final-grid">
                 @foreach (var (team, score) in JeopardyService.Scoreboard(Trip).OrderByDescending(x => x.Score))
                 {
-                    <div class="jeo-final-card" style="--team:@team.Color">
+                    <div class="jeo-final-card @(score == TopScore ? "is-winner" : null)" style="--team:@team.Color">
                         <span class="jeo-join-team">@team.Name</span>
                         <p class="jeo-final-score">@score</p>
                     </div>
                 }
             </div>
-            <p class="jeo-hint">These points are already in the weekend standings.</p>
+
+            <div class="jeo-title-actions">
+                <a class="btn btn-gold btn-lg" href="/">Home</a>
+            </div>
         </section>
     }
     else
     {
-        <section class="jeo-board">
+        @* The board is up for the opening race too, rather than being replaced by a panel. The
+           point of the race is choosing from this board, so it should be the thing everyone is
+           staring at while they hammer their phones. *@
+        <section class="jeo-board @(Game.BuzzersOpen ? "is-racing" : null)">
             @foreach (var category in Board.Categories)
             {
                 <div class="jeo-col">
@@ -317,7 +317,7 @@ else
                     {
                         var used = JeopardyService.IsUsed(Trip, clue.Id);
                         <button class="jeo-cell @(used ? "is-used" : null) @(clue.IsEmpty ? "is-empty" : null)"
-                                disabled="@(used || clue.IsEmpty || !CanEdit)"
+                                disabled="@(used || clue.IsEmpty || !CanEdit || Game.BuzzersOpen)"
                                 @onclick="() => PickAsync(clue.Id)">
                             @(used || clue.IsEmpty ? "" : clue.Value.ToString())
                         </button>
@@ -326,7 +326,31 @@ else
             }
         </section>
 
-        @if (Game.PickingTeamId is not null)
+        @if (Game.BuzzersOpen)
+        {
+            <div class="jeo-race">
+                <span class="jeo-race-dot" aria-hidden="true"></span>
+                <b>Buzz in to pick first</b>
+                <span class="muted">fastest team opens the board</span>
+            </div>
+        }
+        else if (ShowingPickCard)
+        {
+            @* Whoever won the race gets the screen for a moment, so the room knows who it is and
+               the winner knows to look up at the board. It clears itself. *@
+            <div class="jeo-pickcard" style="--team:@TeamColor(Game.PickingTeamId)">
+                <div class="jeo-pickcard-inner">
+                    <span class="jeo-pickcard-name">@TeamName(Game.PickingTeamId)</span>
+                    <span class="jeo-pickcard-line">picks first</span>
+                    @if (Game.Buzzes.FirstOrDefault() is { } won)
+                    {
+                        <span class="jeo-pickcard-time">in @Reaction(won.Milliseconds)</span>
+                    }
+                    <span class="jeo-pickcard-hint">Choose a clue on the board</span>
+                </div>
+            </div>
+        }
+        else if (Game.PickingTeamId is not null)
         {
             <p class="jeo-turn"><b style="color:@TeamColor(Game.PickingTeamId)">@TeamName(Game.PickingTeamId)</b> picks</p>
         }
@@ -346,13 +370,23 @@ else
     private IJSObjectReference? _audio;
     private JeopardyPhase _lastPhase = JeopardyPhase.NotStarted;
     private string? _lastClueId;
-    private bool _showAnswer;
     private bool _editingBoard;
+
+    /// <summary>How long the "you picked first" card holds the screen before the board is clear.</summary>
+    private static readonly TimeSpan PickCardDuration = TimeSpan.FromSeconds(3.4);
+
+    private bool _showPickCard;
+    private bool _lastBuzzersOpen;
+    private CancellationTokenSource? _pickCard;
+
+    private bool ShowingPickCard => _showPickCard && Game.PickingTeamId is not null;
 
     private JeopardyBoard Board => Trip.Jeopardy;
     private JeopardyGame Game => Trip.Jeopardy.Game;
     private bool Muted { get; set; }
-    private bool ShowAnswer => _showAnswer || Game.Phase == JeopardyPhase.Judging;
+
+    /// <summary>Whatever is on the wall — a clue, the final, or the answer to either.</summary>
+    private ClueInPlay? InPlay => JeopardyService.InPlay(Trip);
 
     // Only ever reachable from the title card, so a stale flag cannot hijack a game in progress.
     private bool IsEditingBoard => _editingBoard && CanEdit && Game.Phase == JeopardyPhase.NotStarted;
@@ -363,26 +397,57 @@ else
     private string JoinHost => new Uri(Nav.BaseUri).Authority;
     private string BuzzUrl(string code) => Nav.ToAbsoluteUri($"/buzz/{code}").ToString();
     private string CodeFor(string teamId) => Game.BuzzerCodes.GetValueOrDefault(teamId, "—");
-    private bool Answered(string teamId) => Game.FinalAnswers.ContainsKey(teamId);
 
-    /// <summary>Reaction times are milliseconds in a race and seconds when someone wandered off.</summary>
-    private static string Reaction(int ms) =>
-        ms >= 10_000 ? $"{ms / 1000.0:0.#} s" : $"{ms} ms";
+    /// <summary>
+    /// Always seconds. "4108 ms" is the sort of number a stopwatch reports and a person has to
+    /// convert in their head; "4.11 s" is the one they can read off the wall.
+    /// </summary>
+    private static string Reaction(int ms) => $"{ms / 1000.0:0.00} s";
+
+    /// <summary>
+    /// The line above a clue. The final says so, unless its category already does — the board
+    /// ships with that category called "Final Jeopardy", which otherwise reads back twice.
+    /// </summary>
+    private static string ClueHead(ClueInPlay clue)
+    {
+        var category = clue.Category.Trim();
+
+        if (!clue.IsFinal)
+            return $"{category} · {clue.Value}";
+
+        return category.Length == 0 || category.Contains("final", StringComparison.OrdinalIgnoreCase)
+            ? $"Final Jeopardy · {clue.Value}"
+            : $"Final Jeopardy · {category} · {clue.Value}";
+    }
 
     private string TeamName(string? id) => Trip.Teams.FirstOrDefault(t => t.Id == id)?.Name ?? "—";
     private string TeamColor(string? id) => Trip.Teams.FirstOrDefault(t => t.Id == id)?.Color ?? "#d4af37";
     private string CategoryName(string? clueId) =>
         clueId is null ? "" : JeopardyService.CategoryOf(Trip, clueId)?.Name ?? "";
 
+    private IReadOnlyList<(Team Team, int Score)> Ranked =>
+        JeopardyService.Scoreboard(Trip).OrderByDescending(x => x.Score).ToList();
+
+    private int TopScore => Ranked.Count == 0 ? 0 : Ranked[0].Score;
+
     private string Winner
     {
         get
         {
-            var board = JeopardyService.Scoreboard(Trip).OrderByDescending(x => x.Score).ToList();
+            var board = Ranked;
             if (board.Count == 0) return "No one";
-            var top = board[0].Score;
-            var tied = board.Where(x => x.Score == top).Select(x => x.Team.Name).ToList();
+            var tied = board.Where(x => x.Score == TopScore).Select(x => x.Team.Name).ToList();
             return tied.Count > 1 ? string.Join(" and ", tied) + " tie" : $"{tied[0]} wins";
+        }
+    }
+
+    /// <summary>The winning team's colour, or gold when it is a tie and nobody owns the screen.</summary>
+    private string WinnerColor
+    {
+        get
+        {
+            var winners = Ranked.Where(x => x.Score == TopScore).ToList();
+            return winners.Count == 1 ? winners[0].Team.Color : "#d4af37";
         }
     }
 
@@ -410,28 +475,44 @@ else
         Toasts.Show("New codes issued", CharterTrip.Web.Services.ToastKind.Good);
     }
 
-    private Task SettleAsync() => MutateAsync(JeopardyService.SettleBuzzOff);
-
     private async Task PickAsync(string clueId)
     {
-        _showAnswer = false;
+        // Fired here rather than off the phase change so the click is answered on the device
+        // that made it, without waiting for the round trip.
+        await Cue("pick");
         await MutateAsync(t => JeopardyService.PickClue(t, clueId, DateTimeOffset.UtcNow));
     }
 
-    private Task CorrectAsync() => MutateAsync(t => JeopardyService.JudgeCorrect(t, DateTimeOffset.UtcNow));
-    private Task WrongAsync() => MutateAsync(t => JeopardyService.JudgeWrong(t, DateTimeOffset.UtcNow));
-
-    private async Task NobodyAsync()
+    /// <summary>
+    /// Give the winner of the opening race the screen for a moment. Purely a view state — it is
+    /// not worth a field in trip.json, and every screen watching works it out for itself from
+    /// the same transition.
+    /// </summary>
+    private void ShowPickCard()
     {
-        _showAnswer = true;
-        await MutateAsync(JeopardyService.NobodyGotIt);
+        _pickCard?.Cancel();
+        _pickCard?.Dispose();
+        _pickCard = new CancellationTokenSource();
+        var token = _pickCard.Token;
+
+        _showPickCard = true;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(PickCardDuration, token);
+                _showPickCard = false;
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (OperationCanceledException) { /* superseded, or the page went away */ }
+        });
     }
 
-    private Task RevealAsync() => MutateAsync(JeopardyService.RevealFinal);
-    private Task FinishAsync() => MutateAsync(JeopardyService.Finish);
+    private Task ContinueAsync() => MutateAsync(JeopardyService.Continue);
 
-    private Task MarkFinalAsync(string teamId, bool correct) =>
-        MutateAsync(t => JeopardyService.MarkFinal(t, teamId, correct, DateTimeOffset.UtcNow));
+    private Task StartFinalAsync() =>
+        MutateAsync(t => JeopardyService.StartFinal(t, DateTimeOffset.UtcNow));
 
     private void ConfirmReset() =>
         _confirm?.Show("Reset the whole game? Every clue comes back and the Jeopardy points leave the standings.",
@@ -477,11 +558,48 @@ else
         await _audio.InvokeVoidAsync("unlock");
     }
 
+    /// <summary>Fire one sound, and never let a dead circuit turn into an unhandled exception.</summary>
+    private async Task Cue(string name)
+    {
+        if (_audio is null) return;
+        try { await _audio.InvokeVoidAsync(name); } catch (JSDisconnectedException) { }
+    }
+
     private async Task ToggleMuteAsync()
     {
         Muted = !Muted;
         if (_audio is not null) await _audio.InvokeVoidAsync("setMuted", Muted);
     }
+
+    /// <summary>
+    /// Which piece of music belongs to a phase, or null for silence.
+    ///
+    /// Four beds, deliberately distinct in pace and register, so the game is legible from the
+    /// kitchen: a lounge vamp while people are still scanning codes, something warmer and out of
+    /// the way while the board is being picked from, a tense countdown while a clue is live, and
+    /// the fast one for the final.
+    ///
+    /// The final's music has to cover its judging and its answer too, because those reuse the
+    /// same phases a normal clue does — hence the check on what is actually in play rather than
+    /// on the phase alone. The win screen is silent underneath, so the jingle has the room.
+    /// </summary>
+    private string? BedFor(JeopardyPhase phase)
+    {
+        if (FinalInPlay(phase)) return "final";
+
+        return phase switch
+        {
+            JeopardyPhase.NotStarted => "vamp",
+            JeopardyPhase.Board or JeopardyPhase.Revealed => "board",
+            JeopardyPhase.Clue or JeopardyPhase.Judging => "question",
+            JeopardyPhase.FinalIntro => "final",
+            _ => null
+        };
+    }
+
+    /// <summary>True from the moment the final clue goes up until the game is over.</summary>
+    private bool FinalInPlay(JeopardyPhase phase) =>
+        phase == JeopardyPhase.Final || InPlay is { IsFinal: true };
 
     /// <summary>
     /// Cues follow the phase rather than being fired from each handler, so a buzz arriving from
@@ -499,14 +617,29 @@ else
                 _audio = await JS.InvokeAsync<IJSObjectReference>("import", "./js/jeopardy-audio.js");
                 _lastPhase = Game.Phase;
                 _lastClueId = Game.CurrentClueId;
+                _lastBuzzersOpen = Game.BuzzersOpen;
 
-                if (Game.Phase == JeopardyPhase.NotStarted)
-                    await _audio.InvokeVoidAsync("armLobby");
+                // Adopt the current phase's music, so a screen opened mid-game joins the
+                // soundtrack rather than sitting in silence until the next transition.
+                await _audio.InvokeVoidAsync("setBed", BedFor(Game.Phase));
             }
             catch (JSDisconnectedException) { }
 
             return;
         }
+
+        // The opening race ending is what puts the winner's card on screen. Detected from the
+        // buzzers closing rather than pushed from the click, so a screen that was not the one
+        // being tapped shows it too.
+        if (_lastBuzzersOpen && !Game.BuzzersOpen
+            && Game.Phase == JeopardyPhase.Board && Game.PickingTeamId is not null)
+        {
+            ShowPickCard();
+            await Cue("correct");
+            StateHasChanged();
+        }
+
+        _lastBuzzersOpen = Game.BuzzersOpen;
 
         if (_audio is null) return;
 
@@ -520,35 +653,35 @@ else
 
             if (phase != _lastPhase)
             {
-                // The vamp belongs to the join screen; every other phase brings its own sound.
-                await _audio.InvokeVoidAsync(
-                    phase == JeopardyPhase.NotStarted ? "armLobby" : "stopLobby");
+                // One call decides the music. Every phase names the bed it wants and the module
+                // switches to it — no per-bed stop to forget, and a phase returning to a bed it
+                // was already on does not restart it mid-bar.
+                await _audio.InvokeVoidAsync("setBed", BedFor(phase));
 
+                // The one-shots that mark a moment, on top of whatever is playing under them.
                 switch (phase)
                 {
-                    case JeopardyPhase.Clue: await _audio.InvokeVoidAsync("startThink"); break;
                     case JeopardyPhase.Judging:
-                        await _audio.InvokeVoidAsync("stopThink");
                         await _audio.InvokeVoidAsync("buzz");
                         break;
-                    case JeopardyPhase.Final:
-                        await _audio.InvokeVoidAsync("stopThink");
+
+                    case JeopardyPhase.FinalIntro:
                         await _audio.InvokeVoidAsync("fanfare");
-                        await _audio.InvokeVoidAsync("startDrone");
                         break;
+
                     case JeopardyPhase.Finished:
-                        await _audio.InvokeVoidAsync("stopDrone");
-                        await _audio.InvokeVoidAsync("fanfare");
+                        await _audio.InvokeVoidAsync("winJingle");
                         break;
-                    default: await _audio.InvokeVoidAsync("stopThink"); break;
                 }
             }
 
-            // Judging to Clue means a wrong answer sent it back for someone else.
-            if (_lastPhase == JeopardyPhase.Judging && phase == JeopardyPhase.Clue)
+            // Judging to Clue or Final means a wrong answer sent it back for someone else.
+            if (_lastPhase == JeopardyPhase.Judging && phase is JeopardyPhase.Clue or JeopardyPhase.Final)
                 await _audio.InvokeVoidAsync("wrong");
-            if (_lastPhase == JeopardyPhase.Judging && phase == JeopardyPhase.Board)
-                await _audio.InvokeVoidAsync("correct");
+
+            // Anything reaching the answer with a name on it got there by being right.
+            if (_lastPhase == JeopardyPhase.Judging && phase == JeopardyPhase.Revealed)
+                await _audio.InvokeVoidAsync(Game.RevealedWinnerTeamId is null ? "wrong" : "correct");
         }
         catch (JSDisconnectedException) { }
 
@@ -558,6 +691,9 @@ else
 
     public async ValueTask DisposeAsync()
     {
+        _pickCard?.Cancel();
+        _pickCard?.Dispose();
+
         if (_audio is not null)
         {
             try { await _audio.InvokeVoidAsync("dispose"); } catch (JSDisconnectedException) { }

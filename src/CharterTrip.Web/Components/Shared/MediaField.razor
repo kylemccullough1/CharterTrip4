@@ -1,0 +1,134 @@
+@* Pick a picture or a video, or paste a link to one.
+
+   Both halves are kept on purpose. Uploading is what people actually want for something on their
+   phone, but the board was built on pasted URLs and a link to an album somebody already shares
+   is still the fastest way to get a picture on screen. So the URL stays visible and editable,
+   and uploading simply writes into it. *@
+
+@inject CharterTrip.Web.Services.MediaAttachments Attachments
+
+@if (!CanEditThis)
+{
+    @if (HasMedia)
+    {
+        <MediaView Src="@Value" CssClass="mediafield-thumb" Alt="@Label" />
+    }
+}
+else
+{
+    <div class="mediafield">
+        <div class="mediafield-row">
+            @if (HasMedia)
+            {
+                <a href="@Value" target="_blank" rel="noopener" title="Open full size">
+                    @if (IsVideo)
+                    {
+                        @* muted and metadata-only, so a wall of clue editors does not start
+                           downloading twenty-five clips the moment the page opens. *@
+                        <video class="mediafield-thumb" src="@Value" muted preload="metadata"></video>
+                    }
+                    else
+                    {
+                        <img class="mediafield-thumb" src="@Value" alt="@Label" loading="lazy" />
+                    }
+                </a>
+            }
+
+            <label class="btn btn-xs @(_busy ? "is-busy" : null)">
+                @ButtonLabel
+                <InputFile OnChange="OnPickedAsync" accept="image/*,video/*"
+                           disabled="@_busy" class="mediafield-input" />
+            </label>
+
+            @if (HasMedia)
+            {
+                <button type="button" class="btn btn-xs btn-danger-ghost"
+                        @onclick="RemoveAsync" disabled="@_busy">Remove</button>
+            }
+        </div>
+
+        <EditableText Value="@Value" CssClass="jeo-editor-url"
+                      ValueChanged="SetAsync"
+                      Placeholder="@Placeholder" />
+
+        @if (_error is not null)
+        {
+            <span class="mediafield-error">@_error</span>
+        }
+    </div>
+}
+
+@code {
+    [CascadingParameter] private TripPermissions Permissions { get; set; } = new(false, "Guest");
+
+    [Parameter, EditorRequired] public string Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    /// <summary>Used as the alt text, so it should say what the picture is of.</summary>
+    [Parameter] public string Label { get; set; } = "Image";
+
+    [Parameter] public string Placeholder { get; set; } = "nothing yet — upload or paste a link";
+
+    /// <summary>Lets a caller force read-only even for an admin.</summary>
+    [Parameter] public bool ReadOnly { get; set; }
+
+    private bool _busy;
+    private string? _error;
+
+    private bool CanEditThis => Permissions.CanEdit && !ReadOnly;
+    private bool HasMedia => !string.IsNullOrWhiteSpace(Value);
+    private bool IsVideo => TripMedia.IsVideo(Value);
+
+    private string ButtonLabel => _busy
+        ? "Uploading…"
+        : HasMedia ? "Replace" : "Upload";
+
+    private async Task OnPickedAsync(InputFileChangeEventArgs e)
+    {
+        if (e.File is not { } file) return;
+
+        _error = null;
+        _busy = true;
+
+        // A clip goes up over the circuit a chunk at a time and is not quick. Yield a render so
+        // the button actually says "Uploading…" rather than looking ignored for half a minute.
+        StateHasChanged();
+
+        try
+        {
+            // Store first, and only then point the trip at the result. An upload that fails half
+            // way leaves the clue showing whatever it already had.
+            await SetAsync(await Attachments.SaveAsync(file));
+        }
+        catch (InvalidOperationException ex)
+        {
+            _error = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            _error = $"Could not upload {file.Name} — {ex.Message}";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private Task RemoveAsync() => SetAsync(string.Empty);
+
+    /// <summary>
+    /// Save the new value, then let go of the old file.
+    ///
+    /// That order matters: releasing decides by looking at what the trip points at now, so it has
+    /// to run after the change has landed or it would find the old value still there and keep a
+    /// file nothing uses.
+    /// </summary>
+    private async Task SetAsync(string value)
+    {
+        var previous = Value;
+        if (value == previous) return;
+
+        await ValueChanged.InvokeAsync(value);
+        await Attachments.ReleaseAsync(previous);
+    }
+}

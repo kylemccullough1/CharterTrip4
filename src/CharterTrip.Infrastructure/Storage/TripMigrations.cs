@@ -13,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 9;
+    public const int CurrentVersion = 10;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -28,6 +28,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 7) changed |= ToV7_CountdownAndTagline(trip);
         if (trip.SchemaVersion < 8) changed |= ToV8_ShortNames(trip);
         if (trip.SchemaVersion < 9) changed |= ToV9_JeopardyBoard(trip);
+        if (trip.SchemaVersion < 10) changed |= ToV10_FinalIsAClue(trip);
 
         if (trip.SchemaVersion != CurrentVersion)
         {
@@ -292,6 +293,32 @@ public static class TripMigrations
             return false;
 
         trip.Jeopardy = SeedLoader.Load().Jeopardy;
+        return true;
+    }
+
+    /// <summary>
+    /// Final Jeopardy used to be its own thing: every team wrote an answer, the host revealed
+    /// them together and marked each one. It is now played exactly like any other clue — buzz
+    /// in, answer aloud, wrong costs you the points — so <c>Final</c> means something different
+    /// than it did. It used to mean "everyone is writing"; it now means "the clue is up and the
+    /// buzzers are live", which is a state that needs a clue id to go with it.
+    ///
+    /// A game saved mid-old-final would therefore come back as a final with nothing in play and
+    /// render an empty screen. Sending it to the titles instead costs whoever is playing one
+    /// button press and loses nothing, since the old written answers have nowhere to go anyway.
+    ///
+    /// The abandoned fields — finalAnswers, finalCorrectTeamIds, finalRevealed — need no work
+    /// here. They are simply no longer on the model, and the reader ignores what it cannot map.
+    /// </summary>
+    private static bool ToV10_FinalIsAClue(TripData trip)
+    {
+        var game = trip.Jeopardy.Game;
+        if (game.Phase != JeopardyPhase.Final || game.CurrentClueId is not null) return false;
+
+        game.Phase = JeopardyPhase.FinalIntro;
+        game.BuzzersOpen = false;
+        game.Buzzes.Clear();
+        game.LockedOutTeamIds.Clear();
         return true;
     }
 

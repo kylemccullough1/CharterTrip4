@@ -88,6 +88,16 @@ after a short debounce, with rolling backups.
 
 Delete your local `App_Data` folder to start over from `data/trip.seed.json`.
 
+Clue media — pictures and video — is the one thing kept outside that file. It goes to a `photos/`
+folder beside it and the trip stores the path `/photos/<id>.jpg`. Megabytes of base64 in a
+document rewritten on every keystroke would cost the thing that makes this design work, which is
+being able to read the trip in a diff. It also means a copied `trip.json` carries the references
+but not the files; copy the `photos` folder with it.
+
+Pictures are resized to 1600px in the browser before upload, so there is no server-side image
+library to keep patched. Video is stored as it arrives — transcoding would mean shipping ffmpeg
+to hold one weekend's clips — and is capped at 64 MB a clip instead.
+
 Deploying never touches either file. To move a trip between the two, use the **Data** page at
 `/admin/import`: it downloads the live trip as a file, and imports one back over the top after
 showing what the swap would change. See **Getting the data out, and putting it back** in

@@ -27,6 +27,19 @@ public interface ITripStore
     /// </summary>
     Task MutateAsync(Action<TripData> mutate, TripArea area, CancellationToken ct = default);
 
+    /// <summary>
+    /// Replace the entire trip with <paramref name="replacement"/> — the import path.
+    ///
+    /// Separate from <see cref="MutateAsync"/> because it is a different kind of act: a mutation
+    /// edits the document everyone is looking at, while this discards it wholesale. So it saves
+    /// immediately rather than on the debounce, keeps a copy of what it overwrote, and announces
+    /// itself as <see cref="TripArea.All"/> so every open page re-reads everything.
+    ///
+    /// <paramref name="replacement"/> is consumed, not kept: its contents are copied onto the
+    /// live document so that pages holding <see cref="Current"/> follow the change.
+    /// </summary>
+    Task ReplaceAsync(TripData replacement, CancellationToken ct = default);
+
     /// <summary>Force any pending debounced write to disk right now.</summary>
     Task FlushAsync(CancellationToken ct = default);
 

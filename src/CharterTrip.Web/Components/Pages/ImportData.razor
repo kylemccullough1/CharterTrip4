@@ -1,0 +1,270 @@
+@page "/admin/import"
+@using CharterTrip.Infrastructure.Storage
+@inherits TripAwareComponent
+@inject CharterTrip.Web.Services.ToastService Toasts
+
+@* The way a trip planned on somebody's laptop becomes the trip on the wall.
+
+   Deploying does not do this and never will: the seed in git is only read when the data
+   directory is empty, so once the live site has a trip.json it owns the data forever. This page
+   is the supported way to overwrite it — parse the upload, show what it would change, and only
+   then let go of what is already there. *@
+
+<AdminOnly>
+    <PageTitle>Trip data · Charter Trip 2026</PageTitle>
+
+    <div class="page">
+
+        <SectionCard Title="Trip data"
+                     Subtitle="Where the live trip is kept, and how to replace it with a file.">
+            <div class="card">
+                <dl class="kv">
+                    <dt>File</dt>
+                    <dd><code>@Status.DataPath</code></dd>
+
+                    <dt>Revision</dt>
+                    <dd>@Trip.Revision, last edited @Trip.UpdatedUtc.ToLocalTime().ToString("ddd d MMM, HH:mm")</dd>
+
+                    <dt>State</dt>
+                    <dd class="row gap wrap">
+                        @if (Status.CanPersist)
+                        {
+                            <span class="chip tiny ok">Saving</span>
+                        }
+                        else
+                        {
+                            <span class="chip tiny bad">Read-only — nothing is being saved</span>
+                        }
+
+                        @if (Status.Seeded)
+                        {
+                            <span class="chip tiny bad">Started from the built-in seed</span>
+                        }
+                    </dd>
+                </dl>
+
+                <p class="muted tiny">
+                    Backups sit next to it in <code>backups/</code>, including a
+                    <code>replaced-*.json</code> copy taken immediately before every import.
+                </p>
+
+                <div class="row gap wrap">
+                    <a class="btn btn-sm" href="/admin/trip.json" download>Download the live trip</a>
+                </div>
+            </div>
+        </SectionCard>
+
+        <SectionCard Title="Import a trip.json"
+                     Subtitle="Replaces everything: itinerary, roster, teams, board, mystery, scores.">
+            <div class="card">
+                <label class="field">
+                    <span>Choose a file</span>
+                    <InputFile OnChange="OnFileChosenAsync" accept=".json,application/json" disabled="@_busy" />
+                </label>
+
+                @if (_readError is not null)
+                {
+                    <p class="warnfg">@_readError</p>
+                }
+
+                @if (_report is { Ok: false })
+                {
+                    <p class="warnfg"><b>@_fileName</b> was not imported. @_report.Error</p>
+                }
+            </div>
+
+            @if (_report is { Ok: true, Trip: not null })
+            {
+                var incoming = _report.Counts;
+
+                <div class="card">
+                    <h4>@_fileName</h4>
+                    <p class="muted tiny">
+                        Written at revision @_report.FileRevision,
+                        @_report.FileUpdatedUtc.ToLocalTime().ToString("ddd d MMM yyyy, HH:mm")@(_report.WasMigrated
+                            ? $" — schema v{_report.FromSchemaVersion}, brought forward to v{TripMigrations.CurrentVersion} on read."
+                            : ".")
+                    </p>
+
+                    <div class="table-scroll">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>What</th>
+                                <th>Live now</th>
+                                <th>After importing</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var row in Rows(Live, incoming))
+                            {
+                                <tr>
+                                    <td>@row.Label</td>
+                                    <td class="muted">@row.Before</td>
+                                    <td class="@(row.Before == row.After ? null : "strong")">
+                                        <span>@row.After</span>
+                                        @if (row.Before != row.After)
+                                        {
+                                            <span class="@(row.After > row.Before ? "chip tiny ok" : "chip tiny bad")">
+                                                @(row.After > row.Before ? "+" : "")@(row.After - row.Before)
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (_report.Warnings.Count > 0)
+                    {
+                        <h4 class="mt">Worth a look first</h4>
+                        <ul class="plain">
+                            @foreach (var warning in _report.Warnings)
+                            {
+                                <li class="warnfg">@warning</li>
+                            }
+                        </ul>
+                    }
+
+                    <p class="muted tiny mt">
+                        Everything currently live is replaced. The outgoing file is copied to
+                        <code>backups/</code> first, so this can be undone by hand.
+                    </p>
+
+                    <div class="row gap end">
+                        <button class="btn" @onclick="Clear" disabled="@_busy">Cancel</button>
+                        <button class="btn btn-danger" @onclick="Confirm" disabled="@_busy">
+                            @(_busy ? "Importing…" : "Replace the live trip")
+                        </button>
+                    </div>
+                </div>
+            }
+        </SectionCard>
+
+        <SectionCard Title="Keeping the seed current"
+                     Subtitle="The floor the app lands on when it finds no data file.">
+            <div class="card">
+                <p>
+                    Importing changes the live site only. <code>data/trip.seed.json</code> in the repo is
+                    what a brand new environment starts from, and it goes stale on its own. After a big
+                    change, download the live trip above and refresh the seed from it:
+                </p>
+                <pre class="code">dotnet run --project tools/CharterTrip.SeedRefresh -- ~/Downloads/trip.json</pre>
+                <p class="muted tiny">Then <code>dotnet test tests/CharterTrip.Tests</code> and commit.</p>
+            </div>
+        </SectionCard>
+
+    </div>
+
+    <ConfirmDialog @ref="_confirm" />
+</AdminOnly>
+
+@code {
+    // The whole document is on the line, so a change anywhere is worth re-rendering for.
+    protected override TripArea Watching => TripArea.All;
+
+    /// <summary>
+    /// Enough for a trip with photographs of its Jeopardy clues, small enough that a
+    /// mis-selected video is refused rather than buffered.
+    /// </summary>
+    private const long MaxUploadBytes = 12L * 1024 * 1024;
+
+    private ConfirmDialog? _confirm;
+    private TripImportReport? _report;
+    private string? _fileName;
+    private string? _readError;
+    private bool _busy;
+
+    private TripStoreStatus Status => Store.Status;
+
+    private TripCounts Live => TripCounts.Of(Trip);
+
+    private async Task OnFileChosenAsync(InputFileChangeEventArgs e)
+    {
+        Clear();
+
+        var file = e.File;
+        if (file is null) return;
+
+        _fileName = file.Name;
+
+        try
+        {
+            using var reader = new StreamReader(file.OpenReadStream(MaxUploadBytes));
+            var json = await reader.ReadToEndAsync();
+            _report = TripImporter.Read(json);
+        }
+        catch (IOException)
+        {
+            // What OpenReadStream throws when the file is over the cap.
+            _readError = $"{file.Name} is larger than {MaxUploadBytes / (1024 * 1024)} MB. " +
+                         "That is not a trip.json — check you picked the right file.";
+        }
+        catch (Exception ex)
+        {
+            _readError = $"Could not read {file.Name} — {ex.Message}";
+        }
+    }
+
+    private void Confirm()
+    {
+        if (_report is not { Ok: true, Trip: not null }) return;
+
+        var incoming = _report.Counts;
+        var summary = incoming.People == Live.People
+            ? $"{incoming.People} people"
+            : $"{Live.People} people becomes {incoming.People}";
+
+        _confirm?.Show(
+            $"This replaces the whole live trip with {_fileName} — {summary}, " +
+            $"{incoming.ItineraryItems} itinerary items. Everything on the site now is overwritten.",
+            ImportAsync,
+            confirmLabel: "Replace it",
+            title: "Import this trip?");
+    }
+
+    private async Task ImportAsync()
+    {
+        if (_report is not { Ok: true, Trip: not null }) return;
+
+        _busy = true;
+        try
+        {
+            await Store.ReplaceAsync(_report.Trip);
+            Toasts.Show($"Imported {_fileName} — now revision {Trip.Revision}.",
+                CharterTrip.Web.Services.ToastKind.Good);
+            Clear();
+        }
+        catch (Exception ex)
+        {
+            // A failed import leaves the live trip alone, so the useful thing is to say what
+            // went wrong and leave the preview on screen to try again.
+            _readError = $"The import failed and nothing was changed — {ex.Message}";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Clear()
+    {
+        _report = null;
+        _readError = null;
+        _fileName = null;
+    }
+
+    private sealed record Row(string Label, int Before, int After);
+
+    private static IEnumerable<Row> Rows(TripCounts before, TripCounts after) =>
+    [
+        new("People", before.People, after.People),
+        new("Teams", before.Teams, after.Teams),
+        new("Itinerary days", before.Days, after.Days),
+        new("Itinerary items", before.ItineraryItems, after.ItineraryItems),
+        new("Jeopardy clues", before.Clues, after.Clues),
+        new("Mystery roles", before.MysteryRoles, after.MysteryRoles),
+        new("Score entries", before.Scores, after.Scores)
+    ];
+}

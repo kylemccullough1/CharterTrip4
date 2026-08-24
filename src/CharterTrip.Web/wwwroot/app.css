@@ -1287,3 +1287,23 @@ select.textfield { cursor: pointer; }
   .itin-row .spacer { display: none; }
   .itin-move { width: 100%; justify-content: flex-end; }
 }
+
+/* ------------------------------------------------------- trip data page -- */
+/* A label/value list for facts that are read, not edited: the data path, the
+   revision, what the store thinks of itself. */
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 18px; margin: 0 0 14px; }
+.kv dt { color: var(--text-faint); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; padding-top: 3px; }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+
+@media (max-width: 620px) {
+  .kv { grid-template-columns: 1fr; gap: 2px; }
+  .kv dd { margin-bottom: 10px; }
+}
+
+/* A command meant to be copied, not run from the page. */
+pre.code {
+  margin: 0 0 .8em; padding: 10px 12px; overflow-x: auto;
+  background: var(--ink-2); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px;
+  color: var(--gold-light); white-space: pre;
+}

@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using CharterTrip.Core.Abstractions;
 using CharterTrip.Infrastructure;
 using CharterTrip.Infrastructure.Storage;
@@ -62,6 +64,23 @@ app.MapGet("/healthz", (ITripStore store) =>
         seeded = status.Seeded,
         canPersist = status.CanPersist
     });
+});
+
+// The other half of /admin/import: hand back the live trip as a file. Without this, getting a
+// copy of the deployed data means an SSH session or the Kudu file browser, which is a lot to
+// ask of someone whose actual goal is "let me plan Saturday on my laptop".
+//
+// Serialized from memory rather than read off disk, so it is the trip as it stands right now
+// and not as it was before the last debounced save.
+//
+// PHASE 2: this is the whole trip, including the mystery solution and every buzzer code. It is
+// open today only because AlwaysAdminUser makes every visitor an admin — the moment real logins
+// land, this needs the same guard as the admin pages.
+app.MapGet("/admin/trip.json", (ITripStore store) =>
+{
+    var json = JsonSerializer.Serialize(store.Current, TripJson.Options);
+    var name = $"trip-r{store.Current.Revision}-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}.json";
+    return Results.File(Encoding.UTF8.GetBytes(json), "application/json", name);
 });
 
 // Touch the store during startup so a broken data file fails loudly here rather than on

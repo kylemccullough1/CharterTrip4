@@ -88,6 +88,11 @@ after a short debounce, with rolling backups.
 
 Delete your local `App_Data` folder to start over from `data/trip.seed.json`.
 
+Deploying never touches either file. To move a trip between the two, use the **Data** page at
+`/admin/import`: it downloads the live trip as a file, and imports one back over the top after
+showing what the swap would change. See **Getting the data out, and putting it back** in
+`docs/DEPLOY.md`.
+
 The seed is the floor the app lands on when there is no data file, so it is worth keeping close to
 the real trip rather than frozen at the first commit:
 

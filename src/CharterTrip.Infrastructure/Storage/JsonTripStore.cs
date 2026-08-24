@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using CharterTrip.Core.Abstractions;
 using CharterTrip.Core.Models;
+using CharterTrip.Core.Services;
 using CharterTrip.Infrastructure.Seed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -78,6 +79,48 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
         }
 
         ScheduleFlush();
+        await RaiseChangedAsync(change).ConfigureAwait(false);
+    }
+
+    public async Task ReplaceAsync(TripData replacement, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(replacement);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        // Copy aside what is about to be discarded, before a single field is touched. An import
+        // is the one operation here with no undo, and the person doing it is usually doing it in
+        // a hurry.
+        ArchiveBeforeReplace();
+
+        TripChanged change;
+
+        await _stateGate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            var previous = _current.Revision;
+            TripReplace.Overwrite(_current, replacement);
+
+            // The revision belongs to this store, not to the uploaded file. Taking the file's
+            // number would let the revision go backwards, which is exactly the thing it exists
+            // to make impossible to misread in a log.
+            _current.Revision = previous + 1;
+            _current.UpdatedUtc = _clock.UtcNow;
+
+            change = new TripChanged(TripArea.All, _current.Revision);
+        }
+        finally
+        {
+            _stateGate.Release();
+        }
+
+        // Not ScheduleFlush: nobody should have to wonder whether an import survived a crash in
+        // the next four hundred milliseconds.
+        await FlushAsync(ct).ConfigureAwait(false);
+
+        _logger.LogWarning(
+            "Trip data was replaced wholesale (now revision {Revision}, {People} people, {Items} itinerary items).",
+            _current.Revision, _current.Roster.Count, _current.Itinerary.Sum(d => d.Items.Count));
+
         await RaiseChangedAsync(change).ConfigureAwait(false);
     }
 
@@ -175,6 +218,33 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Could not archive the pre-migration copy of {Path}.", path);
+        }
+    }
+
+    /// <summary>
+    /// Snapshot trip.json as it stands, immediately before an import overwrites it.
+    ///
+    /// Named outside the <c>trip-*.json</c> pattern on purpose: that is what
+    /// <see cref="BackupHostedService"/> prunes on a rolling window, and the one copy of the
+    /// data an import destroyed is the last file that should age out of the folder on a timer.
+    /// </summary>
+    private void ArchiveBeforeReplace()
+    {
+        var path = _options.TripFilePath;
+        if (!File.Exists(path)) return;
+
+        try
+        {
+            Directory.CreateDirectory(_options.BackupDirectory);
+            var name = $"replaced-{_clock.UtcNow:yyyyMMdd-HHmmss}.json";
+            File.Copy(path, Path.Combine(_options.BackupDirectory, name), overwrite: true);
+            _logger.LogInformation("Copied the outgoing trip.json to backups/{Name} before importing.", name);
+        }
+        catch (Exception ex)
+        {
+            // Worth knowing about, but not worth refusing the import over — the person asking
+            // for it has the file they are importing, which is more than the archive would give.
+            _logger.LogError(ex, "Could not archive {Path} before replacing it.", path);
         }
     }
 

@@ -166,14 +166,42 @@ problem can never block deploying the fix for it.
 **Settings** → **Configuration** → **General settings** → **HTTPS Only: On**. The app already sends
 HSTS in production.
 
-## Getting the data out
+## Getting the data out, and putting it back
 
-`trip.json` lives at `/home/data/trip.json`. To read it:
+**Deploying does not touch the data.** This surprises people, so it is worth saying plainly: the
+seed in git is read only when the data directory is empty. Once the live site has written
+`/home/data/trip.json` — which it does the first time anyone opens it — that file is the trip,
+and pushing to `main` will never change it. Editing `data/trip.seed.json` locally and deploying
+does nothing to the deployed site.
+
+The supported round trip is the **Data** page in the admin nav, at `/admin/import`:
+
+- **Download the live trip** hands you `/home/data/trip.json` as it stands this second,
+  serialized from memory rather than read off disk, so it includes edits made moments ago.
+- **Import a trip.json** replaces the entire live trip with a file you upload. It parses and
+  migrates the file first, shows the counts side by side with what is live — people, teams,
+  itinerary items, clues, score entries — and lists anything that looks off before you confirm.
+  A file it cannot read, or one with an empty roster, is refused rather than imported.
+
+Importing overwrites everything, including the scoreboard and any game in progress. The outgoing
+file is copied to `/home/data/backups/replaced-<timestamp>.json` first, and unlike the rolling
+`trip-*.json` backups that copy is never pruned — restoring it is a file copy and a restart.
+
+If you need the raw file instead:
 
 - Portal → your Web App → **Development Tools** → **SSH**, then `cat /home/data/trip.json`
 - Or `https://<app>.scm.azurewebsites.net/newui/fileManager` and browse to `data`
 
 Backups are alongside it in `/home/data/backups/`.
+
+> Editing `/home/data/trip.json` by hand while the site is running does **not** work: the app
+> holds the whole trip in memory and its next save flattens your edit (after copying it to
+> `backups/trip-external-*.json` and logging loudly). Use the import page, or restart the app
+> from the Portal immediately after replacing the file.
+
+> **No password on any of this yet.** `/admin/import` and `/admin/trip.json` are open, because
+> `AlwaysAdminUser` currently makes every visitor an admin, and the download is the whole trip —
+> mystery solution, buzzer codes and all. Phase 2's real logins need to cover both.
 
 ## Keeping the seed current
 
@@ -181,6 +209,7 @@ Backups are alongside it in `/home/data/backups/`.
 environment, or a data directory that did not survive a deploy. It is a floor, not a backup: the
 further it drifts from the real trip, the more a bad day costs.
 
+Importing does **not** refresh it — the import page changes the live site, and the seed is in git.
 So refresh it as the weekend gets planned. Download `trip.json` as above, then:
 
 ```bash

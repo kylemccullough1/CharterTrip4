@@ -194,11 +194,22 @@ If you need the raw file instead:
 
 Backups are alongside it in `/home/data/backups/`, and uploaded images in `/home/data/photos/`.
 
-> **Clue media is not in the trip file.** A photo or video uploaded onto a Jeopardy clue is
-> written to `/home/data/photos/` and the clue keeps only the path `/photos/<id>.jpg`. So
-> downloading `trip.json` gets you the *references*, not the files — importing it somewhere
-> without them gives you clues with broken images. To move a trip complete with its media, copy
-> the `photos` folder across too.
+> **Clue media is not in the trip file.** A clue stores only the path `/photos/<id>.jpg`, never
+> the bytes. So downloading `trip.json` gets you the *references*, and where the files are
+> decides whether the trip survives the trip across environments.
+>
+> Two places serve `/photos/`:
+>
+> - **`src/CharterTrip.Web/wwwroot/photos/`** — committed to git, deployed with the app, present
+>   in every environment. Media put here works locally *and* live with nothing to copy. Picked up
+>   at build time, so a new file needs a rebuild.
+> - **`/home/data/photos/`** — written by uploads through the admin UI at runtime. Not in the repo
+>   and not in a downloaded `trip.json`.
+>
+> A committed file wins: `MapStaticAssets` registers it as a literal route, which outranks the
+> `/photos/{id}` handler. Put media prepared ahead of time in `wwwroot/photos/` and the download →
+> import round trip stops producing broken images. For media uploaded during the weekend, copy
+> `/home/data/photos/` across as well, or re-upload it.
 
 **Video and disk.** Pictures are resized to 1600px in the browser and land at a couple of hundred
 KB each. Video is not resized — it is stored as it arrives, capped at 64 MB per clip. A board with

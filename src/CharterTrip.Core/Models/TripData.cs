@@ -21,6 +21,12 @@ public sealed class TripData
     public TripInfo Trip { get; set; } = new();
     public VenueInfo Venue { get; set; } = new();
 
+    /// <summary>The guest handbook — essentials, menu, what to pack. See <see cref="GuestGuide"/>.</summary>
+    public GuestGuide Guide { get; set; } = new();
+
+    /// <summary>Who is driving from where, and with whom. See <see cref="TravelPlan"/>.</summary>
+    public TravelPlan Travel { get; set; } = new();
+
     public List<CarouselSlide> Slides { get; set; } = [];
     public List<Team> Teams { get; set; } = [];
     public List<RosterPerson> Roster { get; set; } = [];

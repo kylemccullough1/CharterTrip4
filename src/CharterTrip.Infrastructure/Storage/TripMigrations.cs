@@ -13,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 10;
+    public const int CurrentVersion = 12;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -29,6 +29,8 @@ public static class TripMigrations
         if (trip.SchemaVersion < 8) changed |= ToV8_ShortNames(trip);
         if (trip.SchemaVersion < 9) changed |= ToV9_JeopardyBoard(trip);
         if (trip.SchemaVersion < 10) changed |= ToV10_FinalIsAClue(trip);
+        if (trip.SchemaVersion < 11) changed |= ToV11_GuestGuide(trip);
+        if (trip.SchemaVersion < 12) changed |= ToV12_CheckInIsTwo(trip);
 
         if (trip.SchemaVersion != CurrentVersion)
         {
@@ -358,6 +360,75 @@ public static class TripMigrations
             if (item.DurationMinutes == inferred) continue;
 
             item.DurationMinutes = inferred;
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    /// <summary>
+    /// The printed guest itinerary — essentials, menu, packing list, what each car brings —
+    /// moved onto the site.
+    ///
+    /// Taken from the seed wholesale, the same way the board was at v9, so the content has one
+    /// home rather than being written out twice and drifting. Only ever fills an empty guide, so
+    /// a trip that has already had one edited is left alone.
+    /// </summary>
+    private static bool ToV11_GuestGuide(TripData trip)
+    {
+        if (trip.Guide.Essentials.Count > 0 || trip.Guide.Packing.Count > 0) return false;
+
+        trip.Guide = SeedLoader.Load().Guide;
+        return true;
+    }
+
+    /// <summary>
+    /// The travel sheet — who leaves from where, when, and in whose car — plus the check-in time
+    /// it settles.
+    ///
+    /// Check-in is 2:00 PM. Again.
+    ///
+    /// v5 set it to 2:00 PM off the travel sheet, which is the booking. v11 moved it to 4:00 PM
+    /// on the strength of the guest handbook, which says the house is ours from 4:00 — but that
+    /// is when guests are being told to turn up, not when the property opens. The booking wins,
+    /// and this puts every copy of it back: the venue field, the essentials row, and the item on
+    /// the Friday schedule.
+    ///
+    /// Every change is guarded on finding the value v11 wrote, so a time chosen deliberately
+    /// since then is left alone.
+    /// </summary>
+    private static bool ToV12_CheckInIsTwo(TripData trip)
+    {
+        var changed = false;
+
+        // Rows are keyed to the roster, so an empty plan is filled from the seed and one that
+        // has been worked on is left completely alone.
+        if (trip.Travel.Rows.Count == 0 && string.IsNullOrWhiteSpace(trip.Travel.Destination))
+        {
+            trip.Travel = SeedLoader.Load().Travel;
+            changed = true;
+        }
+
+        if (trip.Venue.CheckIn is "Friday 4:00 PM")
+        {
+            trip.Venue.CheckIn = "Friday 2:00 PM";
+            changed = true;
+        }
+
+        var row = trip.Guide.Essentials.FirstOrDefault(f => f.Label == "Check-in");
+        if (row is not null && row.Value.Contains("4:00 PM", StringComparison.OrdinalIgnoreCase))
+        {
+            row.Value = "Friday, August 28. The house is ours from 2:00 PM.";
+            changed = true;
+        }
+
+        // By id, not by title. Matching on "Check-in" would reach into any trip that happens to
+        // have an item so named — this is about one specific item on one specific Friday.
+        // 960 minutes is 4pm; 840 is 2pm.
+        var arrival = trip.Itinerary.SelectMany(d => d.Items).FirstOrDefault(i => i.Id == "item-f1");
+        if (arrival is not null && arrival.StartMinutesOrNull == 960)
+        {
+            arrival.StartMinutes = 840;
             changed = true;
         }
 

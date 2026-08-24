@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 10,
+  "schemaVersion": 12,
   "revision": 0,
   "updatedUtc": "2026-08-19T00:00:00+00:00",
   "trip": {
@@ -64,6 +64,173 @@
         "notes": "Nature trails, creeks, cave loop, fishing pond, sand volleyball court"
       }
     ]
+  },
+  "travel": {
+    "destination": "Braun Manor, Denison TX",
+    "address": "310 Ballpark Lp, Denison, TX 75020",
+    "checkInTime": "2:00 PM",
+    "checkOutTime": "12:00 PM",
+    "note": "Talk amongst yourselves and decide who you are carpooling with, then put the same car name on every row in that car.",
+    "driveTimes": [
+      { "from": "Tulsa", "duration": "~3 hours" },
+      { "from": "OKC", "duration": "~2.75 hours" },
+      { "from": "Dallas", "duration": "~1.25 hours" }
+    ],
+    "rows": [
+      { "personId": "p-ana-torres", "departAt": "Anytime" },
+      {
+        "personId": "p-evie-fox",
+        "leavingFrom": "OKC",
+        "departAt": "Morning?",
+        "dietary": "Dairy is my mortal enemy",
+        "notes": "Leave anytime"
+      },
+      { "personId": "p-hao-dinh", "leavingFrom": "Tulsa", "departAt": "12:30-1" },
+      { "personId": "p-justin-brown", "leavingFrom": "OKC", "departAt": "Anytime" },
+      { "personId": "p-jnguyen", "leavingFrom": "Tulsa", "departAt": "Anytime" },
+      { "personId": "p-joujou", "leavingFrom": "Tulsa", "departAt": "Anytime" },
+      { "personId": "p-kenny-duong", "leavingFrom": "Tulsa", "departAt": "Anytime" },
+      { "personId": "p-kylie-jacelynn", "leavingFrom": "OKC", "departAt": "6:00 PM" },
+      { "personId": "p-maria-riri", "leavingFrom": "Tulsa" },
+      { "personId": "p-maria-saba", "leavingFrom": "Tulsa", "departAt": "Anytime" },
+      { "personId": "p-michael-lor", "leavingFrom": "OKC" },
+      { "personId": "p-sage-hermes", "leavingFrom": "OKC" }
+    ]
+  },
+  "guide": {
+    "essentials": [
+      {
+        "label": "Where",
+        "value": "Braun Manor — Denison, TX"
+      },
+      {
+        "label": "Check-in",
+        "value": "Friday, August 28. The house is ours from 2:00 PM."
+      },
+      {
+        "label": "Check-out",
+        "value": "Sunday, August 30 at 12:00 PM."
+      },
+      {
+        "label": "Covered",
+        "value": "All meals listed in the menu, plus water, soda, and snacks."
+      },
+      {
+        "label": "Not covered",
+        "value": "Beer and liquor, paper towels, toilet paper.",
+        "highlight": true
+      },
+      {
+        "label": "Bedrooms",
+        "value": "8, first come first served on Friday."
+      },
+      {
+        "label": "Bathrooms",
+        "value": "4, stocked with towels, hairdryers, soap, and shampoo."
+      }
+    ],
+    "saturdayNight": "Saturday evening is a murder mystery. You will get your character and the rest of the details once you are there.",
+    "dressCode": "Bring one dressed-up outfit. The fancier the better — formal wear works. Accessories are encouraged, and the best-dressed team earns points.",
+    "menu": [
+      {
+        "when": "Friday dinner",
+        "what": "Chicken adobo, jasmine rice, vegetables"
+      },
+      {
+        "when": "Saturday breakfast",
+        "what": "Eggs, bacon, sausage, pancakes and waffles, fruit, orange and apple juice"
+      },
+      {
+        "when": "Saturday lunch",
+        "what": "Sandwich bar — deli meats, cheese, lettuce, tomato, condiments, chips"
+      },
+      {
+        "when": "Saturday dinner",
+        "what": "Cookout — marinated skirt steak, flour and corn tortillas, salsa, salsa verde, onion and cilantro, tortilla chips"
+      },
+      {
+        "when": "Sunday",
+        "what": "Leftovers, or breakfast on the way home"
+      },
+      {
+        "when": "All weekend",
+        "what": "Bottled water, soda, juice, snacks"
+      }
+    ],
+    "menuNote": "Dietary restrictions or allergies: let one of us know before Friday.",
+    "packing": [
+      {
+        "id": "pack-required",
+        "title": "Required",
+        "required": true,
+        "items": [
+          { "id": "pk-req-tp", "text": "One roll of toilet paper" },
+          { "id": "pk-req-towels", "text": "One roll of paper towels" }
+        ]
+      },
+      {
+        "id": "pack-clothing",
+        "title": "Clothing",
+        "items": [
+          { "id": "pk-clo-casual", "text": "2-3 casual outfits" },
+          { "id": "pk-clo-formal", "text": "One dressed-up outfit for Saturday evening" },
+          { "id": "pk-clo-pjs", "text": "Pajamas, underwear, socks" },
+          { "id": "pk-clo-jacket", "text": "A light jacket, hoodie, or sweater" },
+          { "id": "pk-clo-shoes", "text": "Shoes, sunglasses, a hat" }
+        ]
+      },
+      {
+        "id": "pack-pool",
+        "title": "Pool",
+        "items": [
+          { "id": "pk-pool-suit", "text": "Swimsuit" },
+          { "id": "pk-pool-sandals", "text": "Pool sandals or flip-flops" },
+          { "id": "pk-pool-extras", "text": "Goggles, floaties, whatever you like" }
+        ]
+      },
+      {
+        "id": "pack-toiletries",
+        "title": "Toiletries",
+        "items": [
+          { "id": "pk-toi-teeth", "text": "Toothbrush and toothpaste" },
+          { "id": "pk-toi-body", "text": "Deodorant, body wash, skincare" },
+          { "id": "pk-toi-hair", "text": "Hairbrush or comb, lip balm" },
+          { "id": "pk-toi-sun", "text": "Sunscreen" },
+          { "id": "pk-toi-shampoo", "text": "Shampoo and conditioner (the house has some)" }
+        ]
+      },
+      {
+        "id": "pack-electronics",
+        "title": "Electronics",
+        "items": [
+          { "id": "pk-ele-phone", "text": "Phone and chargers" },
+          { "id": "pk-ele-buds", "text": "Earbuds or headphones" }
+        ]
+      },
+      {
+        "id": "pack-essentials",
+        "title": "Essentials",
+        "items": [
+          { "id": "pk-ess-wallet", "text": "Wallet, ID, cards, keys" },
+          { "id": "pk-ess-bottle", "text": "Water bottle" },
+          { "id": "pk-ess-meds", "text": "Any medication you take" },
+          { "id": "pk-ess-snacks", "text": "Snacks" }
+        ]
+      },
+      {
+        "id": "pack-optional",
+        "title": "Optional",
+        "items": [
+          { "id": "pk-opt-camera", "text": "Camera" }
+        ]
+      }
+    ],
+    "carBrings": [
+      "One case of beer",
+      "One roll of paper towels",
+      "One roll of toilet paper"
+    ],
+    "carBringsNote": "Anything else you want to drink, bring it yourself. There is a Walmart Supercenter 11 minutes from the house."
   },
   "slides": [
     {
@@ -133,7 +300,7 @@
       "items": [
         {
           "id": "item-f1",
-          "startMinutes": 960,
+          "startMinutes": 840,
           "durationMinutes": 60,
           "title": "Check-in at Braun Manor",
           "notes": "Kyle, Ali and Em targeting ~4pm. Jou ~7pm. Unload, claim rooms (8 rooms, 4 bathrooms).",

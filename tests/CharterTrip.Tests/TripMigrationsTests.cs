@@ -176,14 +176,61 @@ public class TripMigrationsTests
         Venue = new VenueInfo { CheckIn = checkIn, CheckOut = checkOut, Outside = [.. outside] }
     };
 
+    /// <summary>
+    /// Check-in is 2pm, off the travel sheet, which is the booking. v11 briefly moved it to 4pm
+    /// on the strength of the guest handbook — but that is the time guests are told to arrive,
+    /// not when the property opens — and v12 puts it back. A document run all the way through
+    /// comes out at 2pm.
+    ///
+    /// The checkout aside is still dropped by v5, and still is.
+    /// </summary>
     [Fact]
-    public void V5_moves_check_in_to_2pm_and_drops_the_checkout_aside()
+    public void V5_drops_the_checkout_aside_and_check_in_settles_at_2pm()
     {
         var trip = WithVenue("Friday 4:00 PM", "Sunday 12:00 PM (pushed back - thanks Kyle)");
         Assert.True(TripMigrations.Apply(trip));
 
         Assert.Equal("Friday 2:00 PM", trip.Venue.CheckIn);
         Assert.Equal("Sunday 12:00 PM", trip.Venue.CheckOut);
+    }
+
+    /// <summary>The copy v11 left behind on an already-migrated trip is the one v12 exists for.</summary>
+    [Fact]
+    public void V12_undoes_the_4pm_check_in_v11_wrote()
+    {
+        var trip = new TripData { SchemaVersion = 11 };
+        trip.Venue.CheckIn = "Friday 4:00 PM";
+        trip.Guide.Essentials.Add(new GuideFact
+        {
+            Label = "Check-in",
+            Value = "Friday, August 28. The house is ours from 4:00 PM."
+        });
+
+        Assert.True(TripMigrations.Apply(trip));
+
+        Assert.Equal("Friday 2:00 PM", trip.Venue.CheckIn);
+        Assert.Contains("2:00 PM", trip.Guide.Essentials.Single(f => f.Label == "Check-in").Value);
+    }
+
+    /// <summary>
+    /// The Friday arrival is moved by id rather than by title. Matching on the word "Check-in"
+    /// reached into any trip with an item so named, including ones that have nothing to do with
+    /// this weekend.
+    /// </summary>
+    [Fact]
+    public void V12_leaves_an_unrelated_check_in_item_alone()
+    {
+        var trip = new TripData { SchemaVersion = 11 };
+        trip.Itinerary.Add(new ItineraryDay
+        {
+            Id = "d1",
+            Day = "Friday",
+            Items = [new ItineraryItem { Id = "something-else", Title = "Check-in", StartMinutes = 960 }]
+        });
+
+        TripMigrations.Apply(trip);
+
+        Assert.Equal(960, trip.Itinerary[0].Items[0].StartMinutes);
     }
 
     [Fact]
@@ -311,5 +358,87 @@ public class TripMigrationsTests
 
         Assert.False(TripMigrations.Apply(trip));
         Assert.Equal(["Kyle", "Riri", "JB"], trip.Roster.Select(p => p.Name));
+    }
+
+    // --------------------------------------------------------- v11: the guide
+
+    /// <summary>
+    /// The deployed trip has no guide at all, so the whole handbook arrives by migration rather
+    /// than needing somebody to import a file before the site is any use.
+    /// </summary>
+    [Fact]
+    public void V11_fills_an_empty_guide_from_the_seed()
+    {
+        var trip = new TripData { SchemaVersion = 10 };
+
+        Assert.True(TripMigrations.Apply(trip));
+
+        Assert.NotEmpty(trip.Guide.Essentials);
+        Assert.NotEmpty(trip.Guide.Menu);
+        Assert.NotEmpty(trip.Guide.Packing);
+        Assert.NotEmpty(trip.Guide.CarBrings);
+        Assert.False(string.IsNullOrWhiteSpace(trip.Guide.DressCode));
+    }
+
+    /// <summary>Exactly one row shouts, and it is the one that costs money to miss.</summary>
+    [Fact]
+    public void V11_marks_only_the_not_covered_row_as_loud()
+    {
+        var trip = new TripData { SchemaVersion = 10 };
+        TripMigrations.Apply(trip);
+
+        var loud = trip.Guide.Essentials.Where(f => f.Highlight).ToList();
+
+        Assert.Single(loud);
+        Assert.Equal("Not covered", loud[0].Label);
+    }
+
+    /// <summary>
+    /// A ticked box is remembered against an item's id, so the ids have to be stable and unique.
+    /// Generated ones would differ per environment and empty everyone's list on the first import.
+    /// </summary>
+    [Fact]
+    public void V11_packing_items_all_carry_a_distinct_id()
+    {
+        var trip = new TripData { SchemaVersion = 10 };
+        TripMigrations.Apply(trip);
+
+        var ids = trip.Guide.Packing.SelectMany(g => g.Items).Select(i => i.Id).ToList();
+
+        Assert.NotEmpty(ids);
+        Assert.DoesNotContain(ids, string.IsNullOrWhiteSpace);
+        Assert.Equal(ids.Count, ids.Distinct(StringComparer.Ordinal).Count());
+    }
+
+    [Fact]
+    public void V11_leaves_a_guide_that_has_already_been_written()
+    {
+        var trip = new TripData { SchemaVersion = 10 };
+        trip.Guide.Essentials.Add(new GuideFact { Label = "Where", Value = "Somewhere else entirely" });
+
+        TripMigrations.Apply(trip);
+
+        Assert.Equal("Somewhere else entirely", Assert.Single(trip.Guide.Essentials).Value);
+    }
+
+    /// <summary>The correction is guarded on the stale value, so a deliberate time is not stamped over.</summary>
+    [Fact]
+    public void V11_does_not_touch_a_check_in_somebody_chose()
+    {
+        var trip = new TripData { SchemaVersion = 10 };
+        trip.Venue.CheckIn = "Friday 6:30 PM";
+
+        TripMigrations.Apply(trip);
+
+        Assert.Equal("Friday 6:30 PM", trip.Venue.CheckIn);
+    }
+
+    [Fact]
+    public void V11_running_twice_changes_nothing_the_second_time()
+    {
+        var trip = new TripData { SchemaVersion = 10 };
+        TripMigrations.Apply(trip);
+
+        Assert.False(TripMigrations.Apply(trip));
     }
 }

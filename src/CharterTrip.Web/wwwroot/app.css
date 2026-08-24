@@ -1583,3 +1583,185 @@ pre.code {
 @media (prefers-reduced-motion: reduce) {
   .jeo-race-dot, .jeo-pickcard, .jeo-pickcard-inner { animation: none; }
 }
+
+/* ======================================================== guest guide === */
+/* The printed handbook, as tabs: essentials, the schedule, the menu. */
+
+.guide-tabs {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--line-soft); margin-bottom: 18px; padding-bottom: 2px;
+}
+.guide-tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 16px; border: 1px solid transparent; border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: transparent; color: var(--text-dim); cursor: pointer;
+  font-family: var(--display); font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase;
+  transition: color .15s, background .15s;
+}
+.guide-tab:hover { color: var(--text); background: rgba(255,255,255,.03); }
+.guide-tab.is-active {
+  color: var(--gold-light); background: var(--panel);
+  border-color: var(--line-soft); box-shadow: inset 0 2px 0 var(--gold);
+}
+.guide-tab-icon { color: var(--gold-dim); font-size: 13px; }
+.guide-tab.is-active .guide-tab-icon { color: var(--gold); }
+
+/* Hidden, not unmounted — see the note in Itinerary.razor. */
+.guide-panel { display: none; }
+.guide-panel.is-active { display: block; }
+
+/* --- the essentials table --------------------------------------------- */
+.fact-list { display: flex; flex-direction: column; gap: 1px; margin-bottom: 18px; }
+.fact {
+  display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 14px; align-items: baseline;
+  padding: 11px 14px; background: var(--panel); border: 1px solid var(--line-soft);
+}
+.fact:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+.fact:last-child { border-radius: 0 0 var(--radius) var(--radius); }
+.fact-label {
+  font-family: var(--display); font-size: 11px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--text-faint);
+}
+.fact-value { color: var(--text); }
+
+/* The one row that costs somebody a beer run if they skim past it. Louder than everything
+   around it on purpose: warm border, its own tint, a flag, and a slow pulse that catches the
+   eye once without turning the page into a fairground. */
+.fact.is-loud {
+  border-color: var(--gold-dim);
+  background: linear-gradient(90deg, rgba(212,175,55,.13), rgba(212,175,55,.04));
+  animation: fact-pulse 3.6s ease-in-out infinite;
+}
+.fact.is-loud .fact-label { color: var(--gold); }
+.fact.is-loud .fact-value { color: var(--gold-light); font-weight: 650; }
+.fact-flag {
+  font-size: 10px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
+  color: var(--ink); background: var(--gold); padding: 3px 9px; border-radius: 999px; font-weight: 700;
+}
+
+@keyframes fact-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
+  50%      { box-shadow: 0 0 22px 0 rgba(212,175,55,.30); }
+}
+
+/* --- menu -------------------------------------------------------------- */
+.menu-list { display: flex; flex-direction: column; gap: 1px; }
+.menu-row {
+  display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 16px; align-items: baseline;
+  padding: 13px 14px; background: var(--panel); border: 1px solid var(--line-soft);
+}
+.menu-row:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+.menu-row:last-child { border-radius: 0 0 var(--radius) var(--radius); }
+.menu-when {
+  font-family: var(--display); font-size: 12px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--gold);
+}
+.menu-note { margin: 14px 0 0; font-size: 12.5px; color: var(--text-dim); }
+
+.card.is-dresscode { border-color: var(--gold-dim); }
+.card.is-dresscode h4 { color: var(--gold-light); }
+
+/* --- what to bring ----------------------------------------------------- */
+.pack-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.pack-group h4 { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.pack-group.is-required { border-color: var(--gold-dim); }
+.pack-group.is-required h4 { color: var(--gold-light); }
+.pack-required-flag {
+  font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink); background: var(--gold); padding: 2px 8px; border-radius: 999px; font-weight: 700;
+}
+
+.pack-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.pack-item {
+  display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
+  padding: 6px 8px; border-radius: var(--radius-sm);
+  transition: background .12s, color .12s;
+}
+.pack-item:hover { background: rgba(255,255,255,.04); }
+.pack-item input { accent-color: var(--gold); width: 16px; height: 16px; margin: 2px 0 0; flex: 0 0 auto; cursor: pointer; }
+/* Ticked lines stay readable rather than vanishing — you still want to see what you packed. */
+.pack-item.is-done span { color: var(--text-faint); text-decoration: line-through; }
+
+.pack-group.is-car { border-color: var(--line); background: var(--panel-2); }
+.pack-car { margin: 6px 0 10px; }
+.pack-car li {
+  padding: 5px 0 5px 18px; position: relative; color: var(--text);
+}
+.pack-car li::before {
+  content: '◆'; position: absolute; left: 0; top: 4px; font-size: 9px; color: var(--gold);
+}
+
+@media (max-width: 620px) {
+  .fact { grid-template-columns: 1fr; gap: 3px; }
+  .menu-row { grid-template-columns: 1fr; gap: 3px; }
+  .guide-tab { flex: 1 1 auto; justify-content: center; padding: 9px 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fact.is-loud { animation: none; box-shadow: 0 0 18px 0 rgba(212,175,55,.24); }
+}
+
+/* ==================================================== definition + accent == */
+/* Every panel gets a visible edge.
+ *
+ * The old borders sat a hair above the background and effectively disappeared on a bright
+ * screen, which is why the site read as one flat sheet of dark. These are the same hues, lifted
+ * far enough to actually draw the box — the outlines a dark-mode extension was adding for us. */
+:root {
+  --line:       #3a465c;
+  --line-soft:  #2c3648;
+}
+
+.card { border-color: var(--line); }
+.section { border-radius: var(--radius); }
+
+/* Per-section accent. Four tabs of dense text in one colour were hard to tell apart at a
+   glance, so each one owns a hue and spends it on its edges, headings and rules. */
+[data-accent="gold"]     { --accent: var(--gold);     --accent-soft: rgba(212,175,55,.14); }
+[data-accent="emerald"]  { --accent: var(--emerald);  --accent-soft: rgba(46,158,126,.14); }
+[data-accent="ruby"]     { --accent: var(--ruby);     --accent-soft: rgba(201,79,90,.14); }
+[data-accent="sapphire"] { --accent: var(--sapphire); --accent-soft: rgba(74,127,214,.14); }
+
+.guide-tab.is-active {
+  color: var(--accent, var(--gold-light));
+  box-shadow: inset 0 2px 0 var(--accent, var(--gold));
+  border-color: var(--line);
+}
+.guide-tab.is-active .guide-tab-icon { color: var(--accent, var(--gold)); }
+
+/* The accent reaches the content, not just the tab, or it is only ever decoration on a button. */
+.guide-panel .card { border-color: var(--line); }
+.guide-panel .card h4 { color: var(--accent, var(--gold-light)); }
+.guide-panel .fact,
+.guide-panel .menu-row { border-color: var(--line); }
+.guide-panel .fact-label,
+.guide-panel .menu-when { color: var(--accent, var(--gold)); }
+
+/* A rule under the tab strip in the live section's colour, so the whole panel reads as one
+   coloured block rather than a tab that happens to be tinted. */
+.guide-panel.is-active { border-top: 2px solid var(--accent, var(--gold)); padding-top: 18px; margin-top: -1px; }
+
+.fact:nth-child(even) { background: var(--ink-2); }
+.menu-row:nth-child(even) { background: var(--ink-2); }
+
+/* --- travel ------------------------------------------------------------ */
+.travel-table td { vertical-align: middle; }
+.travel-table .editable { display: inline-block; min-width: 3ch; }
+.travel-who { font-weight: 600; white-space: nowrap; }
+
+/* The carpool colour, carried on the row itself. The spreadsheet asked people to highlight
+   matching rows by hand; the name picks the colour here so two people in one car cannot end up
+   in two different shades. */
+.travel-table tr.has-car { box-shadow: inset 3px 0 0 var(--car); }
+.travel-table tr.has-car .travel-who { color: var(--car); }
+
+.car-legend { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.car-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 11px; border-radius: 999px; font-size: 12px;
+  background: color-mix(in srgb, var(--car) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--car) 55%, transparent);
+  color: var(--text);
+}
+.car-chip b { color: var(--car); }

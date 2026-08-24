@@ -88,11 +88,21 @@ after a short debounce, with rolling backups.
 
 Delete your local `App_Data` folder to start over from `data/trip.seed.json`.
 
-Clue media — pictures and video — is the one thing kept outside that file. It goes to a `photos/`
-folder beside it and the trip stores the path `/photos/<id>.jpg`. Megabytes of base64 in a
-document rewritten on every keystroke would cost the thing that makes this design work, which is
-being able to read the trip in a diff. It also means a copied `trip.json` carries the references
-but not the files; copy the `photos` folder with it.
+Clue media — pictures and video — is the one thing kept outside that file. The trip stores only
+the path `/photos/<id>.jpg`. Megabytes of base64 in a document rewritten on every keystroke would
+cost the thing that makes this design work, which is being able to read the trip in a diff.
+
+Two folders answer that path, and which one you use decides whether a copied `trip.json` shows
+pictures or broken images:
+
+| Folder | Committed? | Use it for |
+| --- | --- | --- |
+| `src/CharterTrip.Web/wwwroot/photos/` | Yes — deploys with the app | Media prepared ahead of time. Works in every environment with nothing to copy. Needs a rebuild to pick up a new file. |
+| `App_Data/photos/` (`/home/data/photos/` live) | No — runtime state | Anything uploaded through the admin UI during the trip. |
+
+A committed file wins — `MapStaticAssets` registers it as a literal route, which outranks the
+`/photos/{id}` handler in `Program.cs`. So put the Jeopardy board's media in `wwwroot/photos/`,
+and a `trip.json` copied between laptop and live keeps its pictures on its own.
 
 Pictures are resized to 1600px in the browser before upload, so there is no server-side image
 library to keep patched. Video is stored as it arrives — transcoding would mean shipping ffmpeg

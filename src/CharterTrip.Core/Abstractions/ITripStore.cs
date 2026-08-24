@@ -73,7 +73,8 @@ public enum TripArea
     Scores,
     Jeopardy,
     Mystery,
-    Venue
+    Venue,
+    Travel
 }
 
 public readonly record struct TripChanged(TripArea Area, int Revision)

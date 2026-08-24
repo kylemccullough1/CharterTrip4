@@ -26,6 +26,8 @@ public static class TripReplace
 
         target.Trip = source.Trip;
         target.Venue = source.Venue;
+        target.Guide = source.Guide;
+        target.Travel = source.Travel;
 
         target.Slides = source.Slides;
         target.Teams = source.Teams;

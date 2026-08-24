@@ -9,29 +9,93 @@
 
 <div class="page">
 
-    <SectionCard Title="Itinerary" Subtitle="@SubtitleText">
+    <SectionCard Title="@TabTitle" Subtitle="@TabSubtitle">
         <Actions>
-            <div class="planner-tools">
-                <div class="zoom" role="group" aria-label="Zoom">
-                    <button class="mini-btn" title="Zoom out" disabled="@(_pxPerHour <= MinZoom)"
-                            @onclick="() => Zoom(-1)">−</button>
-                    <span class="zoom-label">@(_pxPerHour)px/hr</span>
-                    <button class="mini-btn" title="Zoom in" disabled="@(_pxPerHour >= MaxZoom)"
-                            @onclick="() => Zoom(1)">+</button>
+            @* The planner's tools belong to the planner. Showing zoom controls next to the menu
+               would be nonsense, so they come and go with their own tab. *@
+            @if (_tab == GuideTab.Schedule)
+            {
+                <div class="planner-tools">
+                    <div class="zoom" role="group" aria-label="Zoom">
+                        <button class="mini-btn" title="Zoom out" disabled="@(_pxPerHour <= MinZoom)"
+                                @onclick="() => Zoom(-1)">−</button>
+                        <span class="zoom-label">@(_pxPerHour)px/hr</span>
+                        <button class="mini-btn" title="Zoom in" disabled="@(_pxPerHour >= MaxZoom)"
+                                @onclick="() => Zoom(1)">+</button>
+                    </div>
+
+                    <button class="btn btn-ghost btn-sm" @onclick="ToggleAllGaps">
+                        @(AnyCollapsed ? "Expand empty hours" : "Collapse empty hours")
+                    </button>
+
+                    @if (CanEdit)
+                    {
+                        <button class="btn btn-ghost btn-sm" @onclick="AddDayAsync">+ Day</button>
+                    }
                 </div>
-
-                <button class="btn btn-ghost btn-sm" @onclick="ToggleAllGaps">
-                    @(AnyCollapsed ? "Expand empty hours" : "Collapse empty hours")
-                </button>
-
-                @if (CanEdit)
-                {
-                    <button class="btn btn-ghost btn-sm" @onclick="AddDayAsync">+ Day</button>
-                }
-            </div>
+            }
         </Actions>
 
         <ChildContent>
+
+            <div class="guide-tabs" role="tablist" aria-label="Weekend information">
+                @foreach (var tab in Tabs)
+                {
+                    <button role="tab"
+                            class="guide-tab @(_tab == tab.Key ? "is-active" : null)"
+                            data-accent="@tab.Accent"
+                            aria-selected="@(_tab == tab.Key)"
+                            @onclick="() => _tab = tab.Key">
+                        <span class="guide-tab-icon" aria-hidden="true">@tab.Icon</span>
+                        <span>@tab.Label</span>
+                    </button>
+                }
+            </div>
+
+            @* Every panel stays in the document and is hidden with CSS rather than being torn
+               out of it. Unmounting the planner would throw away a half-written itinerary item
+               the moment somebody glanced at the menu. *@
+
+            <section class="guide-panel @(_tab == GuideTab.Essentials ? "is-active" : null)" data-accent="gold"
+                     role="tabpanel" aria-label="The essentials">
+
+                <div class="fact-list">
+                    @foreach (var fact in Guide.Essentials)
+                    {
+                        <div class="fact @(fact.Highlight ? "is-loud" : null)" @key="fact.Label">
+                            <span class="fact-label">@fact.Label</span>
+                            <span class="fact-value">@fact.Value</span>
+                            @if (fact.Highlight)
+                            {
+                                <span class="fact-flag">bring it yourself</span>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="note-grid">
+                    <div class="card">
+                        <h4>Nearby</h4>
+                        <ul class="plain">
+                            @foreach (var place in Trip.Venue.Stores)
+                            {
+                                <li><b>@place.Name</b> — @place.Distance</li>
+                            }
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <h4>Questions</h4>
+                        <p class="muted">
+                            Reach out to any of the four of us —
+                            @string.Join(", ", Trip.Trip.Committee).
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="guide-panel @(_tab == GuideTab.Schedule ? "is-active" : null)" data-accent="emerald"
+                     role="tabpanel" aria-label="Schedule">
 
             @* Day tabs. Hidden on desktop by CSS, where every day is shown at once. *@
             <div class="planner-tabs" role="tablist">
@@ -251,6 +315,209 @@
                 </aside>
             }
 
+                <div class="note-grid mt">
+                    <div class="card">
+                        <h4>Saturday night</h4>
+                        <p>@Guide.SaturdayNight</p>
+                    </div>
+                    <div class="card is-dresscode">
+                        <h4>Dress code</h4>
+                        <p>@Guide.DressCode</p>
+                    </div>
+                </div>
+
+            </section>
+
+            <section class="guide-panel @(_tab == GuideTab.Menu ? "is-active" : null)" data-accent="ruby"
+                     role="tabpanel" aria-label="Menu">
+
+                <div class="menu-list">
+                    @foreach (var entry in Guide.Menu)
+                    {
+                        <div class="menu-row" @key="entry.When">
+                            <span class="menu-when">@entry.When</span>
+                            <span class="menu-what">@entry.What</span>
+                        </div>
+                    }
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Guide.MenuNote))
+                {
+                    <p class="menu-note">@Guide.MenuNote</p>
+                }
+            </section>
+
+            <section class="guide-panel @(_tab == GuideTab.Travel ? "is-active" : null)" data-accent="sapphire"
+                     role="tabpanel" aria-label="Travel">
+
+                <div class="note-grid">
+                    <div class="card">
+                        <h4>Destination</h4>
+                        <p class="strong">
+                            <EditableText Value="@Travel.Destination" ReadOnly="@(!CanEdit)"
+                                          ValueChanged="@(v => EditTravelAsync(t => t.Destination = v))"
+                                          Placeholder="Where we are going" />
+                        </p>
+                        <p class="muted">
+                            <EditableText Value="@Travel.Address" ReadOnly="@(!CanEdit)"
+                                          ValueChanged="@(v => EditTravelAsync(t => t.Address = v))"
+                                          Placeholder="Street address" />
+                        </p>
+                        <p class="muted tiny">
+                            Check-in
+                            <b><EditableText Value="@Travel.CheckInTime" ReadOnly="@(!CanEdit)"
+                                             ValueChanged="@(v => EditTravelAsync(t => t.CheckInTime = v))"
+                                             Placeholder="—" /></b>
+                            · Check-out
+                            <b><EditableText Value="@Travel.CheckOutTime" ReadOnly="@(!CanEdit)"
+                                             ValueChanged="@(v => EditTravelAsync(t => t.CheckOutTime = v))"
+                                             Placeholder="—" /></b>
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h4>Drive times</h4>
+                        <ul class="plain">
+                            @for (var i = 0; i < Travel.DriveTimes.Count; i++)
+                            {
+                                var index = i;
+                                <li>
+                                    <b>@Travel.DriveTimes[index].From</b> —
+                                    <EditableText Value="@Travel.DriveTimes[index].Duration" ReadOnly="@(!CanEdit)"
+                                                  ValueChanged="@(v => EditTravelAsync(t => t.DriveTimes[index].Duration = v))"
+                                                  Placeholder="—" />
+                                </li>
+                            }
+                        </ul>
+                        <p class="muted tiny">
+                            <EditableText Value="@Travel.Note" Multiline="true" ReadOnly="@(!CanEdit)"
+                                          ValueChanged="@(v => EditTravelAsync(t => t.Note = v))"
+                                          Placeholder="How carpooling works" />
+                        </p>
+                    </div>
+                </div>
+
+                @if (Cars.Count > 0)
+                {
+                    <div class="car-legend">
+                        <span class="muted tiny">Cars</span>
+                        @foreach (var car in Cars)
+                        {
+                            <span class="car-chip" style="--car:@CarColor(car)">
+                                @car <b>@CarCount(car)</b>
+                            </span>
+                        }
+                    </div>
+                }
+
+                <div class="table-scroll mt">
+                    <table class="table travel-table">
+                        <thead>
+                        <tr>
+                            <th>Who</th>
+                            <th>Car</th>
+                            <th>Leaving from</th>
+                            <th>Can depart</th>
+                            <th>Dietary</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var person in Trip.Roster)
+                        {
+                            var row = RowFor(person.Id);
+                            <tr @key="person.Id" style="--car:@CarColor(row.Car)"
+                                class="@(string.IsNullOrWhiteSpace(row.Car) ? null : "has-car")">
+                                <td class="travel-who">@person.Name</td>
+                                <td>
+                                    <EditableText Value="@row.Car" ReadOnly="@(!CanEdit)"
+                                                  ValueChanged="@(v => EditRowAsync(person.Id, r => r.Car = v))"
+                                                  Placeholder="—" />
+                                </td>
+                                <td>
+                                    <EditableText Value="@row.LeavingFrom" ReadOnly="@(!CanEdit)"
+                                                  ValueChanged="@(v => EditRowAsync(person.Id, r => r.LeavingFrom = v))"
+                                                  Placeholder="—" />
+                                </td>
+                                <td>
+                                    <EditableText Value="@row.DepartAt" ReadOnly="@(!CanEdit)"
+                                                  ValueChanged="@(v => EditRowAsync(person.Id, r => r.DepartAt = v))"
+                                                  Placeholder="—" />
+                                </td>
+                                <td>
+                                    <EditableText Value="@row.Dietary" ReadOnly="@(!CanEdit)"
+                                                  ValueChanged="@(v => EditRowAsync(person.Id, r => r.Dietary = v))"
+                                                  Placeholder="—" />
+                                </td>
+                                <td>
+                                    <EditableText Value="@row.Notes" ReadOnly="@(!CanEdit)"
+                                                  ValueChanged="@(v => EditRowAsync(person.Id, r => r.Notes = v))"
+                                                  Placeholder="—" />
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </ChildContent>
+    </SectionCard>
+
+    <SectionCard Title="What to bring"
+                 Subtitle="Ticked boxes are saved on this device only — nobody else sees your list.">
+        <Actions>
+            <span class="muted tiny">@PackedCount of @PackTotal packed</span>
+            @if (PackedCount > 0)
+            {
+                <button class="btn btn-ghost btn-sm" @onclick="ClearPackingAsync">Reset</button>
+            }
+        </Actions>
+
+        <ChildContent>
+            <div class="pack-grid">
+                @foreach (var group in Guide.Packing)
+                {
+                    <div class="card pack-group @(group.Required ? "is-required" : null)" @key="group.Id">
+                        <h4>
+                            @group.Title
+                            @if (group.Required)
+                            {
+                                <span class="pack-required-flag">everyone</span>
+                            }
+                        </h4>
+
+                        <ul class="pack-items">
+                            @foreach (var item in group.Items)
+                            {
+                                <li @key="item.Id">
+                                    <label class="pack-item @(IsPacked(item.Id) ? "is-done" : null)">
+                                        <input type="checkbox"
+                                               checked="@IsPacked(item.Id)"
+                                               @onchange="e => TogglePackedAsync(item.Id, e.Value is true)" />
+                                        <span>@item.Text</span>
+                                    </label>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <div class="card pack-group is-car">
+                    <h4>What every car brings</h4>
+                    <p class="muted tiny">Once your car group is set, that car is responsible for:</p>
+                    <ul class="plain pack-car">
+                        @foreach (var thing in Guide.CarBrings)
+                        {
+                            <li @key="thing">@thing</li>
+                        }
+                    </ul>
+                    @if (!string.IsNullOrWhiteSpace(Guide.CarBringsNote))
+                    {
+                        <p class="muted tiny">@Guide.CarBringsNote</p>
+                    }
+                </div>
+            </div>
         </ChildContent>
     </SectionCard>
 
@@ -258,7 +525,142 @@
 </div>
 
 @code {
-    protected override TripArea Watching => TripArea.Itinerary;
+    // The page now shows the itinerary, the guest guide and the travel sheet, so it has a stake
+    // in more than one area and watching all of them is the honest answer.
+    protected override TripArea Watching => TripArea.All;
+
+    // ------------------------------------------------------------------ tabs
+
+    private enum GuideTab { Essentials, Schedule, Menu, Travel }
+
+    private GuideTab _tab = GuideTab.Essentials;
+
+    /// <summary>
+    /// Each tab carries its own accent. Four sections of dense text all in the same gold were
+    /// hard to tell apart at a glance, so the colour does the work the headings could not.
+    /// </summary>
+    private static readonly (GuideTab Key, string Label, string Icon, string Accent)[] Tabs =
+    [
+        (GuideTab.Essentials, "Essentials", "◆", "gold"),
+        (GuideTab.Schedule, "Itinerary", "◷", "emerald"),
+        (GuideTab.Menu, "Menu", "◈", "ruby"),
+        (GuideTab.Travel, "Travel", "◇", "sapphire")
+    ];
+
+    private string AccentFor(GuideTab tab) => Tabs.First(t => t.Key == tab).Accent;
+
+    private GuestGuide Guide => Trip.Guide;
+    private TravelPlan Travel => Trip.Travel;
+
+    private string TabTitle => _tab switch
+    {
+        GuideTab.Essentials => "The essentials",
+        GuideTab.Menu => "Menu",
+        GuideTab.Travel => "Getting there",
+        _ => "Itinerary"
+    };
+
+    private string TabSubtitle => _tab switch
+    {
+        GuideTab.Essentials => $"{Trip.Trip.Venue} · {Trip.Trip.Dates}",
+        GuideTab.Menu => "Everything on this list is covered.",
+        GuideTab.Travel => "Same car name, same colour. Sort it out amongst yourselves.",
+        _ => SubtitleText
+    };
+
+    // ---------------------------------------------------------------- travel
+
+    private Task EditTravelAsync(Action<TravelPlan> apply) =>
+        Store.MutateAsync(t => apply(t.Travel), TripArea.Travel);
+
+    /// <summary>
+    /// The row for a person, or a blank stand-in. Reading the table must not write to it — a row
+    /// is only ever created once somebody actually types something.
+    /// </summary>
+    private TravelRow RowFor(string personId) =>
+        Travel.Rows.FirstOrDefault(r => r.PersonId == personId) ?? new TravelRow { PersonId = personId };
+
+    /// <summary>
+    /// Edit a person's row, creating it on first use and dropping it again once every field has
+    /// been cleared, so the file does not fill with empty records.
+    /// </summary>
+    private Task EditRowAsync(string personId, Action<TravelRow> apply) =>
+        Store.MutateAsync(t =>
+        {
+            var row = t.Travel.Rows.FirstOrDefault(r => r.PersonId == personId);
+            if (row is null)
+            {
+                row = new TravelRow { PersonId = personId };
+                t.Travel.Rows.Add(row);
+            }
+
+            apply(row);
+
+            if (row.IsEmpty) t.Travel.Rows.Remove(row);
+        }, TripArea.Travel);
+
+    /// <summary>Car names in the order they first appear, so a car keeps its colour as rows change.</summary>
+    private List<string> Cars =>
+        Trip.Roster
+            .Select(p => RowFor(p.Id).Car)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => c.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private int CarCount(string car) =>
+        Trip.Roster.Count(p => string.Equals(RowFor(p.Id).Car.Trim(), car, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// The spreadsheet asked everyone to highlight their car in a matching colour by hand. Here
+    /// the name picks the colour, so two people in the same car cannot end up different shades.
+    /// </summary>
+    private static readonly string[] CarColors =
+        ["#d4af37", "#2e9e7e", "#c94f5a", "#4a7fd6", "#b07cc6", "#d98c3f", "#4fb0a5", "#c96f9b"];
+
+    private string CarColor(string? car)
+    {
+        if (string.IsNullOrWhiteSpace(car)) return "transparent";
+
+        var index = Cars.FindIndex(c => string.Equals(c, car.Trim(), StringComparison.OrdinalIgnoreCase));
+        return index < 0 ? "transparent" : CarColors[index % CarColors.Length];
+    }
+
+    // --------------------------------------------------------------- packing
+
+    /// <summary>
+    /// Which items this person has ticked. Held here for rendering and mirrored into the
+    /// browser's own storage — it is never written to trip.json, because one shared set of
+    /// checkboxes across twenty-six people would be useless to all of them.
+    /// </summary>
+    private readonly HashSet<string> _packed = new(StringComparer.Ordinal);
+
+    private IJSObjectReference? _packing;
+
+    private int PackTotal => Guide.Packing.Sum(g => g.Items.Count);
+
+    /// <summary>Counted against the list as it stands, so a removed item cannot inflate it.</summary>
+    private int PackedCount => Guide.Packing.SelectMany(g => g.Items).Count(i => _packed.Contains(i.Id));
+
+    private bool IsPacked(string id) => _packed.Contains(id);
+
+    private async Task TogglePackedAsync(string id, bool packed)
+    {
+        if (packed) _packed.Add(id); else _packed.Remove(id);
+        await SavePackingAsync();
+    }
+
+    private async Task ClearPackingAsync()
+    {
+        _packed.Clear();
+        await SavePackingAsync();
+    }
+
+    private async Task SavePackingAsync()
+    {
+        if (_packing is null) return;
+        try { await _packing.InvokeVoidAsync("save", _packed); } catch (JSDisconnectedException) { }
+    }
 
     private const int MinZoom = 40;
     private const int MaxZoom = 112;
@@ -532,7 +934,24 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || !CanEdit) return;
+        if (!firstRender) return;
+
+        // The ticked boxes can only be read once there is a browser to read them from, so the
+        // list renders unticked for one frame and then fills in. Cheaper than blocking the page
+        // on interop, and nobody is looking at their packing list in the first 30ms.
+        try
+        {
+            _packing = await JS.InvokeAsync<IJSObjectReference>("import", "./js/packing.js");
+            var saved = await _packing.InvokeAsync<string[]>("load");
+
+            _packed.Clear();
+            foreach (var id in saved) _packed.Add(id);
+
+            StateHasChanged();
+        }
+        catch (JSDisconnectedException) { }
+
+        if (!CanEdit) return;
 
         _self = DotNetObjectReference.Create(this);
         _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/planner.js");
@@ -642,6 +1061,11 @@
         {
             try { await _module.InvokeVoidAsync("dispose"); } catch (JSDisconnectedException) { }
             try { await _module.DisposeAsync(); } catch (JSDisconnectedException) { }
+        }
+
+        if (_packing is not null)
+        {
+            try { await _packing.DisposeAsync(); } catch (JSDisconnectedException) { }
         }
 
         _self?.Dispose();

@@ -97,6 +97,19 @@ app.MapGet("/admin/trip.json", (ITripStore store) =>
 // that does not accept ranges, which would mean clue videos working on the host's laptop during
 // setup and on nobody's phone at the party. The id doubles as the ETag because it identifies the
 // bytes exactly — a different id is a different file, always.
+//
+// Media reaches /photos/ two ways, and this route is only the second of them:
+//
+//   wwwroot/photos/   committed to git, deploys with the app, exists in every environment.
+//                     MapStaticAssets above registers each file as a LITERAL endpoint, and a
+//                     literal segment outranks the "{id}" parameter here — so a committed file
+//                     wins and never reaches this handler. Needs a rebuild to appear.
+//   the data folder   uploaded through the admin UI at runtime, lives beside trip.json, and is
+//                     therefore NOT in the repo or in a downloaded trip.json.
+//
+// Prepared media belongs in wwwroot so that downloading the live trip and running it locally
+// shows pictures instead of broken images. Anything uploaded during the weekend lands in the
+// data folder and is served below, exactly as before.
 app.MapGet(TripMedia.UrlPrefix + "{id}", async (string id, IPhotoStore media, HttpContext http, CancellationToken ct) =>
 {
     var stream = await media.OpenAsync(id, ct);

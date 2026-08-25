@@ -668,8 +668,8 @@
                                          DriveTimeFor="DriveTimeFor"
                                          CustomOrigins="_customOrigins"
                                          CanEdit="CanEdit"
-                                         Ascending="_nameAscending"
-                                         OnToggleSort="ToggleNameSort"
+                                         Ascending="AscendingFor(group.Key)"
+                                         OnToggleSort="@(() => ToggleSort(group.Key))"
                                          OnTogglePicker="TogglePicker" />
                         }
                     </div>
@@ -686,8 +686,8 @@
                                  DriveTimeFor="DriveTimeFor"
                                  CustomOrigins="_customOrigins"
                                  CanEdit="CanEdit"
-                                 Ascending="_nameAscending"
-                                 OnToggleSort="ToggleNameSort"
+                                 Ascending="AscendingFor(UnplacedKey)"
+                                 OnToggleSort="@(() => ToggleSort(UnplacedKey))"
                                  OnTogglePicker="TogglePicker" />
                 }
             </section>
@@ -1181,9 +1181,22 @@
     private TravelGroup _groupBy = TravelGroup.Carpool;
 
     /// <summary>Shared by every table on the page — one header click sorts all of them.</summary>
-    private bool _nameAscending = true;
+    /// <summary>
+    /// Sort direction per table, keyed by the table's own key.
+    ///
+    /// One shared flag made every card on the page flip together, which is not what a header on
+    /// an individual table means — sorting Car 1 should leave Car 2 alone.
+    /// </summary>
+    private readonly Dictionary<string, bool> _sortAscending = new(StringComparer.Ordinal);
 
-    private void ToggleNameSort() => _nameAscending = !_nameAscending;
+    /// <summary>Ascending until somebody says otherwise.</summary>
+    private bool AscendingFor(string key) => _sortAscending.GetValueOrDefault(key, true);
+
+    private void ToggleSort(string key) => _sortAscending[key] = !AscendingFor(key);
+
+    /// <summary>The key the leftovers table sorts under. Its contents change with the grouping,
+    /// but it is the same table either way, so it keeps one direction.</summary>
+    private const string UnplacedKey = "unplaced";
 
     /// <summary>People who chose "somewhere else" and have not typed a city yet.</summary>
     private readonly HashSet<string> _customOrigins = new(StringComparer.Ordinal);
@@ -1229,10 +1242,11 @@
         return string.Join(" · ", cities);
     }
 
-    private List<RosterPerson> ByName(IEnumerable<RosterPerson> people)
+    /// <summary>Sorted by the direction belonging to <paramref name="key"/>, not a shared one.</summary>
+    private List<RosterPerson> ByName(string key, IEnumerable<RosterPerson> people)
     {
         var sorted = people.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase);
-        return (_nameAscending ? sorted : sorted.Reverse()).ToList();
+        return (AscendingFor(key) ? sorted : sorted.Reverse()).ToList();
     }
 
     /// <summary>One table's worth of people, and how to head it.</summary>
@@ -1250,11 +1264,12 @@
             if (_groupBy == TravelGroup.Carpool)
             {
                 return CarGroups
-                    .Select(g => new TravelSection(
-                        $"car-{g.Slot}",
-                        $"Car {g.Slot}",
-                        g.Color,
-                        ByName(Trip.Roster.Where(p => RowFor(p.Id).CarColor == g.Slot))))
+                    .Select(g =>
+                    {
+                        var key = $"car-{g.Slot}";
+                        return new TravelSection(key, $"Car {g.Slot}", g.Color,
+                            ByName(key, Trip.Roster.Where(p => RowFor(p.Id).CarColor == g.Slot)));
+                    })
                     .ToList();
             }
 
@@ -1263,18 +1278,21 @@
                 .Where(c => c.Length > 0)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(c => c, StringComparer.OrdinalIgnoreCase)
-                .Select(city => new TravelSection(
-                    $"city-{city}",
-                    DriveTimeFor(city) is { } drive ? $"{city} · {drive}" : city,
-                    null,
-                    ByName(Trip.Roster.Where(p =>
-                        RowFor(p.Id).LeavingFrom.Trim().Equals(city, StringComparison.OrdinalIgnoreCase)))))
+                .Select(city =>
+                {
+                    var key = $"city-{city}";
+                    var title = DriveTimeFor(city) is { } drive ? $"{city} · {drive}" : city;
+
+                    return new TravelSection(key, title, null,
+                        ByName(key, Trip.Roster.Where(p =>
+                            RowFor(p.Id).LeavingFrom.Trim().Equals(city, StringComparison.OrdinalIgnoreCase))));
+                })
                 .ToList();
         }
     }
 
     /// <summary>Whoever the current grouping has nothing to say about.</summary>
-    private List<RosterPerson> Unplaced => ByName(_groupBy == TravelGroup.Carpool
+    private List<RosterPerson> Unplaced => ByName(UnplacedKey, _groupBy == TravelGroup.Carpool
         ? Trip.Roster.Where(p => RowFor(p.Id).CarColor == 0)
         : Trip.Roster.Where(p => RowFor(p.Id).LeavingFrom.Trim().Length == 0));
 

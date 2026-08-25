@@ -2270,12 +2270,18 @@ pre.code {
 
 /* --- the tables --------------------------------------------------------- */
 /* Group cards sit side by side; the leftovers table below runs full width. */
-.tt-row { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+.tt-row {
+  display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  align-items: stretch;
+}
 .tt-card {
   border: 1px solid var(--line); border-radius: var(--radius);
   background: var(--panel); overflow: hidden; min-width: 0;
 }
-.tt-card + .tt-card, .tt-row + .tt-card { margin-top: 14px; }
+/* Only the standalone table below the row. `.tt-card + .tt-card` also matched every card
+   inside the grid — they are all siblings — so each one after the first was pushed down 14px
+   and lost that much height, which is why the cards sat at different levels. */
+.tt-row + .tt-card { margin-top: 14px; }
 .tt-card.is-compact { border-top: 3px solid var(--car, var(--line)); }
 
 .tt-head {

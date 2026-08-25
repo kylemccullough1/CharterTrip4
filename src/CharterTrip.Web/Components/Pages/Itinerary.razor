@@ -1282,7 +1282,7 @@
                     .Select(g =>
                     {
                         var key = $"car-{g.Slot}";
-                        return new TravelSection(key, $"Car {g.Slot}", g.Color,
+                        return new TravelSection(key, "Car", g.Color,
                             ByName(key, Trip.Roster.Where(p => RowFor(p.Id).CarColor == g.Slot)));
                     })
                     .ToList();

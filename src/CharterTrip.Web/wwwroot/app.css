@@ -2011,7 +2011,9 @@ pre.code {
 .guide-panel.is-active {
   flex: 1 1 auto; min-height: 0;
   overflow-y: auto; overflow-x: hidden;
-  padding-right: 10px;
+  /* Air under the last card. Without it the panel scrolls to exactly the bottom edge of its
+     content, which reads as the card being cut off — there is no margin left to scroll to. */
+  padding-right: 10px; padding-bottom: 1.4rem;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--accent, var(--gold)) 55%, var(--panel-2)) var(--ink-2);
 }
@@ -2268,9 +2270,22 @@ pre.code {
 
 /* --- the tables --------------------------------------------------------- */
 /* Group cards sit side by side; the leftovers table below runs full width. */
+/* Three tables to a row at most, and never one so narrow that a column has to clip.
+
+   The max-width is a third of the row, which is what caps the count — a card cannot be smaller
+   than that and still leave room for a fourth. The min-width is the floor below which the five
+   columns stop fitting, measured rather than guessed: below it the Who column stops clearing
+   the longest name on the roster. Between them, a row that cannot hold three cards
+   holds two, and one that cannot hold two holds one. Nothing is ever squeezed. */
 .tt-row {
-  display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  --tt-gap: 14px;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: var(--tt-gap);
   align-items: stretch;
+}
+.tt-row > .tt-card {
+  flex: 1 1 var(--tt-min);
+  min-width: min(100%, var(--tt-min));
+  max-width: calc((100% - 2 * var(--tt-gap)) / 3);
 }
 .tt-card {
   border: 1px solid var(--line); border-radius: var(--radius);
@@ -2286,6 +2301,15 @@ pre.code {
   display: flex; align-items: center; gap: 9px; padding: 10px 14px;
   border-bottom: 1px solid var(--line-soft); background: var(--ink-2);
 }
+
+/* The floor for one table. Also the table's own min-width, so that if a card ever does get
+   narrower than this — a container we have not thought of — .tt-scroll scrolls it rather than
+   letting a cell clip its contents. */
+.tt-card { --tt-min: 25rem; }
+/* Less the card's two 1px borders: --tt-min bounds the card, which is a border box, and the
+   table lives inside it. Equal values put the table 2px wider than the space it has and every
+   card carried a pointless horizontal scrollbar. */
+.tt-table { min-width: calc(var(--tt-min) - 2px); }
 .tt-swatch {
   width: 12px; height: 12px; border-radius: 4px; flex: 0 0 auto;
   background: var(--car, transparent);
@@ -2471,3 +2495,15 @@ pre.code {
 /* The key was a standalone block below this row, sized to its own contents. As a grid item it
    fills its column and aligns with the card beside it instead. */
 .travel-facts .car-key { display: block; margin-top: 0; min-width: 0; max-width: none; }
+
+/* ================================================== travel, sixth pass == */
+/* The header row takes the carpool's colour. Every table's header was the panel's sapphire, so
+   three carpools side by side were three identical-looking tables distinguished only by a
+   swatch. A card with no car — the departure-city tables — keeps the panel accent. */
+.tt-card .tt-table th {
+  color: var(--car, var(--accent, var(--text-faint)));
+  background: color-mix(in srgb, var(--car, var(--accent, var(--line))) 15%, var(--ink-2));
+  border-bottom-color: color-mix(in srgb, var(--car, var(--accent, var(--line))) 35%, var(--line-soft));
+}
+.tt-card .tt-sort:hover { color: color-mix(in srgb, var(--car, var(--accent)) 60%, var(--text)); }
+.tt-card .tt-arrow { color: inherit; }

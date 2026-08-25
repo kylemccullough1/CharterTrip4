@@ -2023,9 +2023,15 @@ pre.code {
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 16px 18px 14px; min-width: 0;
 }
-.ess-group-name {
-  margin: 0 0 10px; padding-bottom: 9px;
+/* The rule belongs to the header row rather than the heading text, so the add button can sit
+   on it at the right-hand end instead of below the list. */
+.ess-group-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 10px; padding-bottom: 9px;
   border-bottom: 1px solid var(--line-soft);
+}
+.ess-group-name {
+  margin: 0; min-width: 0;
   font-family: var(--display); font-size: 0.75rem; letter-spacing: .14em;
   text-transform: uppercase; color: var(--accent, var(--gold));
 }
@@ -2070,12 +2076,24 @@ pre.code {
 .ess-row:hover .ess-remove { opacity: .8; }
 .ess-remove:hover { color: var(--ruby); }
 
+/* Top-right of the card, in the section's own colour. A rounded square rather than a pill so
+   it reads as a control rather than a tag, and the plus is drawn rather than typed — a glyph
+   at this size is thin and off-centre whatever the font. */
 .ess-add {
-  margin-top: 10px; padding: 5px 12px; cursor: pointer;
-  background: none; border: 1px dashed var(--line); border-radius: 999px;
-  color: var(--text-faint); font: inherit; font-size: 0.75rem;
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  width: 1.55rem; height: 1.55rem; padding: 0; cursor: pointer;
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--accent, var(--gold)) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, var(--gold)) 55%, transparent);
+  color: var(--accent, var(--gold));
+  transition: background .12s, color .12s, transform .1s;
 }
-.ess-add:hover { color: var(--accent, var(--gold)); border-color: var(--accent, var(--gold-dim)); }
+.ess-add:hover {
+  background: var(--accent, var(--gold));
+  color: var(--ink);
+  transform: scale(1.06);
+}
+.ess-add:focus-visible { outline: 2px solid var(--accent, var(--gold)); outline-offset: 2px; }
 
 @media (max-width: 620px) {
   .ess-row { grid-template-columns: 1fr; }

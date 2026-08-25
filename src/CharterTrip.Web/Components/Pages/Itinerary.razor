@@ -71,7 +71,21 @@
                     @foreach (var group in EssentialGroups)
                     {
                         <section class="ess-group" @key="group.Name">
-                            <h4 class="ess-group-name">@group.Name</h4>
+                            <header class="ess-group-head">
+                                <h4 class="ess-group-name">@group.Name</h4>
+                                @if (CanEdit)
+                                {
+                                    <button type="button" class="ess-add"
+                                            title="@($"Add a line to {group.Name}")"
+                                            aria-label="@($"Add a line to {group.Name}")"
+                                            @onclick="() => AddFactAsync(group.Name)">
+                                        <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+                                            <path d="M6 1.6 V10.4 M1.6 6 H10.4" fill="none"
+                                                  stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
+                                        </svg>
+                                    </button>
+                                }
+                            </header>
 
                             <dl class="ess-rows">
                                 @foreach (var entry in group.Facts)
@@ -110,19 +124,26 @@
                                     </div>
                                 }
                             </dl>
-
-                            @if (CanEdit)
-                            {
-                                <button type="button" class="ess-add"
-                                        @onclick="() => AddFactAsync(group.Name)">+ add a line</button>
-                            }
                         </section>
                     }
 
                     @* Nearby reads from the venue rather than being copied into the guide, so the
                        Venue page and this one can never disagree about how far Walmart is. *@
                     <section class="ess-group">
-                        <h4 class="ess-group-name">Nearby</h4>
+                        <header class="ess-group-head">
+                            <h4 class="ess-group-name">Nearby</h4>
+                            @if (CanEdit)
+                            {
+                                <button type="button" class="ess-add"
+                                        title="Add a place" aria-label="Add a place"
+                                        @onclick="AddStoreAsync">
+                                    <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+                                        <path d="M6 1.6 V10.4 M1.6 6 H10.4" fill="none"
+                                              stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
+                                    </svg>
+                                </button>
+                            }
+                        </header>
 
                         <dl class="ess-rows">
                             @for (var i = 0; i < Trip.Venue.Stores.Count; i++)
@@ -150,11 +171,6 @@
                                 </div>
                             }
                         </dl>
-
-                        @if (CanEdit)
-                        {
-                            <button type="button" class="ess-add" @onclick="AddStoreAsync">+ add a place</button>
-                        }
                     </section>
                 </div>
             </section>

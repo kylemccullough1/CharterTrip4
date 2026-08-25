@@ -13,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 14;
+    public const int CurrentVersion = 15;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -33,6 +33,11 @@ public static class TripMigrations
         if (trip.SchemaVersion < 12) changed |= ToV12_CheckInIsTwo(trip);
         if (trip.SchemaVersion < 13) changed |= ToV13_MenuBoard(trip);
         if (trip.SchemaVersion < 14) changed |= ToV14_GroupedEssentials(trip);
+
+        // v15 removed the drive-times list. There is no step for it: the property simply stopped
+        // existing on the model, so an older file's copy is ignored on load and gone on the next
+        // save, and the cities themselves were never in that list alone — they are on the rows,
+        // which is where the dropdown reads them from now.
 
         if (trip.SchemaVersion != CurrentVersion)
         {

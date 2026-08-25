@@ -545,10 +545,10 @@
             <section class="guide-panel @(_tab == GuideTab.Travel ? "is-active" : null)" data-accent="sapphire"
                      role="tabpanel" aria-label="Travel">
 
-                @* Fixed facts, not a working document: the address and the drive times are what
-                   they are, and a stray click that renamed the destination would be a bad way to
-                   find that out. Only the per-person rows below are editable. *@
-                <div class="note-grid">
+                @* Fixed facts, not a working document: the address is what it is, and a stray click
+                   that renamed the destination would be a bad way to find that out. Only the
+                   per-person rows below are editable. *@
+                <div class="note-grid travel-facts">
                     <div class="card">
                         <h4>Destination</h4>
                         <p class="strong">@Travel.Destination</p>
@@ -564,21 +564,6 @@
                         </dl>
                     </div>
 
-                    <div class="card">
-                        <h4>Drive times</h4>
-                        <ul class="plain">
-                            @foreach (var leg in Travel.DriveTimes)
-                            {
-                                var riders = RidersFrom(leg.From);
-                                @* One expression rather than an @if around the text: Razor drops the
-                                   whitespace either side of a block, which glued the dash to the
-                                   city name. The separator is CSS now, so it cannot go missing. *@
-                                <li @key="leg.From" class="@(riders > 0 ? "is-live" : null)">
-                                    <b>@leg.From</b><span class="drive-dur @(string.IsNullOrWhiteSpace(leg.Duration) ? "is-unknown" : null)">@(string.IsNullOrWhiteSpace(leg.Duration) ? "drive time not set" : leg.Duration)</span>
-                                </li>
-                            }
-                        </ul>
-                    </div>
                 </div>
 
 
@@ -667,7 +652,6 @@
                                          OnEdit="EditRowAsync"
                                          ColorOf="ColorOf"
                                          Origins="Origins"
-                                         DriveTimeFor="DriveTimeFor"
                                          CustomOrigins="_customOrigins"
                                          OnCityAdded="AddCityAsync"
                                          CanEdit="true"
@@ -686,7 +670,6 @@
                                  OnEdit="EditRowAsync"
                                  ColorOf="ColorOf"
                                  Origins="Origins"
-                                 DriveTimeFor="DriveTimeFor"
                                  CustomOrigins="_customOrigins"
                                  OnCityAdded="AddCityAsync"
                                  CanEdit="true"
@@ -1220,12 +1203,12 @@
     private readonly HashSet<string> _customOrigins = new(StringComparer.Ordinal);
 
     /// <summary>
-    /// Registers a city somebody typed into their row, then sets it on that row.
+    /// Sets a city somebody typed into their own row.
     ///
-    /// Both halves matter. Adding it to the drive-times list is what puts it on the Drive times
-    /// card and into everyone else's dropdown — otherwise the next person from the same place has
-    /// to type it again, and the two spellings become two tables. The duration is left blank
-    /// because nobody here knows it; the card says so rather than inventing one.
+    /// Nothing else has to happen for it to become an option for everybody: the dropdown is built
+    /// from the cities the roster is actually leaving from, so writing it on one row is what puts
+    /// it in front of the next person from the same place — and stops two spellings becoming two
+    /// tables.
     /// </summary>
     private Task AddCityAsync(string personId, string city)
     {
@@ -1233,11 +1216,6 @@
 
         return Store.MutateAsync(t =>
         {
-            var known = t.Travel.DriveTimes
-                .Any(d => d.From.Trim().Equals(trimmed, StringComparison.OrdinalIgnoreCase));
-
-            if (!known) t.Travel.DriveTimes.Add(new DriveTime { From = trimmed, Duration = "" });
-
             var row = t.Travel.Rows.FirstOrDefault(r => r.PersonId == personId);
             if (row is null)
             {
@@ -1249,38 +1227,23 @@
         }, TripArea.Itinerary);
     }
 
-    /// <summary>The cities we know a drive time for, alphabetised for the dropdown.</summary>
+    /// <summary>
+    /// The cities in play, alphabetised for the dropdown.
+    ///
+    /// Read off the roster rather than kept as a separate list. There is nothing to maintain, a
+    /// city appears the moment somebody says they are coming from there, and it leaves when the
+    /// last person from there changes their mind — which is the honest answer to "where is anyone
+    /// setting off from".
+    /// </summary>
     private IReadOnlyList<string> Origins =>
-        Travel.DriveTimes
-            .Select(d => d.From)
-            .Where(c => !string.IsNullOrWhiteSpace(c))
+        Trip.Roster
+            .Select(p => RowFor(p.Id).LeavingFrom.Trim())
+            .Where(c => c.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(c => c, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-    /// <summary>
-    /// How long it takes from a city, looked up rather than typed — so choosing Tulsa in the
-    /// table is what produces "~3 hours" beside it, and correcting the figure in one place
-    /// corrects it everywhere it is shown.
-    /// </summary>
-    private string? DriveTimeFor(string city)
-    {
-        if (string.IsNullOrWhiteSpace(city)) return null;
-
-        var duration = Travel.DriveTimes
-            .FirstOrDefault(d => d.From.Trim().Equals(city.Trim(), StringComparison.OrdinalIgnoreCase))
-            ?.Duration;
-
-        // A city somebody added has no duration yet, and an empty string beside a city name
-        // reads as a rendering bug. Nothing to say is said by saying nothing.
-        return string.IsNullOrWhiteSpace(duration) ? null : duration;
-    }
-
-    private int RidersFrom(string city) =>
-        Trip.Roster.Count(p => RowFor(p.Id).LeavingFrom.Trim()
-            .Equals(city.Trim(), StringComparison.OrdinalIgnoreCase));
-
-    /// <summary>The cities a carpool is setting off from, with how long each takes.</summary>
+    /// <summary>The cities a carpool is setting off from.</summary>
     private string OriginSummary(int slot)
     {
         var cities = Trip.Roster
@@ -1289,7 +1252,7 @@
             .Where(c => c.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(c => c, StringComparer.OrdinalIgnoreCase)
-            .Select(c => DriveTimeFor(c) is { } drive ? $"{c} ({drive})" : c);
+            .ToList();
 
         return string.Join(" · ", cities);
     }
@@ -1333,9 +1296,7 @@
                 .Select(city =>
                 {
                     var key = $"city-{city}";
-                    var title = DriveTimeFor(city) is { } drive ? $"{city} · {drive}" : city;
-
-                    return new TravelSection(key, title, null,
+                    return new TravelSection(key, city, null,
                         ByName(key, Trip.Roster.Where(p =>
                             RowFor(p.Id).LeavingFrom.Trim().Equals(city, StringComparison.OrdinalIgnoreCase))));
                 })

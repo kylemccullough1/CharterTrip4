@@ -18,20 +18,12 @@ public sealed class TravelPlan
     public string CheckInTime { get; set; } = "";
     public string CheckOutTime { get; set; } = "";
 
-    public List<DriveTime> DriveTimes { get; set; } = [];
-
     /// <summary>
     /// Only people who have filled something in. The page lists the whole roster and creates a
     /// row the first time somebody types into one, so an empty trip does not carry twenty-five
     /// blank records around.
     /// </summary>
     public List<TravelRow> Rows { get; set; } = [];
-}
-
-public sealed class DriveTime
-{
-    public string From { get; set; } = "";
-    public string Duration { get; set; } = "";
 }
 
 /// <summary>One person's travel line, keyed to the roster so the table follows who is coming.</summary>

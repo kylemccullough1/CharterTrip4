@@ -70,11 +70,6 @@
     "address": "310 Ballpark Lp, Denison, TX 75020",
     "checkInTime": "2:00 PM",
     "checkOutTime": "12:00 PM",
-    "driveTimes": [
-      { "from": "Tulsa", "duration": "~3 hours" },
-      { "from": "OKC", "duration": "~2.75 hours" },
-      { "from": "Dallas", "duration": "~1.25 hours" }
-    ],
     "rows": [
       { "personId": "p-ana-torres", "departAt": "Anytime" },
       {

@@ -2243,8 +2243,6 @@ pre.code {
 .car-key-row { grid-template-columns: 14px auto minmax(0, 1fr); column-gap: 14px; }
 .car-key-from { color: var(--text-faint); font-size: 0.75rem; text-align: right; }
 
-/* Drive times that somebody is actually driving. */
-.plain li.is-live b { color: var(--accent, var(--sapphire)); }
 
 /* --- group-by control --------------------------------------------------- */
 .travel-tools { display: flex; align-items: center; gap: 10px; margin: 18px 0 12px; flex-wrap: wrap; }
@@ -2313,7 +2311,6 @@ pre.code {
 }
 .tt-select:hover { border-color: var(--line); background: var(--panel-2); }
 .tt-select:focus-visible { outline: 2px solid var(--accent, var(--gold)); outline-offset: 1px; }
-.tt-drive { display: block; margin-top: 3px; font-size: 0.656rem; color: var(--text-faint); }
 
 /* --- the palette, freed from its container ------------------------------ */
 /* Fixed rather than absolute so the scrolling panel cannot clip it; popover.js does the sums. */
@@ -2443,8 +2440,6 @@ pre.code {
 /* Typing a city happens where the dropdown was, so it is the same box. */
 .tt-city { font-family: inherit; }
 .tt-city::placeholder { color: var(--text-faint); }
-.drive-dur::before { content: "—"; margin: 0 .4em; color: var(--text-faint); }
-.drive-dur.is-unknown { color: var(--text-faint); font-size: 0.75rem; }
 
 /* Side by side, the clock and the AM/PM want about 150px of a 493px card, and the four other
    columns cannot spare it — names started clipping. Stacked, each control gets the column's full
@@ -2457,3 +2452,8 @@ pre.code {
   .tt-when { flex-direction: column; align-items: stretch; gap: 4px; }
   .tt-meridiem { min-width: 0; max-width: none; width: 100%; }
 }
+
+/* This grid holds one card since the drive times went, and auto-fit stretched it across the
+   whole panel — the same mostly-empty rail the carpool key was cured of. Sized to its contents
+   instead. */
+.travel-facts { grid-template-columns: minmax(0, 32rem); }

@@ -110,11 +110,6 @@
                         {
                             <span>@Display(row.LeavingFrom)</span>
                         }
-
-                        @if (DriveTimeFor(row.LeavingFrom) is { } drive)
-                        {
-                            <span class="tt-drive">@drive</span>
-                        }
                     </td>
 
                     <td>
@@ -194,9 +189,6 @@
 
     /// <summary>Known departure cities, already alphabetised by the caller.</summary>
     [Parameter, EditorRequired] public IReadOnlyList<string> Origins { get; set; } = [];
-
-    /// <summary>The drive time for a city, or null when there is nothing to say.</summary>
-    [Parameter, EditorRequired] public Func<string, string?> DriveTimeFor { get; set; } = default!;
 
     /// <summary>People who chose "somewhere else" but have not typed a city yet.</summary>
     [Parameter, EditorRequired] public HashSet<string> CustomOrigins { get; set; } = [];

@@ -49,14 +49,14 @@
  *
  * Every font-size in this file is a rem, so this single value decides how big the site reads.
  * It grows with the viewport instead of being pinned to whatever looked right on one monitor:
- * roughly 15px on a phone, 18px on a 1900px desktop, 19px on anything larger. The design's
+ * roughly 16px on a phone, 20px on a 1900px desktop, 22px on anything larger. The design's
  * proportions never change — only the multiplier does.
  *
  * Expressed in rem rather than px on purpose. px here would override a reader who has set a
  * larger default font size in their browser; rem scales with that preference instead of
- * ignoring it. The `0.2vw` term is what ties it to the screen. */
+ * ignoring it. The `0.25vw` term is what ties it to the screen. */
 html {
-  font-size: clamp(0.9375rem, 0.8875rem + 0.2vw, 1.1875rem);
+  font-size: clamp(1rem, 0.95rem + 0.25vw, 1.375rem);
 }
 
 body {

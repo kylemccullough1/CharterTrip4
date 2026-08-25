@@ -49,14 +49,14 @@
  *
  * Every font-size in this file is a rem, so this single value decides how big the site reads.
  * It grows with the viewport instead of being pinned to whatever looked right on one monitor:
- * roughly 16px on a phone, 20px on a 1900px desktop, 22px on anything larger. The design's
+ * roughly 17px on a phone, 22px on a 1900px desktop, 24px on anything larger. The design's
  * proportions never change — only the multiplier does.
  *
  * Expressed in rem rather than px on purpose. px here would override a reader who has set a
  * larger default font size in their browser; rem scales with that preference instead of
- * ignoring it. The `0.25vw` term is what ties it to the screen. */
+ * ignoring it. The `0.3vw` term is what ties it to the screen. */
 html {
-  font-size: clamp(1rem, 0.95rem + 0.25vw, 1.375rem);
+  font-size: clamp(1rem, 1.02rem + 0.3vw, 1.5rem);
 }
 
 body {
@@ -463,7 +463,7 @@ select.textfield { cursor: pointer; }
 
 .hero-title {
   font-family: var(--display); font-weight: 900;
-  font-size: clamp(38px, 6.6vw, 78px); line-height: .95;
+  font-size: clamp(2.375rem, 6.6vw, 4.875rem); line-height: .95;
   letter-spacing: .02em; text-transform: uppercase;
   margin: 0 0 10px;
   text-shadow: 0 6px 30px rgba(0,0,0,.6);
@@ -473,7 +473,7 @@ select.textfield { cursor: pointer; }
   -webkit-text-stroke: 0;
   font-size: .82em; letter-spacing: .12em;
 }
-.hero-meta { font-family: var(--serif); font-size: clamp(15px, 2vw, 19px); color: #dfe4ec; margin: 0 0 6px; }
+.hero-meta { font-family: var(--serif); font-size: clamp(0.938rem, 2vw, 1.188rem); color: #dfe4ec; margin: 0 0 6px; }
 .hero-meta b { color: var(--gold-light); font-weight: 600; }
 .hero-tag { color: var(--text-dim); font-size: 0.875rem; letter-spacing: .04em; }
 
@@ -791,7 +791,7 @@ select.textfield { cursor: pointer; }
 
 .game-head { display: flex; align-items: flex-start; gap: 16px; padding: 8px 0 20px; border-bottom: 1px solid var(--line-soft); margin-bottom: 8px; }
 .game-icon { font-size: 2.5rem; line-height: 1; }
-.game-title { font-family: var(--display); font-size: clamp(24px, 4vw, 36px); letter-spacing: .05em; text-transform: uppercase; margin: 0; }
+.game-title { font-family: var(--display); font-size: clamp(1.5rem, 4vw, 2.25rem); letter-spacing: .05em; text-transform: uppercase; margin: 0; }
 .game-meta { font-size: 0.75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin: 2px 0 6px; }
 .game-blurb { color: var(--text-dim); margin: 0; max-width: 70ch; }
 
@@ -817,7 +817,7 @@ select.textfield { cursor: pointer; }
 
 .jeo-title { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 20px 0 40px; }
 .jeo-kicker { font-size: 0.75rem; letter-spacing: .3em; text-transform: uppercase; color: var(--gold); margin: 0; }
-.jeo-title h1 { font-family: var(--display); font-size: clamp(46px, 9vw, 110px); letter-spacing: .1em; margin: 0; line-height: 1; }
+.jeo-title h1 { font-family: var(--display); font-size: clamp(2.875rem, 9vw, 6.875rem); letter-spacing: .1em; margin: 0; line-height: 1; }
 .jeo-hint { color: var(--text-faint); font-size: 0.781rem; margin: 0; }
 .jeo-title-actions { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
 
@@ -878,7 +878,7 @@ select.textfield { cursor: pointer; }
 .jeo-cell {
   flex: 1; min-height: 74px; border-radius: var(--radius-sm); cursor: pointer;
   background: var(--panel-2); border: 1px solid var(--line);
-  font-family: var(--display); font-size: clamp(24px, 3vw, 40px); color: var(--gold);
+  font-family: var(--display); font-size: clamp(1.5rem, 3vw, 2.5rem); color: var(--gold);
   transition: background .12s, transform .08s;
 }
 .jeo-cell:hover:not(:disabled) { background: #253048; transform: scale(1.02); }
@@ -906,18 +906,18 @@ select.textfield { cursor: pointer; }
 }
 
 /* The clue text is the thing being read from the back of a room, so it gets the space. */
-.jeo-clue .jeo-clue-text { font-size: clamp(26px, 4.4vw, 62px); max-width: 20ch; }
+.jeo-clue .jeo-clue-text { font-size: clamp(1.625rem, 4.4vw, 3.875rem); max-width: 20ch; }
 
 @media (prefers-reduced-motion: reduce) {
   .jeo-clue, .jeo-final { animation: none; }
 }
 .jeo-clue-head { font-family: var(--display); font-size: 0.813rem; letter-spacing: .18em; text-transform: uppercase; color: var(--gold); margin: 0; }
-.jeo-clue-text { font-size: clamp(22px, 3.4vw, 44px); line-height: 1.25; max-width: 22ch; margin: 0; font-weight: 600; }
+.jeo-clue-text { font-size: clamp(1.375rem, 3.4vw, 2.75rem); line-height: 1.25; max-width: 22ch; margin: 0; font-weight: 600; }
 .jeo-clue-img { max-height: 44vh; max-width: 100%; border-radius: var(--radius-sm); }
 .jeo-open { color: var(--text-dim); margin: 0; }
-.jeo-answer { font-size: clamp(18px, 2.2vw, 30px); color: var(--emerald); margin: 0; }
+.jeo-answer { font-size: clamp(1.125rem, 2.2vw, 1.875rem); color: var(--emerald); margin: 0; }
 .jeo-buzzed { display: flex; flex-direction: column; gap: 4px; }
-.jeo-buzzed-team { font-family: var(--display); font-size: clamp(24px, 3vw, 40px); color: var(--team, var(--gold)); }
+.jeo-buzzed-team { font-family: var(--display); font-size: clamp(1.5rem, 3vw, 2.5rem); color: var(--team, var(--gold)); }
 .jeo-judge { display: flex; gap: 12px; }
 .jeo-judge.is-small { gap: 6px; }
 .jeo-right { background: var(--emerald); border-color: var(--emerald); color: #04120d; }
@@ -998,7 +998,7 @@ select.textfield { cursor: pointer; }
 .buzz-team { flex: 1; display: flex; flex-direction: column; gap: 14px; }
 .buzz-button {
   flex: 1; border-radius: var(--radius); cursor: pointer; touch-action: manipulation;
-  font-family: var(--display); font-size: clamp(46px, 16vw, 90px); letter-spacing: .1em;
+  font-family: var(--display); font-size: clamp(2.875rem, 16vw, 5.625rem); letter-spacing: .1em;
   border: 3px solid var(--line); background: var(--panel); color: var(--text-faint);
   transition: transform .06s, background .12s;
   -webkit-user-select: none; user-select: none;
@@ -1029,7 +1029,7 @@ select.textfield { cursor: pointer; }
 .bee { text-align: center; padding: 24px; }
 .bee-word {
   font-family: var(--display); font-weight: 900;
-  font-size: clamp(30px, 7vw, 68px); letter-spacing: .04em; color: var(--gold);
+  font-size: clamp(1.875rem, 7vw, 4.25rem); letter-spacing: .04em; color: var(--gold);
   margin-bottom: 18px; text-transform: lowercase;
 }
 .bee-team { display: flex; flex-direction: column; gap: 9px; }
@@ -1072,7 +1072,7 @@ select.textfield { cursor: pointer; }
 .murder-hero::after { bottom: 14px; }
 .murder-title {
   font-family: var(--display); font-weight: 900;
-  font-size: clamp(28px, 5.6vw, 58px); letter-spacing: .06em; text-transform: uppercase;
+  font-size: clamp(1.75rem, 5.6vw, 3.625rem); letter-spacing: .06em; text-transform: uppercase;
   color: var(--gold-light); margin: 6px 0;
 }
 .murder-sub { font-family: var(--serif); font-style: italic; color: var(--text-dim); margin: 0 0 14px; }
@@ -1455,17 +1455,17 @@ pre.code {
 
 .jeo-fi-kicker { animation: fi-in .7s .15s ease-out both; }
 .jeo-fi-title {
-  font-family: var(--display); font-size: clamp(38px, 8vw, 96px); letter-spacing: .12em;
+  font-family: var(--display); font-size: clamp(2.375rem, 8vw, 6rem); letter-spacing: .12em;
   margin: 0; line-height: 1; color: var(--gold-light);
   text-shadow: 0 0 40px rgba(212,175,55,.35);
   animation: fi-in .7s .25s ease-out both;
 }
-.jeo-fi-cat { font-size: clamp(15px, 2vw, 22px); color: var(--text-dim); margin: 0; animation: fi-in .7s .35s ease-out both; }
+.jeo-fi-cat { font-size: clamp(0.938rem, 2vw, 1.375rem); color: var(--text-dim); margin: 0; animation: fi-in .7s .35s ease-out both; }
 
 .jeo-fi-rules {
   list-style: none; padding: 0; margin: 10px 0 0; max-width: 54ch;
   display: flex; flex-direction: column; gap: 9px;
-  font-size: clamp(14px, 1.6vw, 18px); color: var(--text-dim); text-align: left;
+  font-size: clamp(0.875rem, 1.6vw, 1.125rem); color: var(--text-dim); text-align: left;
   animation: fi-in .7s .45s ease-out both;
 }
 .jeo-fi-rules li { padding-left: 20px; position: relative; }
@@ -1476,7 +1476,7 @@ pre.code {
 .jeo-clue.is-final { border-color: var(--gold-dim); }
 .jeo-reveal { display: flex; flex-direction: column; align-items: center; gap: 8px; animation: fi-in .45s ease-out both; }
 .jeo-reveal-label { font-size: 0.688rem; letter-spacing: .22em; text-transform: uppercase; color: var(--text-faint); margin: 0; }
-.jeo-reveal-who { font-size: clamp(15px, 1.8vw, 21px); margin: 4px 0 0; }
+.jeo-reveal-who { font-size: clamp(0.938rem, 1.8vw, 1.313rem); margin: 4px 0 0; }
 
 /* the winner */
 .jeo-win {
@@ -1485,7 +1485,7 @@ pre.code {
   gap: 16px; text-align: center; padding: 40px 20px; overflow: hidden;
 }
 .jeo-win-name {
-  font-family: var(--display); font-size: clamp(40px, 9vw, 108px); letter-spacing: .08em;
+  font-family: var(--display); font-size: clamp(2.5rem, 9vw, 6.75rem); letter-spacing: .08em;
   margin: 0; line-height: 1; color: var(--team, var(--gold));
   text-shadow: 0 0 60px color-mix(in srgb, var(--team, #d4af37) 45%, transparent);
   animation: win-pop .9s cubic-bezier(.2, 1.5, .4, 1) both;
@@ -1562,7 +1562,7 @@ pre.code {
 
 .jeo-race {
   display: flex; align-items: center; justify-content: center; gap: 10px;
-  font-size: clamp(15px, 2vw, 22px); margin: 0;
+  font-size: clamp(0.938rem, 2vw, 1.375rem); margin: 0;
 }
 .jeo-race b { font-family: var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--gold-light); }
 .jeo-race-dot {
@@ -1595,11 +1595,11 @@ pre.code {
 @keyframes pc-pop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
 
 .jeo-pickcard-name {
-  font-family: var(--display); font-size: clamp(34px, 7vw, 78px); line-height: 1;
+  font-family: var(--display); font-size: clamp(2.125rem, 7vw, 4.875rem); line-height: 1;
   letter-spacing: .06em; text-transform: uppercase; color: var(--team, var(--gold));
 }
 .jeo-pickcard-line {
-  font-family: var(--display); font-size: clamp(14px, 2vw, 22px);
+  font-family: var(--display); font-size: clamp(0.875rem, 2vw, 1.375rem);
   letter-spacing: .26em; text-transform: uppercase; color: var(--text);
 }
 .jeo-pickcard-time { font-size: 0.813rem; color: var(--text-dim); }
@@ -1609,7 +1609,7 @@ pre.code {
 .jeo-reveal-who {
   display: flex; align-items: baseline; justify-content: center; gap: 10px; flex-wrap: wrap;
   font-family: var(--display); letter-spacing: .08em; text-transform: uppercase;
-  font-size: clamp(17px, 2.3vw, 30px);
+  font-size: clamp(1.063rem, 2.3vw, 1.875rem);
 }
 .jeo-reveal-team { color: var(--team, var(--gold)); font-weight: 700; }
 .jeo-reveal-who.muted { color: var(--text-dim); }

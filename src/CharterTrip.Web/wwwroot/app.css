@@ -34,6 +34,12 @@
 
   --topbar-h: 66px;
 
+  /* The chrome stacked above a page's first section. Named because the guide card measures
+     itself against them to fill exactly the rest of the screen — hardcoding their sum would
+     silently go wrong the first time either one changed. */
+  --page-top: 26px;
+  --section-gap: 34px;
+
   /* The site's content width, and the breathing room inside it. Everything that lines up with
      everything else reads from these two. */
   --shell:  min(2100px, 100%);
@@ -187,7 +193,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .
  * middle with a quarter of the screen empty on either side. `100%` up to a cap fills the
  * display instead, and the cap only bites on something ultrawide, where 2100px of content is
  * already more than anyone wants to read across. */
-.page { max-width: var(--shell); margin: 0 auto; padding: 26px var(--gutter) 60px; }
+.page { max-width: var(--shell); margin: 0 auto; padding: var(--page-top) var(--gutter) 60px; }
 
 /* The home hero is full-bleed. Its horizontal padding was what put a black bar of page
    background down each edge of the artwork — the gutter belongs to the sections inside, not to
@@ -196,7 +202,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .
 .page-home > .section { max-width: var(--shell); margin-left: auto; margin-right: auto; }
 
 /* ------------------------------------------------------------ sections -- */
-.section { margin: 34px 0; }
+.section { margin: var(--section-gap) 0; }
 /* The home page's own gutter, since the wrapper gave its up to let the hero run edge to edge. */
 .page-home .section { padding: 0 var(--gutter); }
 .section-head {
@@ -1260,7 +1266,8 @@ select.textfield { cursor: pointer; }
   .cast-select { max-width: none; flex: 1 1 160px; }
   .jeo-cat { font-size: 0.563rem; padding: 8px 3px; min-height: 48px; }
   .jeo-cell { min-height: 54px; }
-  .page { padding: 18px 14px 50px; }
+  /* Keep --page-top honest here too, or the guide card mis-measures its own offset. */
+  .page { --page-top: 18px; padding: var(--page-top) 14px 50px; }
   .page-home .section { padding: 0 14px; }
 }
 
@@ -1964,8 +1971,16 @@ pre.code {
  * toolbar, and the subtitles wrap to different depths. The card is a flex column of a known
  * height, the body takes whatever the head leaves, and the divider underneath stops moving. */
 .section.guide-card {
-  --guide-h: min(76vh, 700px);
-  height: var(--guide-h);
+  /* Everything between the top of the screen and the top of this card, subtracted — so the
+     card ends exactly at the bottom edge rather than overshooting it. */
+  --guide-h: calc(100vh - var(--topbar-h) - var(--page-top) - var(--section-gap));
+
+  /* dvh where it exists: on a phone, 100vh is the height with the browser's address bar
+     hidden, so a vh-sized panel is taller than the screen until you scroll. */
+  --guide-h: calc(100dvh - var(--topbar-h) - var(--page-top) - var(--section-gap));
+
+  /* A floor, so a short laptop window in landscape does not squeeze the tabs into a slot. */
+  height: max(26rem, var(--guide-h));
   display: flex; flex-direction: column;
   margin-bottom: 0;
 }
@@ -1985,7 +2000,16 @@ pre.code {
 .section.guide-card .guide-tabs { flex: 0 0 auto; }
 
 /* Sits just under the card now that the card's height is dependable. */
-.section.guide-card + .section-divider { margin-top: 20px; }
+/* Now that the card runs the full height of the screen, the rule under it needs real air on
+   both sides — otherwise the packing list reads as a continuation of the tabs rather than the
+   separate thing it is. Padding rather than only margin, so the mark itself sits in its own
+   space instead of hard against the two sections. */
+.section.guide-card + .section-divider {
+  margin-top: 30px; margin-bottom: 30px;
+  padding: 18px 0;
+  height: auto; min-height: 0.75rem;
+  background-position: center;
+}
 
 /* --- essentials: headed groups ----------------------------------------- */
 /* Replaced the plaque grid. Seven unrelated facts in one flat rail was the problem — the money

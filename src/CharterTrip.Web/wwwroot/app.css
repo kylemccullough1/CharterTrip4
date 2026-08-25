@@ -1710,10 +1710,12 @@ pre.code {
 .pack-grid {
   --pack-gap: 1.1rem;
   display: grid; gap: var(--pack-gap);
-  /* 10.5rem is the floor that still lets seven fit on a wide desktop — a larger one binds
-     first and silently caps the row at five, which is what it did at 14rem. */
+  /* Four to a row at most. Seven fit, but only by squeezing each card to about 240px, which
+     wrapped half the entries onto three lines — the row was full and nothing in it was
+     readable. The min track is also "a quarter of what is available", so auto-fit cannot
+     split past four however wide the screen gets. */
   grid-template-columns:
-    repeat(auto-fit, minmax(max(10.5rem, (100% - 6 * var(--pack-gap)) / 7), 1fr));
+    repeat(auto-fit, minmax(max(17rem, (100% - 3 * var(--pack-gap)) / 4), 1fr));
 }
 
 .pack-group { padding: 1.1rem 1.05rem 1.15rem; }
@@ -2032,7 +2034,10 @@ pre.code {
 /* Replaced the plaque grid. Seven unrelated facts in one flat rail was the problem — the money
    answers sat between a check-out time and a bathroom count. Headings do the sorting now, and
    each group is a panel with a label/value list inside it. */
-.ess-groups { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); }
+/* Wider cards, three across rather than four. The label column needs real room — "Walmart
+   Supercenter" and "What's Not Covered" were breaking across three lines — and that room has
+   to come from somewhere. */
+.ess-groups { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); }
 
 .ess-group {
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
@@ -2054,7 +2059,9 @@ pre.code {
 .ess-rows { margin: 0; display: flex; flex-direction: column; }
 .ess-row {
   position: relative;
-  display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 4px 16px;
+  /* In rem, not the old flat 130px: the type scales with the screen now, so a fixed label
+     column got tighter every time the root grew. */
+  display: grid; grid-template-columns: minmax(0, 10rem) minmax(0, 1fr); gap: 4px 1rem;
   padding: 9px 26px 9px 0; align-items: baseline;
   border-bottom: 1px solid var(--line-soft);
 }
@@ -2062,6 +2069,9 @@ pre.code {
 .ess-row dt {
   font-size: 0.688rem; letter-spacing: .08em; text-transform: uppercase;
   color: var(--text-faint); min-width: 0;
+  /* The uppercase tracking is what pushed these over the edge. Let a long name break between
+     words rather than mid-word, and never let one overflow the column silently. */
+  overflow-wrap: break-word; hyphens: none;
 }
 .ess-row dd { margin: 0; font-size: 0.844rem; line-height: 1.5; min-width: 0; }
 .ess-row dd .editable { white-space: pre-wrap; }

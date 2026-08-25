@@ -223,9 +223,11 @@ smoothly on venue wifi anyway.
 > `backups/trip-external-*.json` and logging loudly). Use the import page, or restart the app
 > from the Portal immediately after replacing the file.
 
-> **No password on any of this yet.** `/admin/import` and `/admin/trip.json` are open, because
-> `AlwaysAdminUser` currently makes every visitor an admin, and the download is the whole trip —
-> mystery solution, buzzer codes and all. Phase 2's real logins need to cover both.
+> **Both admin routes need a sign-in.** `/admin/import` is behind `AdminOnly` and
+> `/admin/trip.json` behind `RequireAuthorization()` — the download is the whole trip, mystery
+> solution and buzzer codes included. The credentials are hashes in the `Admin` configuration
+> section; to change them, generate a new salt and two PBKDF2-SHA256 hashes and replace that
+> section. Nothing in the repository can be turned back into the password.
 
 ## Keeping the seed current
 

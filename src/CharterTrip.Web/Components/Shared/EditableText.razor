@@ -48,6 +48,9 @@ else
     [Parameter, EditorRequired] public string Value { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string Placeholder { get; set; } = "—";
+
+    /// <summary>Opts this field out of the admin-only rule. See <see cref="CanEditThis"/>.</summary>
+    [Parameter] public bool AnyoneCanEdit { get; set; }
     [Parameter] public string? CssClass { get; set; }
     [Parameter] public bool Multiline { get; set; }
     [Parameter] public int Rows { get; set; } = 2;
@@ -60,7 +63,12 @@ else
     private bool _focusWanted;
     private ElementReference _field;
 
-    private bool CanEditThis => Permissions.CanEdit && !ReadOnly;
+    /// <summary>
+    /// Normally a field is editable only by an admin. <see cref="AnyoneCanEdit"/> is the exception
+    /// for a field that belongs to whoever is reading it rather than to the committee — the travel
+    /// table, where a guest fills in their own row. ReadOnly still wins over both.
+    /// </summary>
+    private bool CanEditThis => !ReadOnly && (AnyoneCanEdit || Permissions.CanEdit);
     private string Display => string.IsNullOrWhiteSpace(Value) ? Placeholder : Value;
     private string? EmptyClass => string.IsNullOrWhiteSpace(Value) ? "is-empty" : null;
 

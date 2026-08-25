@@ -149,13 +149,14 @@
                     </td>
 
                     <td>
-                        <EditableText Value="@row.Dietary" ReadOnly="@(!CanEdit)"
+                        @* The one thing a guest may write on this site: their own row. *@
+                        <EditableText Value="@row.Dietary" ReadOnly="@(!CanEdit)" AnyoneCanEdit="@CanEdit"
                                       ValueChanged="@(v => OnEdit(person.Id, r => r.Dietary = v))"
                                       Placeholder="—" />
                     </td>
 
                     <td>
-                        <EditableText Value="@row.Notes" ReadOnly="@(!CanEdit)"
+                        <EditableText Value="@row.Notes" ReadOnly="@(!CanEdit)" AnyoneCanEdit="@CanEdit"
                                       ValueChanged="@(v => OnEdit(person.Id, r => r.Notes = v))"
                                       Placeholder="—" />
                     </td>

@@ -7,6 +7,8 @@ using CharterTrip.Infrastructure;
 using CharterTrip.Infrastructure.Storage;
 using CharterTrip.Web.Auth;
 using CharterTrip.Web.Components;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,10 +26,45 @@ builder.Services.PostConfigure<TripStoreOptions>(options =>
         options.DataRoot = Path.Combine(builder.Environment.ContentRootPath, options.DataRoot);
 });
 
-// PHASE 1 SEAM: everyone is an admin. Phase 2 replaces this single registration with
-// join-link cookie auth and nothing else in the app has to change — every page already
-// asks TripPermissions whether it may edit.
-builder.Services.AddScoped<ICurrentUser, AlwaysAdminUser>();
+// Who is looking. One account, the committee's; everyone else browses as a guest. Pages ask
+// TripPermissions rather than the cookie, so this registration is the only thing that decides.
+builder.Services.Configure<AdminCredentialOptions>(
+    builder.Configuration.GetSection(AdminCredentialOptions.Section));
+builder.Services.AddSingleton<IAdminSignIn, AdminSignIn>();
+builder.Services.AddScoped<ICurrentUser, CookieCurrentUser>();
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "chartertrip.admin";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+
+        // A whole weekend, renewed on use. Signing in again halfway through Saturday because a
+        // cookie expired is exactly the friction this is meant to remove.
+        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        options.SlidingExpiration = true;
+
+        options.LoginPath = "/login";
+        options.LogoutPath = "/logout";
+        options.AccessDeniedPath = "/";
+    });
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
+
+// Where trip.json lives, resolved the same way TripStoreOptions resolves it below — the keys
+// have to land in the persistent directory too, and this runs before options are bound.
+var dataRoot = builder.Configuration["Trip:DataRoot"] is { Length: > 0 } configured ? configured : "App_Data";
+if (!Path.IsPathRooted(dataRoot))
+    dataRoot = Path.Combine(builder.Environment.ContentRootPath, dataRoot);
+
+// Data protection encrypts the auth cookie, and its keys live in memory unless told otherwise —
+// which would sign the committee out on every restart and every deploy. Keeping them beside
+// trip.json puts them on the one directory this app knows is persistent.
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(dataRoot, "keys")))
+    .SetApplicationName("CharterTrip");
 builder.Services.AddScoped<CharterTrip.Web.Services.ToastService>();
 builder.Services.AddScoped<CharterTrip.Web.Services.MediaAttachments>();
 
@@ -41,6 +78,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
@@ -76,15 +115,14 @@ app.MapGet("/healthz", (ITripStore store) =>
 // Serialized from memory rather than read off disk, so it is the trip as it stands right now
 // and not as it was before the last debounced save.
 //
-// PHASE 2: this is the whole trip, including the mystery solution and every buzzer code. It is
-// open today only because AlwaysAdminUser makes every visitor an admin — the moment real logins
-// land, this needs the same guard as the admin pages.
+// This is the whole trip, including the mystery solution and every buzzer code, so it is behind
+// the same sign-in as the admin pages rather than merely unlinked.
 app.MapGet("/admin/trip.json", (ITripStore store) =>
 {
     var json = JsonSerializer.Serialize(store.Current, TripJson.Options);
     var name = $"trip-r{store.Current.Revision}-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}.json";
     return Results.File(Encoding.UTF8.GetBytes(json), "application/json", name);
-});
+}).RequireAuthorization();
 
 // Clue pictures and videos are far too big to live inside trip.json, so they are files beside it
 // and the trip only stores the path. This is the route that serves them.

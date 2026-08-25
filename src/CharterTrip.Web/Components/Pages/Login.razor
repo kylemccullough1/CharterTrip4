@@ -1,0 +1,102 @@
+@page "/login"
+@attribute [ExcludeFromInteractiveRouting]
+@layout BareLayout
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@inject IAdminSignIn SignIn
+@inject NavigationManager Nav
+@inject ILogger<Login> Log
+
+@* Deliberately not an interactive component.
+
+   Signing in means writing a cookie, and a cookie can only be written while there is still an
+   HTTP response to write it to. An interactive Blazor page runs over a WebSocket long after the
+   response has gone, so this page opts out of interactive routing and posts its form the ordinary
+   way — which is also why it survives a refresh: the browser holds the cookie, not the circuit. *@
+
+<PageTitle>Sign in · Charter Trip 2026</PageTitle>
+
+<div class="login-page">
+    <div class="login-card">
+        <span class="login-mark" aria-hidden="true">
+            <svg viewBox="0 0 100 100" width="46" height="46">
+                <path d="M50 8 L78 50 L50 92 L22 50 Z" fill="none" stroke="currentColor" stroke-width="5" />
+                <path d="M50 28 L64 50 L50 72 L36 50 Z" fill="currentColor" />
+            </svg>
+        </span>
+
+        <h1 class="login-title">Committee sign in</h1>
+        <p class="login-sub">Everyone else can use the site without this.</p>
+
+        <EditForm Model="Input" FormName="login" OnValidSubmit="SubmitAsync" method="post">
+            <DataAnnotationsValidator />
+
+            <label class="login-field">
+                <span>Username</span>
+                <InputText @bind-Value="Input.Username" class="login-input"
+                           autocomplete="username" autocapitalize="none" autofocus />
+            </label>
+
+            <label class="login-field">
+                <span>Password</span>
+                <InputText @bind-Value="Input.Password" type="password" class="login-input"
+                           autocomplete="current-password" />
+            </label>
+
+            @if (_error is not null)
+            {
+                <p class="login-error" role="alert">@_error</p>
+            }
+
+            <button type="submit" class="btn btn-gold login-submit">Sign in</button>
+        </EditForm>
+
+        <a class="login-back" href="/">← Back to the trip</a>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm] private Credentials Input { get; set; } = new();
+
+    /// <summary>Where to land afterwards. Only ever a path on this site — see <see cref="SafeRedirect"/>.</summary>
+    [SupplyParameterFromQuery(Name = "returnUrl")] private string? ReturnUrl { get; set; }
+
+    private string? _error;
+
+    private async Task SubmitAsync()
+    {
+        if (!SignIn.Verify(Input.Username, Input.Password))
+        {
+            // One message for both halves. "No such user" tells an outsider which of the two
+            // they got right, and there is nothing to gain by being more helpful than this.
+            _error = "That username and password do not match.";
+            Input = new Credentials { Username = Input.Username };
+            Log.LogWarning("Failed admin sign-in from {Ip}.", HttpContext.Connection.RemoteIpAddress);
+            return;
+        }
+
+        var identity = new ClaimsIdentity(
+        [
+            new Claim(ClaimTypes.Name, "Committee"),
+            new Claim(ClaimTypes.Role, TripRoles.Admin)
+        ], CookieAuthenticationDefaults.AuthenticationScheme);
+
+        // Persistent, so closing the tab — or the laptop — does not mean typing this again on
+        // Saturday morning. The cookie itself is encrypted and signed by data protection.
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identity),
+            new AuthenticationProperties { IsPersistent = true });
+
+        Nav.NavigateTo(SafeRedirect.Local(ReturnUrl));
+    }
+
+    public sealed class Credentials
+    {
+        public string Username { get; set; } = "";
+        public string Password { get; set; } = "";
+    }
+}

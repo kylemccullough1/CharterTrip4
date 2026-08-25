@@ -1,5 +1,7 @@
-@* Wraps admin-only page content. Phase 1 lets everyone through because AlwaysAdminUser says
-   so; the guard exists now so phase 2 only has to change who is admin. *@
+@inject NavigationManager Nav
+
+@* Wraps admin-only page content. Guests get a plain explanation and a way in rather than a
+   404 — the page is not secret, it just is not theirs. *@
 
 @if (Permissions.CanSeeAdminAreas)
 {
@@ -11,13 +13,20 @@ else
         <SectionCard Title="Committee only" Subtitle="This part of the site is for Jou, Ali, Kyle and Em.">
             <div class="card">
                 <p>Nothing is broken — this page just isn't yours to see.</p>
-                <a class="btn btn-gold btn-sm" href="/">Back to the trip</a>
+                <p class="row-actions">
+                    <a class="btn btn-gold btn-sm" href="/">Back to the trip</a>
+                    <a class="btn btn-ghost btn-sm" href="@SignInHref">Sign in</a>
+                </p>
             </div>
         </SectionCard>
     </div>
 }
 
 @code {
-    [CascadingParameter] private TripPermissions Permissions { get; set; } = new(false, "Guest");
+    [CascadingParameter] private TripPermissions Permissions { get; set; } = TripPermissions.Guest;
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Signing in from here comes back to the page they were trying to reach.</summary>
+    private string SignInHref =>
+        $"/login?returnUrl={Uri.EscapeDataString(new Uri(Nav.Uri).PathAndQuery)}";
 }

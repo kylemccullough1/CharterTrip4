@@ -38,6 +38,11 @@
                 </p>
             </div>
 
+            @* The standings are the committee's to read: half of what is on this board comes
+               out of games that have not been played in front of anybody yet, and a guest
+               seeing a running total invites questions nobody wants to answer mid-weekend. *@
+            @if (CanEdit)
+            {
             <div class="hero-board">
                 <div class="hero-board-head">
                     <span class="hb-label">@(AnyScores ? "Current standings" : "Standings — no points yet")</span>
@@ -69,6 +74,7 @@
                     </p>
                 }
             </div>
+            }
 
             <div class="hero-cd">
                 <b>@_countdown.Headline</b><span>@_countdown.Detail</span>
@@ -81,8 +87,14 @@
                  Subtitle="@($"{Trip.Trip.Venue} · {Trip.Trip.Dates}")">
         <Actions>
             @* Straight to the planner. Landing on Essentials and making someone find the tab
-               is a worse answer to "edit the itinerary" than naming the tab in the link. *@
-            <a class="btn btn-ghost btn-sm" href="/itinerary?tab=schedule">Edit itinerary →</a>
+               is a worse answer to "edit the itinerary" than naming the tab in the link.
+
+               Only offered to somebody who can act on it — for a guest the button was a door
+               onto a room where nothing is clickable. *@
+            @if (CanEdit)
+            {
+                <a class="btn btn-ghost btn-sm" href="/itinerary?tab=schedule">Edit itinerary →</a>
+            }
         </Actions>
         <ChildContent>
             <div class="glance-grid">

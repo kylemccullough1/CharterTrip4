@@ -171,8 +171,20 @@ The `TripArea` filter is why editing the budget will not re-render twenty-six ch
 @if (CanEdit) { <button @onclick="AddItemAsync">+ Add item</button> }
 ```
 
-Today `AlwaysAdminUser` says everyone is an admin. Phase 2 swaps that **one DI registration** for
-join-link cookie auth. Pages already ask the question; only the answer changes.
+`CookieCurrentUser` answers it from the authentication cookie: signed in means committee, and
+there is exactly one account. It reads `AuthenticationStateProvider` rather than `HttpContext`,
+because on Blazor Server there is an HttpContext during the first render and never again — a page
+that asked the context directly would see an admin on load and a guest once the circuit took over.
+
+Signing in and out are the two pages on the site that opt out of interactive rendering with
+`[ExcludeFromInteractiveRouting]`: a cookie needs an HTTP response to be written to, and an
+interactive component has a WebSocket instead. `App.razor` picks the render mode per request with
+`HttpContext.AcceptsInteractiveRouting()`.
+
+Credentials live in the `Admin` configuration section as PBKDF2-SHA256 hashes — both the username
+and the password, domain-separated so a shared salt cannot reveal that the two happen to match.
+Data protection keys are persisted beside `trip.json`, which is what makes a sign-in survive a
+restart and a deploy instead of ending with the process that issued it.
 
 Two shells already exist — `AdminShell` and `MemberShell` — with different navigation, chosen in
 `MainLayout` (Blazor's `@layout` is fixed per page, so the choice is made inside one layout).

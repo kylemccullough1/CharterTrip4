@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\CharterTrip.Core\CharterTrip.Core.csproj" />
     <ProjectReference Include="..\..\src\CharterTrip.Infrastructure\CharterTrip.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\CharterTrip.Web\CharterTrip.Web.csproj" />
   </ItemGroup>
 
 </Project>

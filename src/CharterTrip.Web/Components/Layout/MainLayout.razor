@@ -8,17 +8,26 @@
     greyed out.
 *@
 
-<CascadingValue Value="_permissions" IsFixed="true">
-    @if (_permissions.IsAdmin)
-    {
-        <AdminShell>@Body</AdminShell>
-    }
-    else
-    {
-        <MemberShell>@Body</MemberShell>
-    }
-    <ToastHost />
-</CascadingValue>
+@* Nothing renders until we know who this is.
+
+   The cascade is IsFixed, which is what makes it cheap — but a fixed value is captured on the
+   first render and never looked at again. Rendering the shell before the identity resolves would
+   pin "Guest" into every component on the page and quietly leave the committee read-only. One
+   empty render is the price of that being impossible. *@
+@if (_permissions is not null)
+{
+    <CascadingValue Value="_permissions" IsFixed="true">
+        @if (_permissions.IsAdmin)
+        {
+            <AdminShell>@Body</AdminShell>
+        }
+        else
+        {
+            <MemberShell>@Body</MemberShell>
+        }
+        <ToastHost />
+    </CascadingValue>
+}
 
 <div id="blazor-error-ui" data-nosnippet>
     Something went wrong.
@@ -27,7 +36,7 @@
 </div>
 
 @code {
-    private TripPermissions _permissions = new(false, "Guest");
+    private TripPermissions? _permissions;
 
-    protected override void OnInitialized() => _permissions = CurrentUser.Get();
+    protected override async Task OnInitializedAsync() => _permissions = await CurrentUser.GetAsync();
 }

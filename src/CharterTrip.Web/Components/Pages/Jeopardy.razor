@@ -8,6 +8,10 @@
 
 <PageTitle>Jeopardy · Charter Trip 2026</PageTitle>
 
+@* The games and the roster are the committee's working area, not part of what a
+   guest came here for. AdminOnly guards the page itself, so typing the URL lands
+   on the same polite refusal as following a link that is not in their menu. *@
+<AdminOnly>
 <div class="jeo-root @(IsTitleCard ? "is-title" : null)">
 
 @if (IsEditingBoard)
@@ -358,6 +362,7 @@ else
 }
 
 </div>
+</AdminOnly>
 
 <ConfirmDialog @ref="_confirm" />
 

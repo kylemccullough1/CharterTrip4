@@ -1,0 +1,26 @@
+@page "/logout"
+@attribute [ExcludeFromInteractiveRouting]
+@layout BareLayout
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@inject NavigationManager Nav
+
+@* Static SSR for the same reason as the sign-in page: clearing a cookie needs a response to
+   clear it in.
+
+   This is a link rather than a posted form, which means another site could in principle cause it
+   to be followed. The worst that does is sign the committee out, so the simpler thing wins. *@
+
+<PageTitle>Signing out · Charter Trip 2026</PageTitle>
+
+<p class="login-page">Signing out…</p>
+
+@code {
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        Nav.NavigateTo("/");
+    }
+}

@@ -1,3 +1,4 @@
+@using Microsoft.AspNetCore.Components.Endpoints
 <!DOCTYPE html>
 <html lang="en">
 
@@ -24,16 +25,29 @@
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["CharterTrip.Web.styles.css"]" />
     <ImportMap />
-    <HeadOutlet @rendermode="InteractiveServer" />
+    <HeadOutlet @rendermode="PageRenderMode" />
 </head>
 
 <body>
     <a class="skip-link" href="#main">Skip to content</a>
 
-    <Routes @rendermode="InteractiveServer" />
+    <Routes @rendermode="PageRenderMode" />
     <ReconnectModal />
 
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
 </html>
+
+@code {
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+
+    /// <summary>
+    /// Interactive for the whole site, except the handful of pages that opt out with
+    /// [ExcludeFromInteractiveRouting] — signing in and out, which need a real HTTP response to
+    /// put a cookie on. Handing those an interactive render mode would give them a WebSocket and
+    /// no response to write to.
+    /// </summary>
+    private IComponentRenderMode? PageRenderMode =>
+        HttpContext.AcceptsInteractiveRouting() ? InteractiveServer : null;
+}

@@ -4,6 +4,10 @@
 
 <PageTitle>@(Game?.Name ?? "Games") · Charter Trip 2026</PageTitle>
 
+@* The games and the roster are the committee's working area, not part of what a
+   guest came here for. AdminOnly guards the page itself, so typing the URL lands
+   on the same polite refusal as following a link that is not in their menu. *@
+<AdminOnly>
 <div class="page">
     @if (Game is null)
     {
@@ -84,6 +88,7 @@
         </SectionCard>
     }
 </div>
+</AdminOnly>
 
 @code {
     protected override TripArea Watching => TripArea.Games;

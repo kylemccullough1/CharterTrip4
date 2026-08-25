@@ -21,6 +21,10 @@
             @if (_tab == GuideTab.Schedule)
             {
                 <div class="planner-tools">
+                    @* How tall an hour is drawn is a stored decision about how the schedule reads,
+                       so changing it is an edit like any other. *@
+                    @if (CanEdit)
+                    {
                     <div class="zoom" role="group" aria-label="Zoom">
                         <button class="mini-btn" title="Zoom out" disabled="@(PxPerHour <= MinZoom)"
                                 @onclick="() => ZoomAsync(-1)">−</button>
@@ -28,6 +32,7 @@
                         <button class="mini-btn" title="Zoom in" disabled="@(PxPerHour >= MaxZoom)"
                                 @onclick="() => ZoomAsync(1)">+</button>
                     </div>
+                    }
 
                     <button class="btn btn-ghost btn-sm" @onclick="ToggleAllGaps">
                         @(AnyCollapsed ? "Expand empty hours" : "Collapse empty hours")
@@ -456,7 +461,7 @@
                    night from Saturday to Friday is one gesture, and if the target slot is taken
                    the two meals swap rather than one being eaten. *@
                 <div class="menu-board">
-                    @foreach (var day in Guide.MenuDays)
+                    @foreach (var day in MenuDaysShown)
                     {
                         <div class="menu-day" @key="day.Id">
                             <h4 class="menu-day-name">
@@ -465,7 +470,7 @@
                                               Placeholder="Day" />
                             </h4>
 
-                            @foreach (var slot in MealSlots)
+                            @foreach (var slot in SlotsShown(day))
                             {
                                 var meal = GetMeal(day, slot);
                                 var isDrop = _mealHover == (day.Id, slot);
@@ -494,16 +499,14 @@
                                                           Placeholder="nothing planned — click to add" />
                                         </div>
                                     }
-                                    else
-                                    {
-                                        <p class="menu-empty muted tiny">—</p>
-                                    }
                                 </div>
                             }
                         </div>
                     }
                 </div>
 
+                @if (CanEdit || Guide.Staples.Count > 0)
+                {
                 <div class="menu-staples">
                     <h4>All weekend</h4>
                     <div class="staple-row">
@@ -527,12 +530,16 @@
                         }
                     </div>
                 </div>
+                }
 
-                <p class="menu-note">
-                    <EditableText Value="@Guide.MenuNote" ReadOnly="@(!CanEdit)"
-                                  ValueChanged="@(v => EditGuideAsync(g => g.MenuNote = v))"
-                                  Placeholder="allergies note" />
-                </p>
+                @if (CanEdit || !string.IsNullOrWhiteSpace(Guide.MenuNote))
+                {
+                    <p class="menu-note">
+                        <EditableText Value="@Guide.MenuNote" ReadOnly="@(!CanEdit)"
+                                      ValueChanged="@(v => EditGuideAsync(g => g.MenuNote = v))"
+                                      Placeholder="allergies note" />
+                    </p>
+                }
             </section>
 
             <section class="guide-panel @(_tab == GuideTab.Travel ? "is-active" : null)" data-accent="sapphire"
@@ -659,7 +666,7 @@
                                          Origins="Origins"
                                          DriveTimeFor="DriveTimeFor"
                                          CustomOrigins="_customOrigins"
-                                         CanEdit="CanEdit"
+                                         CanEdit="true"
                                          Ascending="AscendingFor(group.Key)"
                                          OnToggleSort="@(() => ToggleSort(group.Key))"
                                          OnTogglePicker="TogglePicker" />
@@ -677,7 +684,7 @@
                                  Origins="Origins"
                                  DriveTimeFor="DriveTimeFor"
                                  CustomOrigins="_customOrigins"
-                                 CanEdit="CanEdit"
+                                 CanEdit="true"
                                  Ascending="AscendingFor(UnplacedKey)"
                                  OnToggleSort="@(() => ToggleSort(UnplacedKey))"
                                  OnTogglePicker="TogglePicker" />
@@ -990,6 +997,20 @@
 
     /// <summary>Which slot the dragged meal is hovering, so it can light up.</summary>
     private (string DayId, string Slot)? _mealHover;
+
+    /// <summary>
+    /// The menu as this person should see it. A guest gets the plan, not the gaps in it: an
+    /// empty slot is a note the committee left itself, and a day with nothing in it yet reads
+    /// like the kitchen is closed rather than like nobody has decided.
+    /// </summary>
+    private IEnumerable<MenuDay> MenuDaysShown =>
+        CanEdit ? Guide.MenuDays : Guide.MenuDays.Where(HasAnyMeal);
+
+    private IEnumerable<string> SlotsShown(MenuDay day) =>
+        CanEdit ? MealSlots : MealSlots.Where(s => !string.IsNullOrWhiteSpace(GetMeal(day, s)));
+
+    private static bool HasAnyMeal(MenuDay day) =>
+        MealSlots.Any(s => !string.IsNullOrWhiteSpace(GetMeal(day, s)));
 
     private static string GetMeal(MenuDay day, string slot) => slot switch
     {

@@ -19,8 +19,8 @@ public static class NavTree
     [
         new("Home", "/"),
         new("Itinerary", "/itinerary"),
-        new("Teams", "/teams"),
-        new("Games", "/games", Children:
+        new("Teams", "/teams", AdminOnly: true),
+        new("Games", "/games", AdminOnly: true, Children:
         [
             new("All games", "/games"),
             new("Jeopardy", "/games/jeopardy"),

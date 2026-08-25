@@ -9,7 +9,12 @@
 
 <div class="page">
 
-    <SectionCard Title="@TabTitle" Subtitle="@TabSubtitle">
+    @* Fixed overall height, not just a fixed panel. The panels were already the same size, but
+       the head above them is not: Schedule carries the planner toolbar and the subtitles wrap to
+       different depths, so the card total drifted by a row or two between tabs and the divider
+       below moved with it. Sizing the card and letting the body take whatever is left makes
+       every tab end on exactly the same line. *@
+    <SectionCard CssClass="guide-card" Title="@TabTitle" Subtitle="@TabSubtitle">
         <Actions>
             @* The planner's tools belong to the planner. Showing zoom controls next to the menu
                would be nonsense, so they come and go with their own tab. *@
@@ -59,21 +64,56 @@
             <section class="guide-panel @(_tab == GuideTab.Essentials ? "is-active" : null)" data-accent="gold"
                      role="tabpanel" aria-label="The essentials">
 
-                <div class="fact-list">
-                    @foreach (var fact in Guide.Essentials)
+                @* Plaques, not rows. The old full-width stripes read as one grey table; these are
+                   small mounted cards with the label riveted to the top corner, the loud one
+                   spanning the whole rail so it cannot be scrolled past. Everything is editable
+                   in place — this is reference material the committee corrects, not code. *@
+                <div class="ess-grid">
+                    @for (var i = 0; i < Guide.Essentials.Count; i++)
                     {
-                        <div class="fact @(fact.Highlight ? "is-loud" : null)" @key="fact.Label">
-                            <span class="fact-label">@fact.Label</span>
-                            <span class="fact-value">@fact.Value</span>
+                        var index = i;
+                        var fact = Guide.Essentials[index];
+
+                        <div class="ess-plaque @(fact.Highlight ? "is-loud" : null)" @key="fact">
+                            <span class="ess-corner" aria-hidden="true"></span>
+                            <span class="ess-label">
+                                <EditableText Value="@fact.Label" ReadOnly="@(!CanEdit)"
+                                              ValueChanged="@(v => EditFactAsync(index, f => f.Label = v))"
+                                              Placeholder="label" />
+                            </span>
+                            <div class="ess-value">
+                                <EditableText Value="@fact.Value" Multiline="true" ReadOnly="@(!CanEdit)"
+                                              ValueChanged="@(v => EditFactAsync(index, f => f.Value = v))"
+                                              Placeholder="—" />
+                            </div>
+
+                            @if (IsWhereFact(fact) && !string.IsNullOrWhiteSpace(Travel.Address))
+                            {
+                                <a class="ess-map" href="@MapUrl(Travel.Address)" target="_blank" rel="noopener">
+                                    ⌖ Open in Maps
+                                </a>
+                            }
+
                             @if (fact.Highlight)
                             {
                                 <span class="fact-flag">bring it yourself</span>
                             }
+
+                            @if (CanEdit)
+                            {
+                                <button type="button" class="ess-remove" title="Remove this card"
+                                        @onclick="() => RemoveFactAsync(index)">✕</button>
+                            }
                         </div>
+                    }
+
+                    @if (CanEdit)
+                    {
+                        <button type="button" class="ess-plaque is-add" @onclick="AddFactAsync">+ Add a card</button>
                     }
                 </div>
 
-                <div class="note-grid">
+                <div class="note-grid mt">
                     <div class="card">
                         <h4>Nearby</h4>
                         <ul class="plain">
@@ -110,13 +150,38 @@
                 }
             </div>
 
+            @* On desktop a day can take the whole stage: the others fall back to a sidebar of
+               names, and any of them — or Overview — brings the three-across view back. Same
+               planner, same cards; only which days are visible changes, so nothing in flight
+               (an open editor, a half-dragged card) is ever thrown away by zooming in. *@
+            <div class="planner-stage @(FocusDay is not null ? "is-focused" : null)">
+            @if (FocusDay is not null)
+            {
+                <aside class="planner-side">
+                    <button type="button" class="planner-side-back" @onclick="() => _focusDayId = null">
+                        ← Overview
+                    </button>
+                    @foreach (var day in Trip.Itinerary)
+                    {
+                        <button type="button"
+                                class="planner-side-day @(day.Id == _focusDayId ? "is-current" : null)"
+                                @onclick="() => _focusDayId = day.Id">
+                            <b>@day.Day</b>
+                            <span>@day.Date</span>
+                            <i>@day.Items.Count item@(day.Items.Count == 1 ? "" : "s")</i>
+                        </button>
+                    }
+                </aside>
+            }
+
             <div class="planner">
                 @foreach (var day in Trip.Itinerary)
                 {
                     var timeline = TimelineFor(day);
                     var positioned = OverlapLayout.Arrange(day.Items);
 
-                    <section class="planner-day @(day.Id == ActiveDayId ? "is-active" : null)" @key="day.Id">
+                    <section class="planner-day @(day.Id == ActiveDayId ? "is-active" : null) @(FocusDay is not null ? (day.Id == _focusDayId ? "is-focus" : "is-parked") : null)"
+                             @key="day.Id">
 
                         <header class="planner-day-head">
                             <div>
@@ -132,9 +197,14 @@
                                     · @day.Items.Count item@(day.Items.Count == 1 ? "" : "s")
                                 </p>
                             </div>
-                            @if (CanEdit)
-                            {
-                                <div class="planner-day-actions">
+                            <div class="planner-day-actions">
+                                <button class="mini-btn planner-expand"
+                                        title="@(day.Id == _focusDayId ? "Back to all days" : "Expand this day")"
+                                        @onclick="() => _focusDayId = day.Id == _focusDayId ? null : day.Id">
+                                    @(day.Id == _focusDayId ? "⇱" : "⛶")
+                                </button>
+                                @if (CanEdit)
+                                {
                                     <button class="mini-btn" title="Add an item at midday"
                                             @onclick="() => AddItemAsync(day.Id)">+</button>
                                     @if (day.Items.Count == 0)
@@ -142,8 +212,8 @@
                                         <button class="mini-btn btn-danger-ghost" title="Delete this day"
                                                 @onclick="() => ConfirmDeleteDay(day)">✕</button>
                                     }
-                                </div>
-                            }
+                                }
+                            </div>
                         </header>
 
                         @* The canvas supplies padding; the track is exactly TotalPixels tall so
@@ -213,6 +283,7 @@
                         </div>
                     </section>
                 }
+            </div>
             </div>
 
             @if (_draft is not null)
@@ -331,138 +402,254 @@
             <section class="guide-panel @(_tab == GuideTab.Menu ? "is-active" : null)" data-accent="ruby"
                      role="tabpanel" aria-label="Menu">
 
-                <div class="menu-list">
-                    @foreach (var entry in Guide.Menu)
+                @* The menu as a board: a card per day, a slot per meal. A filled slot is a meal
+                   card the committee can edit in place or drag into another slot — moving grill
+                   night from Saturday to Friday is one gesture, and if the target slot is taken
+                   the two meals swap rather than one being eaten. *@
+                <div class="menu-board">
+                    @foreach (var day in Guide.MenuDays)
                     {
-                        <div class="menu-row" @key="entry.When">
-                            <span class="menu-when">@entry.When</span>
-                            <span class="menu-what">@entry.What</span>
+                        <div class="menu-day" @key="day.Id">
+                            <h4 class="menu-day-name">
+                                <EditableText Value="@day.Day" ReadOnly="@(!CanEdit)"
+                                              ValueChanged="@(v => EditMenuDayAsync(day.Id, d => d.Day = v))"
+                                              Placeholder="Day" />
+                            </h4>
+
+                            @foreach (var slot in MealSlots)
+                            {
+                                var meal = GetMeal(day, slot);
+                                var isDrop = _mealHover == (day.Id, slot);
+
+                                <div class="menu-slot @(isDrop ? "is-drop" : null) @(string.IsNullOrWhiteSpace(meal) ? "is-open" : null)"
+                                     data-menu-day-id="@day.Id" data-menu-slot="@slot">
+                                    <span class="menu-slot-label">@slot</span>
+
+                                    @if (!string.IsNullOrWhiteSpace(meal))
+                                    {
+                                        <div class="menu-meal" data-day-id="@day.Id" data-slot="@slot">
+                                            <EditableText Value="@meal" Multiline="true" ReadOnly="@(!CanEdit)"
+                                                          ValueChanged="@(v => SetMealAsync(day.Id, slot, v))"
+                                                          Placeholder="—" />
+                                            @if (CanEdit)
+                                            {
+                                                <button type="button" class="menu-clear" title="Remove this meal"
+                                                        @onclick="() => SetMealAsync(day.Id, slot, string.Empty)">✕</button>
+                                            }
+                                        </div>
+                                    }
+                                    else if (CanEdit)
+                                    {
+                                        <div class="menu-empty">
+                                            <EditableText Value="" ValueChanged="@(v => SetMealAsync(day.Id, slot, v))"
+                                                          Placeholder="nothing planned — click to add" />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="menu-empty muted tiny">—</p>
+                                    }
+                                </div>
+                            }
                         </div>
                     }
                 </div>
 
-                @if (!string.IsNullOrWhiteSpace(Guide.MenuNote))
-                {
-                    <p class="menu-note">@Guide.MenuNote</p>
-                }
+                <div class="menu-staples">
+                    <h4>All weekend</h4>
+                    <div class="staple-row">
+                        @foreach (var staple in Guide.Staples)
+                        {
+                            <span class="staple-chip" @key="staple.Id">
+                                <EditableText Value="@staple.Text" ReadOnly="@(!CanEdit)"
+                                              ValueChanged="@(v => EditStapleAsync(staple.Id, v))"
+                                              Placeholder="—" />
+                                @if (CanEdit)
+                                {
+                                    <button type="button" class="staple-del" title="Remove"
+                                            @onclick="() => RemoveStapleAsync(staple.Id)">✕</button>
+                                }
+                            </span>
+                        }
+
+                        @if (CanEdit)
+                        {
+                            <button type="button" class="staple-chip is-add" @onclick="AddStapleAsync">+ add</button>
+                        }
+                    </div>
+                </div>
+
+                <p class="menu-note">
+                    <EditableText Value="@Guide.MenuNote" ReadOnly="@(!CanEdit)"
+                                  ValueChanged="@(v => EditGuideAsync(g => g.MenuNote = v))"
+                                  Placeholder="allergies note" />
+                </p>
             </section>
 
             <section class="guide-panel @(_tab == GuideTab.Travel ? "is-active" : null)" data-accent="sapphire"
                      role="tabpanel" aria-label="Travel">
 
+                @* Fixed facts, not a working document: the address and the drive times are what
+                   they are, and a stray click that renamed the destination would be a bad way to
+                   find that out. Only the per-person rows below are editable. *@
                 <div class="note-grid">
                     <div class="card">
                         <h4>Destination</h4>
-                        <p class="strong">
-                            <EditableText Value="@Travel.Destination" ReadOnly="@(!CanEdit)"
-                                          ValueChanged="@(v => EditTravelAsync(t => t.Destination = v))"
-                                          Placeholder="Where we are going" />
+                        <p class="strong">@Travel.Destination</p>
+                        <p>
+                            <a href="@MapUrl(Travel.Address)" target="_blank" rel="noopener"
+                               title="Open in Maps">@Travel.Address</a>
                         </p>
-                        <p class="muted">
-                            <EditableText Value="@Travel.Address" ReadOnly="@(!CanEdit)"
-                                          ValueChanged="@(v => EditTravelAsync(t => t.Address = v))"
-                                          Placeholder="Street address" />
-                        </p>
-                        <p class="muted tiny">
-                            Check-in
-                            <b><EditableText Value="@Travel.CheckInTime" ReadOnly="@(!CanEdit)"
-                                             ValueChanged="@(v => EditTravelAsync(t => t.CheckInTime = v))"
-                                             Placeholder="—" /></b>
-                            · Check-out
-                            <b><EditableText Value="@Travel.CheckOutTime" ReadOnly="@(!CanEdit)"
-                                             ValueChanged="@(v => EditTravelAsync(t => t.CheckOutTime = v))"
-                                             Placeholder="—" /></b>
-                        </p>
+                        <dl class="travel-when">
+                            <dt>Check-in</dt>
+                            <dd>@CheckInLine</dd>
+                            <dt>Check-out</dt>
+                            <dd>@CheckOutLine</dd>
+                        </dl>
                     </div>
 
                     <div class="card">
                         <h4>Drive times</h4>
                         <ul class="plain">
-                            @for (var i = 0; i < Travel.DriveTimes.Count; i++)
+                            @foreach (var leg in Travel.DriveTimes)
                             {
-                                var index = i;
-                                <li>
-                                    <b>@Travel.DriveTimes[index].From</b> —
-                                    <EditableText Value="@Travel.DriveTimes[index].Duration" ReadOnly="@(!CanEdit)"
-                                                  ValueChanged="@(v => EditTravelAsync(t => t.DriveTimes[index].Duration = v))"
-                                                  Placeholder="—" />
+                                var riders = RidersFrom(leg.From);
+                                <li @key="leg.From" class="@(riders > 0 ? "is-live" : null)">
+                                    <b>@leg.From</b> — @leg.Duration
+                                    @if (riders > 0)
+                                    {
+                                        <span class="drive-count">@riders</span>
+                                    }
                                 </li>
                             }
                         </ul>
-                        <p class="muted tiny">
-                            <EditableText Value="@Travel.Note" Multiline="true" ReadOnly="@(!CanEdit)"
-                                          ValueChanged="@(v => EditTravelAsync(t => t.Note = v))"
-                                          Placeholder="How carpooling works" />
-                        </p>
+                        <p class="muted tiny mt">Counts follow the "leaving from" column below.</p>
                     </div>
                 </div>
 
-                @if (Cars.Count > 0)
+
+                @* The key. Sized to its contents rather than stretched across the panel, and
+                   carrying where each carpool is setting off from — which is the question the
+                   colour alone could never answer. *@
+                <div class="car-key">
+                    <div class="car-key-head">
+                        <span>Carpools</span>
+                        <span class="muted tiny">Attach a color to your row to associate yourself with your car.</span>
+                    </div>
+
+                    @if (CarGroups.Count == 0)
+                    {
+                        <p class="muted tiny">Nobody has picked a car yet.</p>
+                    }
+
+                    @foreach (var group in CarGroups)
+                    {
+                        <div class="car-key-row" style="--car:@group.Color" @key="group.Slot">
+                            <span class="car-key-swatch" aria-hidden="true"></span>
+                            <span class="car-key-people">@string.Join(" · ", group.People)</span>
+                            <span class="car-key-from">@OriginSummary(group.Slot)</span>
+                            <span class="car-key-count">@group.People.Count</span>
+                        </div>
+                    }
+
+                    @if (Unassigned.Count > 0)
+                    {
+                        @* No roll call. Two dozen names here just restated the table below; the
+                           count is the only fact this row owes anyone. *@
+                        <div class="car-key-row is-unassigned">
+                            <span class="car-key-swatch" aria-hidden="true"></span>
+                            <span class="car-key-people"><b>No car yet</b></span>
+                            <span class="car-key-from"></span>
+                            <span class="car-key-count">@Unassigned.Count</span>
+                        </div>
+                    }
+                </div>
+
+                @* The palette is fixed-position and placed by JS, so it escapes the scrolling
+                   panel instead of being clipped by it. The backdrop is what closes it. *@
+                @if (_pickerFor is not null)
                 {
-                    <div class="car-legend">
-                        <span class="muted tiny">Cars</span>
-                        @foreach (var car in Cars)
+                    <div class="car-backdrop" @onclick="() => _pickerFor = null"></div>
+
+                    var picked = RowFor(_pickerFor).CarColor;
+                    <div class="car-palette" data-car-pop="@_pickerFor"
+                         role="group" aria-label="Pick a carpool colour">
+                        <button type="button" class="car-swatch is-none"
+                                title="No car" aria-label="No car"
+                                @onclick="() => SetCarAsync(_pickerFor, 0)">✕</button>
+                        @for (var slot = 1; slot <= CarColors.Length; slot++)
                         {
-                            <span class="car-chip" style="--car:@CarColor(car)">
-                                @car <b>@CarCount(car)</b>
-                            </span>
+                            var pick = slot;
+                            <button type="button"
+                                    class="car-swatch @(picked == pick ? "is-on" : null)"
+                                    style="--car:@CarColors[pick - 1]"
+                                    aria-label="@($"Car {pick}")"
+                                    @onclick="() => SetCarAsync(_pickerFor, pick)"></button>
                         }
                     </div>
                 }
 
-                <div class="table-scroll mt">
-                    <table class="table travel-table">
-                        <thead>
-                        <tr>
-                            <th>Who</th>
-                            <th>Car</th>
-                            <th>Leaving from</th>
-                            <th>Can depart</th>
-                            <th>Dietary</th>
-                            <th>Notes</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach (var person in Trip.Roster)
-                        {
-                            var row = RowFor(person.Id);
-                            <tr @key="person.Id" style="--car:@CarColor(row.Car)"
-                                class="@(string.IsNullOrWhiteSpace(row.Car) ? null : "has-car")">
-                                <td class="travel-who">@person.Name</td>
-                                <td>
-                                    <EditableText Value="@row.Car" ReadOnly="@(!CanEdit)"
-                                                  ValueChanged="@(v => EditRowAsync(person.Id, r => r.Car = v))"
-                                                  Placeholder="—" />
-                                </td>
-                                <td>
-                                    <EditableText Value="@row.LeavingFrom" ReadOnly="@(!CanEdit)"
-                                                  ValueChanged="@(v => EditRowAsync(person.Id, r => r.LeavingFrom = v))"
-                                                  Placeholder="—" />
-                                </td>
-                                <td>
-                                    <EditableText Value="@row.DepartAt" ReadOnly="@(!CanEdit)"
-                                                  ValueChanged="@(v => EditRowAsync(person.Id, r => r.DepartAt = v))"
-                                                  Placeholder="—" />
-                                </td>
-                                <td>
-                                    <EditableText Value="@row.Dietary" ReadOnly="@(!CanEdit)"
-                                                  ValueChanged="@(v => EditRowAsync(person.Id, r => r.Dietary = v))"
-                                                  Placeholder="—" />
-                                </td>
-                                <td>
-                                    <EditableText Value="@row.Notes" ReadOnly="@(!CanEdit)"
-                                                  ValueChanged="@(v => EditRowAsync(person.Id, r => r.Notes = v))"
-                                                  Placeholder="—" />
-                                </td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
+                <div class="travel-tools">
+                    <span class="muted tiny">Group by</span>
+                    <div class="seg" role="group" aria-label="Group the tables by">
+                        <button type="button" class="seg-btn @(_groupBy == TravelGroup.Carpool ? "is-on" : null)"
+                                @onclick="() => _groupBy = TravelGroup.Carpool">Carpool</button>
+                        <button type="button" class="seg-btn @(_groupBy == TravelGroup.Origin ? "is-on" : null)"
+                                @onclick="() => _groupBy = TravelGroup.Origin">Leaving from</button>
+                    </div>
                 </div>
+
+                @* One card per group, side by side, with whoever has not answered yet in a wider
+                   table of their own underneath. Splitting the roster this way is the whole point
+                   of the exercise: a carpool you can read in one card is a carpool that is sorted. *@
+                @if (TravelGroups.Count > 0)
+                {
+                    <div class="tt-row">
+                        @foreach (var group in TravelGroups)
+                        {
+                            <TravelTable @key="group.Key"
+                                         Title="@group.Title"
+                                         Color="@group.Color"
+                                         Compact="true"
+                                         People="group.People"
+                                         RowFor="RowFor"
+                                         OnEdit="EditRowAsync"
+                                         ColorOf="ColorOf"
+                                         Origins="Origins"
+                                         DriveTimeFor="DriveTimeFor"
+                                         CustomOrigins="_customOrigins"
+                                         CanEdit="CanEdit"
+                                         Ascending="_nameAscending"
+                                         OnToggleSort="ToggleNameSort"
+                                         OnTogglePicker="TogglePicker" />
+                        }
+                    </div>
+                }
+
+                @if (Unplaced.Count > 0)
+                {
+                    <TravelTable Title="@UnplacedTitle"
+                                 People="Unplaced"
+                                 RowFor="RowFor"
+                                 OnEdit="EditRowAsync"
+                                 ColorOf="ColorOf"
+                                 Origins="Origins"
+                                 DriveTimeFor="DriveTimeFor"
+                                 CustomOrigins="_customOrigins"
+                                 CanEdit="CanEdit"
+                                 Ascending="_nameAscending"
+                                 OnToggleSort="ToggleNameSort"
+                                 OnTogglePicker="TogglePicker" />
+                }
             </section>
 
         </ChildContent>
     </SectionCard>
+
+    @* The tabs above and the packing list below are two different things on one page, and with
+       both sitting in identical cards they read as one long scroll. The house divider — a rule
+       with the deco diamond on it — says otherwise. *@
+    <div class="section-divider" aria-hidden="true"></div>
 
     <SectionCard Title="What to bring"
                  Subtitle="Ticked boxes are saved on this device only — nobody else sees your list.">
@@ -490,16 +677,33 @@
                         <ul class="pack-items">
                             @foreach (var item in group.Items)
                             {
-                                <li @key="item.Id">
+                                <li class="pack-line" @key="item.Id">
                                     <label class="pack-item @(IsPacked(item.Id) ? "is-done" : null)">
                                         <input type="checkbox"
                                                checked="@IsPacked(item.Id)"
                                                @onchange="e => TogglePackedAsync(item.Id, e.Value is true)" />
                                         <span>@item.Text</span>
                                     </label>
+                                    @if (CanEdit)
+                                    {
+                                        <button type="button" class="pack-del" title="Remove from the list"
+                                                @onclick="() => RemovePackItemAsync(group.Id, item.Id)">✕</button>
+                                    }
                                 </li>
                             }
                         </ul>
+
+                        @if (CanEdit)
+                        {
+                            <div class="pack-add">
+                                <input class="inline-edit" placeholder="add something…"
+                                       value="@DraftFor(group.Id)"
+                                       @oninput="e => _packDrafts[group.Id] = e.Value?.ToString() ?? string.Empty"
+                                       @onkeydown="e => PackAddKeyAsync(e, group.Id)" />
+                                <button type="button" class="mini-btn" title="Add"
+                                        @onclick="() => AddPackItemAsync(group.Id)">+</button>
+                            </div>
+                        }
                     </div>
                 }
 
@@ -507,11 +711,32 @@
                     <h4>What every car brings</h4>
                     <p class="muted tiny">Once your car group is set, that car is responsible for:</p>
                     <ul class="plain pack-car">
-                        @foreach (var thing in Guide.CarBrings)
+                        @for (var i = 0; i < Guide.CarBrings.Count; i++)
                         {
-                            <li @key="thing">@thing</li>
+                            var index = i;
+                            <li class="pack-line" @key="index + Guide.CarBrings[index]">
+                                <span>@Guide.CarBrings[index]</span>
+                                @if (CanEdit)
+                                {
+                                    <button type="button" class="pack-del" title="Remove"
+                                            @onclick="() => RemoveCarBringAsync(index)">✕</button>
+                                }
+                            </li>
                         }
                     </ul>
+
+                    @if (CanEdit)
+                    {
+                        <div class="pack-add">
+                            <input class="inline-edit" placeholder="add something…"
+                                   value="@DraftFor(CarBringsKey)"
+                                   @oninput="e => _packDrafts[CarBringsKey] = e.Value?.ToString() ?? string.Empty"
+                                   @onkeydown="e => PackAddKeyAsync(e, CarBringsKey)" />
+                            <button type="button" class="mini-btn" title="Add"
+                                    @onclick="() => AddPackItemAsync(CarBringsKey)">+</button>
+                        </div>
+                    }
+
                     @if (!string.IsNullOrWhiteSpace(Guide.CarBringsNote))
                     {
                         <p class="muted tiny">@Guide.CarBringsNote</p>
@@ -539,10 +764,12 @@
     /// Each tab carries its own accent. Four sections of dense text all in the same gold were
     /// hard to tell apart at a glance, so the colour does the work the headings could not.
     /// </summary>
+    // "Schedule", not "Itinerary" — the page is already called Itinerary, and a tab repeating
+    // the page's own name reads like a folder containing itself.
     private static readonly (GuideTab Key, string Label, string Icon, string Accent)[] Tabs =
     [
         (GuideTab.Essentials, "Essentials", "◆", "gold"),
-        (GuideTab.Schedule, "Itinerary", "◷", "emerald"),
+        (GuideTab.Schedule, "Schedule", "◷", "emerald"),
         (GuideTab.Menu, "Menu", "◈", "ruby"),
         (GuideTab.Travel, "Travel", "◇", "sapphire")
     ];
@@ -557,16 +784,117 @@
         GuideTab.Essentials => "The essentials",
         GuideTab.Menu => "Menu",
         GuideTab.Travel => "Getting there",
-        _ => "Itinerary"
+        _ => "Schedule"
     };
 
     private string TabSubtitle => _tab switch
     {
         GuideTab.Essentials => $"{Trip.Trip.Venue} · {Trip.Trip.Dates}",
         GuideTab.Menu => "Everything on this list is covered.",
-        GuideTab.Travel => "Same car name, same colour. Sort it out amongst yourselves.",
+        GuideTab.Travel => "Same color, same car. Sort it out amongst yourselves.",
         _ => SubtitleText
     };
+
+    // ----------------------------------------------------------------- guide
+
+    private Task EditGuideAsync(Action<GuestGuide> apply) =>
+        Store.MutateAsync(t => apply(t.Guide), TripArea.All);
+
+    /// <summary>Index-guarded inside the mutation, so a card deleted mid-edit is a no-op, not a crash.</summary>
+    private Task EditFactAsync(int index, Action<GuideFact> apply) =>
+        Store.MutateAsync(t =>
+        {
+            if (index >= 0 && index < t.Guide.Essentials.Count) apply(t.Guide.Essentials[index]);
+        }, TripArea.All);
+
+    private Task AddFactAsync() =>
+        EditGuideAsync(g => g.Essentials.Add(new GuideFact { Label = "New", Value = "" }));
+
+    private Task RemoveFactAsync(int index) =>
+        EditGuideAsync(g =>
+        {
+            if (index >= 0 && index < g.Essentials.Count) g.Essentials.RemoveAt(index);
+        });
+
+    /// <summary>The card that earns the map pin — the one that says where the house is.</summary>
+    private static bool IsWhereFact(GuideFact fact) =>
+        fact.Label.Trim().Equals("Where", StringComparison.OrdinalIgnoreCase);
+
+    private static string MapUrl(string address) =>
+        "https://www.google.com/maps/search/?api=1&query=" + Uri.EscapeDataString(address);
+
+    // ------------------------------------------------------------------ menu
+
+    private static readonly string[] MealSlots = ["breakfast", "lunch", "dinner"];
+
+    /// <summary>Which slot the dragged meal is hovering, so it can light up.</summary>
+    private (string DayId, string Slot)? _mealHover;
+
+    private static string GetMeal(MenuDay day, string slot) => slot switch
+    {
+        "breakfast" => day.Breakfast,
+        "lunch" => day.Lunch,
+        _ => day.Dinner
+    };
+
+    private static void SetMeal(MenuDay day, string slot, string value)
+    {
+        switch (slot)
+        {
+            case "breakfast": day.Breakfast = value; break;
+            case "lunch": day.Lunch = value; break;
+            default: day.Dinner = value; break;
+        }
+    }
+
+    private Task EditMenuDayAsync(string dayId, Action<MenuDay> apply) =>
+        Store.MutateAsync(t =>
+        {
+            if (t.Guide.MenuDays.FirstOrDefault(d => d.Id == dayId) is { } day) apply(day);
+        }, TripArea.All);
+
+    private Task SetMealAsync(string dayId, string slot, string value) =>
+        EditMenuDayAsync(dayId, d => SetMeal(d, slot, value.Trim()));
+
+    /// <summary>
+    /// A meal landed on another slot. Occupied targets swap rather than being overwritten,
+    /// because "put grill night where Friday dinner is" almost always means trading the two —
+    /// and a swap never destroys anything, which matters for a gesture this easy to fumble.
+    /// </summary>
+    [JSInvokable]
+    public Task MealDropped(string fromDayId, string fromSlot, string toDayId, string toSlot) =>
+        Store.MutateAsync(t =>
+        {
+            var from = t.Guide.MenuDays.FirstOrDefault(d => d.Id == fromDayId);
+            var to = t.Guide.MenuDays.FirstOrDefault(d => d.Id == toDayId);
+            if (from is null || to is null) return;
+
+            var moving = GetMeal(from, fromSlot);
+            if (string.IsNullOrWhiteSpace(moving)) return;
+
+            var displaced = GetMeal(to, toSlot);
+            SetMeal(to, toSlot, moving);
+            SetMeal(from, fromSlot, displaced);
+        }, TripArea.All);
+
+    [JSInvokable]
+    public Task MealHover(string? dayId, string? slot)
+    {
+        _mealHover = dayId is null || slot is null ? null : (dayId, slot);
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private Task AddStapleAsync() =>
+        EditGuideAsync(g => g.Staples.Add(new MenuStaple { Id = Ids.New("staple"), Text = "New" }));
+
+    private Task EditStapleAsync(string id, string value) =>
+        EditGuideAsync(g =>
+        {
+            if (g.Staples.FirstOrDefault(s => s.Id == id) is { } staple) staple.Text = value;
+        });
+
+    private Task RemoveStapleAsync(string id) =>
+        EditGuideAsync(g => g.Staples.RemoveAll(s => s.Id == id));
 
     // ---------------------------------------------------------------- travel
 
@@ -599,32 +927,192 @@
             if (row.IsEmpty) t.Travel.Rows.Remove(row);
         }, TripArea.Travel);
 
-    /// <summary>Car names in the order they first appear, so a car keeps its colour as rows change.</summary>
-    private List<string> Cars =>
-        Trip.Roster
-            .Select(p => RowFor(p.Id).Car)
-            .Where(c => !string.IsNullOrWhiteSpace(c))
-            .Select(c => c.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+    /// <summary>
+    /// The dates come from the trip itself rather than being typed alongside the times, so a
+    /// check-in date can never drift from the weekend the rest of the site is running on.
+    /// </summary>
+    private string CheckInLine => WhenLine(Trip.Trip.StartsAt, Travel.CheckInTime);
+    private string CheckOutLine => WhenLine(Trip.Trip.EndsAt, Travel.CheckOutTime);
 
-    private int CarCount(string car) =>
-        Trip.Roster.Count(p => string.Equals(RowFor(p.Id).Car.Trim(), car, StringComparison.OrdinalIgnoreCase));
+    private static string WhenLine(DateTimeOffset date, string time)
+    {
+        var day = date.ToString("dddd, MMMM d");
+        return string.IsNullOrWhiteSpace(time) ? day : $"{day} · {time}";
+    }
+
+    /// <summary>One carpool: its colour, and — the part that matters — who is in it.</summary>
+    private sealed record CarGroup(int Slot, string Color, List<string> People);
+
+    /// <summary>Whose colour picker is open, if any. View state; nothing to save.</summary>
+    private string? _pickerFor;
+
+    private void TogglePicker(string personId) =>
+        _pickerFor = _pickerFor == personId ? null : personId;
+
+    private async Task SetCarAsync(string personId, int slot)
+    {
+        _pickerFor = null;
+        await EditRowAsync(personId, r => r.CarColor = slot);
+    }
 
     /// <summary>
-    /// The spreadsheet asked everyone to highlight their car in a matching colour by hand. Here
-    /// the name picks the colour, so two people in the same car cannot end up different shades.
+    /// The spreadsheet asked everyone to highlight their car in a matching colour by hand, which
+    /// only works if everyone picks the same shade. Here the name picks the colour, in the order
+    /// the cars first appear down the roster, so a car keeps its colour as rows are filled in.
+    ///
+    /// Twelve colours because four was not enough the moment people split into small cars, and
+    /// the list wraps rather than running out.
     /// </summary>
     private static readonly string[] CarColors =
-        ["#d4af37", "#2e9e7e", "#c94f5a", "#4a7fd6", "#b07cc6", "#d98c3f", "#4fb0a5", "#c96f9b"];
+    [
+        "#d4af37", "#2e9e7e", "#c94f5a", "#4a7fd6", "#b07cc6",
+        "#d98c3f", "#4fb0a5", "#c96f9b", "#8fb339", "#e0736d"
+    ];
 
-    private string CarColor(string? car)
+    /// <summary>The colour for a slot, or nothing for the unassigned zero.</summary>
+    private static string ColorOf(int slot) =>
+        slot >= 1 && slot <= CarColors.Length ? CarColors[slot - 1] : "transparent";
+
+    /// <summary>
+    /// Every carpool in use, in palette order, with the people in it. Slots nobody picked simply
+    /// do not appear — the key is a list of the cars that exist, not of the ten available.
+    /// </summary>
+    private List<CarGroup> CarGroups
     {
-        if (string.IsNullOrWhiteSpace(car)) return "transparent";
+        get
+        {
+            var groups = new List<CarGroup>();
 
-        var index = Cars.FindIndex(c => string.Equals(c, car.Trim(), StringComparison.OrdinalIgnoreCase));
-        return index < 0 ? "transparent" : CarColors[index % CarColors.Length];
+            for (var slot = 1; slot <= CarColors.Length; slot++)
+            {
+                // Alphabetical, matching the table this key sits above — roster order here and
+                // sorted order there made the two look like different groups.
+                var people = Trip.Roster
+                    .Where(p => RowFor(p.Id).CarColor == slot)
+                    .Select(p => p.Name)
+                    .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (people.Count > 0) groups.Add(new CarGroup(slot, ColorOf(slot), people));
+            }
+
+            return groups;
+        }
     }
+
+    /// <summary>Who still has no car. The whole point of the sheet is getting this to empty.</summary>
+    private List<string> Unassigned =>
+        Trip.Roster.Where(p => RowFor(p.Id).CarColor == 0).Select(p => p.Name).ToList();
+
+    // ---------------------------------------------------------- travel sort
+
+    private enum TravelGroup { Carpool, Origin }
+
+    /// <summary>Which fact splits the roster into tables.</summary>
+    private TravelGroup _groupBy = TravelGroup.Carpool;
+
+    /// <summary>Shared by every table on the page — one header click sorts all of them.</summary>
+    private bool _nameAscending = true;
+
+    private void ToggleNameSort() => _nameAscending = !_nameAscending;
+
+    /// <summary>People who chose "somewhere else" and have not typed a city yet.</summary>
+    private readonly HashSet<string> _customOrigins = new(StringComparer.Ordinal);
+
+    /// <summary>The cities we know a drive time for, alphabetised for the dropdown.</summary>
+    private IReadOnlyList<string> Origins =>
+        Travel.DriveTimes
+            .Select(d => d.From)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(c => c, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    /// <summary>
+    /// How long it takes from a city, looked up rather than typed — so choosing Tulsa in the
+    /// table is what produces "~3 hours" beside it, and correcting the figure in one place
+    /// corrects it everywhere it is shown.
+    /// </summary>
+    private string? DriveTimeFor(string city)
+    {
+        if (string.IsNullOrWhiteSpace(city)) return null;
+
+        return Travel.DriveTimes
+            .FirstOrDefault(d => d.From.Equals(city.Trim(), StringComparison.OrdinalIgnoreCase))
+            ?.Duration;
+    }
+
+    private int RidersFrom(string city) =>
+        Trip.Roster.Count(p => RowFor(p.Id).LeavingFrom.Trim()
+            .Equals(city.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The cities a carpool is setting off from, with how long each takes.</summary>
+    private string OriginSummary(int slot)
+    {
+        var cities = Trip.Roster
+            .Where(p => RowFor(p.Id).CarColor == slot)
+            .Select(p => RowFor(p.Id).LeavingFrom.Trim())
+            .Where(c => c.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(c => c, StringComparer.OrdinalIgnoreCase)
+            .Select(c => DriveTimeFor(c) is { } drive ? $"{c} ({drive})" : c);
+
+        return string.Join(" · ", cities);
+    }
+
+    private List<RosterPerson> ByName(IEnumerable<RosterPerson> people)
+    {
+        var sorted = people.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase);
+        return (_nameAscending ? sorted : sorted.Reverse()).ToList();
+    }
+
+    /// <summary>One table's worth of people, and how to head it.</summary>
+    private sealed record TravelSection(string Key, string Title, string? Color, List<RosterPerson> People);
+
+    /// <summary>
+    /// The roster split into cards. Grouping by carpool gives a card per colour in use; grouping
+    /// by city gives a card per departure point. Either way the people who have not answered
+    /// that question yet are held back for <see cref="Unplaced"/>.
+    /// </summary>
+    private List<TravelSection> TravelGroups
+    {
+        get
+        {
+            if (_groupBy == TravelGroup.Carpool)
+            {
+                return CarGroups
+                    .Select(g => new TravelSection(
+                        $"car-{g.Slot}",
+                        $"Car {g.Slot}",
+                        g.Color,
+                        ByName(Trip.Roster.Where(p => RowFor(p.Id).CarColor == g.Slot))))
+                    .ToList();
+            }
+
+            return Trip.Roster
+                .Select(p => RowFor(p.Id).LeavingFrom.Trim())
+                .Where(c => c.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(c => c, StringComparer.OrdinalIgnoreCase)
+                .Select(city => new TravelSection(
+                    $"city-{city}",
+                    DriveTimeFor(city) is { } drive ? $"{city} · {drive}" : city,
+                    null,
+                    ByName(Trip.Roster.Where(p =>
+                        RowFor(p.Id).LeavingFrom.Trim().Equals(city, StringComparison.OrdinalIgnoreCase)))))
+                .ToList();
+        }
+    }
+
+    /// <summary>Whoever the current grouping has nothing to say about.</summary>
+    private List<RosterPerson> Unplaced => ByName(_groupBy == TravelGroup.Carpool
+        ? Trip.Roster.Where(p => RowFor(p.Id).CarColor == 0)
+        : Trip.Roster.Where(p => RowFor(p.Id).LeavingFrom.Trim().Length == 0));
+
+    private string UnplacedTitle =>
+        _groupBy == TravelGroup.Carpool ? "No car yet" : "No departure city yet";
+
+
 
     // --------------------------------------------------------------- packing
 
@@ -662,6 +1150,54 @@
         try { await _packing.InvokeVoidAsync("save", _packed); } catch (JSDisconnectedException) { }
     }
 
+    // -------------------------------------------------------- packing edits
+
+    /// <summary>The car card shares the add-box plumbing under this stand-in key.</summary>
+    private const string CarBringsKey = "car-brings";
+
+    /// <summary>What is typed into each group's add box, keyed by group id.</summary>
+    private readonly Dictionary<string, string> _packDrafts = new(StringComparer.Ordinal);
+
+    private string DraftFor(string key) => _packDrafts.GetValueOrDefault(key, "");
+
+    private Task PackAddKeyAsync(KeyboardEventArgs e, string key) =>
+        e.Key == "Enter" ? AddPackItemAsync(key) : Task.CompletedTask;
+
+    private async Task AddPackItemAsync(string key)
+    {
+        var text = DraftFor(key).Trim();
+        if (text.Length == 0) return;
+
+        _packDrafts[key] = "";
+
+        if (key == CarBringsKey)
+        {
+            await EditGuideAsync(g => g.CarBrings.Add(text));
+            return;
+        }
+
+        // A fresh id, minted once and stored — the ticked-box memory in everyone's browser is
+        // keyed on it, so it must never be derived from anything that could change.
+        await EditGuideAsync(g =>
+        {
+            if (g.Packing.FirstOrDefault(x => x.Id == key) is { } group)
+                group.Items.Add(new PackItem { Id = Ids.New("pk"), Text = text });
+        });
+    }
+
+    private Task RemovePackItemAsync(string groupId, string itemId) =>
+        EditGuideAsync(g =>
+        {
+            if (g.Packing.FirstOrDefault(x => x.Id == groupId) is { } group)
+                group.Items.RemoveAll(i => i.Id == itemId);
+        });
+
+    private Task RemoveCarBringAsync(int index) =>
+        EditGuideAsync(g =>
+        {
+            if (index >= 0 && index < g.CarBrings.Count) g.CarBrings.RemoveAt(index);
+        });
+
     private const int MinZoom = 40;
     private const int MaxZoom = 112;
     // Two stacked lines need about this much room. Anything shorter than roughly half an hour
@@ -675,6 +1211,12 @@
     private int _pxPerHour = 64;
     private string? _activeDayId;
 
+    /// <summary>The day taking the whole stage, or null for the three-across overview.</summary>
+    private string? _focusDayId;
+
+    /// <summary>Resolved against the trip, so a focused day that gets deleted falls back to the overview.</summary>
+    private ItineraryDay? FocusDay => Trip.Itinerary.FirstOrDefault(d => d.Id == _focusDayId);
+
     /// <summary>Gap band keys the user has opened out, per day.</summary>
     private readonly Dictionary<string, HashSet<string>> _expanded = [];
 
@@ -686,6 +1228,8 @@
     private ConflictInfo? _conflict;
 
     private IJSObjectReference? _module;
+    private IJSObjectReference? _menuJs;
+    private IJSObjectReference? _popover;
     private DotNetObjectReference<Itinerary>? _self;
 
     private string SubtitleText => CanEdit
@@ -934,6 +1478,14 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        // Placed after every render, not just when it opens: the panel behind it can scroll or
+        // reflow while the palette is up, and a stale position is worse than none.
+        if (_pickerFor is not null && _popover is not null)
+        {
+            try { await _popover.InvokeVoidAsync("placeCarPalette"); }
+            catch (JSDisconnectedException) { }
+        }
+
         if (!firstRender) return;
 
         // The ticked boxes can only be read once there is a browser to read them from, so the
@@ -941,6 +1493,7 @@
         // on interop, and nobody is looking at their packing list in the first 30ms.
         try
         {
+            _popover = await JS.InvokeAsync<IJSObjectReference>("import", "./js/popover.js");
             _packing = await JS.InvokeAsync<IJSObjectReference>("import", "./js/packing.js");
             var saved = await _packing.InvokeAsync<string[]>("load");
 
@@ -956,6 +1509,11 @@
         _self = DotNetObjectReference.Create(this);
         _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/planner.js");
         await _module.InvokeVoidAsync("init", _self);
+
+        // The menu board's drag lives in its own module: it targets .menu-meal where the planner
+        // targets .planner-card, so the two document-level listeners never fight over a pointer.
+        _menuJs = await JS.InvokeAsync<IJSObjectReference>("import", "./js/menu.js");
+        await _menuJs.InvokeVoidAsync("init", _self);
     }
 
     // ------------------------------------------------------------- display
@@ -1063,9 +1621,20 @@
             try { await _module.DisposeAsync(); } catch (JSDisconnectedException) { }
         }
 
+        if (_menuJs is not null)
+        {
+            try { await _menuJs.InvokeVoidAsync("dispose"); } catch (JSDisconnectedException) { }
+            try { await _menuJs.DisposeAsync(); } catch (JSDisconnectedException) { }
+        }
+
         if (_packing is not null)
         {
             try { await _packing.DisposeAsync(); } catch (JSDisconnectedException) { }
+        }
+
+        if (_popover is not null)
+        {
+            try { await _popover.DisposeAsync(); } catch (JSDisconnectedException) { }
         }
 
         _self?.Dispose();

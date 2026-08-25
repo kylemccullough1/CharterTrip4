@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 12,
+  "schemaVersion": 13,
   "revision": 0,
   "updatedUtc": "2026-08-19T00:00:00+00:00",
   "trip": {
@@ -70,7 +70,6 @@
     "address": "310 Ballpark Lp, Denison, TX 75020",
     "checkInTime": "2:00 PM",
     "checkOutTime": "12:00 PM",
-    "note": "Talk amongst yourselves and decide who you are carpooling with, then put the same car name on every row in that car.",
     "driveTimes": [
       { "from": "Tulsa", "duration": "~3 hours" },
       { "from": "OKC", "duration": "~2.75 hours" },
@@ -131,31 +130,34 @@
     ],
     "saturdayNight": "Saturday evening is a murder mystery. You will get your character and the rest of the details once you are there.",
     "dressCode": "Bring one dressed-up outfit. The fancier the better — formal wear works. Accessories are encouraged, and the best-dressed team earns points.",
-    "menu": [
+    "menuDays": [
       {
-        "when": "Friday dinner",
-        "what": "Chicken adobo, jasmine rice, vegetables"
+        "id": "menu-fri",
+        "day": "Friday",
+        "breakfast": "",
+        "lunch": "",
+        "dinner": "Chicken adobo, jasmine rice, vegetables"
       },
       {
-        "when": "Saturday breakfast",
-        "what": "Eggs, bacon, sausage, pancakes and waffles, fruit, orange and apple juice"
+        "id": "menu-sat",
+        "day": "Saturday",
+        "breakfast": "Eggs, bacon, sausage, pancakes and waffles, fruit, orange and apple juice",
+        "lunch": "Sandwich bar — deli meats, cheese, lettuce, tomato, condiments, chips",
+        "dinner": "Cookout — marinated skirt steak, flour and corn tortillas, salsa, salsa verde, onion and cilantro, tortilla chips"
       },
       {
-        "when": "Saturday lunch",
-        "what": "Sandwich bar — deli meats, cheese, lettuce, tomato, condiments, chips"
-      },
-      {
-        "when": "Saturday dinner",
-        "what": "Cookout — marinated skirt steak, flour and corn tortillas, salsa, salsa verde, onion and cilantro, tortilla chips"
-      },
-      {
-        "when": "Sunday",
-        "what": "Leftovers, or breakfast on the way home"
-      },
-      {
-        "when": "All weekend",
-        "what": "Bottled water, soda, juice, snacks"
+        "id": "menu-sun",
+        "day": "Sunday",
+        "breakfast": "Leftovers, or breakfast on the way home",
+        "lunch": "",
+        "dinner": ""
       }
+    ],
+    "staples": [
+      { "id": "staple-water", "text": "Bottled water" },
+      { "id": "staple-soda", "text": "Soda" },
+      { "id": "staple-juice", "text": "Juice" },
+      { "id": "staple-snacks", "text": "Snacks" }
     ],
     "menuNote": "Dietary restrictions or allergies: let one of us know before Friday.",
     "packing": [

@@ -18,9 +18,6 @@ public sealed class TravelPlan
     public string CheckInTime { get; set; } = "";
     public string CheckOutTime { get; set; } = "";
 
-    /// <summary>The standing instruction at the top of the sheet.</summary>
-    public string Note { get; set; } = "";
-
     public List<DriveTime> DriveTimes { get; set; } = [];
 
     /// <summary>
@@ -50,15 +47,18 @@ public sealed class TravelRow
     public string Notes { get; set; } = "";
 
     /// <summary>
-    /// Which car. Free text, and everyone who types the same thing is shown in the same colour —
-    /// which is the entire point of the sheet this came from.
+    /// Which carpool, as a slot in the ten-colour palette. Zero means no car yet.
+    ///
+    /// A slot rather than a name, because naming a car was a step that bought nothing: the
+    /// spreadsheet this replaces identified a carpool purely by the colour its rows were
+    /// highlighted in, and the people in it are the only label anybody actually reads.
     /// </summary>
-    public string Car { get; set; } = "";
+    public int CarColor { get; set; }
 
     /// <summary>True when there is nothing here worth keeping.</summary>
     [JsonIgnore]
     public bool IsEmpty =>
         string.IsNullOrWhiteSpace(LeavingFrom) && string.IsNullOrWhiteSpace(DepartAt) &&
         string.IsNullOrWhiteSpace(Dietary) && string.IsNullOrWhiteSpace(Notes) &&
-        string.IsNullOrWhiteSpace(Car);
+        CarColor == 0;
 }

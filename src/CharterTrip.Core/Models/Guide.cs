@@ -19,7 +19,11 @@ public sealed class GuestGuide
     /// <summary>What to wear for it. Kept separate because it is the part people act on.</summary>
     public string DressCode { get; set; } = "";
 
-    public List<MenuEntry> Menu { get; set; } = [];
+    /// <summary>The menu as a board: one card per day, three meal slots each.</summary>
+    public List<MenuDay> MenuDays { get; set; } = [];
+
+    /// <summary>The all-weekend spread — water, soda, snacks — as add/removable cards.</summary>
+    public List<MenuStaple> Staples { get; set; } = [];
 
     /// <summary>The line under the menu — allergies, who to tell, that sort of thing.</summary>
     public string MenuNote { get; set; } = "";
@@ -45,11 +49,28 @@ public sealed class GuideFact
     public bool Highlight { get; set; }
 }
 
-public sealed class MenuEntry
+/// <summary>
+/// One day of the menu: a card with a slot per meal.
+///
+/// A slot is a plain string rather than a list of dishes because that is how the menu is
+/// actually written — "Cookout — marinated skirt steak, tortillas, salsa" is one line, not five
+/// records. Empty means nothing planned, and the board renders it as a place to put something.
+/// </summary>
+public sealed class MenuDay
 {
-    /// <summary>"Friday dinner", "All weekend".</summary>
-    public string When { get; set; } = "";
-    public string What { get; set; } = "";
+    public string Id { get; set; } = "";
+    public string Day { get; set; } = "";
+
+    public string Breakfast { get; set; } = "";
+    public string Lunch { get; set; } = "";
+    public string Dinner { get; set; } = "";
+}
+
+/// <summary>One thing that is simply around all weekend: bottled water, soda, snacks.</summary>
+public sealed class MenuStaple
+{
+    public string Id { get; set; } = "";
+    public string Text { get; set; } = "";
 }
 
 /// <summary>One headed group of the packing list, such as Clothing or Toiletries.</summary>

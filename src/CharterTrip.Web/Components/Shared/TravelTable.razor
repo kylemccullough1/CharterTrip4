@@ -1,0 +1,261 @@
+@* One travel table.
+
+   Extracted because there is no longer one table: grouping by carpool or by departure city
+   produces a card per group plus one for whoever is unattached, and every one of them needs the
+   same sortable header, the same colour picker and the same dropdowns. Rendering that markup
+   once and passing the group in is the only way those stay identical.
+
+   All state lives in the parent — the sort direction is shared across every table on the page,
+   and so is the open palette, because two palettes open at once would be nonsense. *@
+
+<div class="tt-card @(Compact ? "is-compact" : null)" style="--car:@(Color ?? "transparent")">
+
+    @if (Title is not null)
+    {
+        <header class="tt-head">
+            <span class="tt-swatch" aria-hidden="true"></span>
+            <span class="tt-title">@Title</span>
+            <span class="tt-count">@People.Count</span>
+        </header>
+    }
+
+    <div class="tt-scroll">
+        <table class="table tt-table">
+            <thead>
+            <tr>
+                <th class="tt-sort" role="button" tabindex="0"
+                    aria-sort="@(Ascending ? "ascending" : "descending")"
+                    title="Sort by name"
+                    @onclick="OnToggleSort"
+                    @onkeydown="SortKey">
+                    Who
+                    <span class="tt-arrow" aria-hidden="true">
+                        <svg viewBox="0 0 10 6" width="9" height="6">
+                            <path d="@(Ascending ? "M1 5 L5 1 L9 5" : "M1 1 L5 5 L9 1")"
+                                  fill="none" stroke="currentColor" stroke-width="1.6"
+                                  stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </span>
+                </th>
+                <th>Leaving from</th>
+                <th>Can depart</th>
+                <th>Dietary</th>
+                <th>Notes</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            @foreach (var person in People)
+            {
+                var row = RowFor(person.Id);
+
+                <tr @key="person.Id" style="--car:@ColorOf(row.CarColor)"
+                    class="@(row.CarColor == 0 ? null : "has-car")">
+
+                    <td class="travel-who">
+                        <div class="car-pick">
+                            <button type="button"
+                                    class="car-dot @(row.CarColor == 0 ? "is-empty" : null)"
+                                    data-car-anchor="@person.Id"
+                                    disabled="@(!CanEdit)"
+                                    aria-label="@($"Carpool for {person.Name}")"
+                                    title="Carpool colour"
+                                    @onclick="() => OnTogglePicker.InvokeAsync(person.Id)"></button>
+                            <span>@person.Name</span>
+                        </div>
+                    </td>
+
+                    <td>
+                        @if (CanEdit)
+                        {
+                            <select class="tt-select" value="@OriginChoice(row, person.Id)"
+                                    @onchange="e => OriginPicked(person.Id, e.Value?.ToString())">
+                                <option value="">—</option>
+                                @foreach (var city in Origins)
+                                {
+                                    <option value="@city">@city</option>
+                                }
+                                <option value="@OtherOption">Somewhere else…</option>
+                            </select>
+
+                            @if (OriginChoice(row, person.Id) == OtherOption)
+                            {
+                                <input class="inline-edit tt-other" placeholder="which city?"
+                                       value="@row.LeavingFrom"
+                                       @onchange="e => OnEdit(person.Id, r => r.LeavingFrom = (e.Value?.ToString() ?? string.Empty).Trim())" />
+                            }
+                        }
+                        else
+                        {
+                            <span>@Display(row.LeavingFrom)</span>
+                        }
+
+                        @if (DriveTimeFor(row.LeavingFrom) is { } drive)
+                        {
+                            <span class="tt-drive">@drive</span>
+                        }
+                    </td>
+
+                    <td>
+                        @if (CanEdit)
+                        {
+                            var (clock, meridiem) = SplitDepart(row.DepartAt);
+
+                            <div class="tt-when">
+                                <select class="tt-select" value="@clock"
+                                        @onchange="e => ClockPicked(person.Id, e.Value?.ToString(), meridiem)">
+                                    <option value="">—</option>
+                                    <option value="@AnytimeOption">Anytime</option>
+                                    @* Anything typed before the dropdowns existed keeps its own
+                                       option rather than being silently rounded to a clock time. *@
+                                    @if (IsFreeText(clock))
+                                    {
+                                        <option value="@clock">@clock</option>
+                                    }
+                                    @foreach (var time in Clocks)
+                                    {
+                                        <option value="@time">@time</option>
+                                    }
+                                </select>
+
+                                @if (Clocks.Contains(clock))
+                                {
+                                    <select class="tt-select tt-meridiem" value="@meridiem"
+                                            @onchange="e => MeridiemPicked(person.Id, clock, e.Value?.ToString())">
+                                        <option value="AM">AM</option>
+                                        <option value="PM">PM</option>
+                                    </select>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <span>@Display(row.DepartAt)</span>
+                        }
+                    </td>
+
+                    <td>
+                        <EditableText Value="@row.Dietary" ReadOnly="@(!CanEdit)"
+                                      ValueChanged="@(v => OnEdit(person.Id, r => r.Dietary = v))"
+                                      Placeholder="—" />
+                    </td>
+
+                    <td>
+                        <EditableText Value="@row.Notes" ReadOnly="@(!CanEdit)"
+                                      ValueChanged="@(v => OnEdit(person.Id, r => r.Notes = v))"
+                                      Placeholder="—" />
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    /// <summary>Sentinel for the "somewhere else" choice, which is a mode rather than a city.</summary>
+    public const string OtherOption = "__other";
+    public const string AnytimeOption = "Anytime";
+
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Color { get; set; }
+
+    /// <summary>Narrower styling for the side-by-side group cards.</summary>
+    [Parameter] public bool Compact { get; set; }
+
+    [Parameter, EditorRequired] public IReadOnlyList<RosterPerson> People { get; set; } = [];
+    [Parameter, EditorRequired] public Func<string, TravelRow> RowFor { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<string, Action<TravelRow>, Task> OnEdit { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<int, string> ColorOf { get; set; } = default!;
+
+    /// <summary>Known departure cities, already alphabetised by the caller.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<string> Origins { get; set; } = [];
+
+    /// <summary>The drive time for a city, or null when there is nothing to say.</summary>
+    [Parameter, EditorRequired] public Func<string, string?> DriveTimeFor { get; set; } = default!;
+
+    /// <summary>People who chose "somewhere else" but have not typed a city yet.</summary>
+    [Parameter, EditorRequired] public HashSet<string> CustomOrigins { get; set; } = [];
+
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public bool Ascending { get; set; } = true;
+    [Parameter] public EventCallback OnToggleSort { get; set; }
+    [Parameter] public EventCallback<string> OnTogglePicker { get; set; }
+
+    /// <summary>Half-hour marks across a 12-hour clock. The AM/PM is a separate control.</summary>
+    private static readonly string[] Clocks =
+        Enumerable.Range(0, 24)
+            .Select(i => $"{(i / 2 == 0 ? 12 : i / 2)}:{(i % 2 == 0 ? "00" : "30")}")
+            .ToArray();
+
+    private static string Display(string value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
+
+    private Task SortKey(KeyboardEventArgs e) =>
+        e.Key is "Enter" or " " ? OnToggleSort.InvokeAsync() : Task.CompletedTask;
+
+    // ---------------------------------------------------------------- origin
+
+    /// <summary>
+    /// Which option the dropdown should show. A city we know about selects itself; anything else
+    /// non-empty is a hand-typed place and counts as "somewhere else", as does an explicit pick
+    /// that has not been filled in yet.
+    /// </summary>
+    private string OriginChoice(TravelRow row, string personId)
+    {
+        if (Origins.Contains(row.LeavingFrom, StringComparer.OrdinalIgnoreCase))
+            return Origins.First(c => c.Equals(row.LeavingFrom, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(row.LeavingFrom)) return OtherOption;
+
+        return CustomOrigins.Contains(personId) ? OtherOption : "";
+    }
+
+    private async Task OriginPicked(string personId, string? choice)
+    {
+        if (choice == OtherOption)
+        {
+            // Remember the mode so the text box survives a render with nothing typed in it yet.
+            CustomOrigins.Add(personId);
+            await OnEdit(personId, r => r.LeavingFrom = "");
+            return;
+        }
+
+        CustomOrigins.Remove(personId);
+        await OnEdit(personId, r => r.LeavingFrom = choice ?? "");
+    }
+
+    // ---------------------------------------------------------------- depart
+
+    /// <summary>Split "1:30 PM" into its two controls. "Anytime" and free text have no meridiem.</summary>
+    private static (string Clock, string Meridiem) SplitDepart(string value)
+    {
+        var v = (value ?? "").Trim();
+        if (v.Length == 0) return ("", "");
+        if (v.Equals(AnytimeOption, StringComparison.OrdinalIgnoreCase)) return (AnytimeOption, "");
+
+        var parts = v.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 2 && parts[1] is "AM" or "PM" && Clocks.Contains(parts[0]))
+            return (parts[0], parts[1]);
+
+        return (v, "");
+    }
+
+    private static bool IsFreeText(string clock) =>
+        clock.Length > 0 && clock != AnytimeOption && !Clocks.Contains(clock);
+
+    private Task ClockPicked(string personId, string? clock, string meridiem)
+    {
+        var picked = clock ?? "";
+
+        if (picked.Length == 0 || picked == AnytimeOption || IsFreeText(picked))
+            return OnEdit(personId, r => r.DepartAt = picked);
+
+        // A clock time needs a half of the day. Default to PM: this trip starts on a Friday
+        // afternoon and almost nobody is setting off before noon.
+        var half = meridiem is "AM" or "PM" ? meridiem : "PM";
+        return OnEdit(personId, r => r.DepartAt = $"{picked} {half}");
+    }
+
+    private Task MeridiemPicked(string personId, string clock, string? meridiem) =>
+        OnEdit(personId, r => r.DepartAt = $"{clock} {(meridiem is "AM" or "PM" ? meridiem : "PM")}");
+}

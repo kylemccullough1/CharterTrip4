@@ -13,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 12;
+    public const int CurrentVersion = 13;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -31,6 +31,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 10) changed |= ToV10_FinalIsAClue(trip);
         if (trip.SchemaVersion < 11) changed |= ToV11_GuestGuide(trip);
         if (trip.SchemaVersion < 12) changed |= ToV12_CheckInIsTwo(trip);
+        if (trip.SchemaVersion < 13) changed |= ToV13_MenuBoard(trip);
 
         if (trip.SchemaVersion != CurrentVersion)
         {
@@ -433,5 +434,25 @@ public static class TripMigrations
         }
 
         return changed;
+    }
+
+    /// <summary>
+    /// The menu grew up: from a flat when/what list into a board — one card per day with
+    /// breakfast, lunch and dinner slots the committee can edit and drag between, plus the
+    /// all-weekend staples as their own cards.
+    ///
+    /// Filled from the seed when empty, like every other guide section. The old flat list is not
+    /// converted because parsing "Saturday lunch" back out of a label is exactly the kind of
+    /// cleverness that breaks the first time somebody writes "Sat lunch" — and the flat list has
+    /// only existed since v11, unedited, matching the seed it came from.
+    /// </summary>
+    private static bool ToV13_MenuBoard(TripData trip)
+    {
+        if (trip.Guide.MenuDays.Count > 0 || trip.Guide.Staples.Count > 0) return false;
+
+        var seed = SeedLoader.Load().Guide;
+        trip.Guide.MenuDays = seed.MenuDays;
+        trip.Guide.Staples = seed.Staples;
+        return true;
     }
 }

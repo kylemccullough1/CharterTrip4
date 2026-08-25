@@ -374,7 +374,7 @@ public class TripMigrationsTests
         Assert.True(TripMigrations.Apply(trip));
 
         Assert.NotEmpty(trip.Guide.Essentials);
-        Assert.NotEmpty(trip.Guide.Menu);
+        Assert.NotEmpty(trip.Guide.MenuDays);
         Assert.NotEmpty(trip.Guide.Packing);
         Assert.NotEmpty(trip.Guide.CarBrings);
         Assert.False(string.IsNullOrWhiteSpace(trip.Guide.DressCode));
@@ -440,5 +440,37 @@ public class TripMigrationsTests
         TripMigrations.Apply(trip);
 
         Assert.False(TripMigrations.Apply(trip));
+    }
+
+    // ----------------------------------------------------- v13: menu board
+
+    [Fact]
+    public void V13_fills_the_menu_board_from_the_seed()
+    {
+        var trip = new TripData { SchemaVersion = 12 };
+
+        Assert.True(TripMigrations.Apply(trip));
+
+        Assert.Equal(3, trip.Guide.MenuDays.Count);
+        Assert.NotEmpty(trip.Guide.Staples);
+        Assert.All(trip.Guide.MenuDays, d => Assert.False(string.IsNullOrWhiteSpace(d.Id)));
+
+        // Saturday is the full day; the seed should say so.
+        var saturday = trip.Guide.MenuDays.Single(d => d.Day == "Saturday");
+        Assert.False(string.IsNullOrWhiteSpace(saturday.Breakfast));
+        Assert.False(string.IsNullOrWhiteSpace(saturday.Lunch));
+        Assert.False(string.IsNullOrWhiteSpace(saturday.Dinner));
+    }
+
+    /// <summary>A board somebody has already rearranged is not overwritten by the seed's.</summary>
+    [Fact]
+    public void V13_leaves_a_menu_board_that_has_been_worked_on()
+    {
+        var trip = new TripData { SchemaVersion = 12 };
+        trip.Guide.MenuDays.Add(new MenuDay { Id = "custom", Day = "Thursday", Dinner = "Tacos" });
+
+        TripMigrations.Apply(trip);
+
+        Assert.Equal("Tacos", Assert.Single(trip.Guide.MenuDays).Dinner);
     }
 }

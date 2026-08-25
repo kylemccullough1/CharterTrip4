@@ -1708,21 +1708,23 @@ pre.code {
 .card.is-dresscode h4 { color: var(--gold-light); }
 
 /* --- what to bring ----------------------------------------------------- */
-/* Seven across at most. auto-fit alone would keep splitting the row on a very wide screen
-   until the cards were too narrow to read, so the minimum track is also "a seventh of what is
-   available" — whichever of the two is larger wins, and the count tops out at seven. */
+/* Flex rather than a grid, so a last row with fewer cards in it centres instead of hugging the
+   left. The max-width does two jobs: it stops a very wide screen splitting the row until the
+   cards are too narrow to read, and it gives a lone card something to be centred within — with
+   nothing to cap it, it would simply grow to fill the row. */
 .pack-grid {
   --pack-gap: 1.1rem;
-  display: grid; gap: var(--pack-gap);
-  /* Four to a row at most. Seven fit, but only by squeezing each card to about 240px, which
-     wrapped half the entries onto three lines — the row was full and nothing in it was
-     readable. The min track is also "a quarter of what is available", so auto-fit cannot
-     split past four however wide the screen gets. */
-  grid-template-columns:
-    repeat(auto-fit, minmax(max(17rem, (100% - 3 * var(--pack-gap)) / 4), 1fr));
+  display: flex; flex-wrap: wrap; justify-content: center; gap: var(--pack-gap);
 }
-
-.pack-group { padding: 1.1rem 1.05rem 1.15rem; }
+/* A quarter each, which is what caps the row at four however wide the screen gets — max-width
+   bounds the size of a card, not how many of them fit. The min-width is the floor that makes
+   them wrap on a narrow screen instead of dividing 337px four ways. */
+.pack-group {
+  flex: 1 1 calc((100% - 3 * var(--pack-gap)) / 4);
+  min-width: min(100%, 17rem);
+  max-width: 22rem;
+  padding: 1.1rem 1.05rem 1.15rem;
+}
 .pack-head {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   margin-bottom: 10px; padding-bottom: 9px; border-bottom: 1px solid var(--line-soft);
@@ -2036,7 +2038,12 @@ pre.code {
 /* Wider cards, three across rather than four. The label column needs real room — "Walmart
    Supercenter" and "What's Not Covered" were breaking across three lines — and that room has
    to come from somewhere. */
-.ess-groups { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); }
+/* Flex rather than grid so a row that does not fill can centre itself. auto-fit packs orphans
+   to the left — with four groups and three to a row, Nearby sat alone at the far left. The
+   max-width is what makes centring visible: without a cap the last card just grows to fill the
+   row and there is nothing to centre. */
+.ess-groups { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; }
+.ess-group { flex: 1 1 26rem; max-width: 32rem; }
 
 .ess-group {
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
@@ -2086,11 +2093,14 @@ pre.code {
 .ess-row.is-loud dt { color: var(--gold); }
 .ess-row.is-loud dd { color: var(--gold-light); font-weight: 650; }
 
-.ess-map {
+/* The map link, wherever it appears — the Where row on Essentials and the Destination card on
+   Travel, which are the same fact written twice. It takes its panel's accent like everything
+   else on these tabs. */
+.map-link {
   display: inline-block; margin-top: 5px; font-size: 0.75rem;
-  color: var(--gold-light); border-bottom: 1px dotted currentColor;
+  color: var(--accent, var(--gold-light)); border-bottom: 1px dotted currentColor;
 }
-.ess-map:hover { color: var(--text); }
+.map-link:hover { color: var(--text); }
 
 .ess-remove {
   position: absolute; right: 2px; top: 8px; width: 20px; height: 20px; padding: 0;
@@ -2453,7 +2463,11 @@ pre.code {
   .tt-meridiem { min-width: 0; max-width: none; width: 100%; }
 }
 
-/* This grid holds one card since the drive times went, and auto-fit stretched it across the
-   whole panel — the same mostly-empty rail the carpool key was cured of. Sized to its contents
-   instead. */
-.travel-facts { grid-template-columns: minmax(0, 32rem); }
+
+/* Destination and carpools share the top row now. Two columns where there is room for them,
+   one where there is not — no breakpoint, just a floor on how narrow a column may get. */
+.travel-facts { grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); }
+
+/* The key was a standalone block below this row, sized to its own contents. As a grid item it
+   fills its column and aligns with the card beside it instead. */
+.travel-facts .car-key { display: block; margin-top: 0; min-width: 0; max-width: none; }

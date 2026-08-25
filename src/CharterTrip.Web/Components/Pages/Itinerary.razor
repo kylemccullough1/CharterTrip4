@@ -111,7 +111,7 @@
 
                                             @if (IsWhereFact(fact) && !string.IsNullOrWhiteSpace(Travel.Address))
                                             {
-                                                <a class="ess-map" href="@MapUrl(Travel.Address)"
+                                                <a class="map-link" href="@MapUrl(Travel.Address)"
                                                    target="_blank" rel="noopener">Open in Maps</a>
                                             }
                                         </dd>
@@ -552,10 +552,12 @@
                     <div class="card">
                         <h4>Destination</h4>
                         <p class="strong">@Travel.Destination</p>
-                        <p>
-                            <a href="@MapUrl(Travel.Address)" target="_blank" rel="noopener"
-                               title="Open in Maps">@Travel.Address</a>
-                        </p>
+                        @* Same shape as the Where row on Essentials: the address reads as an address,
+                           and the map is a small link under it rather than the address itself
+                           being a link you might not notice you were clicking. *@
+                        <p>@Travel.Address</p>
+                        <a class="map-link" href="@MapUrl(Travel.Address)"
+                           target="_blank" rel="noopener">Open in Maps</a>
                         <dl class="travel-when">
                             <dt>Check-in</dt>
                             <dd>@CheckInLine</dd>
@@ -563,43 +565,41 @@
                             <dd>@CheckOutLine</dd>
                         </dl>
                     </div>
+                    @* The carpools sit beside the destination rather than under it: the drive
+                       times used to hold that half of the row, and a key that reads at a glance
+                       is worth more there than more empty rail. *@
+                    <div class="car-key">
+                        <div class="car-key-head">
+                            <span>Carpools</span>
+                            <span class="muted tiny">Attach a color to your row to associate yourself with your car.</span>
+                        </div>
 
-                </div>
+                        @if (CarGroups.Count == 0)
+                        {
+                            <p class="muted tiny">Nobody has picked a car yet.</p>
+                        }
 
+                        @foreach (var group in CarGroups)
+                        {
+                            <div class="car-key-row" style="--car:@group.Color" @key="group.Slot">
+                                <span class="car-key-swatch" aria-hidden="true"></span>
+                                <span class="car-key-people">@string.Join(" · ", group.People)</span>
+                                <span class="car-key-from">@OriginSummary(group.Slot)</span>
+                            </div>
+                        }
 
-                @* The key. Sized to its contents rather than stretched across the panel, and
-                   carrying where each carpool is setting off from — which is the question the
-                   colour alone could never answer. *@
-                <div class="car-key">
-                    <div class="car-key-head">
-                        <span>Carpools</span>
-                        <span class="muted tiny">Attach a color to your row to associate yourself with your car.</span>
+                        @if (Unassigned.Count > 0)
+                        {
+                            @* No roll call — two dozen names here just restated the table below.
+                               This row is the legend entry for the blank swatch, nothing more. *@
+                            <div class="car-key-row is-unassigned">
+                                <span class="car-key-swatch" aria-hidden="true"></span>
+                                <span class="car-key-people"><b>No car yet</b></span>
+                            </div>
+                        }
                     </div>
-
-                    @if (CarGroups.Count == 0)
-                    {
-                        <p class="muted tiny">Nobody has picked a car yet.</p>
-                    }
-
-                    @foreach (var group in CarGroups)
-                    {
-                        <div class="car-key-row" style="--car:@group.Color" @key="group.Slot">
-                            <span class="car-key-swatch" aria-hidden="true"></span>
-                            <span class="car-key-people">@string.Join(" · ", group.People)</span>
-                            <span class="car-key-from">@OriginSummary(group.Slot)</span>
-                        </div>
-                    }
-
-                    @if (Unassigned.Count > 0)
-                    {
-                        @* No roll call — two dozen names here just restated the table below.
-                           This row is the legend entry for the blank swatch, nothing more. *@
-                        <div class="car-key-row is-unassigned">
-                            <span class="car-key-swatch" aria-hidden="true"></span>
-                            <span class="car-key-people"><b>No car yet</b></span>
-                        </div>
-                    }
                 </div>
+
 
                 @* The palette is fixed-position and placed by JS, so it escapes the scrolling
                    panel instead of being clipped by it. The backdrop is what closes it. *@

@@ -8,7 +8,12 @@
    All state lives in the parent: the sort direction per table, and the open palette, which is
    shared across all of them because two palettes open at once would be nonsense. *@
 
-<div class="tt-card @(Compact ? "is-compact" : null)" style="--car:@(Color ?? "transparent")">
+@* A carpool card carries its colour; a departure-city card has none. Setting --car to
+   "transparent" for those was the bug — the title reads `var(--car, var(--text))`, and a
+   variable that is defined-but-transparent never reaches its fallback, so the heading was
+   painted in nothing. Leave --car unset and let the fallbacks do their job. *@
+<div class="tt-card @(Compact ? "is-compact" : null) @(Color is null ? "is-plain" : null)"
+     style="@(Color is null ? null : $"--car:{Color}")">
 
     @if (Title is not null)
     {

@@ -2376,3 +2376,10 @@ pre.code {
   .tt-table th { letter-spacing: .03em; }
   .tt-select { font-size: 0.7rem; padding: 4px 5px; }
 }
+
+/* A group card with no carpool colour — the departure-city tables. It takes the panel's accent
+   so its heading is styled like every other heading here rather than inheriting a colour that
+   does not exist, and drops the swatch, which has nothing to show. */
+.tt-card.is-plain.is-compact { border-top-color: var(--accent, var(--line)); }
+.tt-card.is-plain.is-compact .tt-title { color: var(--accent, var(--text)); }
+.tt-card.is-plain.is-compact .tt-swatch { display: none; }

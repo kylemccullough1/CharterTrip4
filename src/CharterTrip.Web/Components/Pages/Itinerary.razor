@@ -179,11 +179,21 @@
                 <div class="note-grid schedule-lede">
                     <div class="card">
                         <h4>Saturday night</h4>
-                        <p>@Guide.SaturdayNight</p>
+                        <p>
+                            <EditableText Value="@Guide.SaturdayNight" Multiline="true" Rows="3"
+                                          ReadOnly="@(!CanEdit)"
+                                          ValueChanged="@(v => EditGuideAsync(g => g.SaturdayNight = v))"
+                                          Placeholder="What Saturday evening is" />
+                        </p>
                     </div>
                     <div class="card is-dresscode">
                         <h4>Dress code</h4>
-                        <p>@Guide.DressCode</p>
+                        <p>
+                            <EditableText Value="@Guide.DressCode" Multiline="true" Rows="3"
+                                          ReadOnly="@(!CanEdit)"
+                                          ValueChanged="@(v => EditGuideAsync(g => g.DressCode = v))"
+                                          Placeholder="What to wear for it" />
+                        </p>
                     </div>
                 </div>
 

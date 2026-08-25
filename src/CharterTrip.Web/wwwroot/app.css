@@ -2386,7 +2386,10 @@ pre.code {
 
 /* ============================================================== sign in == */
 /* The one page with no nav and no footer, so it carries its own frame. */
+/* BareLayout is a flex row, so this needs to be told to fill it — left to size itself it was
+   only as wide as the card, which centred the card inside a 488px column at the far left. */
 .login-page {
+  flex: 1 1 auto; width: 100%;
   min-height: 100vh; min-height: 100dvh;
   display: grid; place-items: center; padding: var(--gutter);
   background:

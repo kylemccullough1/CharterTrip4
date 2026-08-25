@@ -2313,8 +2313,6 @@ pre.code {
 }
 .tt-select:hover { border-color: var(--line); background: var(--panel-2); }
 .tt-select:focus-visible { outline: 2px solid var(--accent, var(--gold)); outline-offset: 1px; }
-.tt-when { display: flex; gap: 5px; align-items: center; }
-.tt-meridiem { flex: 0 0 auto; }
 .tt-other { margin-top: 5px; width: 100%; font-size: 0.781rem; }
 .tt-drive { display: block; margin-top: 3px; font-size: 0.656rem; color: var(--text-faint); }
 
@@ -2331,23 +2329,24 @@ pre.code {
 /* ================================================== travel, fourth pass == */
 /* Column widths, stated.
    Sizing itself, the table gave "Leaving from" 171px — the width of the words "Somewhere else…",
-   not of any city anyone picked — and left "Can depart" 110px for two dropdowns that want about
-   150. Fixed layout with declared widths puts the space where the controls are. */
+   not of any city anyone picked — and left "Can depart" 110px, which at the time held two
+   dropdowns wanting about 150. Fixed layout with declared widths puts the space where the
+   controls are. */
 .tt-table { table-layout: fixed; }
 
 /* The full-width table has room to spare, so the three control columns take what they need and
    the two free-text ones split everything left over. */
 .tt-card:not(.is-compact) .tt-c-who  { width: 9rem; }
 .tt-card:not(.is-compact) .tt-c-from { width: 9rem; }
-.tt-card:not(.is-compact) .tt-c-when { width: 12rem; }
+.tt-card:not(.is-compact) .tt-c-when { width: 10rem; }
 
 /* A group card is about a third of that, so its columns are shares of the card instead, and the
    type steps down a size so five columns still fit without a sideways scroll. */
 .tt-card.is-compact .tt-c-who   { width: 19%; }
 .tt-card.is-compact .tt-c-from  { width: 20%; }
-.tt-card.is-compact .tt-c-when  { width: 30%; }
+.tt-card.is-compact .tt-c-when  { width: 25%; }
 .tt-card.is-compact .tt-c-diet,
-.tt-card.is-compact .tt-c-notes { width: 15.5%; }
+.tt-card.is-compact .tt-c-notes { width: 18%; }
 
 .tt-card.is-compact .tt-table { font-size: 0.75rem; }
 .tt-card.is-compact .tt-select { font-size: 0.7rem; padding: 4px 5px; }
@@ -2363,8 +2362,6 @@ pre.code {
    space in the other direction. The open dropdown is unaffected; only the closed control is
    bounded. */
 .tt-select { width: 100%; max-width: 9rem; }
-.tt-when .tt-select { flex: 1 1 auto; min-width: 0; }
-.tt-meridiem { flex: 0 0 auto; width: auto; max-width: 5rem; }
 
 /* Five columns do not fit a phone. Left to the rules above the full-width table spent its whole
    375px on the three control columns and squeezed Dietary and Notes to nothing, so below the
@@ -2374,8 +2371,8 @@ pre.code {
   .tt-table { min-width: 28rem; font-size: 0.75rem; }
   .tt-card:not(.is-compact) .tt-c-who  { width: 19%; }
   .tt-card:not(.is-compact) .tt-c-from { width: 20%; }
-  .tt-card:not(.is-compact) .tt-c-when { width: 30%; }
-  .tt-c-diet, .tt-c-notes { width: 15.5%; }
+  .tt-card:not(.is-compact) .tt-c-when { width: 25%; }
+  .tt-c-diet, .tt-c-notes { width: 18%; }
   .tt-table th { letter-spacing: .03em; }
   .tt-select { font-size: 0.7rem; padding: 4px 5px; }
 }

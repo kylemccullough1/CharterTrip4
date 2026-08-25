@@ -21,9 +21,9 @@
     <div class="tt-scroll">
         <table class="table tt-table">
             @* Fixed layout. Left to size itself the origin column claimed 171px purely because
-               "Somewhere else…" is its longest option — while the two departure dropdowns, which
-               genuinely need the room, were squeezed into 110px. The widths are shares of the
-               card, so the same table works in a narrow group card and the full-width one. *@
+               "Somewhere else…" is its longest option — while "Can depart" was squeezed into 110px.
+               The widths are shares of the card, so the same table works in a narrow group card
+               and the full-width one. *@
             <colgroup>
                 <col class="tt-c-who" />
                 <col class="tt-c-from" />
@@ -109,34 +109,33 @@
                     <td>
                         @if (CanEdit)
                         {
-                            var (clock, meridiem) = SplitDepart(row.DepartAt);
-
-                            <div class="tt-when">
-                                <select class="tt-select" value="@clock"
-                                        @onchange="e => ClockPicked(person.Id, e.Value?.ToString(), meridiem)">
-                                    <option value="">—</option>
-                                    <option value="@AnytimeOption">Anytime</option>
-                                    @* Anything typed before the dropdowns existed keeps its own
-                                       option rather than being silently rounded to a clock time. *@
-                                    @if (IsFreeText(clock))
-                                    {
-                                        <option value="@clock">@clock</option>
-                                    }
-                                    @foreach (var time in Clocks)
+                            @* One dropdown, not a clock and an AM/PM beside it. Two controls in a
+                               column this narrow left the second one squeezed to about forty
+                               pixels, and picking a time meant two interactions to say one thing.
+                               The optgroups keep the list navigable at 48 entries. *@
+                            <select class="tt-select" value="@row.DepartAt"
+                                    @onchange="e => DepartPicked(person.Id, e.Value?.ToString())">
+                                <option value="">—</option>
+                                <option value="@AnytimeOption">Anytime</option>
+                                @* Anything typed before the dropdowns existed keeps its own
+                                   option rather than being silently rounded to a clock time. *@
+                                @if (IsFreeText(row.DepartAt))
+                                {
+                                    <option value="@row.DepartAt">@row.DepartAt</option>
+                                }
+                                <optgroup label="AM">
+                                    @foreach (var time in MorningTimes)
                                     {
                                         <option value="@time">@time</option>
                                     }
-                                </select>
-
-                                @if (Clocks.Contains(clock))
-                                {
-                                    <select class="tt-select tt-meridiem" value="@meridiem"
-                                            @onchange="e => MeridiemPicked(person.Id, clock, e.Value?.ToString())">
-                                        <option value="AM">AM</option>
-                                        <option value="PM">PM</option>
-                                    </select>
-                                }
-                            </div>
+                                </optgroup>
+                                <optgroup label="PM">
+                                    @foreach (var time in AfternoonTimes)
+                                    {
+                                        <option value="@time">@time</option>
+                                    }
+                                </optgroup>
+                            </select>
                         }
                         else
                         {
@@ -192,11 +191,6 @@
     [Parameter] public EventCallback OnToggleSort { get; set; }
     [Parameter] public EventCallback<string> OnTogglePicker { get; set; }
 
-    /// <summary>Half-hour marks across a 12-hour clock. The AM/PM is a separate control.</summary>
-    private static readonly string[] Clocks =
-        Enumerable.Range(0, 24)
-            .Select(i => $"{(i / 2 == 0 ? 12 : i / 2)}:{(i % 2 == 0 ? "00" : "30")}")
-            .ToArray();
 
     private static string Display(string value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
 
@@ -236,36 +230,30 @@
 
     // ---------------------------------------------------------------- depart
 
-    /// <summary>Split "1:30 PM" into its two controls. "Anytime" and free text have no meridiem.</summary>
-    private static (string Clock, string Meridiem) SplitDepart(string value)
+    /// <summary>Half-hour marks across a 12-hour clock, without the half of the day.</summary>
+    private static IEnumerable<string> HalfHours() =>
+        Enumerable.Range(0, 24)
+            .Select(i => $"{(i / 2 == 0 ? 12 : i / 2)}:{(i % 2 == 0 ? "00" : "30")}");
+
+    private static readonly string[] MorningTimes = HalfHours().Select(t => $"{t} AM").ToArray();
+    private static readonly string[] AfternoonTimes = HalfHours().Select(t => $"{t} PM").ToArray();
+
+    /// <summary>Every time the dropdown offers, for telling a picked time from a typed one.</summary>
+    private static readonly HashSet<string> KnownTimes =
+        new(MorningTimes.Concat(AfternoonTimes), StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Something written before the dropdown existed — "Morning?", "12:30-1". It keeps its own
+    /// option so choosing nothing does not quietly round it to a clock time.
+    /// </summary>
+    private static bool IsFreeText(string value)
     {
         var v = (value ?? "").Trim();
-        if (v.Length == 0) return ("", "");
-        if (v.Equals(AnytimeOption, StringComparison.OrdinalIgnoreCase)) return (AnytimeOption, "");
-
-        var parts = v.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 2 && parts[1] is "AM" or "PM" && Clocks.Contains(parts[0]))
-            return (parts[0], parts[1]);
-
-        return (v, "");
+        return v.Length > 0
+               && !v.Equals(AnytimeOption, StringComparison.OrdinalIgnoreCase)
+               && !KnownTimes.Contains(v);
     }
 
-    private static bool IsFreeText(string clock) =>
-        clock.Length > 0 && clock != AnytimeOption && !Clocks.Contains(clock);
-
-    private Task ClockPicked(string personId, string? clock, string meridiem)
-    {
-        var picked = clock ?? "";
-
-        if (picked.Length == 0 || picked == AnytimeOption || IsFreeText(picked))
-            return OnEdit(personId, r => r.DepartAt = picked);
-
-        // A clock time needs a half of the day. Default to PM: this trip starts on a Friday
-        // afternoon and almost nobody is setting off before noon.
-        var half = meridiem is "AM" or "PM" ? meridiem : "PM";
-        return OnEdit(personId, r => r.DepartAt = $"{picked} {half}");
-    }
-
-    private Task MeridiemPicked(string personId, string clock, string? meridiem) =>
-        OnEdit(personId, r => r.DepartAt = $"{clock} {(meridiem is "AM" or "PM" ? meridiem : "PM")}");
+    private Task DepartPicked(string personId, string? value) =>
+        OnEdit(personId, r => r.DepartAt = value ?? "");
 }

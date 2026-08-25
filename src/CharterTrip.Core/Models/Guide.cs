@@ -39,6 +39,13 @@ public sealed class GuestGuide
 /// <summary>One row of the essentials table.</summary>
 public sealed class GuideFact
 {
+    /// <summary>
+    /// The heading this sits under — Logistics, Financial, and so on. Facts sharing a group are
+    /// rendered together, in the order they appear in the list, so moving a row between headings
+    /// is a matter of changing this rather than re-sorting anything.
+    /// </summary>
+    public string Group { get; set; } = "";
+
     public string Label { get; set; } = "";
     public string Value { get; set; } = "";
 

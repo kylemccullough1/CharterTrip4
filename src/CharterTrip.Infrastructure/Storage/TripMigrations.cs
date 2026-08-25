@@ -13,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 13;
+    public const int CurrentVersion = 14;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -32,6 +32,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 11) changed |= ToV11_GuestGuide(trip);
         if (trip.SchemaVersion < 12) changed |= ToV12_CheckInIsTwo(trip);
         if (trip.SchemaVersion < 13) changed |= ToV13_MenuBoard(trip);
+        if (trip.SchemaVersion < 14) changed |= ToV14_GroupedEssentials(trip);
 
         if (trip.SchemaVersion != CurrentVersion)
         {
@@ -454,5 +455,55 @@ public static class TripMigrations
         trip.Guide.MenuDays = seed.MenuDays;
         trip.Guide.Staples = seed.Staples;
         return true;
+    }
+
+    /// <summary>
+    /// The essentials grow headings: Logistics, Financial, and the house. A flat list of seven
+    /// unrelated rows was hard to scan, and grouping them is the whole point of the redesign.
+    ///
+    /// The two money rows are also renamed to say what they are — "Covered" alone reads as a
+    /// state rather than a question — and Payment joins them, blank, because only the committee
+    /// knows what belongs there.
+    ///
+    /// Bails out the moment any fact already carries a group, so a set of headings somebody has
+    /// since rearranged is never re-sorted underneath them.
+    /// </summary>
+    private static bool ToV14_GroupedEssentials(TripData trip)
+    {
+        var facts = trip.Guide.Essentials;
+        if (facts.Count == 0) return false;
+        if (facts.Any(f => !string.IsNullOrWhiteSpace(f.Group))) return false;
+
+        foreach (var fact in facts)
+        {
+            fact.Group = fact.Label switch
+            {
+                "Where" or "Check-in" or "Check-out" => "Logistics",
+                "Covered" or "Not covered" => "Financial",
+                "Bedrooms" or "Bathrooms" => "The house",
+                // Anything added by hand since v11 goes under Logistics rather than into a
+                // heading of its own, which would look like the migration invented a section.
+                _ => "Logistics"
+            };
+        }
+
+        Rename("Covered", "What's Covered");
+        Rename("Not covered", "What's Not Covered");
+
+        if (!facts.Any(f => f.Label.Equals("Payment", StringComparison.OrdinalIgnoreCase)))
+        {
+            var last = facts.FindLastIndex(f => f.Group == "Financial");
+            var payment = new GuideFact { Group = "Financial", Label = "Payment", Value = "" };
+
+            if (last >= 0) facts.Insert(last + 1, payment);
+            else facts.Add(payment);
+        }
+
+        return true;
+
+        void Rename(string from, string to)
+        {
+            if (facts.FirstOrDefault(f => f.Label == from) is { } fact) fact.Label = to;
+        }
     }
 }

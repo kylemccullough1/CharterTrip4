@@ -64,73 +64,98 @@
             <section class="guide-panel @(_tab == GuideTab.Essentials ? "is-active" : null)" data-accent="gold"
                      role="tabpanel" aria-label="The essentials">
 
-                @* Plaques, not rows. The old full-width stripes read as one grey table; these are
-                   small mounted cards with the label riveted to the top corner, the loud one
-                   spanning the whole rail so it cannot be scrolled past. Everything is editable
-                   in place — this is reference material the committee corrects, not code. *@
-                <div class="ess-grid">
-                    @for (var i = 0; i < Guide.Essentials.Count; i++)
+                @* Headed groups. Seven unrelated rows in one flat list was the problem — the
+                   answer to "what does the house cost me" sat between the check-out time and the
+                   bathroom count. Each heading now holds only the facts that belong to it. *@
+                <div class="ess-groups">
+                    @foreach (var group in EssentialGroups)
                     {
-                        var index = i;
-                        var fact = Guide.Essentials[index];
+                        <section class="ess-group" @key="group.Name">
+                            <h4 class="ess-group-name">@group.Name</h4>
 
-                        <div class="ess-plaque @(fact.Highlight ? "is-loud" : null)" @key="fact">
-                            <span class="ess-corner" aria-hidden="true"></span>
-                            <span class="ess-label">
-                                <EditableText Value="@fact.Label" ReadOnly="@(!CanEdit)"
-                                              ValueChanged="@(v => EditFactAsync(index, f => f.Label = v))"
-                                              Placeholder="label" />
-                            </span>
-                            <div class="ess-value">
-                                <EditableText Value="@fact.Value" Multiline="true" ReadOnly="@(!CanEdit)"
-                                              ValueChanged="@(v => EditFactAsync(index, f => f.Value = v))"
-                                              Placeholder="—" />
-                            </div>
+                            <dl class="ess-rows">
+                                @foreach (var entry in group.Facts)
+                                {
+                                    var index = entry.Index;
+                                    var fact = entry.Fact;
 
-                            @if (IsWhereFact(fact) && !string.IsNullOrWhiteSpace(Travel.Address))
-                            {
-                                <a class="ess-map" href="@MapUrl(Travel.Address)" target="_blank" rel="noopener">
-                                    ⌖ Open in Maps
-                                </a>
-                            }
+                                    <div class="ess-row @(fact.Highlight ? "is-loud" : null)" @key="fact">
+                                        <dt>
+                                            <EditableText Value="@fact.Label" ReadOnly="@(!CanEdit)"
+                                                          ValueChanged="@(v => EditFactAsync(index, f => f.Label = v))"
+                                                          Placeholder="label" />
+                                        </dt>
+                                        <dd>
+                                            <EditableText Value="@fact.Value" Multiline="true" ReadOnly="@(!CanEdit)"
+                                                          ValueChanged="@(v => EditFactAsync(index, f => f.Value = v))"
+                                                          Placeholder="—" />
 
-                            @if (fact.Highlight)
-                            {
-                                <span class="fact-flag">bring it yourself</span>
-                            }
+                                            @if (fact.Highlight)
+                                            {
+                                                <span class="fact-flag">bring it yourself</span>
+                                            }
+
+                                            @if (IsWhereFact(fact) && !string.IsNullOrWhiteSpace(Travel.Address))
+                                            {
+                                                <a class="ess-map" href="@MapUrl(Travel.Address)"
+                                                   target="_blank" rel="noopener">Open in Maps</a>
+                                            }
+                                        </dd>
+
+                                        @if (CanEdit)
+                                        {
+                                            <button type="button" class="ess-remove" title="Remove this line"
+                                                    @onclick="() => RemoveFactAsync(index)">✕</button>
+                                        }
+                                    </div>
+                                }
+                            </dl>
 
                             @if (CanEdit)
                             {
-                                <button type="button" class="ess-remove" title="Remove this card"
-                                        @onclick="() => RemoveFactAsync(index)">✕</button>
+                                <button type="button" class="ess-add"
+                                        @onclick="() => AddFactAsync(group.Name)">+ add a line</button>
                             }
-                        </div>
+                        </section>
                     }
 
-                    @if (CanEdit)
-                    {
-                        <button type="button" class="ess-plaque is-add" @onclick="AddFactAsync">+ Add a card</button>
-                    }
-                </div>
+                    @* Nearby reads from the venue rather than being copied into the guide, so the
+                       Venue page and this one can never disagree about how far Walmart is. *@
+                    <section class="ess-group">
+                        <h4 class="ess-group-name">Nearby</h4>
 
-                <div class="note-grid mt">
-                    <div class="card">
-                        <h4>Nearby</h4>
-                        <ul class="plain">
-                            @foreach (var place in Trip.Venue.Stores)
+                        <dl class="ess-rows">
+                            @for (var i = 0; i < Trip.Venue.Stores.Count; i++)
                             {
-                                <li><b>@place.Name</b> — @place.Distance</li>
-                            }
-                        </ul>
-                    </div>
+                                var index = i;
+                                var place = Trip.Venue.Stores[index];
 
-                    <div class="card">
-                        <h4>Questions</h4>
-                        <p class="muted">
-                            Reach out to any of the four of us —
-                            @string.Join(", ", Trip.Trip.Committee).
-                        </p>
-                    </div>
+                                <div class="ess-row" @key="place">
+                                    <dt>
+                                        <EditableText Value="@place.Name" ReadOnly="@(!CanEdit)"
+                                                      ValueChanged="@(v => EditStoreAsync(index, s => s.Name = v))"
+                                                      Placeholder="place" />
+                                    </dt>
+                                    <dd>
+                                        <EditableText Value="@place.Distance" ReadOnly="@(!CanEdit)"
+                                                      ValueChanged="@(v => EditStoreAsync(index, s => s.Distance = v))"
+                                                      Placeholder="—" />
+                                    </dd>
+
+                                    @if (CanEdit)
+                                    {
+                                        <button type="button" class="ess-remove" title="Remove this line"
+                                                @onclick="() => RemoveStoreAsync(index)">✕</button>
+                                    }
+                                </div>
+                            }
+                        </dl>
+
+                        @if (CanEdit)
+                        {
+                            <button type="button" class="ess-add" @onclick="AddStoreAsync">+ add a place</button>
+                        }
+                    </section>
                 </div>
             </section>
 
@@ -807,8 +832,76 @@
             if (index >= 0 && index < t.Guide.Essentials.Count) apply(t.Guide.Essentials[index]);
         }, TripArea.All);
 
-    private Task AddFactAsync() =>
-        EditGuideAsync(g => g.Essentials.Add(new GuideFact { Label = "New", Value = "" }));
+    /// <summary>One heading and the facts under it, each carrying its index in the flat list.</summary>
+    private sealed record EssentialEntry(GuideFact Fact, int Index);
+    private sealed record EssentialGroup(string Name, List<EssentialEntry> Facts);
+
+    /// <summary>
+    /// The essentials split under their headings, in the order the headings first appear.
+    ///
+    /// The list itself stays flat — grouping is a rendering concern, and keeping the storage flat
+    /// means an index is still an index, so editing and removal do not need reworking every time
+    /// a heading is added.
+    /// </summary>
+    private List<EssentialGroup> EssentialGroups
+    {
+        get
+        {
+            var groups = new List<EssentialGroup>();
+
+            for (var i = 0; i < Guide.Essentials.Count; i++)
+            {
+                var fact = Guide.Essentials[i];
+                var name = string.IsNullOrWhiteSpace(fact.Group) ? "Other" : fact.Group.Trim();
+
+                var group = groups.FirstOrDefault(g =>
+                    g.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+                if (group is null)
+                {
+                    group = new EssentialGroup(name, []);
+                    groups.Add(group);
+                }
+
+                group.Facts.Add(new EssentialEntry(fact, i));
+            }
+
+            return groups;
+        }
+    }
+
+    /// <summary>
+    /// Added at the end of its own heading rather than the end of the list, so a new Logistics
+    /// line does not appear underneath the bathrooms.
+    /// </summary>
+    private Task AddFactAsync(string group) =>
+        EditGuideAsync(g =>
+        {
+            var fact = new GuideFact { Group = group, Label = "New", Value = "" };
+            var last = g.Essentials.FindLastIndex(f =>
+                f.Group.Equals(group, StringComparison.OrdinalIgnoreCase));
+
+            if (last >= 0) g.Essentials.Insert(last + 1, fact);
+            else g.Essentials.Add(fact);
+        });
+
+    // ---------------------------------------------------------------- nearby
+
+    private Task EditStoreAsync(int index, Action<NearbyPlace> apply) =>
+        Store.MutateAsync(t =>
+        {
+            if (index >= 0 && index < t.Venue.Stores.Count) apply(t.Venue.Stores[index]);
+        }, TripArea.Venue);
+
+    private Task AddStoreAsync() =>
+        Store.MutateAsync(t => t.Venue.Stores.Add(new NearbyPlace { Name = "New", Distance = "" }),
+            TripArea.Venue);
+
+    private Task RemoveStoreAsync(int index) =>
+        Store.MutateAsync(t =>
+        {
+            if (index >= 0 && index < t.Venue.Stores.Count) t.Venue.Stores.RemoveAt(index);
+        }, TripArea.Venue);
 
     private Task RemoveFactAsync(int index) =>
         EditGuideAsync(g =>

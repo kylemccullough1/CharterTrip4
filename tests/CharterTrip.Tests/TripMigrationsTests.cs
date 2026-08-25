@@ -390,7 +390,9 @@ public class TripMigrationsTests
         var loud = trip.Guide.Essentials.Where(f => f.Highlight).ToList();
 
         Assert.Single(loud);
-        Assert.Equal("Not covered", loud[0].Label);
+
+        // Seeded as "Not covered"; v14 renames it on the way past and the flag rides along.
+        Assert.Equal("What's Not Covered", loud[0].Label);
     }
 
     /// <summary>
@@ -410,6 +412,11 @@ public class TripMigrationsTests
         Assert.Equal(ids.Count, ids.Distinct(StringComparer.Ordinal).Count());
     }
 
+    /// <summary>
+    /// A guide somebody has written is not replaced by the seed's. v14 does then sort that row
+    /// under a heading and add the blank Payment line beside it, which is its job — what matters
+    /// here is that the value written by hand survives untouched.
+    /// </summary>
     [Fact]
     public void V11_leaves_a_guide_that_has_already_been_written()
     {
@@ -418,7 +425,11 @@ public class TripMigrationsTests
 
         TripMigrations.Apply(trip);
 
-        Assert.Equal("Somewhere else entirely", Assert.Single(trip.Guide.Essentials).Value);
+        var where = Assert.Single(trip.Guide.Essentials, f => f.Label == "Where");
+        Assert.Equal("Somewhere else entirely", where.Value);
+
+        // The seed's seven rows did not arrive alongside it.
+        Assert.DoesNotContain(trip.Guide.Essentials, f => f.Label == "Bedrooms");
     }
 
     /// <summary>The correction is guarded on the stale value, so a deliberate time is not stamped over.</summary>
@@ -472,5 +483,97 @@ public class TripMigrationsTests
         TripMigrations.Apply(trip);
 
         Assert.Equal("Tacos", Assert.Single(trip.Guide.MenuDays).Dinner);
+    }
+
+    // ------------------------------------------------ v14: grouped essentials
+
+    /// <summary>A trip carrying the flat v11 essentials, exactly as they were seeded.</summary>
+    private static TripData Ungrouped()
+    {
+        var trip = new TripData { SchemaVersion = 13 };
+        trip.Guide.Essentials.AddRange(
+        [
+            new GuideFact { Label = "Where", Value = "Braun Manor" },
+            new GuideFact { Label = "Check-in", Value = "Friday" },
+            new GuideFact { Label = "Check-out", Value = "Sunday" },
+            new GuideFact { Label = "Covered", Value = "Meals" },
+            new GuideFact { Label = "Not covered", Value = "Beer", Highlight = true },
+            new GuideFact { Label = "Bedrooms", Value = "8" },
+            new GuideFact { Label = "Bathrooms", Value = "4" }
+        ]);
+
+        return trip;
+    }
+
+    [Fact]
+    public void V14_sorts_the_essentials_under_headings()
+    {
+        var trip = Ungrouped();
+
+        Assert.True(TripMigrations.Apply(trip));
+
+        string Group(string label) =>
+            trip.Guide.Essentials.Single(f => f.Label == label).Group;
+
+        Assert.Equal("Logistics", Group("Where"));
+        Assert.Equal("Logistics", Group("Check-in"));
+        Assert.Equal("Logistics", Group("Check-out"));
+        Assert.Equal("Financial", Group("What's Covered"));
+        Assert.Equal("Financial", Group("What's Not Covered"));
+        Assert.Equal("The house", Group("Bedrooms"));
+        Assert.Equal("The house", Group("Bathrooms"));
+    }
+
+    /// <summary>Payment is new, blank, and sits with the rest of the money.</summary>
+    [Fact]
+    public void V14_adds_a_payment_line_to_the_financial_group()
+    {
+        var trip = Ungrouped();
+        TripMigrations.Apply(trip);
+
+        var payment = trip.Guide.Essentials.Single(f => f.Label == "Payment");
+
+        Assert.Equal("Financial", payment.Group);
+        Assert.Equal("", payment.Value);
+
+        // Immediately after the other Financial rows, not stranded at the end of the list.
+        var financial = trip.Guide.Essentials
+            .Select((f, i) => (f, i))
+            .Where(x => x.f.Group == "Financial")
+            .Select(x => x.i)
+            .ToList();
+
+        Assert.Equal(financial.Count, financial.Max() - financial.Min() + 1);
+    }
+
+    /// <summary>Renaming must not lose the one row allowed to shout.</summary>
+    [Fact]
+    public void V14_keeps_the_highlight_on_the_renamed_not_covered_row()
+    {
+        var trip = Ungrouped();
+        TripMigrations.Apply(trip);
+
+        var loud = Assert.Single(trip.Guide.Essentials, f => f.Highlight);
+        Assert.Equal("What's Not Covered", loud.Label);
+    }
+
+    [Fact]
+    public void V14_leaves_headings_that_have_already_been_arranged()
+    {
+        var trip = new TripData { SchemaVersion = 13 };
+        trip.Guide.Essentials.Add(new GuideFact { Group = "Mine", Label = "Where", Value = "Elsewhere" });
+
+        TripMigrations.Apply(trip);
+
+        Assert.Equal("Mine", Assert.Single(trip.Guide.Essentials).Group);
+    }
+
+    [Fact]
+    public void V14_running_twice_changes_nothing_the_second_time()
+    {
+        var trip = Ungrouped();
+        TripMigrations.Apply(trip);
+
+        Assert.False(TripMigrations.Apply(trip));
     }
 }

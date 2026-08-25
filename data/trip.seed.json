@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 13,
+  "schemaVersion": 14,
   "revision": 0,
   "updatedUtc": "2026-08-19T00:00:00+00:00",
   "trip": {
@@ -99,31 +99,43 @@
   "guide": {
     "essentials": [
       {
+        "group": "Logistics",
         "label": "Where",
         "value": "Braun Manor — Denison, TX"
       },
       {
+        "group": "Logistics",
         "label": "Check-in",
         "value": "Friday, August 28. The house is ours from 2:00 PM."
       },
       {
+        "group": "Logistics",
         "label": "Check-out",
         "value": "Sunday, August 30 at 12:00 PM."
       },
       {
-        "label": "Covered",
+        "group": "Financial",
+        "label": "What's Covered",
         "value": "All meals listed in the menu, plus water, soda, and snacks."
       },
       {
-        "label": "Not covered",
+        "group": "Financial",
+        "label": "What's Not Covered",
         "value": "Beer and liquor, paper towels, toilet paper.",
         "highlight": true
       },
       {
+        "group": "Financial",
+        "label": "Payment",
+        "value": ""
+      },
+      {
+        "group": "The house",
         "label": "Bedrooms",
         "value": "8, first come first served on Friday."
       },
       {
+        "group": "The house",
         "label": "Bathrooms",
         "value": "4, stocked with towels, hairdryers, soap, and shampoo."
       }

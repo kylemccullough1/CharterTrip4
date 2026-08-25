@@ -100,7 +100,11 @@
                                                           Placeholder="label" />
                                         </dt>
                                         <dd>
+                                            @* The Where line is itself the map link — for anyone who cannot edit
+                                               it. A committee member still clicks it to edit, so they keep
+                                               the small link below instead; one click cannot do both. *@
                                             <EditableText Value="@fact.Value" Multiline="true" ReadOnly="@(!CanEdit)"
+                                                          Href="@MapHrefFor(fact)"
                                                           ValueChanged="@(v => EditFactAsync(index, f => f.Value = v))"
                                                           Placeholder="—" />
 
@@ -109,9 +113,9 @@
                                                 <span class="fact-flag">bring it yourself</span>
                                             }
 
-                                            @if (IsWhereFact(fact) && !string.IsNullOrWhiteSpace(Travel.Address))
+                                            @if (CanEdit && MapHrefFor(fact) is { } href)
                                             {
-                                                <a class="map-link" href="@MapUrl(Travel.Address)"
+                                                <a class="map-link" href="@href"
                                                    target="_blank" rel="noopener">Open in Maps</a>
                                             }
                                         </dd>
@@ -552,12 +556,12 @@
                     <div class="card">
                         <h4>Destination</h4>
                         <p class="strong">@Travel.Destination</p>
-                        @* Same shape as the Where row on Essentials: the address reads as an address,
-                           and the map is a small link under it rather than the address itself
-                           being a link you might not notice you were clicking. *@
-                        <p>@Travel.Address</p>
-                        <a class="map-link" href="@MapUrl(Travel.Address)"
-                           target="_blank" rel="noopener">Open in Maps</a>
+                        @* The address line is the link. Nothing on this card is editable, so there is
+                           no gesture to compete with. *@
+                        <p>
+                            <a class="map-line" href="@MapUrl(Travel.Address)"
+                               target="_blank" rel="noopener">@Travel.Address</a>
+                        </p>
                         <dl class="travel-when">
                             <dt>Check-in</dt>
                             <dd>@CheckInLine</dd>
@@ -975,6 +979,10 @@
     /// <summary>The card that earns the map pin — the one that says where the house is.</summary>
     private static bool IsWhereFact(GuideFact fact) =>
         fact.Label.Trim().Equals("Where", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The map link for a fact, when it is the one that names where the house is.</summary>
+    private string? MapHrefFor(GuideFact fact) =>
+        IsWhereFact(fact) && !string.IsNullOrWhiteSpace(Travel.Address) ? MapUrl(Travel.Address) : null;
 
     private static string MapUrl(string address) =>
         "https://www.google.com/maps/search/?api=1&query=" + Uri.EscapeDataString(address);

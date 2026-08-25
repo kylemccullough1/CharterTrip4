@@ -2507,3 +2507,14 @@ pre.code {
 }
 .tt-card .tt-sort:hover { color: color-mix(in srgb, var(--car, var(--accent)) 60%, var(--text)); }
 .tt-card .tt-arrow { color: inherit; }
+
+/* A line of text that is itself a link — the address on the Destination card and the Where row
+   on Essentials. Underlined rather than recoloured, so it still reads as the fact it is. */
+.map-line {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent, var(--gold)) 55%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.map-line:hover { color: var(--accent, var(--gold-light)); text-decoration-color: currentColor; }

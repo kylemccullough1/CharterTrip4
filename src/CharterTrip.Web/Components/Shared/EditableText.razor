@@ -3,7 +3,16 @@
 
 @if (!CanEditThis)
 {
-    <span class="@CssClass @EmptyClass">@Display</span>
+    @* A read-only field can be a link — the address on Essentials opens a map. It is only ever
+       the plain branch: the same click cannot both open a map and start editing the text. *@
+    @if (Href is { Length: > 0 })
+    {
+        <a class="map-line @CssClass @EmptyClass" href="@Href" target="_blank" rel="noopener">@Display</a>
+    }
+    else
+    {
+        <span class="@CssClass @EmptyClass">@Display</span>
+    }
 }
 else if (_editing)
 {
@@ -57,6 +66,12 @@ else
 
     /// <summary>Lets a caller force read-only even for an admin.</summary>
     [Parameter] public bool ReadOnly { get; set; }
+
+    /// <summary>
+    /// Makes the text itself a link, for a field nobody here can edit. Ignored the moment this
+    /// viewer can edit it, because click-to-edit and following a link are the same gesture.
+    /// </summary>
+    [Parameter] public string? Href { get; set; }
 
     private bool _editing;
     private string _draft = string.Empty;

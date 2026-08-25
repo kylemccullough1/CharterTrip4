@@ -707,56 +707,88 @@
                 @foreach (var group in Guide.Packing)
                 {
                     <div class="card pack-group @(group.Required ? "is-required" : null)" @key="group.Id">
-                        <h4>
-                            @group.Title
-                            @if (group.Required)
+                        <header class="pack-head">
+                            <h4>
+                                @group.Title
+                                @if (group.Required)
+                                {
+                                    <span class="pack-required-flag">everyone</span>
+                                }
+                            </h4>
+                            @if (CanEdit)
                             {
-                                <span class="pack-required-flag">everyone</span>
+                                <button type="button" class="ess-add"
+                                        title="@($"Add to {group.Title}")"
+                                        aria-label="@($"Add to {group.Title}")"
+                                        @onclick="() => AddPackItemAsync(group.Id)">
+                                    <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+                                        <path d="M6 1.6 V10.4 M1.6 6 H10.4" fill="none"
+                                              stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
+                                    </svg>
+                                </button>
                             }
-                        </h4>
+                        </header>
 
                         <ul class="pack-items">
                             @foreach (var item in group.Items)
                             {
-                                <li class="pack-line" @key="item.Id">
-                                    <label class="pack-item @(IsPacked(item.Id) ? "is-done" : null)">
-                                        <input type="checkbox"
-                                               checked="@IsPacked(item.Id)"
-                                               @onchange="e => TogglePackedAsync(item.Id, e.Value is true)" />
-                                        <span>@item.Text</span>
-                                    </label>
+                                @* The tick and the words are separate controls now: adding from the
+                                   header creates an unnamed line, so the text has to be editable —
+                                   and a click cannot mean both "rename" and "packed". *@
+                                <li class="pack-line @(IsPacked(item.Id) ? "is-done" : null)" @key="item.Id">
+                                    <input class="pack-check" type="checkbox" id="@($"pk-{item.Id}")"
+                                           checked="@IsPacked(item.Id)"
+                                           @onchange="e => TogglePackedAsync(item.Id, e.Value is true)" />
                                     @if (CanEdit)
                                     {
+                                        <span class="pack-text">
+                                            <EditableText Value="@item.Text"
+                                                          ValueChanged="@(v => EditPackItemAsync(group.Id, item.Id, v))"
+                                                          Placeholder="—" />
+                                        </span>
                                         <button type="button" class="pack-del" title="Remove from the list"
                                                 @onclick="() => RemovePackItemAsync(group.Id, item.Id)">✕</button>
+                                    }
+                                    else
+                                    {
+                                        @* Read-only, so the label can do what a label should and
+                                           let the whole line toggle the box. *@
+                                        <label class="pack-text" for="@($"pk-{item.Id}")">@item.Text</label>
                                     }
                                 </li>
                             }
                         </ul>
-
-                        @if (CanEdit)
-                        {
-                            <div class="pack-add">
-                                <input class="inline-edit" placeholder="add something…"
-                                       value="@DraftFor(group.Id)"
-                                       @oninput="e => _packDrafts[group.Id] = e.Value?.ToString() ?? string.Empty"
-                                       @onkeydown="e => PackAddKeyAsync(e, group.Id)" />
-                                <button type="button" class="mini-btn" title="Add"
-                                        @onclick="() => AddPackItemAsync(group.Id)">+</button>
-                            </div>
-                        }
                     </div>
                 }
 
                 <div class="card pack-group is-car">
-                    <h4>What every car brings</h4>
+                    <header class="pack-head">
+                        <h4>What every car brings</h4>
+                        @if (CanEdit)
+                        {
+                            <button type="button" class="ess-add"
+                                    title="Add to what every car brings"
+                                    aria-label="Add to what every car brings"
+                                    @onclick="() => AddPackItemAsync(CarBringsKey)">
+                                <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+                                    <path d="M6 1.6 V10.4 M1.6 6 H10.4" fill="none"
+                                          stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
+                                </svg>
+                            </button>
+                        }
+                    </header>
+
                     <p class="muted tiny">Once your car group is set, that car is responsible for:</p>
                     <ul class="plain pack-car">
                         @for (var i = 0; i < Guide.CarBrings.Count; i++)
                         {
                             var index = i;
-                            <li class="pack-line" @key="index + Guide.CarBrings[index]">
-                                <span>@Guide.CarBrings[index]</span>
+                            <li class="pack-line" @key="index">
+                                <span class="pack-text">
+                                    <EditableText Value="@Guide.CarBrings[index]" ReadOnly="@(!CanEdit)"
+                                                  ValueChanged="@(v => EditCarBringAsync(index, v))"
+                                                  Placeholder="—" />
+                                </span>
                                 @if (CanEdit)
                                 {
                                     <button type="button" class="pack-del" title="Remove"
@@ -765,18 +797,6 @@
                             </li>
                         }
                     </ul>
-
-                    @if (CanEdit)
-                    {
-                        <div class="pack-add">
-                            <input class="inline-edit" placeholder="add something…"
-                                   value="@DraftFor(CarBringsKey)"
-                                   @oninput="e => _packDrafts[CarBringsKey] = e.Value?.ToString() ?? string.Empty"
-                                   @onkeydown="e => PackAddKeyAsync(e, CarBringsKey)" />
-                            <button type="button" class="mini-btn" title="Add"
-                                    @onclick="() => AddPackItemAsync(CarBringsKey)">+</button>
-                        </div>
-                    }
 
                     @if (!string.IsNullOrWhiteSpace(Guide.CarBringsNote))
                     {
@@ -1261,27 +1281,19 @@
 
     // -------------------------------------------------------- packing edits
 
-    /// <summary>The car card shares the add-box plumbing under this stand-in key.</summary>
+    /// <summary>The car card shares the add plumbing under this stand-in key.</summary>
     private const string CarBringsKey = "car-brings";
 
-    /// <summary>What is typed into each group's add box, keyed by group id.</summary>
-    private readonly Dictionary<string, string> _packDrafts = new(StringComparer.Ordinal);
-
-    private string DraftFor(string key) => _packDrafts.GetValueOrDefault(key, "");
-
-    private Task PackAddKeyAsync(KeyboardEventArgs e, string key) =>
-        e.Key == "Enter" ? AddPackItemAsync(key) : Task.CompletedTask;
-
+    /// <summary>
+    /// Add an unnamed line for somebody to type over, the same way the essentials cards work.
+    /// The add box that used to sit under each list is gone: one control per card, in the
+    /// header, and the naming happens in place.
+    /// </summary>
     private async Task AddPackItemAsync(string key)
     {
-        var text = DraftFor(key).Trim();
-        if (text.Length == 0) return;
-
-        _packDrafts[key] = "";
-
         if (key == CarBringsKey)
         {
-            await EditGuideAsync(g => g.CarBrings.Add(text));
+            await EditGuideAsync(g => g.CarBrings.Add("New"));
             return;
         }
 
@@ -1290,9 +1302,26 @@
         await EditGuideAsync(g =>
         {
             if (g.Packing.FirstOrDefault(x => x.Id == key) is { } group)
-                group.Items.Add(new PackItem { Id = Ids.New("pk"), Text = text });
+                group.Items.Add(new PackItem { Id = Ids.New("pk"), Text = "New" });
         });
     }
+
+    /// <summary>Renaming leaves the id alone, so a ticked box stays ticked through an edit.</summary>
+    private Task EditPackItemAsync(string groupId, string itemId, string text) =>
+        EditGuideAsync(g =>
+        {
+            if (g.Packing.FirstOrDefault(x => x.Id == groupId) is { } group &&
+                group.Items.FirstOrDefault(i => i.Id == itemId) is { } item)
+            {
+                item.Text = text;
+            }
+        });
+
+    private Task EditCarBringAsync(int index, string text) =>
+        EditGuideAsync(g =>
+        {
+            if (index >= 0 && index < g.CarBrings.Count) g.CarBrings[index] = text;
+        });
 
     private Task RemovePackItemAsync(string groupId, string itemId) =>
         EditGuideAsync(g =>

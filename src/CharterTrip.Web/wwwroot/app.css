@@ -1704,8 +1704,24 @@ pre.code {
 .card.is-dresscode h4 { color: var(--gold-light); }
 
 /* --- what to bring ----------------------------------------------------- */
-.pack-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-.pack-group h4 { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+/* Seven across at most. auto-fit alone would keep splitting the row on a very wide screen
+   until the cards were too narrow to read, so the minimum track is also "a seventh of what is
+   available" — whichever of the two is larger wins, and the count tops out at seven. */
+.pack-grid {
+  --pack-gap: 1.1rem;
+  display: grid; gap: var(--pack-gap);
+  /* 10.5rem is the floor that still lets seven fit on a wide desktop — a larger one binds
+     first and silently caps the row at five, which is what it did at 14rem. */
+  grid-template-columns:
+    repeat(auto-fit, minmax(max(10.5rem, (100% - 6 * var(--pack-gap)) / 7), 1fr));
+}
+
+.pack-group { padding: 1.1rem 1.05rem 1.15rem; }
+.pack-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-bottom: 10px; padding-bottom: 9px; border-bottom: 1px solid var(--line-soft);
+}
+.pack-head h4 { display: flex; align-items: center; gap: 8px; margin: 0; min-width: 0; }
 .pack-group.is-required { border-color: var(--gold-dim); }
 .pack-group.is-required h4 { color: var(--gold-light); }
 .pack-required-flag {
@@ -1714,15 +1730,14 @@ pre.code {
 }
 
 .pack-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-.pack-item {
-  display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
-  padding: 6px 8px; border-radius: var(--radius-sm);
-  transition: background .12s, color .12s;
+.pack-check {
+  accent-color: var(--gold); width: 1rem; height: 1rem;
+  margin: 0; flex: 0 0 auto; cursor: pointer;
 }
-.pack-item:hover { background: rgba(255,255,255,.04); }
-.pack-item input { accent-color: var(--gold); width: 16px; height: 16px; margin: 2px 0 0; flex: 0 0 auto; cursor: pointer; }
+.pack-text { flex: 1 1 auto; min-width: 0; }
+.pack-text .editable { display: inline-block; min-width: 2ch; }
 /* Ticked lines stay readable rather than vanishing — you still want to see what you packed. */
-.pack-item.is-done span { color: var(--text-faint); text-decoration: line-through; }
+.pack-line.is-done .pack-text { color: var(--text-faint); text-decoration: line-through; }
 
 .pack-group.is-car { border-color: var(--line); background: var(--panel-2); }
 .pack-car { margin: 6px 0 10px; }
@@ -2198,17 +2213,19 @@ pre.code {
 }
 
 /* --- packing: add and remove ------------------------------------------- */
-.pack-line { display: flex; align-items: center; gap: 4px; }
-.pack-line .pack-item { flex: 1 1 auto; }
-.pack-car .pack-line { padding: 5px 0 5px 18px; position: relative; }
+.pack-line {
+  display: flex; align-items: center; gap: 9px;
+  padding: 5px 6px; border-radius: var(--radius-sm);
+  transition: background .12s;
+}
+.pack-line:hover { background: rgba(255,255,255,.04); }
+.pack-car .pack-line { padding-left: 18px; position: relative; }
 .pack-del {
   flex: 0 0 auto; padding: 0 4px; background: none; border: 0; cursor: pointer;
   color: var(--text-faint); font-size: 0.656rem; opacity: 0; transition: opacity .15s;
 }
 .pack-line:hover .pack-del { opacity: .85; }
 .pack-del:hover { color: var(--ruby); }
-.pack-add { display: flex; gap: 6px; margin-top: 8px; }
-.pack-add .inline-edit { flex: 1 1 auto; font-size: 0.781rem; }
 
 /* =================================================== travel, third pass == */
 

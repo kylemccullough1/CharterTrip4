@@ -20,6 +20,17 @@
 
     <div class="tt-scroll">
         <table class="table tt-table">
+            @* Fixed layout. Left to size itself the origin column claimed 171px purely because
+               "Somewhere else…" is its longest option — while the two departure dropdowns, which
+               genuinely need the room, were squeezed into 110px. The widths are shares of the
+               card, so the same table works in a narrow group card and the full-width one. *@
+            <colgroup>
+                <col class="tt-c-who" />
+                <col class="tt-c-from" />
+                <col class="tt-c-when" />
+                <col class="tt-c-diet" />
+                <col class="tt-c-notes" />
+            </colgroup>
             <thead>
             <tr>
                 <th class="tt-sort" role="button" tabindex="0"

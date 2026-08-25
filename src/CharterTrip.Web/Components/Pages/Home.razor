@@ -80,7 +80,9 @@
     <SectionCard Title="The weekend at a glance"
                  Subtitle="@($"{Trip.Trip.Venue} · {Trip.Trip.Dates}")">
         <Actions>
-            <a class="btn btn-ghost btn-sm" href="/itinerary">Edit itinerary →</a>
+            @* Straight to the planner. Landing on Essentials and making someone find the tab
+               is a worse answer to "edit the itinerary" than naming the tab in the link. *@
+            <a class="btn btn-ghost btn-sm" href="/itinerary?tab=schedule">Edit itinerary →</a>
         </Actions>
         <ChildContent>
             <div class="glance-grid">

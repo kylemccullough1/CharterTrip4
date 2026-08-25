@@ -822,6 +822,38 @@
     private GuideTab _tab = GuideTab.Essentials;
 
     /// <summary>
+    /// Which tab to open on, from the URL — <c>/itinerary?tab=schedule</c>. Lets a link
+    /// elsewhere point at a section rather than dumping people on Essentials to go hunting.
+    /// </summary>
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? TabQuery { get; set; }
+
+    /// <summary>
+    /// The query value already acted on. Without this the tab would snap back every time the
+    /// component's parameters were set again, undoing whatever the reader had clicked.
+    /// </summary>
+    private string? _appliedTabQuery;
+
+    protected override void OnParametersSet()
+    {
+        if (TabQuery == _appliedTabQuery) return;
+        _appliedTabQuery = TabQuery;
+
+        if (TabFromQuery(TabQuery) is { } tab) _tab = tab;
+    }
+
+    /// <summary>An unrecognised value is ignored rather than throwing — it is a URL, and URLs
+    /// get typed by hand and truncated by chat apps.</summary>
+    private static GuideTab? TabFromQuery(string? value) => value?.Trim().ToLowerInvariant() switch
+    {
+        "essentials" => GuideTab.Essentials,
+        "schedule" => GuideTab.Schedule,
+        "menu" => GuideTab.Menu,
+        "travel" => GuideTab.Travel,
+        _ => null
+    };
+
+    /// <summary>
     /// Each tab carries its own accent. Four sections of dense text all in the same gold were
     /// hard to tell apart at a glance, so the colour does the work the headings could not.
     /// </summary>

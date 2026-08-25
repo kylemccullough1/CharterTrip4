@@ -75,15 +75,9 @@
                                 <h4 class="ess-group-name">@group.Name</h4>
                                 @if (CanEdit)
                                 {
-                                    <button type="button" class="ess-add"
-                                            title="@($"Add a line to {group.Name}")"
-                                            aria-label="@($"Add a line to {group.Name}")"
-                                            @onclick="() => AddFactAsync(group.Name)">
-                                        <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-                                            <path d="M6 1.6 V10.4 M1.6 6 H10.4" fill="none"
-                                                  stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
-                                        </svg>
-                                    </button>
+                                    <IconButton Icon="IconButtonIcon.Plus"
+                                                Title="@($"Add a line to {group.Name}")"
+                                                OnClick="@(() => AddFactAsync(group.Name))" />
                                 }
                             </header>
 
@@ -138,14 +132,9 @@
                             <h4 class="ess-group-name">Nearby</h4>
                             @if (CanEdit)
                             {
-                                <button type="button" class="ess-add"
-                                        title="Add a place" aria-label="Add a place"
-                                        @onclick="AddStoreAsync">
-                                    <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-                                        <path d="M6 1.6 V10.4 M1.6 6 H10.4" fill="none"
-                                              stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
-                                    </svg>
-                                </button>
+                                <IconButton Icon="IconButtonIcon.Plus"
+                                            Title="Add a place"
+                                            OnClick="AddStoreAsync" />
                             }
                         </header>
 
@@ -246,8 +235,9 @@
             <div class="planner">
                 @foreach (var day in Trip.Itinerary)
                 {
-                    var timeline = TimelineFor(day);
-                    var positioned = OverlapLayout.Arrange(day.Items);
+                    var view = ViewOf(day);
+                    var timeline = TimelineFor(view);
+                    var positioned = OverlapLayout.Arrange(view.Items);
 
                     <section class="planner-day @(day.Id == ActiveDayId ? "is-active" : null) @(FocusDay is not null ? (day.Id == _focusDayId ? "is-focus" : "is-parked") : null)"
                              @key="day.Id">
@@ -263,23 +253,21 @@
                                     <EditableText Value="@day.Date" ReadOnly="@(!CanEdit)"
                                                   ValueChanged="@(v => SetDayDateAsync(day.Id, v))"
                                                   Placeholder="date" />
-                                    · @day.Items.Count item@(day.Items.Count == 1 ? "" : "s")
+                                    · @view.Items.Count item@(view.Items.Count == 1 ? "" : "s")
                                 </p>
                             </div>
                             <div class="planner-day-actions">
-                                <button class="mini-btn planner-expand"
-                                        title="@(day.Id == _focusDayId ? "Back to all days" : "Expand this day")"
-                                        @onclick="() => _focusDayId = day.Id == _focusDayId ? null : day.Id">
-                                    @(day.Id == _focusDayId ? "⇱" : "⛶")
-                                </button>
+                                <IconButton Icon="@(day.Id == _focusDayId ? IconButtonIcon.Collapse : IconButtonIcon.Expand)"
+                                            Title="@(day.Id == _focusDayId ? "Back to all days" : "Expand this day")"
+                                            OnClick="@(() => _focusDayId = day.Id == _focusDayId ? null : day.Id)" />
                                 @if (CanEdit)
                                 {
-                                    <button class="mini-btn" title="Add an item at midday"
-                                            @onclick="() => AddItemAsync(day.Id)">+</button>
+                                    <IconButton Icon="IconButtonIcon.Plus" Title="Add an item at midday"
+                                                OnClick="@(() => AddItem(day.Id))" />
                                     @if (day.Items.Count == 0)
                                     {
-                                        <button class="mini-btn btn-danger-ghost" title="Delete this day"
-                                                @onclick="() => ConfirmDeleteDay(day)">✕</button>
+                                        <IconButton Icon="IconButtonIcon.Close" Tone="danger" Title="Delete this day"
+                                                    OnClick="@(() => ConfirmDeleteDay(day))" />
                                     }
                                 }
                             </div>
@@ -360,7 +348,7 @@
                 <div class="planner-editor-backdrop" @onclick="TryCloseAsync"></div>
                 <aside class="planner-editor" @onclick:stopPropagation="true">
                     <header>
-                        <strong>Edit item @(IsDirty ? "·" : "")</strong>
+                        <strong>@(_isNew ? "New item" : "Edit item") @(IsDirty ? "·" : "")</strong>
                         <button class="mini-btn" title="Close" @onclick="TryCloseAsync">✕</button>
                     </header>
 
@@ -445,11 +433,15 @@
                     </div>
 
                     <footer>
-                        <button class="btn btn-sm btn-danger-ghost" @onclick="ConfirmDeleteDraft">Delete</button>
+                        @* Nothing to delete on an item that was never saved; Cancel is that button. *@
+                        @if (!_isNew)
+                        {
+                            <button class="btn btn-sm btn-danger-ghost" @onclick="ConfirmDeleteDraft">Delete</button>
+                        }
                         <div class="spacer"></div>
                         <button class="btn btn-sm" @onclick="TryCloseAsync">Cancel</button>
-                        <button class="btn btn-sm btn-gold" disabled="@(!IsDirty)" @onclick="() => SaveAsync(false)">
-                            @(IsDirty ? "Save" : "Saved")
+                        <button class="btn btn-sm btn-gold" disabled="@(!CanSave)" @onclick="() => SaveAsync(false)">
+                            @(_isNew ? "Add to the day" : IsDirty ? "Save" : "Saved")
                         </button>
                     </footer>
                 </aside>
@@ -716,15 +708,9 @@
                             </h4>
                             @if (CanEdit)
                             {
-                                <button type="button" class="ess-add"
-                                        title="@($"Add to {group.Title}")"
-                                        aria-label="@($"Add to {group.Title}")"
-                                        @onclick="() => AddPackItemAsync(group.Id)">
-                                    <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-                                        <path d="M6 1.6 V10.4 M1.6 6 H10.4" fill="none"
-                                              stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
-                                    </svg>
-                                </button>
+                                <IconButton Icon="IconButtonIcon.Plus"
+                                            Title="@($"Add to {group.Title}")"
+                                            OnClick="@(() => AddPackItemAsync(group.Id))" />
                             }
                         </header>
 
@@ -765,15 +751,9 @@
                         <h4>What every car brings</h4>
                         @if (CanEdit)
                         {
-                            <button type="button" class="ess-add"
-                                    title="Add to what every car brings"
-                                    aria-label="Add to what every car brings"
-                                    @onclick="() => AddPackItemAsync(CarBringsKey)">
-                                <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-                                    <path d="M6 1.6 V10.4 M1.6 6 H10.4" fill="none"
-                                          stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
-                                </svg>
-                            </button>
+                            <IconButton Icon="IconButtonIcon.Plus"
+                                        Title="Add to what every car brings"
+                                        OnClick="@(() => AddPackItemAsync(CarBringsKey))" />
                         }
                     </header>
 
@@ -1448,6 +1428,9 @@
     // opened with, so "is this dirty?" is a comparison rather than a pile of change flags.
     private Draft? _draft;
     private Draft? _pristine;
+
+    /// <summary>The draft describes an item that is not in the trip yet.</summary>
+    private bool _isNew;
     private ConflictInfo? _conflict;
 
     private IJSObjectReference? _module;
@@ -1461,11 +1444,38 @@
 
     private string? ActiveDayId => _activeDayId ?? Trip.Itinerary.FirstOrDefault()?.Id;
 
+    /// <summary>Whether closing now would lose something somebody typed.</summary>
     private bool IsDirty => _draft is not null && _pristine is not null && !_draft.SameAs(_pristine);
+
+    /// <summary>
+    /// Whether Save has anything to do. A new item always has — it does not exist yet — which is
+    /// a different question from <see cref="IsDirty"/>: pressing plus and then Cancel without
+    /// typing anything should not stop to ask what to discard.
+    /// </summary>
+    private bool CanSave => _draft is not null && (_isNew || IsDirty);
 
     // ------------------------------------------------------------- timeline
 
     private TimelineSettings Settings => new() { PxPerHour = PxPerHour };
+
+    /// <summary>
+    /// The day as this viewer may see it. For the committee that is simply the day; for everyone
+    /// else adjacent games collapse into one anonymous block, so the schedule does not announce
+    /// what is being played days in advance.
+    ///
+    /// A whole day rather than just its items, because the timeline draws its hour window and its
+    /// collapsible gaps from the day — given the real one it would offer to collapse a gap that
+    /// the merged block now covers.
+    /// </summary>
+    private ItineraryDay ViewOf(ItineraryDay day) => CanEdit ? day : new ItineraryDay
+    {
+        Id = day.Id,
+        Day = day.Day,
+        Date = day.Date,
+        WindowStartMinutes = day.WindowStartMinutes,
+        WindowEndMinutes = day.WindowEndMinutes,
+        Items = GuestSchedule.Screen(day.Items)
+    };
 
     private DayTimeline TimelineFor(ItineraryDay day) =>
         DayTimeline.Build(day, Settings, ExpandedFor(day.Id));
@@ -1523,6 +1533,7 @@
 
     private void OpenEditor(ItineraryItem item)
     {
+        _isNew = false;
         if (!CanEdit) return;
 
         var day = ItineraryService.Locate(Trip, item.Id).Day;
@@ -1535,6 +1546,7 @@
 
     private void CloseEditor()
     {
+        _isNew = false;
         _draft = null;
         _pristine = null;
         _conflict = null;
@@ -1584,8 +1596,13 @@
     {
         if (_draft is null) return;
 
+        var edit = _draft.ToEdit();
+        var creating = _isNew;
+
         var outcome = SaveOutcome.Saved;
-        await MutateAsync(t => outcome = ItineraryService.ApplyEdit(t, _draft.ToEdit(), force));
+        await MutateAsync(t => outcome = creating
+            ? ItineraryService.CreateItem(t, edit)
+            : ItineraryService.ApplyEdit(t, edit, force));
 
         switch (outcome)
         {
@@ -1646,18 +1663,34 @@
         if (day is not null) day.Date = value;
     });
 
-    private async Task AddItemAsync(string dayId)
+    /// <summary>
+    /// Opens the editor on an item that does not exist yet.
+    ///
+    /// It used to be written to the trip first and edited afterwards, which meant pressing plus
+    /// and then Cancel left "New item" sitting on the schedule to be deleted by hand. The draft
+    /// is the only copy until Save.
+    /// </summary>
+    private void AddItem(string dayId)
     {
-        string? newId = null;
-        await MutateAsync(t => newId = ItineraryService.AddItem(t, dayId)?.Id);
+        if (!CanEdit) return;
 
-        var added = newId is null ? null : ItineraryService.Locate(Trip, newId).Item;
-        if (added is not null) OpenEditor(added);
+        _conflict = null;
+        _isNew = true;
+        _draft = Draft.ForNewItem(dayId);
+        _pristine = _draft.Copy();
     }
 
     private void ConfirmDeleteDraft()
     {
         if (_draft is null) return;
+
+        // An item that was never saved has nothing to delete — discarding the draft is the whole
+        // of it, and asking "are you sure?" about something nobody else can see is theatre.
+        if (_isNew)
+        {
+            CloseEditor();
+            return;
+        }
 
         var id = _draft.ItemId;
         var title = Display(_draft.Title, "this item");
@@ -1790,6 +1823,19 @@
         public ItineraryTag Tag { get; set; }
         public int StartMinutes { get; set; }
         public int DurationMinutes { get; set; }
+
+        /// <summary>A blank item, with the same defaults the service used to write straight in.</summary>
+        public static Draft ForNewItem(string dayId) => new()
+        {
+            ItemId = Ids.New("item"),
+            BaseVersion = 0,
+            DayId = dayId,
+            Title = "",
+            Notes = "",
+            Tag = ItineraryTag.Logistics,
+            StartMinutes = ItineraryItem.DefaultStartMinutes,
+            DurationMinutes = 60
+        };
 
         public static Draft From(ItineraryItem item, string dayId) => new()
         {

@@ -1283,7 +1283,7 @@ select.textfield { cursor: pointer; }
 }
 
 @media print {
-  .topbar, .footer, .itin-move, .btn, .icon-btn, .team-photo-actions { display: none !important; }
+  .topbar, .footer, .itin-move, .btn, .icon-btn, .act-btn, .team-photo-actions { display: none !important; }
   body { background: #fff; color: #000; }
   .card, .table, .itin-item { border-color: #ccc; background: #fff; color: #000; }
 }
@@ -2112,24 +2112,36 @@ pre.code {
 .ess-row:hover .ess-remove { opacity: .8; }
 .ess-remove:hover { color: var(--ruby); }
 
-/* Top-right of the card, in the section's own colour. A rounded square rather than a pill so
-   it reads as a control rather than a tag, and the plus is drawn rather than typed — a glyph
-   at this size is thin and off-centre whatever the font. */
-.ess-add {
+/* The shared square action button — the plus on an Essentials card, the plus and the expand on
+   a planner day. A rounded square rather than a pill so it reads as a control rather than a tag,
+   in the section's own colour, with the icon drawn rather than typed.
+
+   The icon is inset by a fixed padding rather than sized in its own units, which is what makes
+   a plus and an expand look like the same size instead of merely having the same box. */
+.act-btn {
   flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
-  width: 1.55rem; height: 1.55rem; padding: 0; cursor: pointer;
+  width: 1.7rem; height: 1.7rem; padding: 0.34rem; cursor: pointer;
   border-radius: 0.45rem;
   background: color-mix(in srgb, var(--accent, var(--gold)) 16%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent, var(--gold)) 55%, transparent);
   color: var(--accent, var(--gold));
   transition: background .12s, color .12s, transform .1s;
 }
-.ess-add:hover {
+.act-btn:hover:not(:disabled) {
   background: var(--accent, var(--gold));
   color: var(--ink);
   transform: scale(1.06);
 }
-.ess-add:focus-visible { outline: 2px solid var(--accent, var(--gold)); outline-offset: 2px; }
+.act-btn:focus-visible { outline: 2px solid var(--accent, var(--gold)); outline-offset: 2px; }
+.act-btn:disabled { opacity: .4; cursor: default; }
+
+/* Destructive actions opt out of the accent — deleting a day is not a Schedule-coloured act. */
+.act-btn.is-danger {
+  background: color-mix(in srgb, var(--ruby) 14%, transparent);
+  border-color: color-mix(in srgb, var(--ruby) 50%, transparent);
+  color: var(--ruby);
+}
+.act-btn.is-danger:hover:not(:disabled) { background: var(--ruby); color: var(--ink); }
 
 @media (max-width: 620px) {
   .ess-row { grid-template-columns: 1fr; }

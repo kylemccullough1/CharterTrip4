@@ -52,6 +52,32 @@ public static class ItineraryService
         return item;
     }
 
+    /// <summary>
+    /// Creates the item a draft describes, once that draft has been saved for the first time.
+    ///
+    /// The editor used to call <see cref="AddItem(TripData, string, int?)"/> the moment somebody
+    /// pressed the plus, which put "New item" on the schedule before they had typed anything —
+    /// and left it there when they cancelled. Nothing reaches the trip until this runs.
+    /// </summary>
+    public static SaveOutcome CreateItem(TripData trip, ItemEdit edit)
+    {
+        var day = FindDay(trip, edit.DayId);
+        if (day is null) return SaveOutcome.Missing;
+
+        day.Items.Add(new ItineraryItem
+        {
+            Id = edit.ItemId,
+            Title = edit.Title,
+            Notes = edit.Notes,
+            Tag = edit.Tag,
+            StartMinutes = ClampStart(edit.StartMinutes),
+            DurationMinutes = Math.Clamp(edit.DurationMinutes, MinDuration, MaxDuration)
+        });
+
+        SortDay(day);
+        return SaveOutcome.Saved;
+    }
+
     public static void RemoveItem(TripData trip, string itemId)
     {
         foreach (var day in trip.Itinerary)

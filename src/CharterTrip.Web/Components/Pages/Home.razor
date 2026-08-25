@@ -103,7 +103,10 @@
                     <div class="card glance-card" @key="day.Id">
                         <h3 class="glance-day">@day.Day<span class="glance-date">@day.Date</span></h3>
                         <ul class="glance-list">
-                            @foreach (var item in day.Items)
+                        @* The same screening the planner does: a guest sees "Games", not which
+                           one. Leaving this list alone would give away on the front page exactly
+                           what the schedule tab is being careful about. *@
+                            @foreach (var item in (CanEdit ? day.Items : GuestSchedule.Screen(day.Items)))
                             {
                                 <li @key="item.Id">
                                     <span class="gl-time">@GlanceTime(item)</span>

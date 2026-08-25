@@ -565,14 +565,9 @@
                                 var riders = RidersFrom(leg.From);
                                 <li @key="leg.From" class="@(riders > 0 ? "is-live" : null)">
                                     <b>@leg.From</b> — @leg.Duration
-                                    @if (riders > 0)
-                                    {
-                                        <span class="drive-count">@riders</span>
-                                    }
                                 </li>
                             }
                         </ul>
-                        <p class="muted tiny mt">Counts follow the "leaving from" column below.</p>
                     </div>
                 </div>
 
@@ -597,19 +592,16 @@
                             <span class="car-key-swatch" aria-hidden="true"></span>
                             <span class="car-key-people">@string.Join(" · ", group.People)</span>
                             <span class="car-key-from">@OriginSummary(group.Slot)</span>
-                            <span class="car-key-count">@group.People.Count</span>
                         </div>
                     }
 
                     @if (Unassigned.Count > 0)
                     {
-                        @* No roll call. Two dozen names here just restated the table below; the
-                           count is the only fact this row owes anyone. *@
+                        @* No roll call — two dozen names here just restated the table below.
+                           This row is the legend entry for the blank swatch, nothing more. *@
                         <div class="car-key-row is-unassigned">
                             <span class="car-key-swatch" aria-hidden="true"></span>
                             <span class="car-key-people"><b>No car yet</b></span>
-                            <span class="car-key-from"></span>
-                            <span class="car-key-count">@Unassigned.Count</span>
                         </div>
                     }
                 </div>

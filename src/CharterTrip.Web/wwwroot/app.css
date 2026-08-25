@@ -1871,7 +1871,7 @@ pre.code {
   text-transform: uppercase; color: var(--accent, var(--gold));
 }
 .car-key-row {
-  display: grid; grid-template-columns: 14px auto minmax(0, 1fr) auto;
+  display: grid; grid-template-columns: 14px auto minmax(0, 1fr);
   gap: 12px; align-items: center; padding: 7px 0;
   border-bottom: 1px solid var(--line-soft);
 }
@@ -1886,10 +1886,6 @@ pre.code {
   text-transform: uppercase; color: var(--car, var(--text)); white-space: nowrap;
 }
 .car-key-people { color: var(--text-dim); font-size: 0.813rem; }
-.car-key-count {
-  font-family: var(--display); font-size: 0.813rem; color: var(--text-faint);
-  min-width: 2ch; text-align: right;
-}
 .car-key-row.is-unassigned .car-key-swatch {
   background: repeating-linear-gradient(45deg, var(--line) 0 3px, transparent 3px 6px);
 }
@@ -1928,7 +1924,6 @@ pre.code {
 
 @media (max-width: 620px) {
   .car-key-row { grid-template-columns: 14px auto 1fr; }
-  .car-key-count { display: none; }
 }
 
 /* ------------------------------------------------- carpool colour picker -- */
@@ -1974,7 +1969,7 @@ pre.code {
 .car-backdrop { position: fixed; inset: 0; z-index: 20; }
 
 /* The key lost its name column when cars stopped having names — the people are the label. */
-.car-key-row { grid-template-columns: 14px minmax(0, 1fr) auto; }
+.car-key-row { grid-template-columns: 14px minmax(0, 1fr); }
 .car-key-row.is-unassigned .car-key-people b { color: var(--text-faint); font-weight: 600; }
 
 @media (max-width: 620px) {
@@ -2245,15 +2240,10 @@ pre.code {
 
 /* The key is sized to its contents now — stretched across the panel it was mostly empty rail. */
 .car-key { display: inline-block; min-width: min(100%, 420px); max-width: 100%; }
-.car-key-row { grid-template-columns: 14px auto minmax(0, 1fr) auto; column-gap: 14px; }
+.car-key-row { grid-template-columns: 14px auto minmax(0, 1fr); column-gap: 14px; }
 .car-key-from { color: var(--text-faint); font-size: 0.75rem; text-align: right; }
 
 /* Drive times that somebody is actually driving. */
-.drive-count {
-  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
-  background: var(--accent-soft, rgba(74,127,214,.14)); color: var(--accent, var(--sapphire));
-  font-size: 0.656rem; font-weight: 700;
-}
 .plain li.is-live b { color: var(--accent, var(--sapphire)); }
 
 /* --- group-by control --------------------------------------------------- */
@@ -2301,7 +2291,6 @@ pre.code {
   text-transform: uppercase; color: var(--car, var(--text)); flex: 1 1 auto; min-width: 0;
 }
 .tt-card:not(.is-compact) .tt-title { color: var(--text-dim); }
-.tt-count { font-family: var(--display); font-size: 0.813rem; color: var(--text-faint); }
 
 .tt-scroll { overflow-x: auto; }
 .tt-table { background: transparent; }
@@ -2334,7 +2323,7 @@ pre.code {
 .car-palette { position: fixed; top: 0; left: 0; }
 
 @media (max-width: 620px) {
-  .car-key-row { grid-template-columns: 14px 1fr auto; }
+  .car-key-row { grid-template-columns: 14px 1fr; }
   .car-key-from { display: none; }
   .tt-row { grid-template-columns: 1fr; }
 }

@@ -5,8 +5,8 @@
    same sortable header, the same colour picker and the same dropdowns. Rendering that markup
    once and passing the group in is the only way those stay identical.
 
-   All state lives in the parent — the sort direction is shared across every table on the page,
-   and so is the open palette, because two palettes open at once would be nonsense. *@
+   All state lives in the parent: the sort direction per table, and the open palette, which is
+   shared across all of them because two palettes open at once would be nonsense. *@
 
 <div class="tt-card @(Compact ? "is-compact" : null)" style="--car:@(Color ?? "transparent")">
 
@@ -15,7 +15,6 @@
         <header class="tt-head">
             <span class="tt-swatch" aria-hidden="true"></span>
             <span class="tt-title">@Title</span>
-            <span class="tt-count">@People.Count</span>
         </header>
     }
 

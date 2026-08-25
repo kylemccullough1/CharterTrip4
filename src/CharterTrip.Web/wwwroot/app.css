@@ -2530,3 +2530,7 @@ pre.code {
   text-underline-offset: 3px;
 }
 .map-line:hover { color: var(--accent, var(--gold-light)); text-decoration-color: currentColor; }
+
+/* The street address under the Where row: its own line, quieter than the name of the house. */
+.ess-address { display: block; margin-top: 3px; color: var(--text-dim); font-size: 0.844rem; }
+.when-sep { color: var(--text-faint); }

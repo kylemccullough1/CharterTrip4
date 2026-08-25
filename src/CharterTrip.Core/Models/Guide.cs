@@ -10,6 +10,14 @@ namespace CharterTrip.Core.Models;
 /// </summary>
 public sealed class GuestGuide
 {
+    /// <summary>
+    /// The page's own words: headings, subtitles, the odd line of explanation. Keyed rather than
+    /// given a property each, so that making one more piece of text editable is a call site and
+    /// a fallback rather than a model change and a migration. A missing key means "nobody has
+    /// changed this one", and the page uses the wording it shipped with.
+    /// </summary>
+    public Dictionary<string, string> Labels { get; set; } = new(StringComparer.Ordinal);
+
     /// <summary>The where/when/what-is-covered table. Order is the order it is shown in.</summary>
     public List<GuideFact> Essentials { get; set; } = [];
 

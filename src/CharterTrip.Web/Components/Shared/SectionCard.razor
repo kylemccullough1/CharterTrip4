@@ -3,8 +3,22 @@
 <section class="section @CssClass">
     <div class="section-head">
         <div>
-            <h2 class="section-title">@Title</h2>
-            @if (!string.IsNullOrWhiteSpace(Subtitle))
+            <h2 class="section-title">
+                @if (TitleContent is not null)
+                {
+                    @TitleContent
+                }
+                else
+                {
+                    @Title
+                }
+            </h2>
+
+            @if (SubtitleContent is not null)
+            {
+                <p class="section-sub">@SubtitleContent</p>
+            }
+            else if (!string.IsNullOrWhiteSpace(Subtitle))
             {
                 <p class="section-sub">@Subtitle</p>
             }
@@ -21,8 +35,16 @@
     /// <summary>Extra classes on the section itself, for callers that need to size or place it.</summary>
     [Parameter] public string? CssClass { get; set; }
 
-    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Title { get; set; } = string.Empty;
     [Parameter] public string? Subtitle { get; set; }
+
+    /// <summary>
+    /// A title that is more than a string — an editable one, in practice. Wins over
+    /// <see cref="Title"/>; the same for <see cref="SubtitleContent"/> over <see cref="Subtitle"/>.
+    /// </summary>
+    [Parameter] public RenderFragment? TitleContent { get; set; }
+    [Parameter] public RenderFragment? SubtitleContent { get; set; }
+
     [Parameter] public RenderFragment? Actions { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 }

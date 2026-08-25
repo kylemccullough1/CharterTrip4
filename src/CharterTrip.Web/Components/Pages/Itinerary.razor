@@ -14,7 +14,13 @@
        different depths, so the card total drifted by a row or two between tabs and the divider
        below moved with it. Sizing the card and letting the body take whatever is left makes
        every tab end on exactly the same line. *@
-    <SectionCard CssClass="guide-card" Title="@TabTitle" Subtitle="@TabSubtitle">
+    <SectionCard CssClass="guide-card">
+        <TitleContent>
+            <EditableLabel For="@($"tab.{_tab}.title")" Fallback="@TabTitle" />
+        </TitleContent>
+        <SubtitleContent>
+            <EditableLabel For="@($"tab.{_tab}.sub")" Fallback="@TabSubtitle" Multiline="true" />
+        </SubtitleContent>
         <Actions>
             @* The planner's tools belong to the planner. Showing zoom controls next to the menu
                would be nonsense, so they come and go with their own tab. *@
@@ -72,7 +78,13 @@
                     {
                         <section class="ess-group" @key="group.Name">
                             <header class="ess-group-head">
-                                <h4 class="ess-group-name">@group.Name</h4>
+                                @* Renaming the heading renames the group, which is a real operation:
+                                   the group only exists as a string repeated on each of its facts. *@
+                                <h4 class="ess-group-name">
+                                    <EditableText Value="@group.Name" ReadOnly="@(!CanEdit)"
+                                                  ValueChanged="@(v => RenameGroupAsync(group.Name, v))"
+                                                  Placeholder="group" />
+                                </h4>
                                 @if (CanEdit)
                                 {
                                     <IconButton Icon="IconButtonIcon.Plus"
@@ -94,11 +106,7 @@
                                                           Placeholder="label" />
                                         </dt>
                                         <dd>
-                                            @* The Where line is itself the map link — for anyone who cannot edit
-                                               it. A committee member still clicks it to edit, so they keep
-                                               the small link below instead; one click cannot do both. *@
                                             <EditableText Value="@fact.Value" Multiline="true" ReadOnly="@(!CanEdit)"
-                                                          Href="@MapHrefFor(fact)"
                                                           ValueChanged="@(v => EditFactAsync(index, f => f.Value = v))"
                                                           Placeholder="—" />
 
@@ -107,10 +115,25 @@
                                                 <span class="fact-flag">bring it yourself</span>
                                             }
 
-                                            @if (CanEdit && MapHrefFor(fact) is { } href)
+                                            @* The Where row carries the street address on its own line, the way
+                                               the Destination card does, with the map on the address rather than
+                                               on the name of the house. Editable, because everything here is —
+                                               and a committee member editing it is the one case where the line
+                                               cannot also be a link. *@
+                                            @if (IsWhereFact(fact))
                                             {
-                                                <a class="map-link" href="@href"
-                                                   target="_blank" rel="noopener">Open in Maps</a>
+                                                <span class="ess-address">
+                                                    <EditableText Value="@Travel.Address" ReadOnly="@(!CanEdit)"
+                                                                  Href="@MapHref"
+                                                                  ValueChanged="EditAddressAsync"
+                                                                  Placeholder="street address" />
+                                                </span>
+
+                                                @if (CanEdit && MapHref is { } href)
+                                                {
+                                                    <a class="map-link" href="@href"
+                                                       target="_blank" rel="noopener">Open in Maps</a>
+                                                }
                                             }
                                         </dd>
 
@@ -129,7 +152,7 @@
                        Venue page and this one can never disagree about how far Walmart is. *@
                     <section class="ess-group">
                         <header class="ess-group-head">
-                            <h4 class="ess-group-name">Nearby</h4>
+                            <h4 class="ess-group-name"><EditableLabel For="ess.nearby" Fallback="Nearby" /></h4>
                             @if (CanEdit)
                             {
                                 <IconButton Icon="IconButtonIcon.Plus"
@@ -176,7 +199,7 @@
                    and underneath a full-height schedule they were off the bottom of the panel. *@
                 <div class="note-grid schedule-lede">
                     <div class="card">
-                        <h4>Saturday night</h4>
+                        <h4><EditableLabel For="schedule.saturdayNight" Fallback="Saturday night" /></h4>
                         <p>
                             <EditableText Value="@Guide.SaturdayNight" Multiline="true" Rows="3"
                                           ReadOnly="@(!CanEdit)"
@@ -185,7 +208,7 @@
                         </p>
                     </div>
                     <div class="card is-dresscode">
-                        <h4>Dress code</h4>
+                        <h4><EditableLabel For="schedule.dressCode" Fallback="Dress code" /></h4>
                         <p>
                             <EditableText Value="@Guide.DressCode" Multiline="true" Rows="3"
                                           ReadOnly="@(!CanEdit)"
@@ -504,7 +527,7 @@
                 @if (CanEdit || Guide.Staples.Count > 0)
                 {
                 <div class="menu-staples">
-                    <h4>All weekend</h4>
+                    <h4><EditableLabel For="menu.staples" Fallback="All weekend" /></h4>
                     <div class="staple-row">
                         @foreach (var staple in Guide.Staples)
                         {
@@ -546,19 +569,39 @@
                    per-person rows below are editable. *@
                 <div class="note-grid travel-facts">
                     <div class="card">
-                        <h4>Destination</h4>
-                        <p class="strong">@Travel.Destination</p>
-                        @* The address line is the link. Nothing on this card is editable, so there is
-                           no gesture to compete with. *@
-                        <p>
-                            <a class="map-line" href="@MapUrl(Travel.Address)"
-                               target="_blank" rel="noopener">@Travel.Address</a>
+                        <h4><EditableLabel For="travel.destination" Fallback="Destination" /></h4>
+                        <p class="strong">
+                            <EditableText Value="@Travel.Destination" ReadOnly="@(!CanEdit)"
+                                          ValueChanged="EditDestinationAsync"
+                                          Placeholder="the house" />
                         </p>
+                        @* The address line is the link for anyone who cannot edit it. A committee
+                           member clicks it to edit instead, and gets the small link below. *@
+                        <p>
+                            <EditableText Value="@Travel.Address" ReadOnly="@(!CanEdit)"
+                                          Href="@MapHref"
+                                          ValueChanged="EditAddressAsync"
+                                          Placeholder="street address" />
+                        </p>
+                        @if (CanEdit && MapHref is { } destHref)
+                        {
+                            <a class="map-link" href="@destHref" target="_blank" rel="noopener">Open in Maps</a>
+                        }
                         <dl class="travel-when">
-                            <dt>Check-in</dt>
-                            <dd>@CheckInLine</dd>
-                            <dt>Check-out</dt>
-                            <dd>@CheckOutLine</dd>
+                            <dt><EditableLabel For="travel.checkIn" Fallback="Check-in" /></dt>
+                            <dd>
+                                @CheckInDay<span class="when-sep"> · </span>
+                                <EditableText Value="@Travel.CheckInTime" ReadOnly="@(!CanEdit)"
+                                              ValueChanged="@(v => EditTravelAsync(t => t.CheckInTime = v))"
+                                              Placeholder="time" />
+                            </dd>
+                            <dt><EditableLabel For="travel.checkOut" Fallback="Check-out" /></dt>
+                            <dd>
+                                @CheckOutDay<span class="when-sep"> · </span>
+                                <EditableText Value="@Travel.CheckOutTime" ReadOnly="@(!CanEdit)"
+                                              ValueChanged="@(v => EditTravelAsync(t => t.CheckOutTime = v))"
+                                              Placeholder="time" />
+                            </dd>
                         </dl>
                     </div>
                     @* The carpools sit beside the destination rather than under it: the drive
@@ -566,8 +609,9 @@
                        is worth more there than more empty rail. *@
                     <div class="car-key">
                         <div class="car-key-head">
-                            <span>Carpools</span>
-                            <span class="muted tiny">Attach a color to your row to associate yourself with your car.</span>
+                            <span><EditableLabel For="travel.carpools" Fallback="Carpools" /></span>
+                            <span class="muted tiny"><EditableLabel For="travel.carpoolsHint"
+                                                                    Fallback="Attach a color to your row to associate yourself with your car." /></span>
                         </div>
 
                         @if (CarGroups.Count == 0)
@@ -683,8 +727,14 @@
        with the deco diamond on it — says otherwise. *@
     <div class="section-divider" aria-hidden="true"></div>
 
-    <SectionCard Title="What to bring"
-                 Subtitle="Ticked boxes are saved on this device only — nobody else sees your list.">
+    <SectionCard>
+        <TitleContent>
+            <EditableLabel For="pack.title" Fallback="What to bring" />
+        </TitleContent>
+        <SubtitleContent>
+            <EditableLabel For="pack.sub" Multiline="true"
+                           Fallback="Ticked boxes are saved on this device only — nobody else sees your list." />
+        </SubtitleContent>
         <Actions>
             <span class="muted tiny">@PackedCount of @PackTotal packed</span>
             @if (PackedCount > 0)
@@ -748,7 +798,7 @@
 
                 <div class="card pack-group is-car">
                     <header class="pack-head">
-                        <h4>What every car brings</h4>
+                        <h4><EditableLabel For="pack.carBrings" Fallback="What every car brings" /></h4>
                         @if (CanEdit)
                         {
                             <IconButton Icon="IconButtonIcon.Plus"
@@ -872,6 +922,23 @@
     private Task EditGuideAsync(Action<GuestGuide> apply) =>
         Store.MutateAsync(t => apply(t.Guide), TripArea.All);
 
+    /// <summary>
+    /// Renames a group of essentials. A group is not a thing in the model — it is a string every
+    /// fact in it carries — so renaming the heading means rewriting each of them, and doing it in
+    /// one mutation so the page never renders a half-renamed group.
+    /// </summary>
+    private Task RenameGroupAsync(string from, string to)
+    {
+        var name = (to ?? "").Trim();
+        if (name.Length == 0 || name == from) return Task.CompletedTask;
+
+        return Store.MutateAsync(t =>
+        {
+            foreach (var fact in t.Guide.Essentials.Where(f => f.Group == from))
+                fact.Group = name;
+        }, TripArea.All);
+    }
+
     /// <summary>Index-guarded inside the mutation, so a card deleted mid-edit is a no-op, not a crash.</summary>
     private Task EditFactAsync(int index, Action<GuideFact> apply) =>
         Store.MutateAsync(t =>
@@ -960,9 +1027,12 @@
     private static bool IsWhereFact(GuideFact fact) =>
         fact.Label.Trim().Equals("Where", StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>The map link for a fact, when it is the one that names where the house is.</summary>
-    private string? MapHrefFor(GuideFact fact) =>
-        IsWhereFact(fact) && !string.IsNullOrWhiteSpace(Travel.Address) ? MapUrl(Travel.Address) : null;
+    /// <summary>The map link for the house, or null when nobody has typed an address yet.</summary>
+    private string? MapHref =>
+        string.IsNullOrWhiteSpace(Travel.Address) ? null : MapUrl(Travel.Address);
+
+    private Task EditAddressAsync(string value) =>
+        EditTravelAsync(t => t.Address = value.Trim());
 
     private static string MapUrl(string address) =>
         "https://www.google.com/maps/search/?api=1&query=" + Uri.EscapeDataString(address);
@@ -1089,14 +1159,13 @@
     /// The dates come from the trip itself rather than being typed alongside the times, so a
     /// check-in date can never drift from the weekend the rest of the site is running on.
     /// </summary>
-    private string CheckInLine => WhenLine(Trip.Trip.StartsAt, Travel.CheckInTime);
-    private string CheckOutLine => WhenLine(Trip.Trip.EndsAt, Travel.CheckOutTime);
+    // The day comes from the trip's own dates and the time is typed, so they are shown as two
+    // things rather than one string — the time half has to be editable on its own.
+    private string CheckInDay => Trip.Trip.StartsAt.ToString("dddd, MMMM d");
+    private string CheckOutDay => Trip.Trip.EndsAt.ToString("dddd, MMMM d");
 
-    private static string WhenLine(DateTimeOffset date, string time)
-    {
-        var day = date.ToString("dddd, MMMM d");
-        return string.IsNullOrWhiteSpace(time) ? day : $"{day} · {time}";
-    }
+    private Task EditDestinationAsync(string value) =>
+        EditTravelAsync(t => t.Destination = value.Trim());
 
     /// <summary>One carpool: its colour, and — the part that matters — who is in it.</summary>
     private sealed record CarGroup(int Slot, string Color, List<string> People);

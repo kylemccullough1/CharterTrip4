@@ -1,0 +1,48 @@
+@inherits TripAwareComponent
+
+@* A heading or a line of explanation that the committee can rewrite in place.
+
+   The wording the page ships with is the fallback, not the stored value: nothing is written to
+   trip.json until somebody actually changes it, so a heading nobody has touched keeps improving
+   with the code rather than being frozen at whatever it said the day this shipped. Clearing an
+   edited one puts the original back. *@
+
+<EditableText Value="@Current"
+              ReadOnly="@(!CanEdit)"
+              Multiline="@Multiline"
+              Rows="@Rows"
+              CssClass="@CssClass"
+              Placeholder="@Fallback"
+              ValueChanged="SetAsync" />
+
+@code {
+    protected override TripArea Watching => TripArea.All;
+
+    /// <summary>Stable key for this piece of text. Not shown to anyone.</summary>
+    [Parameter, EditorRequired] public string For { get; set; } = "";
+
+    /// <summary>The wording the page ships with, used until somebody edits it.</summary>
+    [Parameter, EditorRequired] public string Fallback { get; set; } = "";
+
+    [Parameter] public bool Multiline { get; set; }
+    [Parameter] public int Rows { get; set; } = 2;
+    [Parameter] public string? CssClass { get; set; }
+
+    private string Current =>
+        Trip.Guide.Labels.TryGetValue(For, out var stored) && !string.IsNullOrWhiteSpace(stored)
+            ? stored
+            : Fallback;
+
+    private Task SetAsync(string value)
+    {
+        var trimmed = (value ?? "").Trim();
+
+        return MutateAsync(t =>
+        {
+            // Back to the shipped wording rather than storing a copy of it, so the row does not
+            // accumulate entries that say exactly what the code already says.
+            if (trimmed.Length == 0 || trimmed == Fallback) t.Guide.Labels.Remove(For);
+            else t.Guide.Labels[For] = trimmed;
+        });
+    }
+}

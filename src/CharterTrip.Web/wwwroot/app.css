@@ -2313,7 +2313,6 @@ pre.code {
 }
 .tt-select:hover { border-color: var(--line); background: var(--panel-2); }
 .tt-select:focus-visible { outline: 2px solid var(--accent, var(--gold)); outline-offset: 1px; }
-.tt-other { margin-top: 5px; width: 100%; font-size: 0.781rem; }
 .tt-drive { display: block; margin-top: 3px; font-size: 0.656rem; color: var(--text-faint); }
 
 /* --- the palette, freed from its container ------------------------------ */
@@ -2338,15 +2337,15 @@ pre.code {
    the two free-text ones split everything left over. */
 .tt-card:not(.is-compact) .tt-c-who  { width: 9rem; }
 .tt-card:not(.is-compact) .tt-c-from { width: 9rem; }
-.tt-card:not(.is-compact) .tt-c-when { width: 10rem; }
+.tt-card:not(.is-compact) .tt-c-when { width: 13rem; }
 
 /* A group card is about a third of that, so its columns are shares of the card instead, and the
    type steps down a size so five columns still fit without a sideways scroll. */
-.tt-card.is-compact .tt-c-who   { width: 19%; }
+.tt-card.is-compact .tt-c-who   { width: 20%; }
 .tt-card.is-compact .tt-c-from  { width: 20%; }
-.tt-card.is-compact .tt-c-when  { width: 25%; }
+.tt-card.is-compact .tt-c-when  { width: 22%; }
 .tt-card.is-compact .tt-c-diet,
-.tt-card.is-compact .tt-c-notes { width: 18%; }
+.tt-card.is-compact .tt-c-notes { width: 19%; }
 
 .tt-card.is-compact .tt-table { font-size: 0.75rem; }
 .tt-card.is-compact .tt-select { font-size: 0.7rem; padding: 4px 5px; }
@@ -2369,10 +2368,10 @@ pre.code {
    what that wrapper has been there for all along. */
 @media (max-width: 620px) {
   .tt-table { min-width: 28rem; font-size: 0.75rem; }
-  .tt-card:not(.is-compact) .tt-c-who  { width: 19%; }
+  .tt-card:not(.is-compact) .tt-c-who  { width: 20%; }
   .tt-card:not(.is-compact) .tt-c-from { width: 20%; }
-  .tt-card:not(.is-compact) .tt-c-when { width: 25%; }
-  .tt-c-diet, .tt-c-notes { width: 18%; }
+  .tt-card:not(.is-compact) .tt-c-when { width: 22%; }
+  .tt-c-diet, .tt-c-notes { width: 19%; }
   .tt-table th { letter-spacing: .03em; }
   .tt-select { font-size: 0.7rem; padding: 4px 5px; }
 }
@@ -2432,3 +2431,29 @@ pre.code {
 .login-submit { margin-top: .4rem; }
 .login-back { color: var(--text-faint); font-size: 0.75rem; text-decoration: none; }
 .login-back:hover { color: var(--text-dim); }
+
+/* ================================================== travel, fifth pass == */
+/* The departure time is two controls again — a 12-hour clock and the half of the day — so the
+   column has to hold both. The AM/PM box gets a stated minimum: at the width it inherited from
+   the clock it was about forty pixels, which is the arrow and half a letter. */
+.tt-when { display: flex; gap: 5px; align-items: center; }
+.tt-when .tt-clock { flex: 1 1 auto; min-width: 0; }
+.tt-meridiem { flex: 0 0 auto; width: auto; min-width: 3.4rem; max-width: 5rem; }
+
+/* Typing a city happens where the dropdown was, so it is the same box. */
+.tt-city { font-family: inherit; }
+.tt-city::placeholder { color: var(--text-faint); }
+.drive-dur::before { content: "—"; margin: 0 .4em; color: var(--text-faint); }
+.drive-dur.is-unknown { color: var(--text-faint); font-size: 0.75rem; }
+
+/* Side by side, the clock and the AM/PM want about 150px of a 493px card, and the four other
+   columns cannot spare it — names started clipping. Stacked, each control gets the column's full
+   width and the column needs a third less of it. The full-width table has room and keeps them
+   on one line. */
+.tt-card.is-compact .tt-when { flex-direction: column; align-items: stretch; gap: 4px; }
+.tt-card.is-compact .tt-meridiem { min-width: 0; max-width: none; width: 100%; }
+
+@media (max-width: 620px) {
+  .tt-when { flex-direction: column; align-items: stretch; gap: 4px; }
+  .tt-meridiem { min-width: 0; max-width: none; width: 100%; }
+}

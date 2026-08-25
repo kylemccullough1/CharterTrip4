@@ -83,21 +83,27 @@
                     <td>
                         @if (CanEdit)
                         {
-                            <select class="tt-select" value="@OriginChoice(row, person.Id)"
-                                    @onchange="e => OriginPicked(person.Id, e.Value?.ToString())">
-                                <option value="">—</option>
-                                @foreach (var city in Origins)
-                                {
-                                    <option value="@city">@city</option>
-                                }
-                                <option value="@OtherOption">Somewhere else…</option>
-                            </select>
-
-                            @if (OriginChoice(row, person.Id) == OtherOption)
+                            @* "Somewhere else" is a mode, not an answer. Picking it turns this cell
+                               into a text box in the same place the dropdown was — type the city
+                               over the placeholder and it saves. The parent then knows about that
+                               city, so it comes back as an ordinary option next time. *@
+                            @if (IsTypingCity(row, person.Id))
                             {
-                                <input class="inline-edit tt-other" placeholder="which city?"
+                                <input class="tt-select tt-city" placeholder="Somewhere else…"
                                        value="@row.LeavingFrom"
-                                       @onchange="e => OnEdit(person.Id, r => r.LeavingFrom = (e.Value?.ToString() ?? string.Empty).Trim())" />
+                                       @onchange="e => CityTypedAsync(person.Id, e.Value?.ToString())" />
+                            }
+                            else
+                            {
+                                <select class="tt-select" value="@row.LeavingFrom"
+                                        @onchange="e => OriginPicked(person.Id, e.Value?.ToString())">
+                                    <option value="">—</option>
+                                    @foreach (var city in Origins)
+                                    {
+                                        <option value="@city">@city</option>
+                                    }
+                                    <option value="@OtherOption">Somewhere else…</option>
+                                </select>
                             }
                         }
                         else
@@ -114,33 +120,36 @@
                     <td>
                         @if (CanEdit)
                         {
-                            @* One dropdown, not a clock and an AM/PM beside it. Two controls in a
-                               column this narrow left the second one squeezed to about forty
-                               pixels, and picking a time meant two interactions to say one thing.
-                               The optgroups keep the list navigable at 48 entries. *@
-                            <select class="tt-select" value="@row.DepartAt"
-                                    @onchange="e => DepartPicked(person.Id, e.Value?.ToString())">
-                                <option value="">—</option>
-                                <option value="@AnytimeOption">Anytime</option>
-                                @* Anything typed before the dropdowns existed keeps its own
-                                   option rather than being silently rounded to a clock time. *@
-                                @if (IsFreeText(row.DepartAt))
+                            var (clock, meridiem) = SplitDepart(row.DepartAt);
+
+                            <div class="tt-when">
+                                <select class="tt-select tt-clock" value="@clock"
+                                        @onchange="e => ClockPicked(person.Id, e.Value?.ToString(), meridiem)">
+                                    <option value="">—</option>
+                                    <option value="@AnytimeOption">Anytime</option>
+                                    @* Anything typed before the dropdowns existed keeps its own
+                                       option rather than being silently rounded to a clock time. *@
+                                    @if (IsFreeText(clock))
+                                    {
+                                        <option value="@clock">@clock</option>
+                                    }
+                                    @foreach (var time in Clocks)
+                                    {
+                                        <option value="@time">@time</option>
+                                    }
+                                </select>
+
+                                @* Only a clock time has a half of the day. "Anytime" does not, and
+                                   neither does whatever somebody typed in 2025. *@
+                                @if (Clocks.Contains(clock))
                                 {
-                                    <option value="@row.DepartAt">@row.DepartAt</option>
+                                    <select class="tt-select tt-meridiem" value="@meridiem"
+                                            @onchange="e => MeridiemPicked(person.Id, clock, e.Value?.ToString())">
+                                        <option value="AM">AM</option>
+                                        <option value="PM">PM</option>
+                                    </select>
                                 }
-                                <optgroup label="AM">
-                                    @foreach (var time in MorningTimes)
-                                    {
-                                        <option value="@time">@time</option>
-                                    }
-                                </optgroup>
-                                <optgroup label="PM">
-                                    @foreach (var time in AfternoonTimes)
-                                    {
-                                        <option value="@time">@time</option>
-                                    }
-                                </optgroup>
-                            </select>
+                            </div>
                         }
                         else
                         {
@@ -192,6 +201,12 @@
     /// <summary>People who chose "somewhere else" but have not typed a city yet.</summary>
     [Parameter, EditorRequired] public HashSet<string> CustomOrigins { get; set; } = [];
 
+    /// <summary>
+    /// A city somebody typed. The parent registers it — the drive-times card and everyone else's
+    /// dropdown both come from that list — and sets it on the row.
+    /// </summary>
+    [Parameter, EditorRequired] public Func<string, string, Task> OnCityAdded { get; set; } = default!;
+
     [Parameter] public bool CanEdit { get; set; }
     [Parameter] public bool Ascending { get; set; } = true;
     [Parameter] public EventCallback OnToggleSort { get; set; }
@@ -206,25 +221,26 @@
     // ---------------------------------------------------------------- origin
 
     /// <summary>
-    /// Which option the dropdown should show. A city we know about selects itself; anything else
-    /// non-empty is a hand-typed place and counts as "somewhere else", as does an explicit pick
-    /// that has not been filled in yet.
+    /// Whether this cell is a text box rather than a dropdown.
+    ///
+    /// Two ways in: they just picked "Somewhere else" and have nothing typed yet, or their row
+    /// already holds a city nobody has registered — old data, or a city added and then removed
+    /// from the drive-times list.
     /// </summary>
-    private string OriginChoice(TravelRow row, string personId)
+    private bool IsTypingCity(TravelRow row, string personId)
     {
-        if (Origins.Contains(row.LeavingFrom, StringComparer.OrdinalIgnoreCase))
-            return Origins.First(c => c.Equals(row.LeavingFrom, StringComparison.OrdinalIgnoreCase));
+        if (CustomOrigins.Contains(personId)) return true;
 
-        if (!string.IsNullOrWhiteSpace(row.LeavingFrom)) return OtherOption;
-
-        return CustomOrigins.Contains(personId) ? OtherOption : "";
+        var city = row.LeavingFrom.Trim();
+        return city.Length > 0 && !Origins.Contains(city, StringComparer.OrdinalIgnoreCase);
     }
 
     private async Task OriginPicked(string personId, string? choice)
     {
         if (choice == OtherOption)
         {
-            // Remember the mode so the text box survives a render with nothing typed in it yet.
+            // Remember the mode, because with nothing typed yet there is nothing on the row to
+            // tell the next render that this cell should still be a text box.
             CustomOrigins.Add(personId);
             await OnEdit(personId, r => r.LeavingFrom = "");
             return;
@@ -234,32 +250,66 @@
         await OnEdit(personId, r => r.LeavingFrom = choice ?? "");
     }
 
-    // ---------------------------------------------------------------- depart
-
-    /// <summary>Half-hour marks across a 12-hour clock, without the half of the day.</summary>
-    private static IEnumerable<string> HalfHours() =>
-        Enumerable.Range(0, 24)
-            .Select(i => $"{(i / 2 == 0 ? 12 : i / 2)}:{(i % 2 == 0 ? "00" : "30")}");
-
-    private static readonly string[] MorningTimes = HalfHours().Select(t => $"{t} AM").ToArray();
-    private static readonly string[] AfternoonTimes = HalfHours().Select(t => $"{t} PM").ToArray();
-
-    /// <summary>Every time the dropdown offers, for telling a picked time from a typed one.</summary>
-    private static readonly HashSet<string> KnownTimes =
-        new(MorningTimes.Concat(AfternoonTimes), StringComparer.OrdinalIgnoreCase);
-
     /// <summary>
-    /// Something written before the dropdown existed — "Morning?", "12:30-1". It keeps its own
-    /// option so choosing nothing does not quietly round it to a clock time.
+    /// A typed city. Registering it is the parent's job — it goes on the drive-times card and
+    /// into everyone else's dropdown — and emptying the box is how you get back to the dropdown.
     /// </summary>
-    private static bool IsFreeText(string value)
+    private async Task CityTypedAsync(string personId, string? typed)
     {
-        var v = (value ?? "").Trim();
-        return v.Length > 0
-               && !v.Equals(AnytimeOption, StringComparison.OrdinalIgnoreCase)
-               && !KnownTimes.Contains(v);
+        var city = (typed ?? "").Trim();
+        CustomOrigins.Remove(personId);
+
+        if (city.Length == 0)
+        {
+            await OnEdit(personId, r => r.LeavingFrom = "");
+            return;
+        }
+
+        await OnCityAdded(personId, city);
     }
 
-    private Task DepartPicked(string personId, string? value) =>
-        OnEdit(personId, r => r.DepartAt = value ?? "");
+    // ---------------------------------------------------------------- depart
+
+    /// <summary>Half-hour marks across a 12-hour clock. The half of the day is its own control.</summary>
+    private static readonly string[] Clocks =
+        Enumerable.Range(0, 24)
+            .Select(i => $"{(i / 2 == 0 ? 12 : i / 2)}:{(i % 2 == 0 ? "00" : "30")}")
+            .ToArray();
+
+    /// <summary>Split "1:30 PM" into its two controls. "Anytime" and free text have no meridiem.</summary>
+    private static (string Clock, string Meridiem) SplitDepart(string value)
+    {
+        var v = (value ?? "").Trim();
+        if (v.Length == 0) return ("", "");
+        if (v.Equals(AnytimeOption, StringComparison.OrdinalIgnoreCase)) return (AnytimeOption, "");
+
+        var parts = v.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 2 && parts[1] is "AM" or "PM" && Clocks.Contains(parts[0]))
+            return (parts[0], parts[1]);
+
+        return (v, "");
+    }
+
+    /// <summary>
+    /// Something written before the dropdowns existed — "Morning?", "12:30-1". It keeps its own
+    /// option so choosing nothing does not quietly round it to a clock time.
+    /// </summary>
+    private static bool IsFreeText(string clock) =>
+        clock.Length > 0 && clock != AnytimeOption && !Clocks.Contains(clock);
+
+    private Task ClockPicked(string personId, string? clock, string meridiem)
+    {
+        var picked = clock ?? "";
+
+        if (picked.Length == 0 || picked == AnytimeOption || IsFreeText(picked))
+            return OnEdit(personId, r => r.DepartAt = picked);
+
+        // A clock time needs a half of the day. Default to PM: this trip starts on a Friday
+        // afternoon and almost nobody is setting off before noon.
+        var half = meridiem is "AM" or "PM" ? meridiem : "PM";
+        return OnEdit(personId, r => r.DepartAt = $"{picked} {half}");
+    }
+
+    private Task MeridiemPicked(string personId, string clock, string? meridiem) =>
+        OnEdit(personId, r => r.DepartAt = $"{clock} {(meridiem is "AM" or "PM" ? meridiem : "PM")}");
 }

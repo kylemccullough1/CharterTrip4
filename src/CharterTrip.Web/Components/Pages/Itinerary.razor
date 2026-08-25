@@ -570,8 +570,11 @@
                             @foreach (var leg in Travel.DriveTimes)
                             {
                                 var riders = RidersFrom(leg.From);
+                                @* One expression rather than an @if around the text: Razor drops the
+                                   whitespace either side of a block, which glued the dash to the
+                                   city name. The separator is CSS now, so it cannot go missing. *@
                                 <li @key="leg.From" class="@(riders > 0 ? "is-live" : null)">
-                                    <b>@leg.From</b> — @leg.Duration
+                                    <b>@leg.From</b><span class="drive-dur @(string.IsNullOrWhiteSpace(leg.Duration) ? "is-unknown" : null)">@(string.IsNullOrWhiteSpace(leg.Duration) ? "drive time not set" : leg.Duration)</span>
                                 </li>
                             }
                         </ul>
@@ -666,6 +669,7 @@
                                          Origins="Origins"
                                          DriveTimeFor="DriveTimeFor"
                                          CustomOrigins="_customOrigins"
+                                         OnCityAdded="AddCityAsync"
                                          CanEdit="true"
                                          Ascending="AscendingFor(group.Key)"
                                          OnToggleSort="@(() => ToggleSort(group.Key))"
@@ -684,6 +688,7 @@
                                  Origins="Origins"
                                  DriveTimeFor="DriveTimeFor"
                                  CustomOrigins="_customOrigins"
+                                 OnCityAdded="AddCityAsync"
                                  CanEdit="true"
                                  Ascending="AscendingFor(UnplacedKey)"
                                  OnToggleSort="@(() => ToggleSort(UnplacedKey))"
@@ -1214,6 +1219,36 @@
     /// <summary>People who chose "somewhere else" and have not typed a city yet.</summary>
     private readonly HashSet<string> _customOrigins = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// Registers a city somebody typed into their row, then sets it on that row.
+    ///
+    /// Both halves matter. Adding it to the drive-times list is what puts it on the Drive times
+    /// card and into everyone else's dropdown — otherwise the next person from the same place has
+    /// to type it again, and the two spellings become two tables. The duration is left blank
+    /// because nobody here knows it; the card says so rather than inventing one.
+    /// </summary>
+    private Task AddCityAsync(string personId, string city)
+    {
+        var trimmed = city.Trim();
+
+        return Store.MutateAsync(t =>
+        {
+            var known = t.Travel.DriveTimes
+                .Any(d => d.From.Trim().Equals(trimmed, StringComparison.OrdinalIgnoreCase));
+
+            if (!known) t.Travel.DriveTimes.Add(new DriveTime { From = trimmed, Duration = "" });
+
+            var row = t.Travel.Rows.FirstOrDefault(r => r.PersonId == personId);
+            if (row is null)
+            {
+                row = new TravelRow { PersonId = personId };
+                t.Travel.Rows.Add(row);
+            }
+
+            row.LeavingFrom = trimmed;
+        }, TripArea.Itinerary);
+    }
+
     /// <summary>The cities we know a drive time for, alphabetised for the dropdown.</summary>
     private IReadOnlyList<string> Origins =>
         Travel.DriveTimes
@@ -1232,9 +1267,13 @@
     {
         if (string.IsNullOrWhiteSpace(city)) return null;
 
-        return Travel.DriveTimes
-            .FirstOrDefault(d => d.From.Equals(city.Trim(), StringComparison.OrdinalIgnoreCase))
+        var duration = Travel.DriveTimes
+            .FirstOrDefault(d => d.From.Trim().Equals(city.Trim(), StringComparison.OrdinalIgnoreCase))
             ?.Duration;
+
+        // A city somebody added has no duration yet, and an empty string beside a city name
+        // reads as a rendering bug. Nothing to say is said by saying nothing.
+        return string.IsNullOrWhiteSpace(duration) ? null : duration;
     }
 
     private int RidersFrom(string city) =>

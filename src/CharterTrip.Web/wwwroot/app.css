@@ -567,6 +567,10 @@ select.textfield { cursor: pointer; }
 .zoom-label { font-size: 0.688rem; color: var(--text-faint); min-width: 54px; text-align: center; }
 
 /* day tabs: phones only — desktop shows all three columns at once */
+/* The two cards that sit above the planner. On desktop the day tabs are hidden, so without a
+   margin here the dress code ran straight into the top of the schedule with nothing between. */
+.schedule-lede { margin-bottom: 1.4rem; }
+
 .planner-tabs { display: none; gap: 6px; margin-bottom: 12px; }
 .planner-tab {
   flex: 1; padding: 9px 10px; border-radius: var(--radius-sm);

@@ -28,6 +28,7 @@ public static class TripReplace
         target.Venue = source.Venue;
         target.Guide = source.Guide;
         target.Travel = source.Travel;
+        target.PlannerPxPerHour = source.PlannerPxPerHour;
 
         target.Slides = source.Slides;
         target.Teams = source.Teams;

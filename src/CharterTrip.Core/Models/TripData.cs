@@ -27,6 +27,15 @@ public sealed class TripData
     /// <summary>Who is driving from where, and with whom. See <see cref="TravelPlan"/>.</summary>
     public TravelPlan Travel { get; set; } = new();
 
+    /// <summary>
+    /// How tall an hour is drawn in the planner, in pixels.
+    ///
+    /// Stored rather than kept in the page because it is a decision about how the schedule
+    /// reads, not a per-visit preference — set it once and it is how the itinerary looks for
+    /// everyone, including after a reload. An older file without it keeps this default.
+    /// </summary>
+    public int PlannerPxPerHour { get; set; } = 64;
+
     public List<CarouselSlide> Slides { get; set; } = [];
     public List<Team> Teams { get; set; } = [];
     public List<RosterPerson> Roster { get; set; } = [];

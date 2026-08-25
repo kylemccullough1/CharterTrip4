@@ -22,21 +22,16 @@
             {
                 <div class="planner-tools">
                     <div class="zoom" role="group" aria-label="Zoom">
-                        <button class="mini-btn" title="Zoom out" disabled="@(_pxPerHour <= MinZoom)"
-                                @onclick="() => Zoom(-1)">−</button>
-                        <span class="zoom-label">@(_pxPerHour)px/hr</span>
-                        <button class="mini-btn" title="Zoom in" disabled="@(_pxPerHour >= MaxZoom)"
-                                @onclick="() => Zoom(1)">+</button>
+                        <button class="mini-btn" title="Zoom out" disabled="@(PxPerHour <= MinZoom)"
+                                @onclick="() => ZoomAsync(-1)">−</button>
+                        <span class="zoom-label">@(PxPerHour)px/hr</span>
+                        <button class="mini-btn" title="Zoom in" disabled="@(PxPerHour >= MaxZoom)"
+                                @onclick="() => ZoomAsync(1)">+</button>
                     </div>
 
                     <button class="btn btn-ghost btn-sm" @onclick="ToggleAllGaps">
                         @(AnyCollapsed ? "Expand empty hours" : "Collapse empty hours")
                     </button>
-
-                    @if (CanEdit)
-                    {
-                        <button class="btn btn-ghost btn-sm" @onclick="AddDayAsync">+ Day</button>
-                    }
                 </div>
             }
         </Actions>
@@ -177,6 +172,20 @@
 
             <section class="guide-panel @(_tab == GuideTab.Schedule ? "is-active" : null)" data-accent="emerald"
                      role="tabpanel" aria-label="Schedule">
+
+                @* Above the planner, not below it. These are the two things somebody needs
+                   *before* reading Saturday — what the evening is, and what to wear for it —
+                   and underneath a full-height schedule they were off the bottom of the panel. *@
+                <div class="note-grid">
+                    <div class="card">
+                        <h4>Saturday night</h4>
+                        <p>@Guide.SaturdayNight</p>
+                    </div>
+                    <div class="card is-dresscode">
+                        <h4>Dress code</h4>
+                        <p>@Guide.DressCode</p>
+                    </div>
+                </div>
 
             @* Day tabs. Hidden on desktop by CSS, where every day is shown at once. *@
             <div class="planner-tabs" role="tablist">
@@ -426,17 +435,6 @@
                     </footer>
                 </aside>
             }
-
-                <div class="note-grid mt">
-                    <div class="card">
-                        <h4>Saturday night</h4>
-                        <p>@Guide.SaturdayNight</p>
-                    </div>
-                    <div class="card is-dresscode">
-                        <h4>Dress code</h4>
-                        <p>@Guide.DressCode</p>
-                    </div>
-                </div>
 
             </section>
 
@@ -1378,8 +1376,14 @@
         [15, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360];
 
     private ConfirmDialog? _confirm;
-    private int _pxPerHour = 64;
     private string? _activeDayId;
+
+    /// <summary>
+    /// The stored zoom, clamped on the way out. A hand-edited trip.json could carry anything —
+    /// a zero would collapse every hour band to nothing — so the page never trusts the number
+    /// it reads, only the range.
+    /// </summary>
+    private int PxPerHour => Math.Clamp(Trip.PlannerPxPerHour, MinZoom, MaxZoom);
 
     /// <summary>The day taking the whole stage, or null for the three-across overview.</summary>
     private string? _focusDayId;
@@ -1412,7 +1416,7 @@
 
     // ------------------------------------------------------------- timeline
 
-    private TimelineSettings Settings => new() { PxPerHour = _pxPerHour };
+    private TimelineSettings Settings => new() { PxPerHour = PxPerHour };
 
     private DayTimeline TimelineFor(ItineraryDay day) =>
         DayTimeline.Build(day, Settings, ExpandedFor(day.Id));
@@ -1454,8 +1458,17 @@
         }
     }
 
-    private void Zoom(int direction) =>
-        _pxPerHour = Math.Clamp(_pxPerHour + direction * 16, MinZoom, MaxZoom);
+    /// <summary>
+    /// Zooming is a saved edit now, not a page setting — so it survives a reload and everyone
+    /// looking at the schedule sees the same one.
+    /// </summary>
+    private Task ZoomAsync(int direction)
+    {
+        var next = Math.Clamp(PxPerHour + direction * 16, MinZoom, MaxZoom);
+        if (next == Trip.PlannerPxPerHour) return Task.CompletedTask;
+
+        return Store.MutateAsync(t => t.PlannerPxPerHour = next, TripArea.Itinerary);
+    }
 
     // --------------------------------------------------------- editor form
 
@@ -1592,8 +1605,6 @@
         var added = newId is null ? null : ItineraryService.Locate(Trip, newId).Item;
         if (added is not null) OpenEditor(added);
     }
-
-    private Task AddDayAsync() => MutateAsync(t => ItineraryService.AddDay(t));
 
     private void ConfirmDeleteDraft()
     {

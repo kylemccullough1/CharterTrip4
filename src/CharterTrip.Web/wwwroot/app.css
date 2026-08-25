@@ -1972,12 +1972,14 @@ pre.code {
  * height, the body takes whatever the head leaves, and the divider underneath stops moving. */
 .section.guide-card {
   /* Everything between the top of the screen and the top of this card, subtracted — so the
-     card ends exactly at the bottom edge rather than overshooting it. */
-  --guide-h: calc(100vh - var(--topbar-h) - var(--page-top) - var(--section-gap));
+     card is measured against the screen rather than guessed at.
+     94 rather than 100: filling the viewport exactly left the card looking oversized and hid
+     any hint that the page continues, so it stops just short of the fold. */
+  --guide-h: calc(94vh - var(--topbar-h) - var(--page-top) - var(--section-gap));
 
   /* dvh where it exists: on a phone, 100vh is the height with the browser's address bar
      hidden, so a vh-sized panel is taller than the screen until you scroll. */
-  --guide-h: calc(100dvh - var(--topbar-h) - var(--page-top) - var(--section-gap));
+  --guide-h: calc(94dvh - var(--topbar-h) - var(--page-top) - var(--section-gap));
 
   /* A floor, so a short laptop window in landscape does not squeeze the tabs into a slot. */
   height: max(26rem, var(--guide-h));

@@ -29,22 +29,27 @@
             {
                 if (!entry.HasChildren)
                 {
-                    <NavLink class="navlink" href="@entry.Href" Match="Match(entry.Href)" @onclick="Close">
+                    <a class="navlink @On(entry.Href)" href="@entry.LinkHref" @onclick="() => Close(entry.LinkHref)">
                         @entry.Label
-                    </NavLink>
+                    </a>
                 }
                 else
                 {
                     <div class="dropdown">
-                        <span class="navlink has-kids" tabindex="0" role="button" aria-haspopup="true">
+                        @* The parent is a link, not a bare label. Itinerary and Games are both
+                           real pages, and a menu that lists their sections should not take away
+                           the way in to the page itself. Being an anchor also keeps the menu
+                           reachable by keyboard, which is what :focus-within opens on. *@
+                        <a class="navlink has-kids @On(entry.Href)" href="@entry.LinkHref"
+                           aria-haspopup="true" @onclick="() => Close(entry.LinkHref)">
                             @entry.Label<span class="caret">▾</span>
-                        </span>
+                        </a>
                         <div class="dropdown-menu">
                             @foreach (var child in entry.Children!)
                             {
-                                <NavLink class="dropdown-item" href="@child.Href" Match="Match(child.Href)" @onclick="Close">
+                                <a class="dropdown-item @On(child.Href)" href="@child.LinkHref" @onclick="() => Close(child.LinkHref)">
                                     @child.Label
-                                </NavLink>
+                                </a>
                             }
                         </div>
                     </div>
@@ -73,15 +78,38 @@
         Nav.LocationChanged += OnLocationChanged;
     }
 
-    private static NavLinkMatch Match(string href) =>
-        href == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix;
+    /// <summary>
+    /// Where the last click in this menu is taking us, when the router will not say so itself.
+    ///
+    /// A move that only changes the fragment — #guide to #packing — is handled by Blazor as the
+    /// browser's own business: it pushes the address and scrolls to the card, then returns
+    /// without notifying .NET and without raising any DOM event either. So there is nothing to
+    /// listen for, and <c>Nav.Uri</c> goes on reporting the address we were at before. The click
+    /// knew the answer all along, so it is kept here until the router says otherwise.
+    /// </summary>
+    private string? _goingTo;
 
-    private void Close() => _open = false;
+    /// <summary>
+    /// The highlight class, which is <c>on</c> — what the stylesheet has always styled. NavLink
+    /// writes <c>active</c>, which nothing in app.css matches, so plain anchors and this do the
+    /// job NavLink was silently failing at. <see cref="NavTree.IsCurrent"/> owns the rule.
+    /// </summary>
+    private string? On(string href) =>
+        NavTree.IsCurrent(href, _goingTo ?? Nav.ToBaseRelativePath(Nav.Uri)) ? "on" : null;
+
+    private void Close(string? goingTo = null)
+    {
+        _open = false;
+        _goingTo = goingTo;
+    }
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
-        if (!_open) return;
+        // Redrawn on every move, not only to shut the panel: the highlight is computed from the
+        // current address now, so it goes stale if the menu does not follow along. The router
+        // has spoken here, so its address wins over whatever the last click was aiming at.
         _open = false;
+        _goingTo = null;
         _ = InvokeAsync(StateHasChanged);
     }
 

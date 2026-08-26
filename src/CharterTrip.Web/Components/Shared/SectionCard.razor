@@ -1,6 +1,6 @@
 @* The standard section wrapper: deco rule, title, optional subtitle, optional action buttons. *@
 
-<section class="section @CssClass">
+<section id="@Id" class="section @CssClass">
     <div class="section-head">
         <div>
             <h2 class="section-title">
@@ -34,6 +34,9 @@
 @code {
     /// <summary>Extra classes on the section itself, for callers that need to size or place it.</summary>
     [Parameter] public string? CssClass { get; set; }
+
+    /// <summary>An id, when something needs to link straight to this card — see #packing.</summary>
+    [Parameter] public string? Id { get; set; }
 
     [Parameter] public string Title { get; set; } = string.Empty;
     [Parameter] public string? Subtitle { get; set; }

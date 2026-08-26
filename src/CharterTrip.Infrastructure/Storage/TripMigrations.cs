@@ -13,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 15;
+    public const int CurrentVersion = 18;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -33,6 +33,18 @@ public static class TripMigrations
         if (trip.SchemaVersion < 12) changed |= ToV12_CheckInIsTwo(trip);
         if (trip.SchemaVersion < 13) changed |= ToV13_MenuBoard(trip);
         if (trip.SchemaVersion < 14) changed |= ToV14_GroupedEssentials(trip);
+
+        // v18 gave a carpool's ETA a day to go with the time. No step, same as the two
+        // before it: the field defaults to empty and an older file simply has not said.
+
+        // v17 gave a travel row what its owner is bringing. No step: the field defaults to
+        // empty and there was nothing to convert. It is its own version rather than being
+        // folded into v16 because the stamp records the shape of a file, and one number
+        // standing for two different shapes is the confusion the stamp exists to prevent.
+
+        // v16 gave a carpool facts of its own — a name, a departure time, an ETA. No step
+        // either: the cars list simply defaults to empty, and there was nothing in an older
+        // file to convert, because until now nobody could write any of it down.
 
         // v15 removed the drive-times list. There is no step for it: the property simply stopped
         // existing on the model, so an older file's copy is ignored on load and gone on the next

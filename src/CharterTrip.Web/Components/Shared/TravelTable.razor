@@ -12,14 +12,56 @@
    "transparent" for those was the bug — the title reads `var(--car, var(--text))`, and a
    variable that is defined-but-transparent never reaches its fallback, so the heading was
    painted in nothing. Leave --car unset and let the fallbacks do their job. *@
-<div class="tt-card @(Compact ? "is-compact" : null) @(Color is null ? "is-plain" : null)"
+<div class="tt-card @(Compact ? "is-compact" : null) @(Color is null ? "is-plain" : null) @(ShowDepart ? null : "no-depart")"
      style="@(Color is null ? null : $"--car:{Color}")">
 
     @if (Title is not null)
     {
         <header class="tt-head">
             <span class="tt-swatch" aria-hidden="true"></span>
-            <span class="tt-title">@Title</span>
+
+            @if (Car is not null)
+            {
+                @* A carpool names itself and says when it moves. All three are open to
+                   everyone: the people in the car are the ones who know, and routing that
+                   through the committee is how it ends up never being written down. *@
+                <span class="tt-title">
+                    <EditableText Value="@Car.Name" AnyoneCanEdit="true"
+                                  ValueChanged="@(v => EditCar(c => c.Name = v))"
+                                  Placeholder="@Title" />
+                </span>
+                <div class="tt-car-eta">
+                    <span class="tt-car-eta-label">ETA</span>
+
+                    @* Which day, then what time. Not every car arrives on the same day, and a
+                       clock time alone cannot say which one it means. *@
+                    <select class="tt-select tt-eta-day" value="@Car.EtaDay"
+                            aria-label="Day of arrival"
+                            @onchange="e => EditCar(c => c.EtaDay = e.Value?.ToString() ?? string.Empty)">
+                        <option value="">—</option>
+                        @* A day already on the car that is no longer offered — the trip moved —
+                           keeps its own option rather than being silently dropped. *@
+                        @if (Car.EtaDay is { Length: > 0 } day && !EtaDays.Contains(day))
+                        {
+                            <option value="@day">@day</option>
+                        }
+                        @foreach (var name in EtaDays)
+                        {
+                            <option value="@name">@name</option>
+                        }
+                    </select>
+
+                    @* The same control the people in this car use for their own departure, so
+                       one row of the card is not a dropdown and the next a text box. Arriving
+                       "Anytime" is not an answer, which is the one option it drops. *@
+                    <TimePicker Value="@Car.Eta" AllowAnytime="false" Label="Estimated arrival"
+                                ValueChanged="@(v => EditCar(c => c.Eta = v))" />
+                </div>
+            }
+            else
+            {
+                <span class="tt-title">@Title</span>
+            }
         </header>
     }
 
@@ -32,7 +74,10 @@
             <colgroup>
                 <col class="tt-c-who" />
                 <col class="tt-c-from" />
-                <col class="tt-c-when" />
+                @if (ShowDepart)
+                {
+                    <col class="tt-c-when" />
+                }
                 <col class="tt-c-diet" />
                 <col class="tt-c-notes" />
             </colgroup>
@@ -53,9 +98,14 @@
                     </span>
                 </th>
                 <th>Leaving from</th>
-                <th>Can depart</th>
+                @if (ShowDepart)
+                {
+                    <th>Can depart</th>
+                }
                 <th>Dietary</th>
-                <th>Notes</th>
+                @* Sorting out carpools asks what you are putting in the car; everywhere else
+                   asks for a note. Two questions, two fields — see TravelRow.Bringing. *@
+                <th>@(AsksBringing ? "Bringing?" : "Notes")</th>
             </tr>
             </thead>
 
@@ -76,7 +126,11 @@
                                     aria-label="@($"Carpool for {person.Name}")"
                                     title="Carpool colour"
                                     @onclick="() => OnTogglePicker.InvokeAsync(person.Id)"></button>
-                            <span>@person.Name</span>
+                            @* Anyone may fix a name. It is the roster's name, not this table's,
+                               so it changes everywhere the person appears — see OnRename. *@
+                            <EditableText Value="@person.Name" AnyoneCanEdit="true"
+                                          ValueChanged="@(v => OnRename.InvokeAsync((person.Id, v)))"
+                                          Placeholder="@person.Name" />
                         </div>
                     </td>
 
@@ -89,20 +143,44 @@
                                city, so it comes back as an ordinary option next time. *@
                             @if (IsTypingCity(row, person.Id))
                             {
-                                <input class="tt-select tt-city" placeholder="Somewhere else…"
-                                       value="@row.LeavingFrom"
-                                       @onchange="e => CityTypedAsync(person.Id, e.Value?.ToString())" />
+                                <div class="tt-city-wrap">
+                                    <input class="tt-select tt-city" placeholder="Somewhere else…"
+                                           value="@row.LeavingFrom"
+                                           @onchange="e => CityTypedAsync(person.Id, e.Value?.ToString())" />
+
+                                    @* The way out. "Somewhere else" is a mode, and the only exit
+                                       used to be the box reporting a change — which an empty box
+                                       nobody typed in never does, so picking it by mistake took
+                                       the dropdown away for good. Offered only for the mode; a
+                                       row already holding a city that is not on the list has
+                                       nothing to go back to. *@
+                                    @if (CustomOrigins.Contains(person.Id))
+                                    {
+                                        <button type="button" class="tt-city-back"
+                                                title="Back to the list"
+                                                aria-label="@($"Back to the list of cities for {person.Name}")"
+                                                @onclick="() => CityAbandoned(person.Id)">✕</button>
+                                    }
+                                </div>
                             }
                             else
                             {
+                                @* The options are keyed by the city they name. Without that,
+                                   adding a city rewrites this list in place — every option after
+                                   the new one takes the next city's text — while the browser
+                                   holds its selected INDEX. The select then quietly displayed
+                                   somebody else's city: one person typing "Ada" moved everybody
+                                   on Dallas to Ada on screen, while the file still said Dallas.
+                                   Keyed, the new option is inserted and the rest keep both their
+                                   identity and their selection. *@
                                 <select class="tt-select" value="@row.LeavingFrom"
                                         @onchange="e => OriginPicked(person.Id, e.Value?.ToString())">
-                                    <option value="">—</option>
+                                    <option value="" @key="@("origin-none")">—</option>
                                     @foreach (var city in Origins)
                                     {
-                                        <option value="@city">@city</option>
+                                        <option value="@city" @key="city">@city</option>
                                     }
-                                    <option value="@OtherOption">Somewhere else…</option>
+                                    <option value="@OtherOption" @key="@("origin-other")">Somewhere else…</option>
                                 </select>
                             }
                         }
@@ -112,45 +190,21 @@
                         }
                     </td>
 
-                    <td>
-                        @if (CanEdit)
-                        {
-                            var (clock, meridiem) = SplitDepart(row.DepartAt);
-
-                            <div class="tt-when">
-                                <select class="tt-select tt-clock" value="@clock"
-                                        @onchange="e => ClockPicked(person.Id, e.Value?.ToString(), meridiem)">
-                                    <option value="">—</option>
-                                    <option value="@AnytimeOption">Anytime</option>
-                                    @* Anything typed before the dropdowns existed keeps its own
-                                       option rather than being silently rounded to a clock time. *@
-                                    @if (IsFreeText(clock))
-                                    {
-                                        <option value="@clock">@clock</option>
-                                    }
-                                    @foreach (var time in Clocks)
-                                    {
-                                        <option value="@time">@time</option>
-                                    }
-                                </select>
-
-                                @* Only a clock time has a half of the day. "Anytime" does not, and
-                                   neither does whatever somebody typed in 2025. *@
-                                @if (Clocks.Contains(clock))
-                                {
-                                    <select class="tt-select tt-meridiem" value="@meridiem"
-                                            @onchange="e => MeridiemPicked(person.Id, clock, e.Value?.ToString())">
-                                        <option value="AM">AM</option>
-                                        <option value="PM">PM</option>
-                                    </select>
-                                }
-                            </div>
-                        }
-                        else
-                        {
-                            <span>@Display(row.DepartAt)</span>
-                        }
-                    </td>
+                    @if (ShowDepart)
+                    {
+                        <td>
+                            @if (CanEdit)
+                            {
+                                <TimePicker Value="@row.DepartAt"
+                                            Label="@($"When {person.Name} can depart")"
+                                            ValueChanged="@(v => OnEdit(person.Id, r => r.DepartAt = v))" />
+                            }
+                            else
+                            {
+                                <span>@Display(row.DepartAt)</span>
+                            }
+                        </td>
+                    }
 
                     <td>
                         @* The one thing a guest may write on this site: their own row. *@
@@ -160,9 +214,18 @@
                     </td>
 
                     <td>
-                        <EditableText Value="@row.Notes" ReadOnly="@(!CanEdit)" AnyoneCanEdit="@CanEdit"
-                                      ValueChanged="@(v => OnEdit(person.Id, r => r.Notes = v))"
-                                      Placeholder="—" />
+                        @if (AsksBringing)
+                        {
+                            <EditableText Value="@row.Bringing" ReadOnly="@(!CanEdit)" AnyoneCanEdit="@CanEdit"
+                                          ValueChanged="@(v => OnEdit(person.Id, r => r.Bringing = v))"
+                                          Placeholder="—" />
+                        }
+                        else
+                        {
+                            <EditableText Value="@row.Notes" ReadOnly="@(!CanEdit)" AnyoneCanEdit="@CanEdit"
+                                          ValueChanged="@(v => OnEdit(person.Id, r => r.Notes = v))"
+                                          Placeholder="—" />
+                        }
                     </td>
                 </tr>
             }
@@ -174,10 +237,46 @@
 @code {
     /// <summary>Sentinel for the "somewhere else" choice, which is a mode rather than a city.</summary>
     public const string OtherOption = "__other";
-    public const string AnytimeOption = "Anytime";
 
     [Parameter] public string? Title { get; set; }
     [Parameter] public string? Color { get; set; }
+
+    /// <summary>
+    /// The carpool this card is, when it is one. Null for a card grouped by departure city,
+    /// which has no name of its own and nothing to leave at a time.
+    /// </summary>
+    [Parameter] public Car? Car { get; set; }
+
+    /// <summary>How to write to <see cref="Car"/>. Required whenever a car is given.</summary>
+    [Parameter] public Func<Action<Car>, Task>? OnCarEdit { get; set; }
+
+    /// <summary>
+    /// The days a car could arrive on, named. Passed in rather than worked out here, because
+    /// they come from the trip's own dates and this component does not know the trip.
+    /// </summary>
+    [Parameter] public IReadOnlyList<string> EtaDays { get; set; } = [];
+
+    /// <summary>
+    /// Whether the last column asks what this person is bringing rather than for a note.
+    ///
+    /// It follows the view rather than the card: when the page is sorting carpools out, that is
+    /// the question every table on it is asking, including the one holding whoever has no car
+    /// yet — they are as likely to be carrying the cooler as anybody else. Grouped by departure
+    /// city the page is not about cars at all, so the column goes back to being a note.
+    /// </summary>
+    [Parameter] public bool AsksBringing { get; set; }
+
+    /// <summary>Whether this card is a carpool, as opposed to a city or the unplaced.</summary>
+    private bool IsCar => Car is not null;
+
+    /// <summary>
+    /// Whether the "Can depart" column is drawn. A car's own table does not draw it: once the
+    /// car is a unit with an arrival time of its own, five separate departure times inside it
+    /// are noise. Every other table keeps the column, and it is only ever hidden — nothing here
+    /// writes to <see cref="TravelRow.DepartAt"/>, so what somebody answered before joining a
+    /// car is still theirs, still saved, and back on screen the moment they leave one.
+    /// </summary>
+    private bool ShowDepart => !IsCar;
 
     /// <summary>Narrower styling for the side-by-side group cards.</summary>
     [Parameter] public bool Compact { get; set; }
@@ -194,10 +293,16 @@
     [Parameter, EditorRequired] public HashSet<string> CustomOrigins { get; set; } = [];
 
     /// <summary>
-    /// A city somebody typed. The parent registers it — the drive-times card and everyone else's
-    /// dropdown both come from that list — and sets it on the row.
+    /// A city somebody typed. The parent writes it to the row, and that is all the registering
+    /// there is: everyone else's dropdown is built from the cities the rows name.
     /// </summary>
     [Parameter, EditorRequired] public Func<string, string, Task> OnCityAdded { get; set; } = default!;
+
+    /// <summary>
+    /// A person renamed: their id and what they should be called. The roster is the one place
+    /// a name lives, so the caller writes it there and every page showing that person follows.
+    /// </summary>
+    [Parameter] public EventCallback<(string PersonId, string Name)> OnRename { get; set; }
 
     [Parameter] public bool CanEdit { get; set; }
     [Parameter] public bool Ascending { get; set; } = true;
@@ -206,6 +311,8 @@
 
 
     private static string Display(string value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
+
+    private Task EditCar(Action<Car> apply) => OnCarEdit?.Invoke(apply) ?? Task.CompletedTask;
 
     private Task SortKey(KeyboardEventArgs e) =>
         e.Key is "Enter" or " " ? OnToggleSort.InvokeAsync() : Task.CompletedTask;
@@ -243,8 +350,15 @@
     }
 
     /// <summary>
-    /// A typed city. Registering it is the parent's job — it goes on the drive-times card and
-    /// into everyone else's dropdown — and emptying the box is how you get back to the dropdown.
+    /// Gave up on typing a city. Nothing was named, so there is nothing to keep — drop the mode
+    /// and the cell goes back to being the dropdown it was.
+    /// </summary>
+    private void CityAbandoned(string personId) => CustomOrigins.Remove(personId);
+
+    /// <summary>
+    /// A typed city. Writing it is the parent's job — that alone puts it into everyone else's
+    /// dropdown — and emptying the box is one of the two ways back to that dropdown, the ✕
+    /// beside it being the other.
     /// </summary>
     private async Task CityTypedAsync(string personId, string? typed)
     {
@@ -259,49 +373,4 @@
 
         await OnCityAdded(personId, city);
     }
-
-    // ---------------------------------------------------------------- depart
-
-    /// <summary>Half-hour marks across a 12-hour clock. The half of the day is its own control.</summary>
-    private static readonly string[] Clocks =
-        Enumerable.Range(0, 24)
-            .Select(i => $"{(i / 2 == 0 ? 12 : i / 2)}:{(i % 2 == 0 ? "00" : "30")}")
-            .ToArray();
-
-    /// <summary>Split "1:30 PM" into its two controls. "Anytime" and free text have no meridiem.</summary>
-    private static (string Clock, string Meridiem) SplitDepart(string value)
-    {
-        var v = (value ?? "").Trim();
-        if (v.Length == 0) return ("", "");
-        if (v.Equals(AnytimeOption, StringComparison.OrdinalIgnoreCase)) return (AnytimeOption, "");
-
-        var parts = v.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 2 && parts[1] is "AM" or "PM" && Clocks.Contains(parts[0]))
-            return (parts[0], parts[1]);
-
-        return (v, "");
-    }
-
-    /// <summary>
-    /// Something written before the dropdowns existed — "Morning?", "12:30-1". It keeps its own
-    /// option so choosing nothing does not quietly round it to a clock time.
-    /// </summary>
-    private static bool IsFreeText(string clock) =>
-        clock.Length > 0 && clock != AnytimeOption && !Clocks.Contains(clock);
-
-    private Task ClockPicked(string personId, string? clock, string meridiem)
-    {
-        var picked = clock ?? "";
-
-        if (picked.Length == 0 || picked == AnytimeOption || IsFreeText(picked))
-            return OnEdit(personId, r => r.DepartAt = picked);
-
-        // A clock time needs a half of the day. Default to PM: this trip starts on a Friday
-        // afternoon and almost nobody is setting off before noon.
-        var half = meridiem is "AM" or "PM" ? meridiem : "PM";
-        return OnEdit(personId, r => r.DepartAt = $"{picked} {half}");
-    }
-
-    private Task MeridiemPicked(string personId, string clock, string? meridiem) =>
-        OnEdit(personId, r => r.DepartAt = $"{clock} {(meridiem is "AM" or "PM" ? meridiem : "PM")}");
 }

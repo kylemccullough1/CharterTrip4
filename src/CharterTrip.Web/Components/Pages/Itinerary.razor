@@ -14,7 +14,7 @@
        different depths, so the card total drifted by a row or two between tabs and the divider
        below moved with it. Sizing the card and letting the body take whatever is left makes
        every tab end on exactly the same line. *@
-    <SectionCard CssClass="guide-card">
+    <SectionCard Id="guide" CssClass="guide-card">
         <TitleContent>
             <EditableLabel For="@($"tab.{_tab}.title")" Fallback="@TabTitle" />
         </TitleContent>
@@ -553,16 +553,23 @@
 
                 @if (CanEdit || !string.IsNullOrWhiteSpace(Guide.MenuNote))
                 {
+                    @* The note sends people to the Carpool tab, so it carries the way there.
+                       The link sits beside the words rather than around them: for the committee
+                       these words are click-to-edit, and one click cannot mean both "follow
+                       this" and "rewrite this". *@
                     <p class="menu-note">
                         <EditableText Value="@Guide.MenuNote" ReadOnly="@(!CanEdit)"
                                       ValueChanged="@(v => EditGuideAsync(g => g.MenuNote = v))"
                                       Placeholder="allergies note" />
+                        <a class="note-jump" href="/itinerary?tab=carpool#guide"
+                           title="Go to the Carpool tab" aria-label="Go to the Carpool tab"
+                           @onclick="() => _tab = GuideTab.Carpool">→</a>
                     </p>
                 }
             </section>
 
-            <section class="guide-panel @(_tab == GuideTab.Travel ? "is-active" : null)" data-accent="sapphire"
-                     role="tabpanel" aria-label="Travel">
+            <section class="guide-panel @(_tab == GuideTab.Carpool ? "is-active" : null)" data-accent="sapphire"
+                     role="tabpanel" aria-label="Carpool">
 
                 @* Fixed facts, not a working document: the address is what it is, and a stray click
                    that renamed the destination would be a bad way to find that out. Only the
@@ -673,6 +680,13 @@
                         <button type="button" class="seg-btn @(_groupBy == TravelGroup.Origin ? "is-on" : null)"
                                 @onclick="() => _groupBy = TravelGroup.Origin">Leaving from</button>
                     </div>
+
+                    @* Said once, here, because everything below this line is editable by anyone
+                       and none of it looks it until you click. *@
+                    <p class="travel-hint tiny">
+                        <EditableLabel For="travel.editHint"
+                                       Fallback="You can change your car&#39;s name, your name, and the items in the columns." />
+                    </p>
                 </div>
 
                 @* One card per group, side by side, with whoever has not answered yet in a wider
@@ -686,10 +700,17 @@
                             <TravelTable @key="group.Key"
                                          Title="@group.Title"
                                          Color="@group.Color"
+                                         Car="@(group.CarSlot is { } slot ? CarFor(slot) : null)"
+                                         EtaDays="EtaDays"
+                                         OnCarEdit="@(group.CarSlot is { } editSlot
+                                                        ? apply => EditCarAsync(editSlot, apply)
+                                                        : null)"
                                          Compact="true"
+                                         AsksBringing="@(_groupBy == TravelGroup.Carpool)"
                                          People="group.People"
                                          RowFor="RowFor"
                                          OnEdit="EditRowAsync"
+                                         OnRename="RenamePersonAsync"
                                          ColorOf="ColorOf"
                                          Origins="Origins"
                                          CustomOrigins="_customOrigins"
@@ -705,9 +726,11 @@
                 @if (Unplaced.Count > 0)
                 {
                     <TravelTable Title="@UnplacedTitle"
+                                 AsksBringing="@(_groupBy == TravelGroup.Carpool)"
                                  People="Unplaced"
                                  RowFor="RowFor"
                                  OnEdit="EditRowAsync"
+                                 OnRename="RenamePersonAsync"
                                  ColorOf="ColorOf"
                                  Origins="Origins"
                                  CustomOrigins="_customOrigins"
@@ -727,7 +750,9 @@
        with the deco diamond on it — says otherwise. *@
     <div class="section-divider" aria-hidden="true"></div>
 
-    <SectionCard>
+    @* Named, because the menu links straight down here: this card is a section of the page in
+       every sense except that it is not one of the tabs above. *@
+    <SectionCard Id="packing">
         <TitleContent>
             <EditableLabel For="pack.title" Fallback="What to bring" />
         </TitleContent>
@@ -846,7 +871,7 @@
 
     // ------------------------------------------------------------------ tabs
 
-    private enum GuideTab { Essentials, Schedule, Menu, Travel }
+    private enum GuideTab { Essentials, Schedule, Menu, Carpool }
 
     private GuideTab _tab = GuideTab.Essentials;
 
@@ -878,7 +903,10 @@
         "essentials" => GuideTab.Essentials,
         "schedule" => GuideTab.Schedule,
         "menu" => GuideTab.Menu,
-        "travel" => GuideTab.Travel,
+        "carpool" => GuideTab.Carpool,
+        // The tab was called Travel until the committee renamed it; links predating that
+        // still work rather than quietly landing people on Essentials.
+        "travel" => GuideTab.Carpool,
         _ => null
     };
 
@@ -893,7 +921,7 @@
         (GuideTab.Essentials, "Essentials", "◆", "gold"),
         (GuideTab.Schedule, "Schedule", "◷", "emerald"),
         (GuideTab.Menu, "Menu", "◈", "ruby"),
-        (GuideTab.Travel, "Travel", "◇", "sapphire")
+        (GuideTab.Carpool, "Carpool", "◇", "sapphire")
     ];
 
     private string AccentFor(GuideTab tab) => Tabs.First(t => t.Key == tab).Accent;
@@ -905,7 +933,7 @@
     {
         GuideTab.Essentials => "The essentials",
         GuideTab.Menu => "Menu",
-        GuideTab.Travel => "Getting there",
+        GuideTab.Carpool => "Getting there",
         _ => "Schedule"
     };
 
@@ -913,7 +941,7 @@
     {
         GuideTab.Essentials => $"{Trip.Trip.Venue} · {Trip.Trip.Dates}",
         GuideTab.Menu => "Everything on this list is covered.",
-        GuideTab.Travel => "Same color, same car. Sort it out amongst yourselves.",
+        GuideTab.Carpool => "Same color, same car. Sort it out amongst yourselves.",
         _ => SubtitleText
     };
 
@@ -1156,6 +1184,64 @@
         }, TripArea.Travel);
 
     /// <summary>
+    /// Renames somebody on the roster, which is the only place a name is kept — so the change
+    /// follows them onto the scoreboard, the teams and everywhere else they appear. Open to
+    /// everyone: a misspelled name is exactly the kind of thing the person it belongs to should
+    /// be able to put right without hunting down a committee member.
+    ///
+    /// A blank is refused rather than saved. It is not an answer to what somebody is called,
+    /// and a nameless row would be untraceable on every page at once.
+    /// </summary>
+    private Task RenamePersonAsync((string PersonId, string Name) rename)
+    {
+        var name = rename.Name.Trim();
+        if (name.Length == 0) return Task.CompletedTask;
+
+        return Store.MutateAsync(t =>
+        {
+            if (t.Roster.FirstOrDefault(p => p.Id == rename.PersonId) is { } person) person.Name = name;
+        }, TripArea.Roster);
+    }
+
+    /// <summary>
+    /// The days a car could turn up on, named from the trip's own dates so they stay right if
+    /// the weekend ever moves. The first two: people arrive on the day it starts or the morning
+    /// after, and nobody arrives on the day everyone leaves.
+    /// </summary>
+    private IReadOnlyList<string> EtaDays =>
+    [
+        Trip.Trip.StartsAt.ToString("dddd"),
+        Trip.Trip.StartsAt.AddDays(1).ToString("dddd")
+    ];
+
+    /// <summary>
+    /// The car in a slot, or a blank stand-in. Reading must not write, exactly as with
+    /// <see cref="RowFor"/> — a car record appears the first time somebody names one.
+    /// </summary>
+    private Car CarFor(int slot) =>
+        Travel.Cars.FirstOrDefault(c => c.Slot == slot) ?? new Car { Slot = slot };
+
+    /// <summary>
+    /// Edit a carpool, creating the record on first use and dropping it again once it has been
+    /// cleared. No permission check: naming your own car and saying when it leaves is not
+    /// committee business, so this is open to everyone the same way a person's own row is.
+    /// </summary>
+    private Task EditCarAsync(int slot, Action<Car> apply) =>
+        Store.MutateAsync(t =>
+        {
+            var car = t.Travel.Cars.FirstOrDefault(c => c.Slot == slot);
+            if (car is null)
+            {
+                car = new Car { Slot = slot };
+                t.Travel.Cars.Add(car);
+            }
+
+            apply(car);
+
+            if (car.IsEmpty) t.Travel.Cars.Remove(car);
+        }, TripArea.Travel);
+
+    /// <summary>
     /// The dates come from the trip itself rather than being typed alongside the times, so a
     /// check-in date can never drift from the weekend the rest of the site is running on.
     /// </summary>
@@ -1199,6 +1285,18 @@
     /// <summary>The colour for a slot, or nothing for the unassigned zero.</summary>
     private static string ColorOf(int slot) =>
         slot >= 1 && slot <= CarColors.Length ? CarColors[slot - 1] : "transparent";
+
+    /// <summary>
+    /// A colour for a departure city, out of the same palette the carpools use, so a row of
+    /// Dallas / OKC / Tulsa cards tells itself apart at a glance the way a row of cars does.
+    ///
+    /// Handed out by position in the list, which is alphabetical, so the cities on screen are
+    /// always distinct from one another; an eleventh would wrap round rather than come out
+    /// colourless. A city is not stored anywhere but on the rows that name it, so there is
+    /// nothing to hang a remembered colour on — which also means adding a city can shift the
+    /// ones after it. Nothing reads meaning into which colour, only that they differ.
+    /// </summary>
+    private static string CityColor(int index) => CarColors[index % CarColors.Length];
 
     /// <summary>
     /// Every carpool in use, in palette order, with the people in it. Slots nobody picked simply
@@ -1266,23 +1364,14 @@
     /// from the cities the roster is actually leaving from, so writing it on one row is what puts
     /// it in front of the next person from the same place — and stops two spellings becoming two
     /// tables.
+    ///
+    /// Through <see cref="EditRowAsync"/> rather than its own mutation, so a typed city creates
+    /// the row, prunes it and announces itself exactly as every other travel edit does. Its own
+    /// copy of that had drifted: it announced the change as <c>TripArea.Itinerary</c>, which is
+    /// not where it wrote, so anything listening for travel alone would never have heard it.
     /// </summary>
-    private Task AddCityAsync(string personId, string city)
-    {
-        var trimmed = city.Trim();
-
-        return Store.MutateAsync(t =>
-        {
-            var row = t.Travel.Rows.FirstOrDefault(r => r.PersonId == personId);
-            if (row is null)
-            {
-                row = new TravelRow { PersonId = personId };
-                t.Travel.Rows.Add(row);
-            }
-
-            row.LeavingFrom = trimmed;
-        }, TripArea.Itinerary);
-    }
+    private Task AddCityAsync(string personId, string city) =>
+        EditRowAsync(personId, r => r.LeavingFrom = city.Trim());
 
     /// <summary>
     /// The cities in play, alphabetised for the dropdown.
@@ -1322,7 +1411,12 @@
     }
 
     /// <summary>One table's worth of people, and how to head it.</summary>
-    private sealed record TravelSection(string Key, string Title, string? Color, List<RosterPerson> People);
+    /// <summary>
+    /// One card. <see cref="CarSlot"/> is set only when the card is a carpool — a card grouped
+    /// by departure city is not a car and has nothing to name or to leave at a time.
+    /// </summary>
+    private sealed record TravelSection(
+        string Key, string Title, string? Color, List<RosterPerson> People, int? CarSlot = null);
 
     /// <summary>
     /// The roster split into cards. Grouping by carpool gives a card per colour in use; grouping
@@ -1340,7 +1434,8 @@
                     {
                         var key = $"car-{g.Slot}";
                         return new TravelSection(key, "Car", g.Color,
-                            ByName(key, Trip.Roster.Where(p => RowFor(p.Id).CarColor == g.Slot)));
+                            ByName(key, Trip.Roster.Where(p => RowFor(p.Id).CarColor == g.Slot)),
+                            g.Slot);
                     })
                     .ToList();
             }
@@ -1350,10 +1445,10 @@
                 .Where(c => c.Length > 0)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(c => c, StringComparer.OrdinalIgnoreCase)
-                .Select(city =>
+                .Select((city, index) =>
                 {
                     var key = $"city-{city}";
-                    return new TravelSection(key, city, null,
+                    return new TravelSection(key, city, CityColor(index),
                         ByName(key, Trip.Roster.Where(p =>
                             RowFor(p.Id).LeavingFrom.Trim().Equals(city, StringComparison.OrdinalIgnoreCase))));
                 })

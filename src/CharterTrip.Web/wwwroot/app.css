@@ -203,6 +203,9 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .
 
 /* ------------------------------------------------------------ sections -- */
 .section { margin: var(--section-gap) 0; }
+/* A card the menu can link straight to has to stop clear of the fixed topbar, or the browser
+   scrolls its heading to y=0 and puts it behind the bar. */
+.section[id] { scroll-margin-top: calc(var(--topbar-h) + 14px); }
 /* The home page's own gutter, since the wrapper gave its up to let the hero run edge to edge. */
 .page-home .section { padding: 0 var(--gutter); }
 .section-head {
@@ -1296,8 +1299,14 @@ select.textfield { cursor: pointer; }
    ========================================================================= */
 
 /* --- dropdowns: pure CSS now, no JS class toggling ---------------------- */
+/* Hover, and only hover, for anyone using a pointer. :focus-within used to be on this list
+   and it made the menu sticky: clicking the parent link focused it, so the panel stayed
+   down after the pointer had moved on and had to be dismissed by clicking elsewhere.
+   :focus-visible is the narrower thing that was actually wanted — a browser sets it when
+   focus arrives from the keyboard and withholds it on a click — so tabbing to the trigger
+   still opens the menu and clicking it no longer pins it open. */
 .dropdown:hover > .dropdown-menu,
-.dropdown:focus-within > .dropdown-menu { display: block; }
+.dropdown:has(:focus-visible) > .dropdown-menu { display: block; }
 
 /* The menu sits 6px below the trigger. Without this the pointer crosses that dead gap,
    leaves .dropdown, and the menu vanishes before it can be reached — which is why it
@@ -1703,6 +1712,14 @@ pre.code {
   text-transform: uppercase; color: var(--gold);
 }
 .menu-note { margin: 14px 0 0; font-size: 0.781rem; color: var(--text-dim); }
+/* A note that names another tab carries the way there, set apart from the words themselves
+   because those words are click-to-edit for the committee. */
+.note-jump {
+  display: inline-block; margin-left: 7px; padding: 0 7px;
+  border: 1px solid var(--line); border-radius: 5px;
+  color: var(--sapphire); line-height: 1.5;
+}
+.note-jump:hover, .note-jump:focus-visible { color: var(--text); border-color: var(--sapphire); }
 
 .card.is-dresscode { border-color: var(--gold-dim); }
 .card.is-dresscode h4 { color: var(--gold-light); }
@@ -2270,6 +2287,17 @@ pre.code {
 
 /* --- group-by control --------------------------------------------------- */
 .travel-tools { display: flex; align-items: center; gap: 10px; margin: 18px 0 12px; flex-wrap: wrap; }
+/* An aside, and dressed as one: italic and dimmer than the label beside it, so it reads as a
+   remark about the tables rather than another control above them. It sits immediately after
+   the buttons; where the row is too narrow to hold both, the two stack and centre together. */
+.travel-hint {
+  margin: 0; flex: 0 1 auto;
+  font-style: italic; color: var(--text-faint);
+}
+@media (max-width: 860px) {
+  .travel-tools { justify-content: center; }
+  .travel-hint { flex: 1 1 100%; text-align: center; }
+}
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
 .seg-btn {
   padding: 6px 16px; cursor: pointer; background: none; border: 0;
@@ -2282,13 +2310,20 @@ pre.code {
 
 /* --- the tables --------------------------------------------------------- */
 /* Group cards sit side by side; the leftovers table below runs full width. */
-/* Three tables to a row at most, and never one so narrow that a column has to clip.
+/* As many tables to a row as fit, sharing the whole of it, and never one so narrow that a
+   column has to clip.
 
-   The max-width is a third of the row, which is what caps the count — a card cannot be smaller
-   than that and still leave room for a fourth. The min-width is the floor below which the five
-   columns stop fitting, measured rather than guessed: below it the Who column stops clearing
-   the longest name on the roster. Between them, a row that cannot hold three cards
-   holds two, and one that cannot hold two holds one. Nothing is ever squeezed. */
+   How many fit is decided by the min-width: the floor below which the columns stop fitting,
+   measured rather than guessed — below it the Who column stops clearing the longest name on
+   the roster. Whatever lands on a row then grows to share it.
+
+   There is no cap any more. It was a third of the row, then half, and both times it ended up
+   below the floor at some width or other — and since min-width beats max-width whenever the
+   two disagree, a cap under the floor pins every card at its minimum and leaves the rest of
+   the row empty. That is the bug it kept causing, twice. What it was for — stopping a lone
+   card on the last row spanning the whole width — turns out not to be worth a rule: the
+   leftovers table underneath already runs full width, so a card doing the same reads as of a
+   piece with it rather than as a mistake. */
 .tt-row {
   --tt-gap: 14px;
   display: flex; flex-wrap: wrap; justify-content: center; gap: var(--tt-gap);
@@ -2297,7 +2332,6 @@ pre.code {
 .tt-row > .tt-card {
   flex: 1 1 var(--tt-min);
   min-width: min(100%, var(--tt-min));
-  max-width: calc((100% - 2 * var(--tt-gap)) / 3);
 }
 .tt-card {
   border: 1px solid var(--line); border-radius: var(--radius);
@@ -2305,13 +2339,56 @@ pre.code {
 }
 /* Only the standalone table below the row. `.tt-card + .tt-card` also matched every card
    inside the grid — they are all siblings — so each one after the first was pushed down 14px
-   and lost that much height, which is why the cards sat at different levels. */
-.tt-row + .tt-card { margin-top: 14px; }
+   and lost that much height, which is why the cards sat at different levels.
+
+   The page's own section spacing rather than the grid's gap: whoever the grouping has nothing
+   to say about is a different thing from the groups themselves, and sitting exactly as close
+   to them as they sit to each other read as one more card in the set. */
+.tt-row + .tt-card { margin-top: var(--section-gap); }
 .tt-card.is-compact { border-top: 3px solid var(--car, var(--line)); }
 
 .tt-head {
   display: flex; align-items: center; gap: 9px; padding: 10px 14px;
   border-bottom: 1px solid var(--line-soft); background: var(--ink-2);
+}
+
+/* When the card is a carpool, its ETA sits at the far end of the head so the name keeps the
+   left, where every other card's title is. It wraps under the name on a narrow card rather
+   than squeezing the name down to nothing. */
+.tt-car-eta { display: flex; align-items: center; gap: 7px; margin-left: auto; }
+.tt-car-eta-label {
+  color: var(--text-faint); letter-spacing: .08em; text-transform: uppercase;
+  font-size: 0.625rem; flex: 0 0 auto;
+}
+/* The head is not a table cell: the clock and its AM/PM belong side by side here even on a
+   compact card, where the column version of this control stacks them. Matched on .tt-card too,
+   because the rule it is overriding carries that class and would otherwise win on specificity. */
+.tt-card .tt-car-eta .tt-when,
+.tt-card.is-compact .tt-car-eta .tt-when { flex-direction: row; align-items: center; gap: 5px; }
+/* Sized here rather than left to the column rules, which come later in this file and would
+   otherwise win: those let the clock shrink to nothing (flex: 1 1 auto; min-width: 0) and give
+   the AM/PM the column's full width, which is right in a table cell that owns its column and
+   wrong in a head where three controls share the line with a name.
+
+   Every one of these names .is-compact as well, purely to outrank those later rules — they are
+   `.tt-card.is-compact .tt-meridiem` and friends, the same weight as `.tt-card .tt-car-eta`,
+   and later in the file. Without the extra class the AM/PM took 137px of a 286px head on a
+   phone and ran off the edge of the card. */
+.tt-card .tt-car-eta .tt-select,
+.tt-card.is-compact .tt-car-eta .tt-select { width: auto; font-size: 0.7rem; padding: 3px 5px; }
+.tt-card .tt-car-eta .tt-clock,
+.tt-card.is-compact .tt-car-eta .tt-clock { flex: 0 0 auto; min-width: 4.6rem; max-width: none; }
+.tt-card .tt-car-eta .tt-eta-day,
+.tt-card.is-compact .tt-car-eta .tt-eta-day { flex: 0 0 auto; min-width: 5.4rem; }
+.tt-card .tt-car-eta .tt-meridiem,
+.tt-card.is-compact .tt-car-eta .tt-meridiem { flex: 0 0 auto; min-width: 3.6rem; max-width: 5rem; }
+/* Three controls and a label do not always fit one line on a phone. Wrapping is better than
+   the last of them hanging off the card. */
+.tt-car-eta, .tt-card .tt-car-eta .tt-when { flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  .tt-head { flex-wrap: wrap; }
+  .tt-car-eta { margin-left: 21px; width: 100%; }
 }
 
 /* The floor for one table. Also the table's own min-width, so that if a card ever does get
@@ -2389,6 +2466,20 @@ pre.code {
 .tt-card.is-compact .tt-c-when  { width: 22%; }
 .tt-card.is-compact .tt-c-diet,
 .tt-card.is-compact .tt-c-notes { width: 19%; }
+
+/* A car's table has no "Can depart" column, so the four that remain share the width the five
+   used to. Stated rather than left to the browser: with table-layout: fixed, widths that no
+   longer add up to 100% are made up proportionally, which quietly hands the extra to whichever
+   column happened to be widest. */
+.tt-card.no-depart.is-compact .tt-c-who   { width: 25%; }
+.tt-card.no-depart.is-compact .tt-c-from  { width: 25%; }
+.tt-card.no-depart.is-compact .tt-c-diet,
+.tt-card.no-depart.is-compact .tt-c-notes { width: 25%; }
+/* One column fewer needs less room, but not as much less as it first looked: at 20rem two of
+   these cards fit a mid-width row at exactly the floor, and the Who column then dropped to
+   about sixty pixels of text — enough to break "JouJou" across two lines. 22rem is the width
+   at which that stops, so a row that cannot give both cards it gives one of them all of it. */
+.tt-card.no-depart { --tt-min: 22rem; }
 
 .tt-card.is-compact .tt-table { font-size: 0.75rem; }
 .tt-card.is-compact .tt-select { font-size: 0.7rem; padding: 4px 5px; }
@@ -2486,6 +2577,17 @@ pre.code {
 /* Typing a city happens where the dropdown was, so it is the same box. */
 .tt-city { font-family: inherit; }
 .tt-city::placeholder { color: var(--text-faint); }
+
+/* The box and its way back out, which has to fit the same cell the dropdown did. */
+.tt-city-wrap { display: flex; align-items: center; gap: 4px; }
+.tt-city-wrap .tt-city { flex: 1 1 auto; min-width: 0; }
+.tt-city-back {
+  flex: 0 0 auto; width: 22px; height: 22px; padding: 0;
+  border: 1px solid var(--line); border-radius: 5px;
+  background: none; color: var(--text-faint);
+  font: inherit; font-size: 0.688rem; line-height: 1; cursor: pointer;
+}
+.tt-city-back:hover { color: var(--text); border-color: var(--text-faint); }
 
 /* Side by side, the clock and the AM/PM want about 150px of a 493px card, and the four other
    columns cannot spare it — names started clipping. Stacked, each control gets the column's full

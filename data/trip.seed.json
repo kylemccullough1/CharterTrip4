@@ -166,7 +166,7 @@
       { "id": "staple-juice", "text": "Juice" },
       { "id": "staple-snacks", "text": "Snacks" }
     ],
-    "menuNote": "Dietary restrictions or allergies: let one of us know before Friday.",
+    "menuNote": "Dietary restrictions or allergies can be added on the Carpool tab.",
     "packing": [
       {
         "id": "pack-required",

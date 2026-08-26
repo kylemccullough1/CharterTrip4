@@ -1,0 +1,104 @@
+@* A time, chosen rather than typed: a half-hour clock with the half of the day beside it.
+
+   Its own component because two things want it now — the "Can depart" column and a carpool's
+   ETA — and two copies of the parsing below would drift apart the first time one of them
+   learned a new format. *@
+
+<div class="tt-when">
+    <select class="tt-select tt-clock" value="@Clock" aria-label="@Label" @onchange="ClockPickedAsync">
+        <option value="">—</option>
+
+        @if (AllowAnytime)
+        {
+            <option value="@AnytimeOption">Anytime</option>
+        }
+
+        @* Anything typed before the dropdowns existed keeps its own option rather than being
+           silently rounded to a clock time. *@
+        @if (IsFreeText(Clock))
+        {
+            <option value="@Clock">@Clock</option>
+        }
+
+        @foreach (var time in Clocks)
+        {
+            <option value="@time">@time</option>
+        }
+    </select>
+
+    @* Only a clock time has a half of the day. "Anytime" does not, and neither does whatever
+       somebody typed in 2025. *@
+    @if (Clocks.Contains(Clock))
+    {
+        <select class="tt-select tt-meridiem" value="@Meridiem"
+                aria-label="@($"{Label}, AM or PM")" @onchange="MeridiemPickedAsync">
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+        </select>
+    }
+</div>
+
+@code {
+    public const string AnytimeOption = "Anytime";
+
+    [Parameter, EditorRequired] public string Value { get; set; } = "";
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    /// <summary>
+    /// "Anytime" is a real answer to when you can set off. It is not one to when you arrive, so
+    /// the ETA turns it off.
+    /// </summary>
+    [Parameter] public bool AllowAnytime { get; set; } = true;
+
+    /// <summary>Names the control for anyone not looking at the column heading above it.</summary>
+    [Parameter] public string Label { get; set; } = "Time";
+
+    /// <summary>Half-hour marks across a 12-hour clock. The half of the day is its own control.</summary>
+    private static readonly string[] Clocks =
+        Enumerable.Range(0, 24)
+            .Select(i => $"{(i / 2 == 0 ? 12 : i / 2)}:{(i % 2 == 0 ? "00" : "30")}")
+            .ToArray();
+
+    private string Clock => Split(Value).Clock;
+    private string Meridiem => Split(Value).Meridiem;
+
+    /// <summary>Split "1:30 PM" into its two controls. "Anytime" and free text have no meridiem.</summary>
+    private static (string Clock, string Meridiem) Split(string? value)
+    {
+        var v = (value ?? "").Trim();
+        if (v.Length == 0) return ("", "");
+        if (v.Equals(AnytimeOption, StringComparison.OrdinalIgnoreCase)) return (AnytimeOption, "");
+
+        var parts = v.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 2 && parts[1] is "AM" or "PM" && Clocks.Contains(parts[0]))
+            return (parts[0], parts[1]);
+
+        return (v, "");
+    }
+
+    /// <summary>
+    /// Something written before the dropdowns existed — "Morning?", "12:30-1". It keeps its own
+    /// option so choosing nothing does not quietly round it to a clock time.
+    /// </summary>
+    private static bool IsFreeText(string clock) =>
+        clock.Length > 0 && clock != AnytimeOption && !Clocks.Contains(clock);
+
+    private Task ClockPickedAsync(ChangeEventArgs e)
+    {
+        var picked = e.Value?.ToString() ?? "";
+
+        if (picked.Length == 0 || picked == AnytimeOption || IsFreeText(picked))
+            return ValueChanged.InvokeAsync(picked);
+
+        // A clock time needs a half of the day. Default to PM: this trip starts on a Friday
+        // afternoon and almost nobody is setting off before noon.
+        var half = Meridiem is "AM" or "PM" ? Meridiem : "PM";
+        return ValueChanged.InvokeAsync($"{picked} {half}");
+    }
+
+    private Task MeridiemPickedAsync(ChangeEventArgs e)
+    {
+        var half = e.Value?.ToString();
+        return ValueChanged.InvokeAsync($"{Clock} {(half is "AM" or "PM" ? half : "PM")}");
+    }
+}

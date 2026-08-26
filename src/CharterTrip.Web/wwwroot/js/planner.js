@@ -5,9 +5,12 @@
 // mapping non-linear and DayTimeline (which is unit tested) is the only thing that knows
 // the band layout. Keeping the arithmetic on one side avoids two implementations drifting.
 //
-// Pointer events rather than HTML5 drag-and-drop, so touch works the same as mouse.
+// Pointer events rather than HTML5 drag-and-drop, so touch works the same as mouse. When a
+// press becomes a drag is drag-gesture.js's decision, not this module's — on touch that means
+// after a short hold, so a finger that just wants to scroll the day still can.
 
-const DRAG_THRESHOLD_PX = 4;
+import * as gesture from './drag-gesture.js';
+
 const MIN_HEIGHT_PX = 18;
 
 let state = null;
@@ -30,7 +33,23 @@ export function dispose() {
     document.removeEventListener('pointerup', onPointerUp, true);
     document.removeEventListener('pointercancel', onPointerUp, true);
     document.removeEventListener('click', onClick, true);
+    abandonDrag();
     state = null;
+}
+
+/// Put a half-finished drag back the way it was found. Navigating away mid-drag otherwise
+/// strands three things: the pending hold timer, the document-level scroll lock (which would
+/// block touch scrolling everywhere until a reload), and the card's own is-dragging class —
+/// and that class carries touch-action: none, so the card itself would never scroll again.
+function abandonDrag() {
+    const drag = state?.drag;
+    if (!drag) return;
+
+    gesture.end(drag.gesture);
+    drag.card.classList.remove('is-dragging', 'is-resizing');
+    drag.card.style.transform = '';
+    drag.card.style.removeProperty('--drag-h');
+    state.drag = null;
 }
 
 function onPointerDown(event) {
@@ -49,6 +68,9 @@ function onPointerDown(event) {
     const rect = card.getBoundingClientRect();
 
     state.drag = {
+        // Set once the press has earned the right to move the card; until then this is still
+        // a tap or a scroll, and the card must not have moved or been marked.
+        gesture: gesture.begin(event, () => markDragging(state?.drag)),
         mode: handle ? 'resize' : 'move',
         card,
         lanes,
@@ -65,18 +87,38 @@ function onPointerDown(event) {
     };
 }
 
+/// Show the card as picked up. Called on the hold for touch, on the first real movement for
+/// mouse and pen — the two paths differ only in when, so they share the marking.
+function markDragging(drag) {
+    if (!drag || drag.marked) return;
+    drag.marked = true;
+    drag.card.classList.add(drag.mode === 'resize' ? 'is-resizing' : 'is-dragging');
+}
+
 function onPointerMove(event) {
     const drag = state?.drag;
     if (!drag) return;
+
+    const verdict = gesture.classify(drag.gesture, event);
+
+    // A finger that moved before the hold was scrolling all along. Drop the press entirely and
+    // leave the page to the browser — a card that was never marked has nothing to undo.
+    if (verdict === 'abandon') {
+        gesture.end(drag.gesture);
+        state.drag = null;
+        return;
+    }
+
+    // A short press is a tap, not a drag — let it through so the editor still opens.
+    if (verdict === 'wait') return;
 
     const dy = event.clientY - drag.startY;
     const dx = event.clientX - drag.startX;
 
     if (!drag.moved) {
-        // A short press is a tap, not a drag — let it through so the editor still opens.
-        if (Math.abs(dy) < DRAG_THRESHOLD_PX && Math.abs(dx) < DRAG_THRESHOLD_PX) return;
         drag.moved = true;
-        drag.card.classList.add(drag.mode === 'resize' ? 'is-resizing' : 'is-dragging');
+        gesture.lockScroll(drag.gesture);
+        markDragging(drag);
     }
 
     event.preventDefault();
@@ -97,10 +139,15 @@ async function onPointerUp(event) {
     if (!drag) return;
 
     state.drag = null;
+    gesture.end(drag.gesture);
 
     // A plain click never set anything, so it must not clear anything either. This ran before
-    // the check once, and every click on a card silently stripped its height.
-    if (!drag.moved) return;
+    // the check once, and every click on a card silently stripped its height. A touch that held
+    // long enough to be marked but never moved lands here too, so clear the mark before leaving.
+    if (!drag.moved) {
+        if (drag.marked) drag.card.classList.remove('is-dragging', 'is-resizing');
+        return;
+    }
 
     drag.card.classList.remove('is-dragging', 'is-resizing');
     drag.card.style.transform = '';

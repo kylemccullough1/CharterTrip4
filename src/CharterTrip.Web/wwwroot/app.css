@@ -2317,21 +2317,31 @@ pre.code {
    measured rather than guessed — below it the Who column stops clearing the longest name on
    the roster. Whatever lands on a row then grows to share it.
 
-   There is no cap any more. It was a third of the row, then half, and both times it ended up
-   below the floor at some width or other — and since min-width beats max-width whenever the
-   two disagree, a cap under the floor pins every card at its minimum and leaves the rest of
-   the row empty. That is the bug it kept causing, twice. What it was for — stopping a lone
-   card on the last row spanning the whole width — turns out not to be worth a rule: the
-   leftovers table underneath already runs full width, so a card doing the same reads as of a
-   piece with it rather than as a mistake. */
+   Two to a row at most, however wide the screen gets, and the odd one out centred under them.
+
+   How many fit is decided by the flex BASIS, not by any cap — that was the thing to get right.
+   A basis of the card's own minimum meant a wide monitor simply fitted more of them: three
+   across at 1950px, then a lone fourth stretched over the whole width. A basis of half the row
+   cannot fit three no matter how much room there is, and the max-width keeps that last card at
+   the width of the two above it instead of letting it grow into the space beside it.
+
+   Below the width where two fit, the media query hands the single card the whole row: a cap of
+   half a row nobody is sharing is just empty rail. 1024px rather than the 860px used elsewhere
+   because the widest of these cards — the five-column ones, which have a 25rem floor — stop
+   fitting two to a row well before a phone: at 900px the floor beat the cap and left a card
+   sitting at 476px in an 837px row with the rest blank. */
 .tt-row {
   --tt-gap: 14px;
   display: flex; flex-wrap: wrap; justify-content: center; gap: var(--tt-gap);
   align-items: stretch;
 }
 .tt-row > .tt-card {
-  flex: 1 1 var(--tt-min);
+  flex: 1 1 calc((100% - var(--tt-gap)) / 2);
   min-width: min(100%, var(--tt-min));
+  max-width: calc((100% - var(--tt-gap)) / 2);
+}
+@media (max-width: 1024px) {
+  .tt-row > .tt-card { max-width: 100%; }
 }
 .tt-card {
   border: 1px solid var(--line); border-radius: var(--radius);

@@ -1,5 +1,13 @@
 @* Click-to-edit text. Renders as plain text for anyone without edit rights, which is how the
-   member view stays read-only without every page writing an @if around each field. *@
+   member view stays read-only without every page writing an @if around each field.
+
+   It is also where two people editing at once is dealt with, because every editable string on
+   the site comes through here. Writes are already serialised and every change is broadcast
+   live, so the only thing that can be lost is an edit typed against a value that has since
+   moved — see OnParametersSet and CommitAsync. Dropdowns need none of this: they commit on
+   change, so there is no window to be stale in. *@
+
+@inject CharterTrip.Web.Services.ToastService Toasts
 
 @if (!CanEditThis)
 {
@@ -23,7 +31,7 @@ else if (_editing)
                   class="inline-edit @CssClass"
                   rows="@Rows"
                   value="@_draft"
-                  @oninput="e => _draft = e.Value?.ToString() ?? string.Empty"
+                  @oninput="OnInput"
                   @onblur="CommitAsync"
                   @onkeydown="OnKeyDownAsync"
                   placeholder="@Placeholder"></textarea>
@@ -35,7 +43,7 @@ else if (_editing)
                class="inline-edit @CssClass"
                type="text"
                value="@_draft"
-               @oninput="e => _draft = e.Value?.ToString() ?? string.Empty"
+               @oninput="OnInput"
                @onblur="CommitAsync"
                @onkeydown="OnKeyDownAsync"
                placeholder="@Placeholder" />
@@ -78,6 +86,12 @@ else
     private bool _focusWanted;
     private ElementReference _field;
 
+    /// <summary>What this field said when the box was opened — the baseline a commit is judged against.</summary>
+    private string _opened = string.Empty;
+
+    /// <summary>Whether anything has actually been typed since the box opened.</summary>
+    private bool _touched;
+
     /// <summary>
     /// Normally a field is editable only by an admin. <see cref="AnyoneCanEdit"/> is the exception
     /// for a field that belongs to whoever is reading it rather than to the committee — the travel
@@ -90,8 +104,30 @@ else
     private void BeginEdit()
     {
         _draft = Value;
+        _opened = Value;
+        _touched = false;
         _editing = true;
         _focusWanted = true;
+    }
+
+    private void OnInput(ChangeEventArgs e)
+    {
+        _draft = e.Value?.ToString() ?? string.Empty;
+        _touched = true;
+    }
+
+    /// <summary>
+    /// Someone else changed this field while the box sat open. If nothing has been typed into
+    /// it there is nothing to protect, so take their value rather than sitting on a stale one —
+    /// otherwise clicking a field, being distracted, and clicking away would quietly put the old
+    /// text back.
+    /// </summary>
+    protected override void OnParametersSet()
+    {
+        if (!_editing || _touched || Value == _opened) return;
+
+        _draft = Value;
+        _opened = Value;
     }
 
     private void OnDisplayKeyDown(KeyboardEventArgs e)
@@ -115,13 +151,33 @@ else
     private async Task CommitAsync()
     {
         if (!_editing) return;
-        _editing = false;
 
         var trimmed = _draft.Trim();
-        if (trimmed == Value) return;
+
+        // Somebody else wrote here while this box was open, and what was typed disagrees with
+        // them. Writing would erase their answer with neither of them ever knowing, so the
+        // first commit buys nothing but the news: what it now says, and that saying it again
+        // will overwrite. What was typed is kept — losing it to a warning would be its own bug.
+        if (EditConflict.Decide(_opened, Value, trimmed) == EditOutcome.Warn)
+        {
+            _opened = Value;      // the next commit is an informed one, so let it through
+            _touched = true;      // and it is deliberate, so stop adopting from underneath it
+            _focusWanted = true;  // put them back in the box they were told about
+            Toasts.Show(
+                $"Someone else set this to “{Shorten(Value)}” while you were typing. Save again to replace it.",
+                CharterTrip.Web.Services.ToastKind.Bad);
+            return;
+        }
+
+        _editing = false;
+        if (EditConflict.Decide(_opened, Value, trimmed) == EditOutcome.Skip) return;
 
         await ValueChanged.InvokeAsync(trimmed);
     }
+
+    /// <summary>A toast is gone in under three seconds; a paragraph in one is no use to anybody.</summary>
+    private static string Shorten(string value) =>
+        value.Length <= 40 ? value : value[..39].TrimEnd() + "…";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

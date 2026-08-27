@@ -1,5 +1,6 @@
 @page "/games/relay"
 @inherits TripAwareComponent
+@inject GameCues Cues
 
 @* The relay is four clocks on one gun. Somebody hits START and every team's clock starts on the
    same instant — four thumbs are not simultaneous, and the difference between them is the same
@@ -57,27 +58,28 @@
     }
     else if (State.Phase == PartyGamePhase.Playing)
     {
-        <div class="game-head">
-            <div class="grow">
-                <h1 class="game-title">Relay Race</h1>
-                <p class="game-meta">
-                    @if (State.IsRunOff)
-                    {
-                        <b class="is-sudden">Run-off</b>
-                        <text> · @string.Join(" v ", Field.Select(t => t.Name))</text>
-                    }
-                    else if (NotYetRun)
-                    {
-                        <text>On the line. Anyone can start it.</text>
-                    }
-                    else
-                    {
-                        <text>Running. Stop your own clock as your team comes in.</text>
-                    }
-                </p>
+        <GamePlayHead Title="Relay Race" OnReset="ConfirmReset">
+            <Detail>
+                @if (NotYetRun)
+                {
+                    <text>On the line. Anyone can start it.</text>
+                }
+                else
+                {
+                    <text>Running. Stop your own clock as your team comes in.</text>
+                }
+            </Detail>
+        </GamePlayHead>
+
+        @* The same announcement the round games get, for the one moment this game has rounds:
+           two clocks came back identical and those teams are going again. *@
+        @if (State.IsRunOff)
+        {
+            <div class="round-splash" @key="@($"runoff-{Field.Count}")">
+                <span class="round-splash-kicker is-sudden">Run-off</span>
+                <span class="round-splash-sub">@string.Join(" v ", Field.Select(t => t.Name))</span>
             </div>
-            <button class="btn btn-ghost btn-sm" @onclick="ConfirmReset">Reset</button>
-        </div>
+        }
 
         @if (NotYetRun)
         {
@@ -227,8 +229,11 @@
 
     private Task ArmAsync() => MutateAsync(t => RelayService.Arm(t.Party.Relay, t.Teams));
 
-    private Task StartAllAsync() =>
-        MutateAsync(t => RelayService.StartAll(t.Party.Relay, t.Teams, DateTimeOffset.UtcNow));
+    private async Task StartAllAsync()
+    {
+        await MutateAsync(t => RelayService.StartAll(t.Party.Relay, t.Teams, DateTimeOffset.UtcNow));
+        await Cues.PlayAsync(GameCues.RoundStart);
+    }
 
     private Task StopAsync(string teamId) =>
         MutateAsync(t => RelayService.StopTimer(t.Party.Relay, teamId, DateTimeOffset.UtcNow));
@@ -244,8 +249,11 @@
         if (_mine is { } mine && !State.TieBreakTeamIds.Contains(mine)) _mine = null;
     }
 
-    private Task FinishAsync() =>
-        MutateAsync(t => RelayService.Finish(t, t.Party.Relay, DateTimeOffset.UtcNow));
+    private async Task FinishAsync()
+    {
+        await MutateAsync(t => RelayService.Finish(t, t.Party.Relay, DateTimeOffset.UtcNow));
+        await Cues.PlayAsync(GameCues.Scored);
+    }
 
     private void ConfirmReset() => _confirm?.Show(
         "This clears the Relay Race's points and all four clocks. Nothing else is touched.",

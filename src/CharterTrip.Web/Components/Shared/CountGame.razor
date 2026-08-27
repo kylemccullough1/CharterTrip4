@@ -1,0 +1,117 @@
+@* Pool Noodle Cups and Beer Run, whole.
+
+   They are the same game to a scoreboard: a fixed number of rounds, and after each one you say
+   how many each team carried off. The only thing that differs is the word — cups, beers — so
+   they are one component and two pages that name it. *@
+
+@inherits RoundGamePage
+
+<PageTitle>@Title · Charter Trip 2026</PageTitle>
+
+<AdminOnly>
+<div class="page page-game">
+    @if (Definition is null)
+    {
+        <SectionCard Title="@Title" Subtitle="This game is not in the trip data.">
+            <a class="btn btn-gold btn-sm" href="/games">See all games</a>
+        </SectionCard>
+    }
+    else if (State.Phase == PartyGamePhase.NotStarted)
+    {
+        <GameSetup Game="Definition" OnStart="BeginAsync">
+            <Structure>
+                <p><b>@State.PointValue points</b> for every @One collected.</p>
+                <p><b>@State.RoundCount rounds</b>, one player per team at a time.</p>
+                <p class="muted tiny">Level at the end goes to sudden death, so this cannot finish in a tie.</p>
+            </Structure>
+            <Settings>
+                <div class="settings-row">
+                    <label class="field">
+                        <span>Points per @One</span>
+                        <input class="numfield" type="number" min="0" value="@State.PointValue"
+                               @onchange="e => SetPointValueAsync(e.Value?.ToString())" />
+                    </label>
+                    <label class="field">
+                        <span>Rounds</span>
+                        <input class="numfield" type="number" min="1" value="@State.RoundCount"
+                               @onchange="e => SetRoundCountAsync(e.Value?.ToString())" />
+                    </label>
+                </div>
+            </Settings>
+        </GameSetup>
+    }
+    else if (State.Phase == PartyGamePhase.Playing)
+    {
+        <GamePlayHead Title="@Title" OnReset="ConfirmReset">
+            <Detail>
+                @State.PointValue points a @One · a cast of @Active.Count teams in play
+            </Detail>
+        </GamePlayHead>
+
+        <RoundSplash Game="State" Active="Active" />
+
+        @if (ShowingResult)
+        {
+            <RoundResult Rows="ResultRows!" Kicker="@ResultKicker" Caption="@ResultCaption" />
+        }
+        else
+        {
+            <CountRoundBoard Trip="Trip" State="State" GameId="@GameId" Unit="@Unit"
+                             Select="SelectFor" OnScored="OnScoredAsync" OnSkipped="SkipRoundAsync" />
+        }
+
+        <GameScoreSidebar Trip="Trip" GameId="@GameId" Label="@Title" />
+    }
+    else
+    {
+        <GameVictory Rows="ScoreService.Scoreboard(Trip, GameId)"
+                     Winner="ScoreService.Leader(Trip, GameId)"
+                     Kicker="@Title">
+            <Actions>
+                <button class="btn btn-ghost btn-lg" @onclick="ConfirmReset">Play again</button>
+            </Actions>
+        </GameVictory>
+    }
+</div>
+
+<ConfirmDialog @ref="_confirm" />
+</AdminOnly>
+
+@code {
+    [Parameter, EditorRequired] public string Id { get; set; } = "";
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    /// <summary>What is being counted, plural: "cups", "beers".</summary>
+    [Parameter, EditorRequired] public string Unit { get; set; } = "";
+
+    /// <summary>Reaches this game's state on whichever trip it is handed.</summary>
+    [Parameter, EditorRequired] public Func<TripData, RoundGame> SelectFor { get; set; } = default!;
+
+    private ConfirmDialog? _confirm;
+
+    protected override string GameId => Id;
+    protected override RoundGame State => SelectFor(Trip);
+    protected override RoundGame Select(TripData trip) => SelectFor(trip);
+
+    /// <summary>"cups" reads as "points per cups" in a sentence, so the singular is worth having.</summary>
+    private string One => Unit.TrimEnd('s');
+
+    private async Task OnScoredAsync(IReadOnlyList<ScoreRow> rows) =>
+        await ShowResultAsync(rows, State.IsSuddenDeath ? "Sudden death" : $"Round {State.Round - 1}");
+
+    private void ConfirmReset() => _confirm?.Show(
+        $"This clears {Title}'s points and puts the game back to the rules card. Nothing else is touched.",
+        ResetAsync,
+        "Reset the game",
+        $"Reset {Title}");
+
+    private Task SetPointValueAsync(string? raw) =>
+        int.TryParse(raw, out var value) && value >= 0
+            ? MutateAsync(t => SelectFor(t).PointValue = value)
+            : Task.CompletedTask;
+
+    private Task SetRoundCountAsync(string? raw) =>
+        int.TryParse(raw, out var value) && value >= 1
+            ? MutateAsync(t => SelectFor(t).RoundCount = value)
+            : Task.CompletedTask;
+}

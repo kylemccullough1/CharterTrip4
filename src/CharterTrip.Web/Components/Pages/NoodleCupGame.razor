@@ -1,95 +1,12 @@
 @page "/games/noodlecup"
-@inherits TripAwareComponent
 
 @* Pool Noodle Cups. Four players in at a time, and whoever is not playing is watching for
-   cheating and counting cups — this is where the counting lands. *@
+   cheating and counting cups — this is where the counting lands.
 
-<PageTitle>Pool Noodle Cups · Charter Trip 2026</PageTitle>
+   The screen itself is CountGame, which Beer Run also uses: same rounds, same counting, and only
+   the noun is different. *@
 
-<AdminOnly>
-<div class="page page-game">
-    @if (Game is null)
-    {
-        <SectionCard Title="Pool Noodle Cups" Subtitle="This game is not in the trip data.">
-            <a class="btn btn-gold btn-sm" href="/games">See all games</a>
-        </SectionCard>
-    }
-    else if (State.Phase == PartyGamePhase.NotStarted)
-    {
-        <GameSetup Game="Game" OnStart="StartAsync">
-            <Structure>
-                <p><b>@State.PointValue points</b> for every cup knocked off.</p>
-                <p><b>@State.RoundCount rounds</b>, one player per team at a time.</p>
-            </Structure>
-            <Settings>
-                <div class="settings-row">
-                    <label class="field">
-                        <span>Points per cup</span>
-                        <input class="numfield" type="number" min="0" value="@State.PointValue"
-                               @onchange="e => SetPointValueAsync(e.Value?.ToString())" />
-                    </label>
-                    <label class="field">
-                        <span>Rounds</span>
-                        <input class="numfield" type="number" min="1" value="@State.RoundCount"
-                               @onchange="e => SetRoundCountAsync(e.Value?.ToString())" />
-                    </label>
-                </div>
-            </Settings>
-        </GameSetup>
-    }
-    else if (State.Phase == PartyGamePhase.Playing)
-    {
-        <div class="game-head">
-            <div class="grow">
-                <h1 class="game-title">Pool Noodle Cups</h1>
-                <p class="game-meta">Round <b>@State.Round</b> of <b>@State.RoundCount</b> · @State.PointValue points a cup</p>
-            </div>
-            <button class="btn btn-ghost btn-sm" @onclick="ConfirmReset">Reset</button>
-        </div>
-
-        <CountRoundBoard Trip="Trip" State="State" GameId="@RoundGameService.NoodleCupId"
-                         Unit="cups" Select="t => t.Party.NoodleCup" />
-
-        <GameScoreSidebar Trip="Trip" GameId="@RoundGameService.NoodleCupId" Label="Pool Noodle Cups" />
-    }
-    else
-    {
-        <GameVictory Rows="ScoreService.Scoreboard(Trip, RoundGameService.NoodleCupId)"
-                     Winner="ScoreService.Leader(Trip, RoundGameService.NoodleCupId)"
-                     Kicker="Pool Noodle Cups">
-            <Actions>
-                <button class="btn btn-ghost btn-lg" @onclick="ConfirmReset">Play again</button>
-            </Actions>
-        </GameVictory>
-    }
-</div>
-
-<ConfirmDialog @ref="_confirm" />
-</AdminOnly>
-
-@code {
-    protected override TripArea Watching => TripArea.Games;
-
-    private ConfirmDialog? _confirm;
-
-    private Game? Game => Trip.Games.FirstOrDefault(g => g.Id == RoundGameService.NoodleCupId);
-    private RoundGame State => Trip.Party.NoodleCup;
-
-    private Task StartAsync() => MutateAsync(t => RoundGameService.Begin(t.Party.NoodleCup));
-
-    private void ConfirmReset() => _confirm?.Show(
-        "This clears Pool Noodle Cups' points and puts the game back to the rules card. Nothing else is touched.",
-        () => MutateAsync(t => RoundGameService.Reset(t, t.Party.NoodleCup, RoundGameService.NoodleCupId)),
-        "Reset the game",
-        "Reset Pool Noodle Cups");
-
-    private Task SetPointValueAsync(string? raw) =>
-        int.TryParse(raw, out var value) && value >= 0
-            ? MutateAsync(t => t.Party.NoodleCup.PointValue = value)
-            : Task.CompletedTask;
-
-    private Task SetRoundCountAsync(string? raw) =>
-        int.TryParse(raw, out var value) && value >= 1
-            ? MutateAsync(t => t.Party.NoodleCup.RoundCount = value)
-            : Task.CompletedTask;
-}
+<CountGame Id="@RoundGameService.NoodleCupId"
+           Title="Pool Noodle Cups"
+           Unit="cups"
+           SelectFor="t => t.Party.NoodleCup" />

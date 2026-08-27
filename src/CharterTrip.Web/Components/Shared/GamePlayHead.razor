@@ -1,0 +1,31 @@
+@* The bar across the top of a game in progress: what you are playing, where you are up to, and
+   the way to start it over. Every one of the four had its own copy of this, and they had already
+   drifted — different wording for the same thing, Reset in a different place. *@
+
+<div class="game-head">
+    <div class="grow">
+        <h1 class="game-title">@Title</h1>
+        <p class="game-meta">@Detail</p>
+    </div>
+    @if (CanEdit)
+    {
+        <button class="btn btn-ghost btn-sm" @onclick="OnReset">Reset</button>
+    }
+</div>
+
+@code {
+    [CascadingParameter] private TripPermissions Permissions { get; set; } = new(false, "Guest");
+
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    /// <summary>
+    /// The line under the title — the round, the points, whose clock is whose. Named Detail
+    /// rather than Meta because Razor reads a component called Meta as the HTML void element and
+    /// refuses to let it have child content.
+    /// </summary>
+    [Parameter] public RenderFragment? Detail { get; set; }
+
+    [Parameter] public EventCallback OnReset { get; set; }
+
+    private bool CanEdit => Permissions.CanEdit;
+}

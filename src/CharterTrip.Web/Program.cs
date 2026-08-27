@@ -67,6 +67,7 @@ builder.Services.AddDataProtection()
     .SetApplicationName("CharterTrip");
 builder.Services.AddScoped<CharterTrip.Web.Services.ToastService>();
 builder.Services.AddScoped<CharterTrip.Web.Services.MediaAttachments>();
+builder.Services.AddScoped<CharterTrip.Web.Services.GameCues>();
 
 var app = builder.Build();
 

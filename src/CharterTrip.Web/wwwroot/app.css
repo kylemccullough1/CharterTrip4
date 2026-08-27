@@ -2816,28 +2816,47 @@ pre.code {
 .team-pick-pts { color: var(--team, var(--gold)); font-size: 0.813rem; font-variant-numeric: tabular-nums; }
 
 /* ------------------------------------------------------------ the round won --
-   Stars, briefly, in the winning team's colour. It replaces the round rather
-   than covering the screen, because the next thing to do is pick again and a
-   full-screen overlay just got in the way of that. */
-.sketch-result {
+   Stars, briefly, in the leading team's colour. It replaces the round rather
+   than covering the screen, because the next thing to do is play the next one
+   and a full-screen overlay just got in the way of that.
+
+   Shared by all three round games: one team takes a round of Police Sketch,
+   three of them carry something off in the cups, and it is the same card. */
+.round-result {
   position: relative; overflow: hidden;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   padding: 44px 20px; text-align: center;
   background: var(--panel); border: 1px solid var(--line-soft);
   border-top: 3px solid var(--team, var(--gold)); border-radius: var(--radius);
 }
-.sketch-result-who {
+.round-result-kicker {
+  margin: 0 0 2px; font-size: 0.75rem; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--text-faint);
+}
+.round-result-who {
   font-family: var(--display); font-size: clamp(1.5rem, 7vw, 3.5rem); letter-spacing: .06em;
   margin: 0; line-height: 1.05; color: var(--team, var(--gold));
   max-width: 100%; overflow-wrap: anywhere; hyphens: auto;
   text-shadow: 0 0 50px color-mix(in srgb, var(--team, #d4af37) 55%, transparent);
   animation: win-pop .55s cubic-bezier(.2, 1.5, .4, 1) both;
 }
-.sketch-result-pts {
+.round-result-pts {
   margin: 0; font-family: var(--display); font-size: 1.5rem; color: var(--gold-light);
   animation: win-pop .55s .09s cubic-bezier(.2, 1.5, .4, 1) both;
 }
-.sketch-result .muted { margin: 4px 0 0; }
+/* Everybody else who scored in the same round, small, underneath the one who led it. */
+.round-result-rest {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px;
+  margin-top: 10px; position: relative;
+  animation: win-pop .55s .18s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+.round-result-also {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.844rem; color: var(--text-dim);
+}
+.round-result-also b { color: var(--team, var(--gold)); font-variant-numeric: tabular-nums; }
+.round-result-caption { position: relative; }
+.round-result .muted { margin: 4px 0 0; }
 
 /* Twelve five-pointed stars thrown out from the middle. The star itself is a
    clip-path rather than a glyph, so it is the same shape on every device. */
@@ -3001,11 +3020,11 @@ pre.code {
   .score-recent-note { display: none; }
   .page-game .card { padding: 16px 15px; }
   .score-tab.is-open { right: 88vw; }
-  .sketch-result { padding: 34px 16px; }
+  .round-result { padding: 34px 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .round-splash, .sketch-result-who, .sketch-result-pts, .star { animation: none; }
+  .round-splash, .round-result-who, .round-result-pts, .round-result-rest, .star { animation: none; }
   .star-burst { display: none; }
   .score-sidebar { transition: none; }
 }

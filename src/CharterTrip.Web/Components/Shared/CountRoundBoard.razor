@@ -46,6 +46,12 @@
     /// <summary>Reaches into the live trip to find this game's state, since the parameter is a snapshot.</summary>
     [Parameter, EditorRequired] public Func<TripData, RoundGame> Select { get; set; } = default!;
 
+    /// <summary>What the round paid out, so the page can put it on screen before moving on.</summary>
+    [Parameter] public EventCallback<IReadOnlyList<ScoreRow>> OnScored { get; set; }
+
+    /// <summary>The round was a washout and the page should just move the game along.</summary>
+    [Parameter] public EventCallback OnSkipped { get; set; }
+
     /// <summary>This round's tally, per team. Local until the round is scored.</summary>
     private readonly Dictionary<string, int> _counts = new(StringComparer.Ordinal);
 
@@ -79,18 +85,24 @@
         var unit = Unit;
         var gameId = GameId;
 
+        // Captured before the mutation: the round advances as it is scored, and the teams in play
+        // can change with it if this was the round that sent two of them to sudden death.
+        var scored = Active
+            .Where(t => Count(t.Id) > 0)
+            .Select(t => new ScoreRow(t, Count(t.Id) * State.PointValue))
+            .ToList();
+
         await Store.MutateAsync(
             t => RoundGameService.AwardRoundCounts(t, Select(t), gameId, counts, unit, DateTimeOffset.UtcNow),
             TripArea.Games);
 
         _counts.Clear();
+        await OnScored.InvokeAsync(scored);
     }
 
     private async Task SkipAsync()
     {
-        var gameId = GameId;
-
-        await Store.MutateAsync(t => RoundGameService.NextRound(t, Select(t), gameId), TripArea.Games);
         _counts.Clear();
+        await OnSkipped.InvokeAsync();
     }
 }

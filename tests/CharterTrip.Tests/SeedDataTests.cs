@@ -1,4 +1,5 @@
 using CharterTrip.Core.Models;
+using CharterTrip.Core.Services;
 using CharterTrip.Infrastructure.Seed;
 
 namespace CharterTrip.Tests;
@@ -121,6 +122,60 @@ public class SeedDataTests
 
         Assert.Equal(5, Seed.Mystery.Characters.Count(c => c.IsConspirator));
         Assert.Equal(1, Seed.Mystery.Characters.Count(c => c.IsMastermind));
+    }
+
+    [Fact]
+    public void Spelling_bee_has_a_word_list_with_no_repeats()
+    {
+        var words = Seed.SpellingBee.Words;
+
+        Assert.NotEmpty(words);
+        Assert.All(words, w => Assert.False(w.IsEmpty, $"{w.Id} has no word"));
+        Assert.All(words, w => Assert.False(string.IsNullOrWhiteSpace(w.Hint), $"{w.Word} has no hint to read"));
+
+        // A word coming round twice is the one mistake a room notices instantly.
+        Assert.Equal(words.Count, words.Select(w => w.Word.ToLowerInvariant()).Distinct().Count());
+        Assert.Equal(words.Count, words.Select(w => w.Id).Distinct().Count());
+    }
+
+    /// <summary>
+    /// The dress rehearsal: the real roster, the real teams, the real word list, played to a
+    /// finish. Everything else about the bee is tested on a four-person fixture, which proves the
+    /// rules but not that they survive contact with twenty-five people across four teams — and
+    /// the two ways this could go wrong on the night are that it never ends, or that it runs out
+    /// of words before it does.
+    /// </summary>
+    [Fact]
+    public void A_full_bee_on_the_real_roster_finishes_without_running_out_of_words()
+    {
+        var trip = SeedLoader.Load();
+        SpellingBeeService.Start(trip);
+
+        // Everybody misses until one is left, then the survivor spells their way to the win.
+        // The cap is a deadlock detector, not a limit: a bee this size should end well inside it.
+        var turns = 0;
+        while (trip.SpellingBee.Game.Phase != BeePhase.Finished && turns++ < 500)
+        {
+            if (trip.SpellingBee.Game.Survivors.Count == 1)
+                SpellingBeeService.JudgeCorrect(trip);
+            else
+                SpellingBeeService.JudgeWrong(trip);
+
+            SpellingBeeService.Continue(trip);
+        }
+
+        Assert.Equal(BeePhase.Finished, trip.SpellingBee.Game.Phase);
+
+        var winner = SpellingBeeService.Winner(trip);
+        Assert.NotNull(winner);
+        Assert.Contains(trip.Teams, t => t.Id == winner!.TeamId);
+
+        // 25 people means 24 eliminations and a winning word — the list has to outlast that.
+        Assert.True(SpellingBeeService.WordsRemaining(trip) > 0,
+            $"the bee used every word in the list with {turns} turns played");
+
+        var entry = Assert.Single(trip.Scores, s => s.GameId == SpellingBeeService.GameId);
+        Assert.Equal(winner!.TeamId, entry.TeamId);
     }
 
     [Fact]

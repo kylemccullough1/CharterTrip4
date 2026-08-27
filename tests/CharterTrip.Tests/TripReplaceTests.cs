@@ -82,6 +82,7 @@ public class TripReplaceTests
         Scores = [new ScoreEntry { Id = "score", TeamId = "team", Points = 10 }],
         Superlatives = [new Superlative { Id = "sup", Title = "Most likely to nap" }],
         Jeopardy = new JeopardyBoard { Title = "Charter Jeopardy" },
+        SpellingBee = new SpellingBee { Title = "Charter Spelling Bee" },
         Mystery = new MysteryState { Title = "Murder at West Egg Manor" }
     };
 }

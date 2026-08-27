@@ -38,6 +38,7 @@ public static class TripReplace
         target.Scores = source.Scores;
         target.Superlatives = source.Superlatives;
         target.Jeopardy = source.Jeopardy;
+        target.SpellingBee = source.SpellingBee;
         target.Mystery = source.Mystery;
     }
 }

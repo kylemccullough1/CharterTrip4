@@ -72,6 +72,7 @@ public enum TripArea
     Games,
     Scores,
     Jeopardy,
+    SpellingBee,
     Mystery,
     Venue,
     Travel

@@ -44,6 +44,7 @@ public sealed class TripData
     public List<ScoreEntry> Scores { get; set; } = [];
     public List<Superlative> Superlatives { get; set; } = [];
     public JeopardyBoard Jeopardy { get; set; } = new();
+    public SpellingBee SpellingBee { get; set; } = new();
     public MysteryState Mystery { get; set; } = new();
 }
 

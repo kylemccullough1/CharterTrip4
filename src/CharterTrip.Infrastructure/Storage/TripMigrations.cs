@@ -13,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 18;
+    public const int CurrentVersion = 19;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -33,6 +33,10 @@ public static class TripMigrations
         if (trip.SchemaVersion < 12) changed |= ToV12_CheckInIsTwo(trip);
         if (trip.SchemaVersion < 13) changed |= ToV13_MenuBoard(trip);
         if (trip.SchemaVersion < 14) changed |= ToV14_GroupedEssentials(trip);
+
+        // v19 gave the spelling bee a home of its own. No step: the property defaults to an
+        // empty bee with an empty word list, which is exactly what an older file means by not
+        // mentioning it. The words arrive from the seed, not from a conversion.
 
         // v18 gave a carpool's ETA a day to go with the time. No step, same as the two
         // before it: the field defaults to empty and an older file simply has not said.

@@ -53,14 +53,12 @@ public static class NavTree
         [
             new("All games", "/games"),
             new("Jeopardy", "/games/jeopardy"),
-            new("Newlywed Game", "/games/newlywed"),
             new("Police Sketch", "/games/sketch"),
             new("Spelling Bee", "/games/spelling"),
             new("Pool Noodle Cups", "/games/noodlecup"),
             new("Beer Run", "/games/beerrun"),
             new("Relay Race", "/games/relay"),
-            new("Superlatives", "/games/superlatives"),
-            new("Murder Mystery", "/mystery")
+            new("Murder Mystery", "/games/mystery")
         ]),
         new("Venue", "/venue"),
         new("Data", "/admin/import", AdminOnly: true)

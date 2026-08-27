@@ -42,7 +42,7 @@ Open `CharterTrip.sln` in Rider or Visual Studio; everything also works from the
 | **Home** | Hero, rotating Art Deco carousel, standings panel, weekend-at-a-glance, status tiles |
 | **Itinerary** | **Fully working.** Inline edit, add/delete, drag between days, ↑↓«» on touch, sort-by-time |
 | **Venue & Area** | Real content — the house, nearby stores and parks, committee info |
-| **Games** | Real rules for all eight games; scoring widgets come in phase 4 |
+| **Games** | Real rules for all six games; scoring widgets come in phase 4 |
 | Teams, Murder Mystery, Checklist, Roster, Budget, Payments, Shopping | Styled placeholders — the data is already seeded, only the screens are missing |
 
 The design system, both role shells (`AdminShell` / `MemberShell`), navigation, inline editing,

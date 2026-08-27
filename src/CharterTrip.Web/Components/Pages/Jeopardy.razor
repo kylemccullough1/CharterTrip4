@@ -273,9 +273,13 @@ else
                     <span class="muted">buzzed in @Reaction(Game.Buzzes.FirstOrDefault()?.Milliseconds ?? 0)</span>
                 </div>
             }
-            else
+            else if (Game.BuzzersOpen)
             {
                 <p class="jeo-open">Buzzers are open@(Game.LockedOutTeamIds.Count > 0 ? $" — {Game.LockedOutTeamIds.Count} locked out" : "")</p>
+            }
+            else
+            {
+                <p class="jeo-open">Reading the clue…</p>
             }
         </section>
     }
@@ -485,8 +489,19 @@ else
         // Fired here rather than off the phase change so the click is answered on the device
         // that made it, without waiting for the round trip.
         await Cue("pick");
-        await MutateAsync(t => JeopardyService.PickClue(t, clueId, DateTimeOffset.UtcNow));
+        await MutateAsync(t => JeopardyService.PickClue(t, clueId));
+        ScheduleBuzzersOpen(clueId);
     }
+
+    /// <summary>
+    /// Opens the buzzers after the room's had a moment to read the clue. Runs detached from this
+    /// circuit on purpose — the buzzers open on schedule even if whoever picked navigates away.
+    /// </summary>
+    private void ScheduleBuzzersOpen(string clueId) => _ = Task.Run(async () =>
+    {
+        await Task.Delay(JeopardyService.ClueReadDelay);
+        await Store.MutateAsync(t => JeopardyService.OpenBuzzers(t, clueId, DateTimeOffset.UtcNow), Watching);
+    });
 
     /// <summary>
     /// Give the winner of the opening race the screen for a moment. Purely a view state — it is
@@ -516,8 +531,11 @@ else
 
     private Task ContinueAsync() => MutateAsync(JeopardyService.Continue);
 
-    private Task StartFinalAsync() =>
-        MutateAsync(t => JeopardyService.StartFinal(t, DateTimeOffset.UtcNow));
+    private async Task StartFinalAsync()
+    {
+        await MutateAsync(t => JeopardyService.StartFinal(t));
+        ScheduleBuzzersOpen(JeopardyService.FinalClueId);
+    }
 
     private void ConfirmReset() =>
         _confirm?.Show("Reset the whole game? Every clue comes back and the Jeopardy points leave the standings.",

@@ -161,7 +161,7 @@ public static class JeopardyService
     /// anything but the moment a pick is actually due — two people tapping at once cannot
     /// otherwise replace the clue that is already on the wall.
     /// </summary>
-    public static void PickClue(TripData trip, string clueId, DateTimeOffset now)
+    public static void PickClue(TripData trip, string clueId)
     {
         var game = trip.Jeopardy.Game;
         if (game.Phase != JeopardyPhase.Board || game.BuzzersOpen) return;
@@ -171,8 +171,6 @@ public static class JeopardyService
         game.Phase = JeopardyPhase.Clue;
         game.Buzzes.Clear();
         game.LockedOutTeamIds.Clear();
-        game.BuzzersOpen = true;
-        game.BuzzOpenedAt = now;
     }
 
     /// <summary>Right answer: the team takes the points, and the answer goes up for everyone.</summary>
@@ -277,8 +275,11 @@ public static class JeopardyService
     /// </summary>
     public const string FinalClueId = "final";
 
-    /// <summary>Leave the titles and put the final clue up, buzzers live.</summary>
-    public static void StartFinal(TripData trip, DateTimeOffset now)
+    /// <summary>How long the room gets to read a freshly revealed clue before buzzers go live.</summary>
+    public static readonly TimeSpan ClueReadDelay = TimeSpan.FromSeconds(3);
+
+    /// <summary>Leave the titles and put the final clue up. Buzzers open after a reading pause.</summary>
+    public static void StartFinal(TripData trip)
     {
         var game = trip.Jeopardy.Game;
 
@@ -286,6 +287,19 @@ public static class JeopardyService
         game.CurrentClueId = FinalClueId;
         game.Buzzes.Clear();
         game.LockedOutTeamIds.Clear();
+    }
+
+    /// <summary>
+    /// Opens the buzzers for the clue that's already on the wall, once the room's had a moment to
+    /// read it. Guarded by clue id and phase so a reset or a call made during the wait can't
+    /// reopen buzzers for a clue that has already moved on.
+    /// </summary>
+    public static void OpenBuzzers(TripData trip, string clueId, DateTimeOffset now)
+    {
+        var game = trip.Jeopardy.Game;
+        if (game.CurrentClueId != clueId) return;
+        if (game.Phase is not (JeopardyPhase.Clue or JeopardyPhase.Final)) return;
+
         game.BuzzersOpen = true;
         game.BuzzOpenedAt = now;
     }

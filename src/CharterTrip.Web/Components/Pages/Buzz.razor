@@ -193,11 +193,11 @@ else
     {
         JeopardyPhase.NotStarted => "not started",
         JeopardyPhase.Board => Game.BuzzersOpen ? "buzz-off" : "picking",
-        JeopardyPhase.Clue => "buzzers open",
+        JeopardyPhase.Clue => Game.BuzzersOpen ? "buzzers open" : "reading the clue",
         JeopardyPhase.Judging => "your call",
         JeopardyPhase.Revealed => "answer up",
         JeopardyPhase.FinalIntro => "final titles",
-        JeopardyPhase.Final => "final — buzzers open",
+        JeopardyPhase.Final => Game.BuzzersOpen ? "final — buzzers open" : "final — reading the clue",
         _ => "finished"
     };
 
@@ -216,6 +216,7 @@ else
             if (Game.Phase == JeopardyPhase.FinalIntro) return "Final Jeopardy is next.";
             if (FinalInPlay && Game.BuzzersOpen) return "Final Jeopardy — buzz when your team has it.";
             if (Game.BuzzersOpen) return "Buzzers are open.";
+            if (Game.Phase is JeopardyPhase.Clue or JeopardyPhase.Final) return "Get ready — buzzers open in a moment.";
             if (Game.Phase == JeopardyPhase.Judging) return $"{TeamName(Game.LeadingBuzzTeamId)} is answering.";
             if (Game.Phase == JeopardyPhase.Revealed) return "Answer's up on the screen.";
             if (Game.Phase == JeopardyPhase.Board) return $"{TeamName(Game.PickingTeamId)} is picking.";
@@ -245,8 +246,19 @@ else
     private async Task PickAsync(string clueId)
     {
         await Cue("pick");
-        await MutateAsync(t => JeopardyService.PickClue(t, clueId, DateTimeOffset.UtcNow));
+        await MutateAsync(t => JeopardyService.PickClue(t, clueId));
+        ScheduleBuzzersOpen(clueId);
     }
+
+    /// <summary>
+    /// Opens the buzzers after the room's had a moment to read the clue. Runs detached from this
+    /// circuit on purpose — the buzzers open on schedule even if whoever picked navigates away.
+    /// </summary>
+    private void ScheduleBuzzersOpen(string clueId) => _ = Task.Run(async () =>
+    {
+        await Task.Delay(JeopardyService.ClueReadDelay);
+        await Store.MutateAsync(t => JeopardyService.OpenBuzzers(t, clueId, DateTimeOffset.UtcNow), Watching);
+    });
 
     /// <summary>
     /// One sound on this phone.
@@ -282,6 +294,9 @@ else
     private Task NobodyAsync() => MutateAsync(JeopardyService.NobodyGotIt);
     private Task ContinueAsync() => MutateAsync(JeopardyService.Continue);
 
-    private Task StartFinalAsync() =>
-        MutateAsync(t => JeopardyService.StartFinal(t, DateTimeOffset.UtcNow));
+    private async Task StartFinalAsync()
+    {
+        await MutateAsync(t => JeopardyService.StartFinal(t));
+        ScheduleBuzzersOpen(JeopardyService.FinalClueId);
+    }
 }

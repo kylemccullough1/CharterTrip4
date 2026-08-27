@@ -33,10 +33,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 12) changed |= ToV12_CheckInIsTwo(trip);
         if (trip.SchemaVersion < 13) changed |= ToV13_MenuBoard(trip);
         if (trip.SchemaVersion < 14) changed |= ToV14_GroupedEssentials(trip);
-
-        // v19 gave the spelling bee a home of its own. No step: the property defaults to an
-        // empty bee with an empty word list, which is exactly what an older file means by not
-        // mentioning it. The words arrive from the seed, not from a conversion.
+        if (trip.SchemaVersion < 19) changed |= ToV19_SpellingBeeWords(trip);
 
         // v18 gave a carpool's ETA a day to go with the time. No step, same as the two
         // before it: the field defaults to empty and an older file simply has not said.
@@ -318,6 +315,24 @@ public static class TripMigrations
             return false;
 
         trip.Jeopardy = SeedLoader.Load().Jeopardy;
+        return true;
+    }
+
+    /// <summary>
+    /// The bee arrived with a word list, and a trip.json that already exists has no way to come
+    /// by it — the seed only ever builds a file from nothing, so on the deployed copy the bee
+    /// would have opened with nothing to read. Same shape as <see cref="ToV9_JeopardyBoard"/>,
+    /// which had to carry the Jeopardy board across for exactly this reason.
+    ///
+    /// Only the words are taken, and only when there are none: a host who has already written
+    /// their own list must never find it replaced. The version guard means this runs once, so
+    /// emptying the list deliberately does not bring the seed's words back on the next load.
+    /// </summary>
+    private static bool ToV19_SpellingBeeWords(TripData trip)
+    {
+        if (trip.SpellingBee.Words.Count > 0) return false;
+
+        trip.SpellingBee.Words = SeedLoader.Load().SpellingBee.Words;
         return true;
     }
 

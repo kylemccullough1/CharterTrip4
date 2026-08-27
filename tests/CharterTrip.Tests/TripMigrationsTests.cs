@@ -576,4 +576,31 @@ public class TripMigrationsTests
 
         Assert.False(TripMigrations.Apply(trip));
     }
+
+    /// <summary>
+    /// The live trip.json predates the bee entirely, and the seed only builds a file from
+    /// nothing — so without this step the bee opens on the deployed site with no words to read.
+    /// </summary>
+    [Fact]
+    public void V19_brings_the_word_list_to_a_file_that_predates_the_bee()
+    {
+        var trip = new TripData { SchemaVersion = 18 };
+        Assert.Empty(trip.SpellingBee.Words);
+
+        TripMigrations.Apply(trip);
+
+        Assert.NotEmpty(trip.SpellingBee.Words);
+        Assert.All(trip.SpellingBee.Words, w => Assert.False(w.IsEmpty));
+    }
+
+    [Fact]
+    public void V19_never_replaces_a_word_list_somebody_has_already_written()
+    {
+        var trip = new TripData { SchemaVersion = 18 };
+        trip.SpellingBee.Words.Add(new BeeWord { Id = "mine", Word = "onomatopoeia" });
+
+        TripMigrations.Apply(trip);
+
+        Assert.Equal("mine", Assert.Single(trip.SpellingBee.Words).Id);
+    }
 }

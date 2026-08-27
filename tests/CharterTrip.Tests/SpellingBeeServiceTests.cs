@@ -280,6 +280,50 @@ public class SpellingBeeServiceTests
         Assert.Equal(BeePhase.Finished, trip.SpellingBee.Game.Phase);
     }
 
+    // ------------------------------------------------------------ reinstating
+
+    [Fact]
+    public void Someone_wrongly_eliminated_can_be_put_back_in()
+    {
+        var trip = Trip(aCount: 3, bCount: 1);
+        SpellingBeeService.Start(trip);
+
+        Wrong(trip);   // ann out, by mistake
+        Assert.Contains("ann", trip.SpellingBee.Game.Eliminated);
+
+        SpellingBeeService.Reinstate(trip, "ann");
+
+        Assert.Contains("ann", trip.SpellingBee.Game.Survivors);
+        Assert.DoesNotContain("ann", trip.SpellingBee.Game.Eliminated);
+    }
+
+    [Fact]
+    public void A_reinstated_speller_rejoins_the_rotation_at_the_back()
+    {
+        var trip = Trip(aCount: 3, bCount: 1);
+        SpellingBeeService.Start(trip);
+
+        Wrong(trip);                                  // ann out
+        SpellingBeeService.Reinstate(trip, "ann");
+
+        // Team A's queue was Ben, Cal; Ann goes behind them rather than jumping back to the front.
+        Assert.Equal(["ben", "cal", "ann"],
+            SpellingBeeService.SurvivorsOn(trip, "a").Select(p => p.Id));
+    }
+
+    [Fact]
+    public void Reinstating_somebody_who_is_already_in_changes_nothing()
+    {
+        var trip = Trip();
+        SpellingBeeService.Start(trip);
+
+        var before = trip.SpellingBee.Game.Survivors.ToList();
+        SpellingBeeService.Reinstate(trip, "ann");
+        SpellingBeeService.Reinstate(trip, "nobody-at-all");
+
+        Assert.Equal(before, trip.SpellingBee.Game.Survivors);
+    }
+
     // --------------------------------------------------------------- scoring
 
     [Fact]

@@ -1,0 +1,326 @@
+@page "/games/spelling"
+@inherits TripAwareComponent
+
+<PageTitle>Spelling Bee · Charter Trip 2026</PageTitle>
+
+@* The host's screen, and only the host's.
+
+   A spelling bee has a problem Jeopardy does not: the word is the answer. Jeopardy can put a
+   clue on the wall because reading it is the point, so that game splits across a television
+   and a phone. Here anything the room can see, the speller can see — so there is no wall mode
+   at all, and the word never leaves this page. That is the guarantee: not a rule about where
+   the laptop is pointed, but nowhere else for the word to go. *@
+<AdminOnly>
+<div class="page">
+
+@if (Game.Phase == BeePhase.NotStarted)
+{
+    <SectionCard Title="@Trip.SpellingBee.Title"
+                 Subtitle="@($"{FieldSize} spellers · {WordCount} words ready")">
+        <Actions>
+            @if (CanEdit)
+            {
+                <button class="btn btn-gold" disabled="@(!CanStart)" @onclick="StartAsync">Start the bee</button>
+            }
+        </Actions>
+        <ChildContent>
+            <p class="bee-warn">
+                Keep this screen to yourself — whoever is spelling must not see the word.
+            </p>
+
+            @if (Rules.Count > 0)
+            {
+                <ul class="rules">
+                    @foreach (var rule in Rules)
+                    {
+                        <li>@rule</li>
+                    }
+                </ul>
+            }
+
+            @if (!CanStart)
+            {
+                <p class="warnfg tiny">
+                    The bee needs at least two people on teams and one word to read.
+                </p>
+            }
+        </ChildContent>
+    </SectionCard>
+
+    @* The list is only reachable here, before anyone has started, so the phase does the
+       gating and no editing flag is needed. Order is the difficulty curve — first read,
+       first spelled. *@
+    <SectionCard Title="Words"
+                 Subtitle="Read top to bottom. Click any line to change it; edits save as you leave the field.">
+        <Actions>
+            @if (CanEdit)
+            {
+                <IconButton Icon="IconButtonIcon.Plus" Title="Add a word" OnClick="AddWordAsync" />
+            }
+        </Actions>
+        <ChildContent>
+            <ol class="bee-words">
+                @foreach (var word in Trip.SpellingBee.Words)
+                {
+                    var id = word.Id;             // the loop variable is shared; the handlers are not
+
+                    <li class="bee-word-row @(word.IsEmpty ? "is-empty" : null)" @key="id">
+                        <div class="bee-word-fields">
+                            <EditableText Value="@word.Word" ReadOnly="@(!CanEdit)"
+                                          ValueChanged="@(v => EditWordAsync(id, w => w.Word = v))"
+                                          Placeholder="Word" CssClass="strong" />
+                            <EditableText Value="@word.Hint" ReadOnly="@(!CanEdit)"
+                                          ValueChanged="@(v => EditWordAsync(id, w => w.Hint = v))"
+                                          Placeholder="Definition, or a sentence to read"
+                                          CssClass="tiny muted" />
+                        </div>
+
+                        @if (CanEdit)
+                        {
+                            <IconButton Icon="IconButtonIcon.Close" Tone="danger"
+                                        Title="@($"Remove “{word.Word}”")"
+                                        OnClick="@(() => RemoveWordAsync(id))" />
+                        }
+                    </li>
+                }
+            </ol>
+
+            @if (WordCount == 0)
+            {
+                <p class="muted tiny">No words yet. Add some above.</p>
+            }
+        </ChildContent>
+    </SectionCard>
+}
+else
+{
+    <div class="bee-bar">
+        <span class="chip @(WordsLeft <= 10 ? "warn" : null)">@WordsLeft words left</span>
+        @if (CanEdit)
+        {
+            <button class="btn btn-ghost btn-xs" @onclick="ConfirmReset">Reset</button>
+        }
+    </div>
+
+    @if (Game.Phase == BeePhase.Finished)
+    {
+        <section class="bee">
+            <p class="bee-kicker">Last one standing</p>
+            <h1 class="bee-speller" style="--team:@ColourOf(Winner)">@(Winner?.Name ?? "—")</h1>
+            <p class="bee-took">
+                @TeamNameOf(Winner) takes @Trip.SpellingBee.WinnerPoints points.
+            </p>
+        </section>
+    }
+    else if (Game.Phase == BeePhase.Revealed)
+    {
+        <section class="bee">
+            <p class="bee-kicker">@(Game.LastCorrect ? "Correct" : "Missed")</p>
+            <p class="bee-word">@(CurrentWord?.Word ?? "—")</p>
+
+            @* Three outcomes, not two: a miss by the last one standing does not put them out,
+               it brings the field back, and saying "is out" there would be a lie. *@
+            @if (Game.LastCorrect)
+            {
+                <p class="bee-result is-good">@Name(Game.CurrentPersonId) spelled it.</p>
+            }
+            else if (Game.JustRevived.Count > 0)
+            {
+                <p class="bee-result is-bad">@Name(Game.CurrentPersonId) missed it.</p>
+
+                <div class="bee-revival">
+                    <p class="bee-revival-head">Revival</p>
+                    <p class="bee-revival-why">
+                        The last one standing has to earn it, so every team gets somebody back.
+                    </p>
+                    <p class="bee-revival-names">@RevivedNames</p>
+                </div>
+            }
+            else
+            {
+                <p class="bee-result is-bad">@Name(Game.CurrentPersonId) is out.</p>
+            }
+
+            @if (CanEdit)
+            {
+                <button class="btn btn-gold btn-lg" @onclick="ContinueAsync">
+                    @(WillEndTheBee ? "See who won" : "Next speller")
+                </button>
+            }
+        </section>
+    }
+    else
+    {
+        <section class="bee" @key="Game.CurrentPersonId">
+            <p class="bee-kicker">@TeamNameOf(Speller) · up now</p>
+            <h1 class="bee-speller" style="--team:@ColourOf(Speller)">@(Speller?.Name ?? "—")</h1>
+
+            @if (CurrentWord is { } word)
+            {
+                <p class="bee-word">@word.Word</p>
+                <p class="bee-hint">@word.Hint</p>
+
+                @if (CanEdit)
+                {
+                    <div class="jeo-judge">
+                        <button class="btn btn-lg jeo-right" @onclick="CorrectAsync">Correct</button>
+                        <button class="btn btn-lg jeo-wrong" @onclick="WrongAsync">Wrong</button>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" @onclick="SkipAsync">Skip this word</button>
+                }
+            }
+            else
+            {
+                <p class="warnfg">
+                    The word list is spent. Reset the bee, or add more words and start again.
+                </p>
+            }
+        </section>
+    }
+
+    @* One panel, not two. Who a team has lost is as much of the story as who it has left, and
+       splitting them apart makes it harder to see a team running out of people. *@
+    <SectionCard Title="The field"
+                 Subtitle="@(CanEdit ? "Struck through means out. Use + to put somebody back in." : "Struck through means out.")">
+        <div class="team-board">
+            @foreach (var roster in TeamService.Rosters(Trip))
+            {
+                var team = roster.Team;
+
+                <section class="team-col" @key="team.Id" style="--team:@team.Color">
+                    <header class="team-col-head">
+                        <div class="team-title">
+                            <span class="team-dot" aria-hidden="true"></span>
+                            <h3>@team.Name</h3>
+                        </div>
+                        <span class="muted tiny">@LeftOn(team.Id) in</span>
+                    </header>
+
+                    <div class="team-people">
+                        @foreach (var person in Field(team.Id))
+                        {
+                            var personId = person.Id;
+                            var isOut = Game.Eliminated.Contains(personId);
+
+                            <div class="person @(isOut ? "is-out" : null) @(personId == Game.CurrentPersonId ? "is-up" : null)"
+                                 @key="personId">
+
+                                <span class="person-name">@person.Name</span>
+
+                                @if (isOut && CanEdit)
+                                {
+                                    <IconButton Icon="IconButtonIcon.Plus"
+                                                Title="@($"Put {person.Name} back in")"
+                                                OnClick="@(() => ReinstateAsync(personId))" />
+                                }
+                            </div>
+                        }
+
+                        @if (roster.Count == 0)
+                        {
+                            <p class="muted tiny empty-team">Nobody on this team.</p>
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+    </SectionCard>
+}
+
+</div>
+</AdminOnly>
+
+<ConfirmDialog @ref="_confirm" />
+
+@code {
+    /// <summary>
+    /// All, not SpellingBee. Winning the bee writes a ScoreEntry, which lives in TripArea.Scores
+    /// — so a page watching only its own area would render the whole game correctly and then
+    /// miss the one change that ends it. Jeopardy widens for the same reason.
+    /// </summary>
+    protected override TripArea Watching => TripArea.All;
+
+    private ConfirmDialog? _confirm;
+
+    private BeeGame Game => Trip.SpellingBee.Game;
+
+    // ---------------------------------------------------------------- reading
+
+    private BeeWord? CurrentWord => SpellingBeeService.CurrentWord(Trip);
+    private int WordsLeft => SpellingBeeService.WordsRemaining(Trip);
+    private int WordCount => Trip.SpellingBee.Words.Count(w => !w.IsEmpty);
+
+    private RosterPerson? Speller => SpellingBeeService.Speller(Trip);
+    private RosterPerson? Winner => SpellingBeeService.Winner(Trip);
+
+    /// <summary>Everyone eligible to play — a speller with no team has nowhere to send the points.</summary>
+    private int FieldSize => Trip.Roster.Count(p => Trip.Teams.Any(t => t.Id == p.TeamId));
+
+    private bool CanStart => FieldSize >= 2 && WordCount > 0;
+
+    private IReadOnlyList<string> Rules =>
+        Trip.Games.FirstOrDefault(g => g.Id == SpellingBeeService.GameId)?.Rules ?? [];
+
+    /// <summary>
+    /// Whether moving on from this answer finishes the bee, so the button can say so. Mirrors
+    /// the condition in <c>SpellingBeeService.Continue</c>.
+    /// </summary>
+    private bool WillEndTheBee => Game.Survivors.Count == 1 && Game.LastCorrect;
+
+    private string RevivedNames => string.Join(", ", Game.JustRevived.Select(Name));
+
+    private string Name(string? personId) => SpellingBeeService.Person(Trip, personId)?.Name ?? "—";
+
+    private Team? TeamOf(RosterPerson? person) =>
+        person is null ? null : Trip.Teams.FirstOrDefault(t => t.Id == person.TeamId);
+
+    private string TeamNameOf(RosterPerson? person) => TeamOf(person)?.Name ?? "";
+    private string ColourOf(RosterPerson? person) => TeamOf(person)?.Color ?? "#d4af37";
+
+    private int LeftOn(string teamId) => SpellingBeeService.SurvivorsOn(Trip, teamId).Count;
+
+    /// <summary>
+    /// A team's column: who is still in, in the order they will be called, then everyone it has
+    /// lost, in the order it lost them.
+    /// </summary>
+    private IEnumerable<RosterPerson> Field(string teamId) =>
+        SpellingBeeService.SurvivorsOn(Trip, teamId)
+            .Concat(Game.Eliminated
+                .Select(id => SpellingBeeService.Person(Trip, id))
+                .Where(p => p is not null && p.TeamId == teamId)
+                .Select(p => p!));
+
+    // ------------------------------------------------------------------ flow
+
+    private Task StartAsync() => MutateAsync(SpellingBeeService.Start);
+    private Task CorrectAsync() => MutateAsync(SpellingBeeService.JudgeCorrect);
+    private Task WrongAsync() => MutateAsync(SpellingBeeService.JudgeWrong);
+    private Task ContinueAsync() => MutateAsync(SpellingBeeService.Continue);
+    private Task SkipAsync() => MutateAsync(SpellingBeeService.SkipWord);
+
+    private Task ReinstateAsync(string personId) =>
+        MutateAsync(t => SpellingBeeService.Reinstate(t, personId));
+
+    /// <summary>The only destructive action here, and the only one that asks first.</summary>
+    private void ConfirmReset() =>
+        _confirm?.Show("Reset the bee? Everyone comes back in and the spelling points leave the standings.",
+            () => MutateAsync(SpellingBeeService.Reset), "Reset");
+
+    // --------------------------------------------------------------- editing
+
+    /// <summary>
+    /// The word is looked up by id inside the mutation rather than captured from the render, so
+    /// an edit cannot land on a stale object if the list changed underneath it.
+    /// </summary>
+    private Task EditWordAsync(string wordId, Action<BeeWord> edit) =>
+        MutateAsync(t =>
+        {
+            if (t.SpellingBee.Words.FirstOrDefault(w => w.Id == wordId) is { } word) edit(word);
+        });
+
+    private Task AddWordAsync() =>
+        MutateAsync(t => t.SpellingBee.Words.Add(new BeeWord { Id = Ids.New("sb") }));
+
+    private Task RemoveWordAsync(string wordId) =>
+        MutateAsync(t => t.SpellingBee.Words.RemoveAll(w => w.Id == wordId));
+}

@@ -187,6 +187,29 @@ public static class SpellingBeeService
         BeginTurn(trip);
     }
 
+    /// <summary>
+    /// Put someone back in who should not be out.
+    ///
+    /// The safety valve for a mis-tapped Wrong, which is otherwise unrecoverable — and a bee is
+    /// two dozen eliminations in a row, judged live by someone also running the room. They rejoin
+    /// at the back of the queue, so their team simply calls them when it comes round again.
+    ///
+    /// There is deliberately no manual eliminate to match it. The two mistakes are not equal:
+    /// wrongly ending someone's game cannot be walked back, while wrongly sparing them means only
+    /// that they spell again.
+    /// </summary>
+    public static void Reinstate(TripData trip, string personId)
+    {
+        var game = trip.SpellingBee.Game;
+        if (game.Phase == BeePhase.Finished) return;
+        if (!game.Eliminated.Remove(personId)) return;
+
+        game.Survivors.Add(personId);
+
+        // They may have been the reason a revival looked due, or the reason the bee looked won.
+        game.JustRevived.Remove(personId);
+    }
+
     /// <summary>Skip the word without settling the turn — unsayable, already used at the table, whatever.</summary>
     public static void SkipWord(TripData trip)
     {

@@ -178,6 +178,53 @@ public class SeedDataTests
         Assert.Equal(winner!.TeamId, entry.TeamId);
     }
 
+    /// <summary>
+    /// TeamCursor and CurrentPersonId are two records of the same fact — whose turn it is — so
+    /// they must never disagree. Checked after every operation of a long game rather than at the
+    /// end, because a cursor that drifts one turn shows up as the wrong person being called much
+    /// later, when it is far too late to work out why.
+    /// </summary>
+    [Fact]
+    public void The_team_cursor_always_agrees_with_who_is_spelling()
+    {
+        var trip = SeedLoader.Load();
+        SpellingBeeService.Start(trip);
+
+        void Check(string after)
+        {
+            var game = trip.SpellingBee.Game;
+            if (game.CurrentPersonId is null) return;
+
+            var speller = SpellingBeeService.Person(trip, game.CurrentPersonId);
+            var cursorTeam = trip.Teams[game.TeamCursor].Id;
+
+            Assert.True(speller!.TeamId == cursorTeam,
+                $"after {after}: {speller.Name} is on {speller.TeamId} but the cursor says {cursorTeam}");
+        }
+
+        Check("start");
+
+        var turns = 0;
+        while (trip.SpellingBee.Game.Phase != BeePhase.Finished && turns++ < 500)
+        {
+            if (turns % 7 == 0)
+            {
+                SpellingBeeService.SkipWord(trip);
+                Check("a skip");
+                continue;
+            }
+
+            if (trip.SpellingBee.Game.Survivors.Count == 1) SpellingBeeService.JudgeCorrect(trip);
+            else SpellingBeeService.JudgeWrong(trip);
+            Check("a judgement");
+
+            SpellingBeeService.Continue(trip);
+            Check("moving on");
+        }
+
+        Assert.Equal(BeePhase.Finished, trip.SpellingBee.Game.Phase);
+    }
+
     [Fact]
     public void Games_are_populated()
     {

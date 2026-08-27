@@ -138,7 +138,7 @@ else if (Game.Phase == JeopardyPhase.NotStarted)
             </div>
         </div>
 
-        <p class="jeo-hint">Scan a code, or go to <b>@JoinHost/buzz</b> and type it in.</p>
+        <p class="jeo-hint">Scan a code, or go to <b>@JoinHost/login</b> and type it in.</p>
 
         @if (CanEdit)
         {
@@ -400,7 +400,7 @@ else
     private string? BuzzedFirst => Game.LeadingBuzzTeamId;
 
     private string JoinHost => new Uri(Nav.BaseUri).Authority;
-    private string BuzzUrl(string code) => Nav.ToAbsoluteUri($"/buzz/{code}").ToString();
+    private string BuzzUrl(string code) => Nav.ToAbsoluteUri($"/login/{code}").ToString();
     private string CodeFor(string teamId) => Game.BuzzerCodes.GetValueOrDefault(teamId, "—");
 
     /// <summary>

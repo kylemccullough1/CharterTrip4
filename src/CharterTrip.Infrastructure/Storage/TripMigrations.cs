@@ -13,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 18;
+    public const int CurrentVersion = 19;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -33,6 +33,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 12) changed |= ToV12_CheckInIsTwo(trip);
         if (trip.SchemaVersion < 13) changed |= ToV13_MenuBoard(trip);
         if (trip.SchemaVersion < 14) changed |= ToV14_GroupedEssentials(trip);
+        if (trip.SchemaVersion < 19) changed |= ToV19_EverybodyHasAJoinToken(trip);
 
         // v18 gave a carpool's ETA a day to go with the time. No step, same as the two
         // before it: the field defaults to empty and an older file simply has not said.
@@ -485,6 +486,23 @@ public static class TripMigrations
     /// Bails out the moment any fact already carries a group, so a set of headings somebody has
     /// since rearranged is never re-sorted underneath them.
     /// </summary>
+    /// <summary>
+    /// v19 gives everybody on the roster their own join token.
+    ///
+    /// <c>RosterPerson.JoinToken</c> has existed unused since phase 2 was first sketched. It is
+    /// what turns "authenticated" from a synonym for "is an admin" into an actual identity: the
+    /// murder mystery needs twenty-one people to be twenty-one different people on twenty-one
+    /// phones, and a shared committee password cannot express that.
+    ///
+    /// A numbered step rather than minting on demand, because these end up printed on name tags.
+    /// Something that gets printed should be decided once, written down, and then stable —
+    /// generating a token the first time somebody happens to load a page means the badge in your
+    /// hand and the token in the file can disagree.
+    ///
+    /// Idempotent, and existing tokens are never reissued.
+    /// </summary>
+    private static bool ToV19_EverybodyHasAJoinToken(TripData trip) => JoinCodes.EnsureTokens(trip);
+
     private static bool ToV14_GroupedEssentials(TripData trip)
     {
         var facts = trip.Guide.Essentials;

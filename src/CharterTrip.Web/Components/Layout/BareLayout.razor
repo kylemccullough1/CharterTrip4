@@ -1,4 +1,24 @@
 @inherits LayoutComponentBase
+@inject ICurrentUser CurrentUser
 
-@* No nav, no footer. A phone acting as a buzzer should be the buzzer and nothing else. *@
-<main class="bare">@Body</main>
+@* No nav, no footer. A phone acting as a buzzer should be the buzzer and nothing else.
+
+   It still needs to know who is holding it, though. Identity used to come out of the URL here —
+   /buzz/{code} — so this layout could get away with cascading nothing. Now that a code is
+   exchanged for a session at /login/{code}, a page on this layout reads the cookie like every
+   other page, and without the cascade it would see "Guest" and ask for a code it already has.
+
+   Same shape as MainLayout: nothing renders until the identity resolves, because an IsFixed
+   cascade is captured on the first render and never looked at again. *@
+@if (_permissions is not null)
+{
+    <CascadingValue Value="_permissions" IsFixed="true">
+        <main class="bare">@Body</main>
+    </CascadingValue>
+}
+
+@code {
+    private TripPermissions? _permissions;
+
+    protected override async Task OnInitializedAsync() => _permissions = await CurrentUser.GetAsync();
+}

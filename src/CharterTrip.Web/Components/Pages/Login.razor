@@ -26,8 +26,28 @@
             </svg>
         </span>
 
-        <h1 class="login-title">Committee sign in</h1>
-        <p class="login-sub">Everyone else can use the site without this.</p>
+        <h1 class="login-title">Sign in</h1>
+        <p class="login-sub">Scanning your own link signs you in without any of this.</p>
+
+        @* Everybody's route in: their own link, a buzzer code, the host code. One box, because
+           the person holding the phone does not know or care which kind they were handed. *@
+        <EditForm Model="CodeInput" FormName="code" OnValidSubmit="GoAsync" method="post">
+            <label class="login-field">
+                <span>Code</span>
+                <InputText @bind-Value="CodeInput.Code" class="login-input buzz-code-input"
+                           autocomplete="off" autocapitalize="characters" spellcheck="false"
+                           inputmode="latin" placeholder="CODE" />
+            </label>
+
+            @if (_codeError is not null)
+            {
+                <p class="login-error" role="alert">@_codeError</p>
+            }
+
+            <button type="submit" class="btn btn-gold login-submit">Continue</button>
+        </EditForm>
+
+        <p class="login-sub login-or">or, for the committee</p>
 
         <EditForm Model="Input" FormName="login" OnValidSubmit="SubmitAsync" method="post">
             <DataAnnotationsValidator />
@@ -59,12 +79,39 @@
 @code {
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
-    [SupplyParameterFromForm] private Credentials Input { get; set; } = new();
+    [SupplyParameterFromForm(FormName = "login")] private Credentials Input { get; set; } = new();
+
+    [SupplyParameterFromForm(FormName = "code")] private CodeEntry CodeInput { get; set; } = new();
 
     /// <summary>Where to land afterwards. Only ever a path on this site — see <see cref="SafeRedirect"/>.</summary>
     [SupplyParameterFromQuery(Name = "returnUrl")] private string? ReturnUrl { get; set; }
 
     private string? _error;
+    private string? _codeError;
+
+    /// <summary>
+    /// Hand the typed code to /login/{code}, which is the one place that resolves any of them.
+    ///
+    /// Deliberately not resolved here: this page would then be a second implementation of the
+    /// same decision, and the two would eventually disagree about what counts as a live code.
+    /// </summary>
+    private Task GoAsync()
+    {
+        var typed = new string((CodeInput.Code ?? "").Where(char.IsLetterOrDigit).ToArray());
+
+        if (typed.Length == 0)
+        {
+            _codeError = "Type the code from your link, your card, or the screen.";
+            return Task.CompletedTask;
+        }
+
+        var target = $"/login/{Uri.EscapeDataString(typed)}";
+        if (ReturnUrl is { Length: > 0 })
+            target += $"?returnUrl={Uri.EscapeDataString(SafeRedirect.Local(ReturnUrl))}";
+
+        Nav.NavigateTo(target);
+        return Task.CompletedTask;
+    }
 
     private async Task SubmitAsync()
     {
@@ -78,17 +125,11 @@
             return;
         }
 
-        var identity = new ClaimsIdentity(
-        [
-            new Claim(ClaimTypes.Name, "Committee"),
-            new Claim(ClaimTypes.Role, TripRoles.Admin)
-        ], CookieAuthenticationDefaults.AuthenticationScheme);
-
         // Persistent, so closing the tab — or the laptop — does not mean typing this again on
         // Saturday morning. The cookie itself is encrypted and signed by data protection.
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(identity),
+            TripSignIn.ForCommittee(),
             new AuthenticationProperties { IsPersistent = true });
 
         Nav.NavigateTo(SafeRedirect.Local(ReturnUrl));
@@ -98,5 +139,10 @@
     {
         public string Username { get; set; } = "";
         public string Password { get; set; } = "";
+    }
+
+    public sealed class CodeEntry
+    {
+        public string Code { get; set; } = "";
     }
 }

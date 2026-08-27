@@ -62,8 +62,8 @@ All seven verified against the tree.
 conspirators, `ReleaseRound` clue cards. Braun Manor shares none of that structure. The seed carries
 26 West Egg characters with empty secrets.
 
-Delete the type. Migration **v19** drops `trip.mystery` wholesale and writes the new shape
-(`TripMigrations.CurrentVersion` is 18, so v19 is next). `TripMigrations` already establishes that a
+Delete the type. Migration **v20** drops `trip.mystery` wholesale and writes the new shape — v19
+went to the join tokens in phase 2. `TripMigrations` already establishes that a
 removed property is ignored on load and gone on the next save, so the mechanism is cheap — but it
 needs to be a *numbered* step rather than a silent model change, because the reveal is the one
 screen where a half-migrated document is unrecoverable.
@@ -94,8 +94,9 @@ Infrastructure/Mystery/ScriptLoader.cs       embedded resources → one immutabl
 Core/Mystery/Script/*.cs                     records mirroring the JSON
 ```
 
-Registered as a singleton `IMysteryScript`. `trip.json` then holds only two things: **the deal**
-(what this particular game generated) and **the live state** (what the room has done to it).
+Registered as a singleton of the immutable record itself — see phase 1 for why there is no
+interface. `trip.json` then holds only two things: **the deal** (what this particular game
+generated) and **the live state** (what the room has done to it).
 
 ### 2.3 Identity is the blocker, and it is a prerequisite, not a phase
 
@@ -226,25 +227,45 @@ Three things worth knowing before phase 5:
 Registered as a singleton of the concrete record rather than behind an `IMysteryScript` interface —
 it is immutable data, and a test that wants a different script constructs one with `with`.
 
-### Phase 2 — generic code login
+### Phase 2 — generic code login ✅
 
-One route, `/login/{code}`, resolving a code and landing the person in the right place:
+Done. `/login/{code}` is the one front door. `JoinCodes.Resolve` (in Core, beside
+`JeopardyService`) works out what a code is and the page signs the holder in accordingly:
 
-1. a `RosterPerson.JoinToken` → issue the cookie with a `PersonId` claim, redirect to their home
-2. a Jeopardy team or host code → the buzzer
+| Code | Becomes |
+|---|---|
+| a `RosterPerson.JoinToken` | that person — `PersonId` claim, plus their team for free |
+| a Jeopardy buzzer code | that team, nobody in particular |
+| the Jeopardy host code | the host job |
 
-`CookieCurrentUser` reads the `PersonId` claim instead of assuming admin, and `IsAdmin` comes from
-`RosterPerson.Role == TripRole.Admin` rather than from being signed in at all. The committee's
-existing username/password path stays untouched beside it.
+`CookieCurrentUser` reads all of it off claims. **`IsAdmin` now comes from
+`RosterPerson.Role == TripRole.Admin`, not from being authenticated** — verified against the live
+app: a member's own link renders "Committee only" on `/games/mystery` while an organizer's link
+renders the page. That is the property the whole game rests on, since 21 people are about to be
+holding their own links.
 
-`/buzz/{Code}` was Jeopardy-specific and should never have set the pattern; it becomes a redirect to
-`/login/{code}` so anything already printed keeps working. `Buzz.razor` is otherwise the template
-for every phone screen that follows — a working, no-chrome, live-updating page with a host view and
-a player view in one file, on `BareLayout`, inheriting `TripAwareComponent`.
+`TripSignIn` is the single writer of the cookie and `CookieCurrentUser` the single reader, so the
+sign-in page and the code page cannot drift apart on what a signed-in person looks like.
 
-This unblocks Teams and live scoring too, not just the mystery.
+Four things worth knowing:
 
-### Phase 3 — migration v19
+- **`/buzz/{Code}` is gone**, not redirected — identity comes from the session now, so the buzzer
+  needs no code in its route. The Jeopardy board's QR codes point at `/login/{code}` instead, and
+  `/login` carries a code box beside the committee's username and password.
+- **A person signed in as themselves already has their team**, so they can use the buzzer without
+  typing the team code off the wall. That fell out of putting `TeamId` in the claims.
+- **`BareLayout` now cascades `TripPermissions`.** It never did, which was invisible while
+  `/buzz/{code}` carried identity in the URL and became a real bug the moment it did not: the page
+  saw `Guest` and asked for a code it was already holding. Any phone screen on this layout — `/m`
+  included — depends on this.
+- **Join tokens are 10 characters, not 4.** A buzzer code is a room-scoped convenience shown on a
+  wall and reset between games; a join token is the whole proof of somebody's identity, lasts the
+  weekend, and gets printed on a name tag. Four characters is 390,000 guesses.
+
+Minted by **migration v19** rather than on demand, because they end up printed: something that
+gets printed should be decided once and then stable. The mystery model migration is therefore v20.
+
+### Phase 3 — migration v20
 
 West Egg out, Braun Manor in, per §2.1: the new model shape, the three seed renames, the dress-code
 decision, and the seven referencing files. Also the provenance line in the root `README.md`, which

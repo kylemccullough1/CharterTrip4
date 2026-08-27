@@ -362,10 +362,11 @@ Two consequences the trial code has to respect:
   6 slots rather than 3. The `README.md` table now reads `re-sim` rather than carrying a number
   nobody has earned.
 
-`story_beats.json` gained a `town_win_partial` endgame template for the 2-of-3 case, because the
-existing `town_win` text asserts all three hands were caught and the reveal screen reads it aloud.
-That new line is the one piece of prose in the data set not written by the original author — worth a
-voice pass before the night.
+**The endgame text does not need a second branch.** `town_win` asserts all three hands were caught,
+and that stays true even when only two were convicted: narratively, two in custody means the third
+is rolled up off the back of them — one rats out the last one. So a town win always reads as three
+names going to the press, and `town_win` remains the only town template. Do not add a partial-win
+variant.
 
 `rounds.json`'s `total_runtime_minutes` said 110 while its nine rounds sum to 120, which is exactly
 the itinerary slot. The field now says 120. The schedule is unchanged; only the summary that lied

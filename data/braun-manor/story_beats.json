@@ -64,7 +64,6 @@
   },
   "endgame_reveals": {
     "town_win": "The house has its answer. {killer_access} came {access_route_reveal}. {method_reveal} {signature_reveal} All three hands of the Syndicate \u2014 caught. James Braun's evidence goes to the press with three names attached.",
-    "town_win_partial": "The house has its answer, or enough of one. {killer_access} came {access_route_reveal}. {method_reveal} {signature_reveal} Two of the three hands are in custody \u2014 and {surviving_killers} walked out with the rest of you, unremarked. James Braun's evidence goes to the press anyway. It will be enough to finish the Syndicate. It will not be enough to find everyone who held the knife.",
     "killer_win": "Three trials. Six convictions. And the Syndicate walks out the front door. {surviving_killers} pour themselves a drink from the good cabinet. Braun's evidence is ash in the study fireplace, and the snail owns another city. You dined with them all night.",
     "jester_reveal": "{name} \u2014 convicted, and delighted. Ruin was coming for them either way: {fear_line}. A cell is quieter than what was waiting outside. They wanted the blame. You gave it to them. THE DESPERATE \u2014 VICTORY.",
     "jester_fail": "{name} spent all night trying to look guilty, and you refused to oblige. THE DESPERATE \u2014 no way out after all.",

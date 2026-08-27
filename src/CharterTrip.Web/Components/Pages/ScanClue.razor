@@ -6,6 +6,7 @@
 @inherits TripAwareComponent
 @inject MysteryScript Script
 @inject IClock Clock
+@inject IWebHostEnvironment Env
 @layout CharterTrip.Web.Components.Layout.BareLayout
 
 <PageTitle>A clue · Braun Manor</PageTitle>
@@ -106,8 +107,16 @@ else
 
     private MysteryClue? Clue => MysteryService.ClueByToken(Trip, Token);
 
-    private MysteryCastMember? Me =>
-        Permissions.PersonId is { } personId ? Trip.Mystery.ForPerson(personId) : null;
+    /// <summary>Dev-only impersonation for the sim harness, same as /m?as= and /buzz?as=.</summary>
+    [SupplyParameterFromQuery(Name = "as")]
+    private string? ActAs { get; set; }
+
+    private bool DevActing => Env.IsDevelopment() && ActAs is { Length: > 0 };
+
+    private MysteryCastMember? Me => DevActing
+        ? Trip.Mystery.Deal?.Cast.FirstOrDefault(c =>
+            string.Equals(c.CharacterId, ActAs, StringComparison.OrdinalIgnoreCase))
+        : Permissions.PersonId is { } personId ? Trip.Mystery.ForPerson(personId) : null;
 
     private string ZoneName => Clue is null ? "" : Script.Zones.ById(Clue.ZoneId)?.Name ?? Clue.ZoneId;
 

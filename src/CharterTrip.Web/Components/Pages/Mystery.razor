@@ -7,6 +7,7 @@
 @inject MysteryScript Script
 @inject IClock Clock
 @inject NavigationManager Nav
+@inject IWebHostEnvironment Env
 
 <PageTitle>Murder at Braun Manor · Charter Trip 2026</PageTitle>
 
@@ -420,6 +421,75 @@
                 }
             </div>
         </SectionCard>
+
+        @if (IsDev)
+        {
+            @* Local-only testing aid, the same shape as the Jeopardy board's. Never reaches
+               Azure — IsDev is IWebHostEnvironment.IsDevelopment(). *@
+            <section class="jeo-testing">
+                <button class="btn btn-ghost btn-sm" @onclick="() => _testingOpen = !_testingOpen">
+                    🧪 Testing tools @(_testingOpen ? "▲" : "▼")
+                </button>
+
+                @if (_testingOpen)
+                {
+                    <div class="jeo-testing-panel">
+                        @* The tedium of twenty-one people, skipped. Each button does exactly what
+                           the room would do, through the same service calls, so nothing here can
+                           put the game in a state real play could not. *@
+                        <div class="row gap wrap">
+                            @if (MysteryService.SeatsLeft(Trip) > 0)
+                            {
+                                <button class="btn btn-ghost btn-xs" @onclick="FillRoomAsync">⚡ Fill the room</button>
+                            }
+                            @if (MysteryService.CurrentTrial(Trip) is { } openTrial
+                                 && openTrial.Phase is MysteryTrialPhase.OpenVote or MysteryTrialPhase.FinalVote)
+                            {
+                                <button class="btn btn-ghost btn-xs" @onclick="EverybodyVotesAsync">⚡ Everybody votes</button>
+                            }
+                            @if (Trip.Mystery.Clues.Any(c => !c.Found))
+                            {
+                                <button class="btn btn-ghost btn-xs" @onclick="FindAllCluesAsync">⚡ Find the remaining clues</button>
+                            }
+                        </div>
+
+                        @* Real /m pages, embedded — not a hand-rolled stand-in — so what you're
+                           testing against is exactly what a phone in the room would show: votes,
+                           abilities, the ghost state, all of it live against this game.
+
+                           They go through ?as= rather than a sign-in: identity lives in a cookie,
+                           and same-origin iframes share this page's, so frames signing in would
+                           fight over one session — the same reason the buzzer strip works this way. *@
+                        <div class="row gap wrap mys-sim-picks">
+                            <button class="btn btn-xs" @onclick="() => ShowSim(GuiltyIds)">The guilty six</button>
+                            <button class="btn btn-xs" @onclick='() => ShowSim(Deal!.InFaction("detective").Select(m => m.CharacterId))'>Detectives</button>
+                            <button class="btn btn-xs" @onclick="() => ShowSim(Deal!.Cast.Select(c => c.CharacterId))">Everyone</button>
+                            <button class="btn btn-ghost btn-xs" @onclick="() => _simShown.Clear()">None</button>
+                        </div>
+                        <div class="mys-chips">
+                            @foreach (var member in Deal!.Cast)
+                            {
+                                var id = member.CharacterId;
+                                <button class="mys-chip @(_simShown.Contains(id) ? "on" : "")" @onclick="() => ToggleSim(id)">
+                                    @Name(id)
+                                </button>
+                            }
+                        </div>
+
+                        <div class="jeo-simstrip-row">
+                            @foreach (var id in _simShown)
+                            {
+                                <div class="jeo-simcard mys-simcard" @key="id">
+                                    <span class="jeo-simcard-label">@Name(id)@(IsKiller(id) ? " 🔪" : "")</span>
+                                    <iframe class="jeo-simframe mys-simframe" src="@SimUrl(id)"
+                                            title="@($"Test phone — {Name(id)}")"></iframe>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </section>
+        }
     }
 
 </div>
@@ -431,6 +501,79 @@
     private int _seed = Random.Shared.Next(1, 999999);
     private string? _error;
     private ConfirmDialog? _confirm;
+
+    // ---- dev testing harness --------------------------------------------------------------
+
+    private bool IsDev => Env.IsDevelopment();
+    private bool _testingOpen;
+
+    /// <summary>Which phones the sim strip shows. Empty by default — every frame is a whole
+    /// Blazor circuit, and twenty-one of them is a choice, not a landing page.</summary>
+    private readonly HashSet<string> _simShown = [];
+
+    private IEnumerable<string> GuiltyIds =>
+        Deal?.Cast.Where(c => c.ShowsGuilty).Select(c => c.CharacterId) ?? [];
+
+    private void ShowSim(IEnumerable<string> ids)
+    {
+        _simShown.Clear();
+        foreach (var id in ids) _simShown.Add(id);
+    }
+
+    private void ToggleSim(string characterId)
+    {
+        if (!_simShown.Remove(characterId)) _simShown.Add(characterId);
+    }
+
+    /// <summary>A phone acting as one character. Honoured by /m only in Development.</summary>
+    private string SimUrl(string characterId) =>
+        Nav.ToAbsoluteUri($"/m?as={characterId}").ToString();
+
+    /// <summary>Everybody left outside picks up a part, exactly as they would at the door.</summary>
+    private Task FillRoomAsync() => Flush(t =>
+    {
+        foreach (var person in MysteryService.Unclaimed(t).ToList())
+            MysteryService.ClaimCharacter(t, person.Id, Random.Shared);
+    });
+
+    /// <summary>
+    /// Every living player who has not voted yet does, through the same rule checks a phone goes
+    /// through — nominees still cannot vote in the final, ghosts still cannot vote at all. Spread
+    /// over a few targets so the cuts have something to bite on.
+    /// </summary>
+    private Task EverybodyVotesAsync() => Flush(t =>
+    {
+        if (MysteryService.CurrentTrial(t) is not { } trial) return;
+
+        var living = MysteryService.Living(t).Select(c => c.CharacterId).ToList();
+
+        var targets = trial.Phase == MysteryTrialPhase.FinalVote
+            ? trial.NomineeCharacterIds.ToList()
+            : [.. living.OrderBy(_ => Random.Shared.Next()).Take(5)];
+
+        if (targets.Count == 0) return;
+
+        var ballots = trial.Phase == MysteryTrialPhase.FinalVote ? trial.FinalVotes : trial.OpenVotes;
+        var voted = ballots.Select(v => v.VoterCharacterId).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var voter in living.Where(id => !voted.Contains(id)))
+        {
+            var pool = targets.Where(x => x != voter).ToList();
+            if (pool.Count == 0) continue;
+
+            MysteryService.CastVote(t, trial, voter, pool[Random.Shared.Next(pool.Count)], Clock.UtcNow);
+        }
+    });
+
+    /// <summary>Walk the house in one click: every unfound card found, each by somebody living.</summary>
+    private Task FindAllCluesAsync() => Flush(t =>
+    {
+        var living = MysteryService.Living(t).Select(c => c.CharacterId).ToList();
+        if (living.Count == 0) return;
+
+        foreach (var clue in t.Mystery.Clues.Where(c => !c.Found))
+            MysteryService.RecordClueFound(t, clue, living[Random.Shared.Next(living.Count)], Clock.UtcNow);
+    });
     private List<string> _tied = [];
     private readonly HashSet<string> _forced = [];
 

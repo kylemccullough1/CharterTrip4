@@ -6,6 +6,7 @@
 @inherits TripAwareComponent
 @inject MysteryScript Script
 @inject IClock Clock
+@inject IWebHostEnvironment Env
 @layout CharterTrip.Web.Components.Layout.BareLayout
 
 <PageTitle>Braun Manor</PageTitle>
@@ -354,11 +355,28 @@ else
     private MysteryDeal? Deal => Trip.Mystery.Deal;
 
     /// <summary>Which character this phone is holding, from the signed-in person.</summary>
-    private MysteryCastMember? Me =>
-        Permissions.PersonId is { } personId ? Trip.Mystery.ForPerson(personId) : null;
+    /// <summary>
+    /// Acting as a character, for the sim strip on the host console. Development only.
+    ///
+    /// The strip embeds real /m pages side by side, and identity lives in a cookie — which
+    /// same-origin iframes share, so frames signing in would fight over one session. Naming the
+    /// character in the query instead writes nothing, exactly the way /buzz?as= works for the
+    /// Jeopardy harness. False the moment this is deployed: Azure runs Production.
+    /// </summary>
+    [SupplyParameterFromQuery(Name = "as")]
+    private string? ActAs { get; set; }
 
-    /// <summary>The house part this organizer took, if they are one.</summary>
-    private ScriptNpcRole? MyNpc => MysteryService.NpcRoleFor(Trip, Script, Permissions.PersonId);
+    private bool DevActing => Env.IsDevelopment() && ActAs is { Length: > 0 };
+
+    private MysteryCastMember? Me => DevActing
+        ? Trip.Mystery.Deal?.Cast.FirstOrDefault(c =>
+            string.Equals(c.CharacterId, ActAs, StringComparison.OrdinalIgnoreCase))
+        : Permissions.PersonId is { } personId ? Trip.Mystery.ForPerson(personId) : null;
+
+    /// <summary>The house part this organizer took, if they are one. Never while acting — the
+    /// admin's own part would otherwise shadow every character frame on their console.</summary>
+    private ScriptNpcRole? MyNpc =>
+        DevActing ? null : MysteryService.NpcRoleFor(Trip, Script, Permissions.PersonId);
 
     private bool AmGhost => Me is not null && MysteryService.IsGhost(Trip, Me.CharacterId);
 

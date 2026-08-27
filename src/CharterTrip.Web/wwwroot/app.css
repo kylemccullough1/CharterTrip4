@@ -1017,23 +1017,18 @@ select.textfield { cursor: pointer; }
   .jeo-final-timer.is-urgent, .jeo-shot-text { animation: none; }
 }
 
-/* Local-only testing strip: one mini buzzer per team, plus a host judging card. */
-.jeo-simstrip { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line-soft); }
-.jeo-simstrip-label { font-size: 0.688rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 8px; }
-.jeo-simstrip-row { display: flex; flex-wrap: wrap; gap: 10px; }
+/* Local-only testing panel: collapsed behind one toggle, holding real /buzz pages embedded per
+   team plus the host, so what's being tested is exactly what a phone would show — not a stand-in. */
+.jeo-testing { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line-soft); }
+.jeo-testing-panel { margin-top: 12px; }
+.jeo-simstrip-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
 .jeo-simcard {
-  flex: 1; min-width: 130px; display: flex; flex-direction: column; gap: 8px;
+  flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 6px;
   background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
   padding: 10px;
 }
-.jeo-simcard-head { display: flex; align-items: center; justify-content: space-between; font-size: 0.813rem; color: var(--team, var(--text-dim)); }
-.jeo-simcard-mute { display: flex; align-items: center; gap: 4px; font-size: 0.688rem; color: var(--text-faint); cursor: pointer; }
-.buzz-button.jeo-simcard-buzz {
-  flex: none; align-self: stretch; margin: 0; width: 100%; aspect-ratio: auto; height: 44px;
-  border-radius: var(--radius-sm); font-size: 1rem; letter-spacing: .06em; border-width: 2px;
-}
-.jeo-simcard-judge { display: flex; gap: 6px; }
-.jeo-simcard-judge .btn { flex: 1; }
+.jeo-simcard-label { font-size: 0.813rem; font-weight: 600; }
+.jeo-simframe { width: 100%; height: 420px; border: 0; border-radius: var(--radius-sm); background: var(--ink-2); }
 
 .jeo-answer { font-size: clamp(1.125rem, 2.2vw, 1.875rem); color: var(--emerald); margin: 0; }
 .jeo-buzzed { display: flex; flex-direction: column; gap: 4px; }

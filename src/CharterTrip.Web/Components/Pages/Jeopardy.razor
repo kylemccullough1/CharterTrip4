@@ -152,10 +152,6 @@ else if (Game.Phase == JeopardyPhase.NotStarted)
         {
             <div class="jeo-title-actions">
                 <button class="btn btn-gold btn-lg" @onclick="BeginAsync">Start the game</button>
-                @if (IsDev)
-                {
-                    <button class="btn btn-ghost btn-sm" @onclick="SkipToFinalAsync">⚡ Skip to Final (testing)</button>
-                }
                 <button class="btn btn-ghost btn-sm" @onclick="() => _editingBoard = true">Edit questions</button>
                 <button class="btn btn-ghost btn-sm" @onclick="NewCodesAsync">New codes</button>
                 <button class="mini-btn" title="@(Muted ? "Unmute" : "Mute")" @onclick="ToggleMuteAsync">@(Muted ? "🔇" : "🔊")</button>
@@ -188,10 +184,6 @@ else
         {
             <div class="jeo-bar-actions">
                 <button class="mini-btn" title="@(Muted ? "Unmute" : "Mute")" @onclick="ToggleMuteAsync">@(Muted ? "🔇" : "🔊")</button>
-                @if (IsDev && Game.Phase is not (JeopardyPhase.Final or JeopardyPhase.FinalIntro or JeopardyPhase.Finished))
-                {
-                    <button class="btn btn-ghost btn-xs" @onclick="SkipToFinalAsync">⚡ Skip to Final</button>
-                }
                 <button class="btn btn-ghost btn-xs" @onclick="ConfirmReset">Reset</button>
             </div>
         }
@@ -408,38 +400,40 @@ else
     }
 }
 
-@if (IsDev && Game.Phase != JeopardyPhase.NotStarted)
+@if (IsDev)
 {
-    @* Local-only testing aid: simulated phones so the game can be played through without real
-       devices. Never reaches Azure — IsDev is IWebHostEnvironment.IsDevelopment(). *@
-    <section class="jeo-simstrip">
-        <p class="jeo-simstrip-label">Testing — simulated phones</p>
-        <div class="jeo-simstrip-row">
-            @foreach (var team in Trip.Teams)
-            {
-                <div class="jeo-simcard" style="--team:@team.Color" @key="team.Id">
-                    <div class="jeo-simcard-head">
-                        <span>@team.Name</span>
-                        <label class="jeo-simcard-mute">
-                            <input type="checkbox" checked="@IsSimMuted(team.Id)"
-                                   @onchange="@(e => SetSimMuted(team.Id, (bool)e.Value!))" /> mute
-                        </label>
+    @* Local-only testing aid. Never reaches Azure — IsDev is IWebHostEnvironment.IsDevelopment(). *@
+    <section class="jeo-testing">
+        <button class="btn btn-ghost btn-sm" @onclick="() => _testingOpen = !_testingOpen">
+            🧪 Testing tools @(_testingOpen ? "▲" : "▼")
+        </button>
+
+        @if (_testingOpen)
+        {
+            <div class="jeo-testing-panel">
+                @if (Game.Phase is not (JeopardyPhase.Final or JeopardyPhase.FinalIntro or JeopardyPhase.Finished))
+                {
+                    <button class="btn btn-ghost btn-xs" @onclick="SkipToFinalAsync">⚡ Skip to Final Jeopardy</button>
+                }
+
+                @* Real /buzz pages, embedded — not a hand-rolled stand-in — so what you're testing
+                   against is exactly what a real phone would show, judging order included. The
+                   host frame uses the local-only "TEST" code from Buzz.razor's IsHost bypass. *@
+                <div class="jeo-simstrip-row">
+                    @foreach (var team in Trip.Teams)
+                    {
+                        <div class="jeo-simcard" @key="team.Id">
+                            <span class="jeo-simcard-label" style="color:@team.Color">@team.Name</span>
+                            <iframe class="jeo-simframe" src="@BuzzUrl(CodeFor(team.Id))" title="@($"Test buzzer — {team.Name}")"></iframe>
+                        </div>
+                    }
+                    <div class="jeo-simcard">
+                        <span class="jeo-simcard-label">Host</span>
+                        <iframe class="jeo-simframe" src="@BuzzUrl("TEST")" title="Test host view"></iframe>
                     </div>
-                    <button class="buzz-button jeo-simcard-buzz @SimBuzzClass(team.Id)"
-                            disabled="@(!SimCanBuzz(team.Id))" @onclick="@(() => SimBuzzAsync(team.Id))">
-                        @SimBuzzLabel(team.Id)
-                    </button>
-                </div>
-            }
-            <div class="jeo-simcard is-host">
-                <div class="jeo-simcard-head"><span>Host</span></div>
-                <div class="jeo-simcard-judge">
-                    <button class="btn btn-xs jeo-right" disabled="@(!SimCanJudge)" @onclick="SimCorrectAsync">Correct</button>
-                    <button class="btn btn-xs jeo-wrong" disabled="@(!SimCanJudge)" @onclick="SimWrongAsync">Wrong</button>
-                    <button class="btn btn-xs btn-ghost" disabled="@(InPlay is null)" @onclick="SimNobodyAsync">Nobody</button>
                 </div>
             </div>
-        </div>
+        }
     </section>
 }
 
@@ -474,7 +468,7 @@ else
     private DateTimeOffset? _diamondDeadline;
     private bool _justOpened;
     private CancellationTokenSource? _openFlash;
-    private readonly HashSet<string> _simMuted = new();
+    private bool _testingOpen;
 
     private JeopardyBoard Board => Trip.Jeopardy;
     private JeopardyGame Game => Trip.Jeopardy.Game;
@@ -616,30 +610,6 @@ else
     }
 
     private Task SkipToFinalAsync() => MutateAsync(JeopardyService.SkipToFinal);
-
-    // -------------------------------------------------------- testing simulation
-
-    private bool IsSimMuted(string teamId) => _simMuted.Contains(teamId);
-    private void SetSimMuted(string teamId, bool muted) { if (muted) _simMuted.Add(teamId); else _simMuted.Remove(teamId); }
-
-    private bool SimLockedOut(string teamId) => Game.LockedOutTeamIds.Contains(teamId);
-    private bool SimAlreadyBuzzed(string teamId) => Game.Buzzes.Any(b => b.TeamId == teamId);
-    private bool SimCanBuzz(string teamId) => Game.BuzzersOpen && !SimLockedOut(teamId) && !SimAlreadyBuzzed(teamId);
-    private string SimBuzzLabel(string teamId) =>
-        SimLockedOut(teamId) ? "OUT" : SimAlreadyBuzzed(teamId) ? "IN" : Game.BuzzersOpen ? "BUZZ" : "WAIT";
-    private string SimBuzzClass(string teamId) =>
-        SimLockedOut(teamId) ? "is-out" : SimAlreadyBuzzed(teamId) ? "is-in" : Game.BuzzersOpen ? "is-live" : "is-idle";
-
-    private async Task SimBuzzAsync(string teamId)
-    {
-        if (!IsSimMuted(teamId)) await Cue("buzz");
-        await MutateAsync(t => JeopardyService.Buzz(t, teamId, DateTimeOffset.UtcNow));
-    }
-
-    private bool SimCanJudge => Game.Phase == JeopardyPhase.Judging;
-    private Task SimCorrectAsync() => MutateAsync(t => JeopardyService.JudgeCorrect(t, DateTimeOffset.UtcNow));
-    private Task SimWrongAsync() => MutateAsync(t => JeopardyService.JudgeWrong(t, DateTimeOffset.UtcNow));
-    private Task SimNobodyAsync() => MutateAsync(JeopardyService.NobodyGotIt);
 
     /// <summary>
     /// Give the winner of the opening race the screen for a moment. Purely a view state — it is

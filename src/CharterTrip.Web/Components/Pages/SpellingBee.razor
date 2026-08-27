@@ -51,11 +51,11 @@
        gating and no editing flag is needed. Order is the difficulty curve — first read,
        first spelled. *@
     <SectionCard Title="Words"
-                 Subtitle="Read top to bottom. Click any line to change it; edits save as you leave the field.">
+                 Subtitle="Read top to bottom, so easiest first. Click any line to change it; edits save as you leave the field.">
         <Actions>
             @if (CanEdit)
             {
-                <IconButton Icon="IconButtonIcon.Plus" Title="Add a word" OnClick="AddWordAsync" />
+                <IconButton Icon="IconButtonIcon.Plus" Title="Add a word to the top" OnClick="AddWordAsync" />
             }
         </Actions>
         <ChildContent>
@@ -318,8 +318,17 @@ else
             if (t.SpellingBee.Words.FirstOrDefault(w => w.Id == wordId) is { } word) edit(word);
         });
 
+    /// <summary>
+    /// New words go to the top, next to the button that made them. Appending put a blank row at
+    /// the bottom of forty-five, off the screen and out of reach of the click that was meant to
+    /// start typing into it.
+    ///
+    /// It does mean a new word is read first, since the order is the running order. That is only
+    /// safe because this list is reachable on the title card alone — nothing can be inserted
+    /// underneath a game already counting its way down the list.
+    /// </summary>
     private Task AddWordAsync() =>
-        MutateAsync(t => t.SpellingBee.Words.Add(new BeeWord { Id = Ids.New("sb") }));
+        MutateAsync(t => t.SpellingBee.Words.Insert(0, new BeeWord { Id = Ids.New("sb") }));
 
     private Task RemoveWordAsync(string wordId) =>
         MutateAsync(t => t.SpellingBee.Words.RemoveAll(w => w.Id == wordId));

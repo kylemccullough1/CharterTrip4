@@ -77,8 +77,8 @@
     "phase_4": "Final vote among nominees only, 2 minutes. Every living non-nominee votes.",
     "phase_5": "Top 2 convicted. Tie at the cut: revote between tied players only; if still tied, the earlier open-vote tally decides.",
     "phase_6": "Conviction reveal: faction card on the main screen. Killers show as KILLER (unless blame-taken). Minions as SYNDICATE ASSOCIATE. Jesters and Braun claimants show as GUEST. Detectives and villagers show as GUEST. Full truth waits for endgame.",
-    "early_end": "If all 3 killers are convicted (truly — blame-take suppresses the tick), the game ends at that trial. Killers caught, town wins, straight to reveal. Jesters and Brauns who haven't scored by then are out of time — they know this, and it should make them reckless."
+    "early_end": "Town wins at 2+ killers convicted, but that is evaluated after the third trial — reaching 2 does NOT stop play, and the room is not told it has already won. The game ends early only if all 3 killers are convicted (truly — blame-take suppresses the tick), because at that point there is nothing left to catch: straight to reveal. Jesters and Brauns who haven't scored by then are out of time — they know this, and it should make them reckless."
   },
   "reveal_card_note": "Non-killer convictions all show as GUEST during play. Revealing 'detective' or 'villager' mid-game hands the killers a kill-list confirmation for free; revealing 'jester' ends the fun of the silent win. GUEST keeps every conviction ambiguous.",
-  "total_runtime_minutes": 110
+  "total_runtime_minutes": 120
 }

@@ -6,7 +6,7 @@
       "count": 3,
       "assignment": "Drawn at generation, one per guilt slot (access / means / signature), constrained by placement. Never Harry or Isla. No two co-located.",
       "knowledge": "Killers know each other and know their minions. Each killer's briefing includes their role in the murder, their cover story, and which red herring their cover story points at.",
-      "win": "RULESET A (recommended, pending sim): at least 1 killer survives all three trials \u2014 one hand is enough to burn the evidence. RULESET B (alternative): at least 2 survive, with town winning at 2+ convicted.",
+      "win": "At least 2 of the 3 killers survive all three trials \u2014 one hand alone cannot burn the evidence, but two can. Evaluated on ground truth: blame-take fools the reveal card, not the tally.",
       "win_note": "Minions win with them. A minion's blame-take can protect a killer's identity on conviction.",
       "abilities": [
         {
@@ -51,7 +51,7 @@
       "count": 3,
       "assignment": "Drawn from any non-inheritance character. Remington, Martha, and Molly are flavor-weighted but not guaranteed \u2014 a killer Remington is a legal and excellent draw.",
       "knowledge": "Detectives know each other.",
-      "win": "All 3 killers convicted within the three trials. Evaluated on ground truth \u2014 shield and decoy cannot change it.",
+      "win": "At least 2 of the 3 killers convicted within the three trials. Evaluated on ground truth \u2014 shield and decoy cannot change it, and blame-take fools only the reveal card.",
       "abilities": [
         {
           "id": "sync",
@@ -125,7 +125,7 @@
       "count": 9,
       "assignment": "Everyone remaining.",
       "knowledge": "Only what they saw and what they hold.",
-      "win": "Win with the detectives: all 3 killers convicted.",
+      "win": "Win with the detectives: at least 2 of the 3 killers convicted.",
       "abilities": []
     }
   ],

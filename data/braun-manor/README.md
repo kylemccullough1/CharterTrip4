@@ -60,12 +60,25 @@ Placement × killer draw × herrings is millions of distinct games. Full-story p
 
 | Faction | Win | Est. |
 |---|---|---|
-| Town (9 villagers + 3 detectives) | all 3 killers convicted | ~45% |
-| Killers + minions (5) | 2+ killers survive | ~55% |
+| Town (9 villagers + 3 detectives) | 2+ killers convicted | re-sim |
+| Killers + minions (5) | 2+ killers survive | re-sim |
 | Jester (each) | be convicted | ~50% |
 | Braun (each) | rival convicted + survive | ~30% |
 
-Killers edge slightly ahead now that town needs a clean 3-for-6 against herrings, blame-take, and false plants — the detective toolkit (6 syncs, 3 forensics, 3 hard questions) is what pulls town back toward even. Braun is the hard seat by choice: no fallback, pure knife-fight, and the dig-dirt ability is their equalizer.
+**Ruleset B is settled**: killers win on 2+ of 3 surviving, town wins on 2+ of 3 convicted. Those are
+exhaustive and mutually exclusive across the 6 conviction slots — 0 or 1 convicted is a killer win,
+2 or 3 is a town win, and there is no outcome where nobody wins.
+
+The two `~45%` / `~55%` figures that used to sit in this table are gone rather than adjusted. They
+were computed against a mixed reading — town needing a clean 3-for-6 while killers needed only 2
+surviving — which left a dead zone at exactly 2 convicted and is not the ruleset any more. Town now
+needs 2 of 6 rather than 3, so its odds went up by an amount nobody has measured. Re-run the
+simulation before trusting a number here.
+
+What has not changed: town is working against herrings, blame-take and false plants, and the
+detective toolkit (6 syncs, 3 forensics, 3 hard questions) is what pulls it back toward even. Braun
+is the hard seat by choice — no fallback, pure knife-fight, and the dig-dirt ability is their
+equalizer.
 
 ## Flags for build time
 

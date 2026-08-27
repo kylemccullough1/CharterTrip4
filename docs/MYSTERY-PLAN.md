@@ -278,6 +278,9 @@ specified in the file — all tied players nominated at the top-4 cut; revote th
 tally at the top-2 cut — and both need implementing or a trial can hang. Give the host console a
 force-advance for the case nobody predicted.
 
+The early-end rule is the subtle one: it fires only on all three killers convicted, **not** on the
+two that win town the game. See §4.
+
 ### Phase 10 — the main screen
 
 `/games/mystery/screen`. Roster grid, clue feed, trial takeover, conviction cards. The map panel
@@ -333,24 +336,40 @@ matter.
 
 ## 4. Open decisions
 
-Three left. The rest were settled by the data set itself: the organizers are already cast (Jou, Ali,
-Kyle and Em to Braun, Leo, Chloe and Bertram), the roster is trimmed to 21 playable roles with Jacob
-Kruse cut, and gender is not an input to casting.
+One left. The rest are settled: the organizers are already cast (Jou, Ali, Kyle and Em to Braun,
+Leo, Chloe and Bertram), the roster is trimmed to 21 playable roles with Jacob Kruse cut, gender is
+not an input to casting, and the win condition is decided — see below.
 
-- **Ruleset A or B for the killer win condition — and the two canonical files disagree.**
-  `factions.json` says *"RULESET A (recommended, pending sim): at least 1 killer survives"*, while
-  `README.md`'s balance snapshot scores the game as *"Killers + minions (5) — 2+ killers survive —
-  ~55%"*, which is Ruleset B. This is not merely undecided; it is a contradiction inside the
-  content, and the endgame text, the early-end rule and the balance estimate all branch on it.
-  Settle it and make both files say the same thing before phase 6 fills the endgame templates.
-- **`rounds.json` does not add up.** Its `total_runtime_minutes` says 110; its nine rounds sum to
-  **120**, and the itinerary slot (`item-s8`) is exactly 120 minutes. So the schedule as authored
-  fills the entire slot with zero slack for 21 people finding their phones. Either trim a round or
-  accept that the game runs to the minute — but fix the field either way, because a generator that
-  trusts it will be ten minutes wrong.
 - **Finder visibility on the clue feed.** `main_screen.json` sets `finder_shown: true` and flags it
   as a deliberate knob: it credits hunters and makes re-scanning a tampered clue a public act. Flip
   to anonymous if playtest shows scan-shyness.
+
+### The win condition: Ruleset B, settled
+
+**Killers win on 2+ of 3 surviving. Town wins on 2+ of 3 convicted.** Across the six conviction
+slots those are exhaustive and mutually exclusive — 0 or 1 convicted is a killer win, 2 or 3 is a
+town win — so unlike the old mixed reading there is no outcome where nobody wins. All six places in
+the content that stated a win condition now agree.
+
+Two consequences the trial code has to respect:
+
+- **Reaching 2 convictions does not end the game.** Town's win is evaluated after the third trial,
+  and the room is not told it has already won. The early end fires only on a clean sweep of all
+  three, where there is genuinely nothing left to catch. Without that, a trial-1 double-hit would
+  end a two-hour game forty minutes in and strand every jester and Braun who hadn't scored yet.
+- **The balance estimate is void, not adjusted.** The old `~45%`/`~55%` figures were computed
+  against the contradictory reading, and town's job just got easier by an unmeasured amount — 2 of
+  6 slots rather than 3. The `README.md` table now reads `re-sim` rather than carrying a number
+  nobody has earned.
+
+`story_beats.json` gained a `town_win_partial` endgame template for the 2-of-3 case, because the
+existing `town_win` text asserts all three hands were caught and the reveal screen reads it aloud.
+That new line is the one piece of prose in the data set not written by the original author — worth a
+voice pass before the night.
+
+`rounds.json`'s `total_runtime_minutes` said 110 while its nine rounds sum to 120, which is exactly
+the itinerary slot. The field now says 120. The schedule is unchanged; only the summary that lied
+about it is.
 
 ---
 

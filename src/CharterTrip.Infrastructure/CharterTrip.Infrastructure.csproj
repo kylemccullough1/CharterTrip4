@@ -21,4 +21,32 @@
                       LogicalName="CharterTrip.Infrastructure.Seed.trip.seed.json" />
   </ItemGroup>
 
+  <!-- The Braun Manor content, embedded for the same reason as the seed: if the app is running,
+       the content is there. Listed one by one rather than by wildcard so that a file added to
+       data/braun-manor/ does not silently become a runtime dependency — and so the two UI spec
+       files (main_screen.json, player_phone.json) stay out, since nothing loads them. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\data\braun-manor\characters.json"
+                      Link="Mystery\BraunManor\characters.json"
+                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.characters.json" />
+    <EmbeddedResource Include="..\..\data\braun-manor\zones.json"
+                      Link="Mystery\BraunManor\zones.json"
+                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.zones.json" />
+    <EmbeddedResource Include="..\..\data\braun-manor\factions.json"
+                      Link="Mystery\BraunManor\factions.json"
+                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.factions.json" />
+    <EmbeddedResource Include="..\..\data\braun-manor\rounds.json"
+                      Link="Mystery\BraunManor\rounds.json"
+                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.rounds.json" />
+    <EmbeddedResource Include="..\..\data\braun-manor\story_beats.json"
+                      Link="Mystery\BraunManor\story_beats.json"
+                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.story_beats.json" />
+    <EmbeddedResource Include="..\..\data\braun-manor\prompts.json"
+                      Link="Mystery\BraunManor\prompts.json"
+                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.prompts.json" />
+    <EmbeddedResource Include="..\..\data\braun-manor\ghosts_npcs.json"
+                      Link="Mystery\BraunManor\ghosts_npcs.json"
+                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.ghosts_npcs.json" />
+  </ItemGroup>
+
 </Project>

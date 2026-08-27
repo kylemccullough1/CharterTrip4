@@ -204,14 +204,28 @@ mechanism for the phones and the main screen, and it needs nothing new.
 Done. The data set is in `data/braun-manor/`, committed and pushed. It previously existed only in a
 git stash entry, untracked on every branch, on a stash stack shared with four other worktrees.
 
-### Phase 1 — the script layer
+### Phase 1 — the script layer ✅
 
-`Core/Mystery/Script/*.cs` records mirroring the JSON. `Infrastructure/Mystery/ScriptLoader.cs`
-reading them as embedded resources, copying `SeedLoader` verbatim. Registered as a singleton
-`IMysteryScript`.
+Done. `Core/Mystery/Script/*.cs` holds the records; `Infrastructure/Mystery/ScriptLoader.cs` reads
+them as embedded resources, following `SeedLoader`. Seven of the nine content files load —
+`main_screen.json` and `player_phone.json` are specs for whoever builds those screens, not data the
+game consumes, so nothing reads them.
 
-One test asserting the shape: 21 characters, 9 zones, 6 factions summing to 21, and that every
-`slots` entry names a real slot.
+Three things worth knowing before phase 5:
+
+- **`MysteryScript.Validate()` runs at load and throws**, listing everything wrong. `Program.cs`
+  resolves the script during startup so a content file edited by hand breaks the app immediately
+  rather than halfway through dealing a game. Five tests break the script deliberately to prove the
+  validator is not passing vacuously.
+- **`MysteryJson` is separate from `TripJson`** because the content files are snake_cased and
+  `trip.json` is camelCased. The content was authored by hand and is read on its own terms.
+- **Access-slot supply is 7, not the 8 the data set's README implies.** Eight characters carry the
+  access tag but Harry is one of them and he is pinned to `inheritance`, so the killer draw only
+  ever sees seven. `ForSlot` filters by eligibility; anything reasoning from the tag count will
+  over-count its candidates.
+
+Registered as a singleton of the concrete record rather than behind an `IMysteryScript` interface —
+it is immutable data, and a test that wants a different script constructs one with `with`.
 
 ### Phase 2 — generic code login
 

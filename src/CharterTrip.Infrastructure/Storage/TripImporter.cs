@@ -121,8 +121,18 @@ public static class TripImporter
                 warnings.Add($"Jeopardy categories with no clues: {string.Join(", ", thin)}.");
         }
 
-        if (trip.Mystery.Characters.Count > 0 && trip.Mystery.Characters.Count < trip.Roster.Count)
-            warnings.Add($"Only {trip.Mystery.Characters.Count} mystery roles for {trip.Roster.Count} people.");
+        // The old warning counted hand-typed mystery roles against the roster. There is nothing to
+        // count now — the 21 characters come from the embedded script, and the cast is generated.
+        // What is worth saying is that a dealt game carries its own solution: importing this file
+        // replaces whoever is currently guilty, including in front of a room mid-evening.
+        if (trip.Mystery.Deal is { } deal)
+        {
+            var uncast = deal.Cast.Count(c => c.PersonId is null);
+            warnings.Add(
+                $"This file has a murder mystery dealt (seed {deal.Seed}) — importing it replaces " +
+                "the current cast and guilty list." +
+                (uncast > 0 ? $" {uncast} of {deal.Cast.Count} roles are uncast." : ""));
+        }
 
         // Play state travels with the file. Nobody expects an upload to change the scoreboard,
         // so say so here rather than letting it be discovered on the wall.
@@ -192,6 +202,6 @@ public readonly record struct TripCounts(
         trip.Itinerary.Count,
         trip.Itinerary.Sum(d => d.Items.Count),
         trip.Jeopardy.Categories.Sum(c => c.Clues.Count),
-        trip.Mystery.Characters.Count,
+        trip.Mystery.Deal?.Cast.Count ?? 0,
         trip.Scores.Count);
 }

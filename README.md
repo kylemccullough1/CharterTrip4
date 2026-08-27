@@ -139,7 +139,7 @@ Until that secret exists, the deploy workflow builds and tests, then stops clean
 ## Where the content came from
 
 Transcribed from the committee's planning documents: the 2026 budget sheet, the meeting notes
-(6/23 through 8/11), *Murder at West Egg Manor*, and the JeopardyLabs board.
+(6/23 through 8/11), the Braun Manor murder mystery design documents, and the JeopardyLabs board.
 
 Some judgement calls are baked into `data/trip.seed.json` and worth a look before the trip:
 

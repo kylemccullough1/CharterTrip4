@@ -101,27 +101,25 @@ public class SeedDataTests
     }
 
     [Fact]
-    public void Mystery_has_26_roles_five_conspirators_and_one_mastermind()
+    public void The_seed_carries_no_dealt_mystery()
     {
-        Assert.Equal(26, Seed.Mystery.Characters.Count);
-        Assert.Equal(5, Seed.Mystery.Characters.Count(c => c.IsConspirator));
-        Assert.Single(Seed.Mystery.Characters, c => c.IsMastermind);
-
-        // The mastermind must be one of the conspirators.
-        var mastermind = Seed.Mystery.Characters.Single(c => c.IsMastermind);
-        Assert.True(mastermind.IsConspirator);
+        // The 21 Braun Manor characters live in the embedded script, not here, and the cast is
+        // generated at deal time from a seed. A trip.seed.json carrying a deal would ship a
+        // guilty list in git.
+        Assert.Null(Seed.Mystery.Deal);
+        Assert.False(Seed.Mystery.Active);
+        Assert.Empty(Seed.Mystery.Clues);
+        Assert.Empty(Seed.Mystery.Trials);
+        Assert.Equal(-1, Seed.Mystery.CurrentRoundIndex);
     }
 
     [Fact]
-    public void There_is_a_mystery_role_for_everyone_going()
+    public void The_seed_carries_no_join_tokens()
     {
-        // West Egg Manor is written for 26 and the roster is 25, so a role goes spare. What
-        // matters is that nobody is left without one — the surplus is the host's to trim.
-        Assert.True(Seed.Mystery.Characters.Count >= Seed.Roster.Count,
-            $"{Seed.Roster.Count} people but only {Seed.Mystery.Characters.Count} roles");
-
-        Assert.Equal(5, Seed.Mystery.Characters.Count(c => c.IsConspirator));
-        Assert.Equal(1, Seed.Mystery.Characters.Count(c => c.IsMastermind));
+        // A join token is somebody's identity for the weekend. Twenty-five of them committed to a
+        // repository is twenty-five accounts anybody who can read it can use. SeedPreparation
+        // strips them on the way out; this is what notices if that stops happening.
+        Assert.All(Seed.Roster, p => Assert.True(string.IsNullOrEmpty(p.JoinToken)));
     }
 
     [Fact]

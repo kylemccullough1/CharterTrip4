@@ -13,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 19;
+    public const int CurrentVersion = 20;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -34,6 +34,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 13) changed |= ToV13_MenuBoard(trip);
         if (trip.SchemaVersion < 14) changed |= ToV14_GroupedEssentials(trip);
         if (trip.SchemaVersion < 19) changed |= ToV19_EverybodyHasAJoinToken(trip);
+        if (trip.SchemaVersion < 20) changed |= ToV20_BraunManorReplacesWestEgg(trip);
 
         // v18 gave a carpool's ETA a day to go with the time. No step, same as the two
         // before it: the field defaults to empty and an older file simply has not said.
@@ -502,6 +503,57 @@ public static class TripMigrations
     /// Idempotent, and existing tokens are never reissued.
     /// </summary>
     private static bool ToV19_EverybodyHasAJoinToken(TripData trip) => JoinCodes.EnsureTokens(trip);
+
+    /// <summary>
+    /// v20 replaces Murder at West Egg Manor with Murder at Braun Manor.
+    ///
+    /// The old game was 26 characters, a mastermind and five conspirators, with clue cards the host
+    /// typed in and released by round. Braun Manor shares none of that structure: 21 characters, six
+    /// factions, three killers drawn per guilt slot, and every word of it composed from embedded
+    /// content. So <c>MysteryState</c> was replaced rather than extended, and the old properties
+    /// simply stop existing — <see cref="TripMigrations"/> already establishes that a removed
+    /// property is ignored on load and gone on the next save.
+    ///
+    /// This is nonetheless a numbered step rather than a silent model change, for two reasons. The
+    /// stamp records the shape of a file, and a document half-way between two different games is
+    /// unrecoverable on the one screen — the reveal — where being wrong is worst. And the titles
+    /// need rewriting, which no amount of default-value handling would do on its own.
+    ///
+    /// Guarded on finding the old text, so a title someone has since chosen deliberately survives.
+    /// </summary>
+    private static bool ToV20_BraunManorReplacesWestEgg(TripData trip)
+    {
+        const string old = "Murder at West Egg Manor";
+        const string now = "Murder at Braun Manor";
+
+        // Nothing in the old shape is worth carrying: the cast was 26 West Egg roles with empty
+        // secrets, and Braun Manor deals its own from the script.
+        var changed = trip.Mystery.Deal is not null || trip.Mystery.Active;
+        trip.Mystery = new MysteryState();
+
+        // The name appears in three places, all of them read by guests before the night.
+        foreach (var slide in trip.Slides.Where(s => s.Caption == old))
+        {
+            slide.Caption = now;
+            changed = true;
+        }
+
+        foreach (var item in trip.Itinerary
+                     .SelectMany(d => d.Items)
+                     .Where(i => i.Title.Contains(old, StringComparison.Ordinal)))
+        {
+            item.Title = item.Title.Replace(old, now, StringComparison.Ordinal);
+            changed = true;
+        }
+
+        foreach (var game in trip.Games.Where(g => g.Name.Contains(old, StringComparison.Ordinal)))
+        {
+            game.Name = game.Name.Replace(old, now, StringComparison.Ordinal);
+            changed = true;
+        }
+
+        return changed;
+    }
 
     private static bool ToV14_GroupedEssentials(TripData trip)
     {

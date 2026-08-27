@@ -28,10 +28,27 @@ public class SeedPreparationTests
         game.HostCode = "AAKH";
 
         trip.Mystery.Active = true;
-        trip.Mystery.CastRevealed = true;
-        trip.Mystery.VotingOpen = true;
-        trip.Mystery.CurrentRound = 2;
-        trip.Mystery.Clues.Add(new ClueCard { Id = "cc-1", Text = "A torn photograph", Released = true });
+        trip.Mystery.CurrentRoundIndex = 2;
+        trip.Mystery.Deal = new MysteryDeal
+        {
+            Seed = 1234,
+            Cast =
+            [
+                new MysteryCastMember
+                {
+                    CharacterId = "wilhelm",
+                    PersonId = trip.Roster[0].Id,
+                    ZoneId = "entry",
+                    FactionId = "killer",
+                    GuiltSlot = "access"
+                }
+            ]
+        };
+        trip.Mystery.Clues.Add(new MysteryClue
+        {
+            Id = "mc-1", Token = "ACDEFGHJKM", ZoneId = "entry", TraceCharacterId = "wilhelm", Found = true
+        });
+        trip.Mystery.Trials.Add(new MysteryTrial { RoundId = "trial_1", ConvictedCharacterIds = ["hugo"] });
 
         return trip;
     }
@@ -50,10 +67,16 @@ public class SeedPreparationTests
         Assert.Empty(trip.Jeopardy.Game.BuzzerCodes);
         Assert.Equal("", trip.Jeopardy.Game.HostCode);
         Assert.False(trip.Mystery.Active);
-        Assert.False(trip.Mystery.CastRevealed);
-        Assert.False(trip.Mystery.VotingOpen);
-        Assert.Equal(-1, trip.Mystery.CurrentRound);
-        Assert.All(trip.Mystery.Clues, c => Assert.False(c.Released));
+        Assert.Equal(-1, trip.Mystery.CurrentRoundIndex);
+
+        // The whole mystery goes, deal included. Nothing in it is authored any more — it is all
+        // generated from the script and a seed, so there is no host work to preserve.
+        Assert.Null(trip.Mystery.Deal);
+        Assert.Empty(trip.Mystery.Clues);
+        Assert.Empty(trip.Mystery.Trials);
+
+        // Issued identity, and this file goes into git.
+        Assert.All(trip.Roster, p => Assert.True(string.IsNullOrEmpty(p.JoinToken)));
     }
 
     [Fact]
@@ -62,8 +85,6 @@ public class SeedPreparationTests
         var trip = PlayedTrip();
         trip.Itinerary[0].Items[0].Title = "Check-in, moved earlier";
         trip.Itinerary[0].Items[0].StartMinutes = 840;
-        trip.Mystery.Characters[0].AssignedPersonId = trip.Roster[0].Id;
-        trip.Mystery.Characters[0].Secret = "Secretly bankrupt";
 
         SeedPreparation.Prepare(trip, DateTimeOffset.UnixEpoch);
 
@@ -72,10 +93,10 @@ public class SeedPreparationTests
         Assert.Equal(25, trip.Roster.Count);
         Assert.Equal(25, trip.Jeopardy.Categories.Sum(c => c.Clues.Count));
 
-        // Casting is an evening of the host's work, not something the game produced.
-        Assert.Equal(trip.Roster[0].Id, trip.Mystery.Characters[0].AssignedPersonId);
-        Assert.Equal("Secretly bankrupt", trip.Mystery.Characters[0].Secret);
-        Assert.Single(trip.Mystery.Clues);
+        // The roster itself survives — names, teams and roles are the host's work. Only the
+        // issued token on each person goes.
+        Assert.All(trip.Roster, p => Assert.False(string.IsNullOrWhiteSpace(p.Name)));
+        Assert.Equal(4, trip.Roster.Count(p => p.Role == TripRole.Admin));
     }
 
     /// <summary>A prepared trip has to still satisfy everything SeedDataTests asserts.</summary>
@@ -91,6 +112,6 @@ public class SeedPreparationTests
         Assert.Equal(seed.UpdatedUtc, prepared.UpdatedUtc);
         Assert.Equal(seed.Scores.Count, prepared.Scores.Count);
         Assert.Equal(seed.Jeopardy.Game.Phase, prepared.Jeopardy.Game.Phase);
-        Assert.Equal(seed.Mystery.CurrentRound, prepared.Mystery.CurrentRound);
+        Assert.Equal(seed.Mystery.CurrentRoundIndex, prepared.Mystery.CurrentRoundIndex);
     }
 }

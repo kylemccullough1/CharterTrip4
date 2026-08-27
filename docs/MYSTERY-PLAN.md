@@ -265,7 +265,7 @@ Four things worth knowing:
 Minted by **migration v19** rather than on demand, because they end up printed: something that
 gets printed should be decided once and then stable. The mystery model migration is therefore v20.
 
-### Phase 3 — migration v20
+### Phase 3 — migration v20 ✅
 
 West Egg out, Braun Manor in, per §2.1: the new model shape, the three seed renames, the dress-code
 decision, and the seven referencing files. Also the provenance line in the root `README.md`, which

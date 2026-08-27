@@ -1,25 +1,36 @@
 @page "/games/mystery"
+@using CharterTrip.Core.Mystery.Script
+@inject MysteryScript Script
 
-<PageTitle>Murder at West Egg Manor · Charter Trip 2026</PageTitle>
+<PageTitle>Murder at Braun Manor · Charter Trip 2026</PageTitle>
 
 @* The games and the roster are the committee's working area, not part of what a
    guest came here for. AdminOnly guards the page itself, so typing the URL lands
-   on the same polite refusal as following a link that is not in their menu. *@
+   on the same polite refusal as following a link that is not in their menu.
+
+   This becomes the host console — round control, the guilty list, and an override for
+   everything the app cannot do. Until then it reports what the content actually holds, so the
+   page is at least true. *@
 <AdminOnly>
-<ComingSoon Title="Murder at West Egg Manor"
-            Subtitle="Saturday, 8:00 PM — Gatsby dress code."
+<ComingSoon Title="Murder at Braun Manor"
+            Subtitle="Saturday, 8:00 PM — two hours, nine rounds, three trials."
             Phase="3"
-            Description="All 26 roles, the 5 conspirators and the mastermind are already seeded. Phase 3 turns it into a live game."
+            Description="@Description"
             Bullets="_bullets" />
 </AdminOnly>
 
 @code {
+    private string Description =>
+        $"{Script.Characters.Count} characters across {Script.Zones.Playable.Count()} rooms, " +
+        $"{Script.Factions.Factions.Count} factions, and every line of it already written. " +
+        "What is left is dealing a game and putting it on the phones.";
+
     private readonly string[] _bullets =
     [
-        "Cast 26 people into 26 roles, by hand or randomised",
-        "Deal private character cards to everyone's phone at once",
-        "Host-driven rounds that update every screen live",
-        "Release clues publicly, or slip one to a single character",
-        "Final ballot with a live tally and a reveal screen",
+        "Deal a game from a seed — three killers, three red herrings, everyone placed",
+        "Compose 21 private briefings and the witness web from the authored blocks",
+        "Nine printed clue QRs, one per room, found by walking there",
+        "Three trials on phones, with both tie rules and a force-advance",
+        "The reveal, which is already written and only needs filling in",
     ];
 }

@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 14,
   "revision": 0,
   "updatedUtc": "2026-08-19T00:00:00+00:00",
@@ -96,7 +96,7 @@
       {
         "group": "Logistics",
         "label": "Where",
-        "value": "Braun Manor — Denison, TX"
+        "value": "Braun Manor â€” Denison, TX"
       },
       {
         "group": "Logistics",
@@ -136,7 +136,7 @@
       }
     ],
     "saturdayNight": "Saturday evening is a murder mystery. You will get your character and the rest of the details once you are there.",
-    "dressCode": "Bring one dressed-up outfit. The fancier the better — formal wear works. Accessories are encouraged, and the best-dressed team earns points.",
+    "dressCode": "Bring one dressed-up outfit. The fancier the better â€” formal wear works. Accessories are encouraged, and the best-dressed team earns points.",
     "menuDays": [
       {
         "id": "menu-fri",
@@ -149,8 +149,8 @@
         "id": "menu-sat",
         "day": "Saturday",
         "breakfast": "Eggs, bacon, sausage, pancakes and waffles, fruit, orange and apple juice",
-        "lunch": "Sandwich bar — deli meats, cheese, lettuce, tomato, condiments, chips",
-        "dinner": "Cookout — marinated skirt steak, flour and corn tortillas, salsa, salsa verde, onion and cilantro, tortilla chips"
+        "lunch": "Sandwich bar â€” deli meats, cheese, lettuce, tomato, condiments, chips",
+        "dinner": "Cookout â€” marinated skirt steak, flour and corn tortillas, salsa, salsa verde, onion and cilantro, tortilla chips"
       },
       {
         "id": "menu-sun",
@@ -259,7 +259,7 @@
     {
       "id": "slide-3",
       "kind": "deco",
-      "caption": "Murder at West Egg Manor",
+      "caption": "Murder at Braun Manor",
       "sub": "Saturday, 8:00 PM - dress the part",
       "hue": 2
     },
@@ -426,7 +426,7 @@
           "id": "item-s8",
           "startMinutes": 1200,
           "durationMinutes": 120,
-          "title": "Murder Mystery - Murder at West Egg Manor",
+          "title": "Murder Mystery - Murder at Braun Manor",
           "notes": "Gatsby dress code. Group photo. Best-dressed group wins points.",
           "tag": "game",
           "version": 1
@@ -828,7 +828,7 @@
           {
             "id": "j-kdphi-15",
             "value": 15,
-            "clue": "“I'm the DOM”",
+            "clue": "â€œI'm the DOMâ€",
             "response": "What was written on Evie's white lies party shirt?",
             "clueImage": "",
             "responseImage": ""
@@ -1054,412 +1054,7 @@
     }
   },
   "mystery": {
-    "title": "Murder at West Egg Manor",
-    "subtitle": "A Great Gatsby-inspired murder mystery for 26 players",
-    "setting": "Long Island - 1926",
-    "hook": "At midnight the lights go out. When they come back, millionaire James Blackwell is dead in his private study - and five guests share the blame.",
-    "premise": "A lavish soiree hosted by the mysterious millionaire James Blackwell. His extravagant parties attract politicians, socialites, bootleggers, jazz musicians and movie stars. At midnight the lights go out. When they return, Blackwell is dead in his private study. Everyone had a motive. The twist: five guests secretly conspired together.",
-    "hostNote": "This setup is designed to encourage teamwork, bluffing and deduction while giving every player a meaningful role in a glamorous Roaring Twenties setting.",
-    "crimeSteps": [
-      "Stole the key",
-      "Lured Blackwell to the study",
-      "Cut communications",
-      "Ensured there were no witnesses",
-      "Removed evidence afterward"
-    ],
-    "exampleSecrets": [
-      "Secretly bankrupt",
-      "Forged artwork",
-      "Hidden engagement",
-      "Gambling debts",
-      "Bootlegging customer",
-      "Affair with another guest",
-      "Fake aristocratic title",
-      "Stole expensive jewelry",
-      "Blackmailed someone",
-      "Secretly related to Blackwell"
-    ],
-    "clueTypes": [
-      "Witness statements",
-      "Hidden letters",
-      "Financial records",
-      "Torn photographs",
-      "Matchbooks",
-      "Jewelry",
-      "Guest-book entries",
-      "Telephone logs",
-      "Servant notes"
-    ],
-    "rounds": [
-      {
-        "name": "Round 1 - Cocktail Hour",
-        "description": "Guests mingle, introduce themselves and exchange rumors."
-      },
-      {
-        "name": "Round 2 - The Murder",
-        "description": "The body is discovered and the investigation begins."
-      },
-      {
-        "name": "Round 3 - Search the Mansion",
-        "description": "Clues are released and players compare evidence."
-      },
-      {
-        "name": "Round 4 - Interrogations",
-        "description": "Guests may privately question one another."
-      },
-      {
-        "name": "Round 5 - Final Revelations",
-        "description": "Additional evidence is revealed before accusations."
-      },
-      {
-        "name": "Finale",
-        "description": "Everyone votes for the five conspirators and names the mastermind."
-      }
-    ],
-    "characters": [
-      {
-        "id": "ch-01",
-        "role": "The Bootleg King",
-        "isConspirator": true,
-        "isMastermind": false,
-        "brief": "Organized illegal liquor distribution. Blackwell planned to expose him. He provided access to the mansion through hidden tunnels.",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-02",
-        "role": "The Corrupt Politician",
-        "isConspirator": true,
-        "isMastermind": false,
-        "brief": "Accepted bribes from the Syndicate. Blackwell possessed incriminating documents. The politician ordered servants away from the study.",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-03",
-        "role": "The Jazz Singer",
-        "isConspirator": true,
-        "isMastermind": false,
-        "brief": "A former lover of Blackwell. The singer stole a key to the study and distracted the guests with a special performance.",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-04",
-        "role": "The Chauffeur",
-        "isConspirator": true,
-        "isMastermind": false,
-        "brief": "Loyal to the Syndicate. The chauffeur disabled the mansion telephone and controlled arrivals and departures.",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-05",
-        "role": "The Socialite",
-        "isConspirator": true,
-        "isMastermind": true,
-        "brief": "The secret leader of the Syndicate. The socialite planned the conspiracy and destroyed the final piece of evidence.",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-06",
-        "role": "Blackwell's Fiancee",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-07",
-        "role": "His Estranged Brother",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-08",
-        "role": "Newspaper Reporter",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-09",
-        "role": "Famous Actress",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-10",
-        "role": "Silent Film Director",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-11",
-        "role": "Investment Banker",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-12",
-        "role": "Family Attorney",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-13",
-        "role": "Head Butler",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-14",
-        "role": "Maid",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-15",
-        "role": "French Chef",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-16",
-        "role": "Doctor",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-17",
-        "role": "Private Detective",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-18",
-        "role": "Jazz Trumpeter",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-19",
-        "role": "Flapper",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-20",
-        "role": "Prize Boxer",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-21",
-        "role": "College Professor",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-22",
-        "role": "Jewelry Dealer",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-23",
-        "role": "Neighboring Millionaire",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-24",
-        "role": "Artist",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-25",
-        "role": "Fashion Designer",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      },
-      {
-        "id": "ch-26",
-        "role": "Police Inspector",
-        "isConspirator": false,
-        "isMastermind": false,
-        "brief": "",
-        "secret": "",
-        "motive": "",
-        "protecting": "",
-        "suspiciousActivity": "",
-        "objective1": "",
-        "objective2": ""
-      }
-    ],
-    "clues": [],
     "active": false,
-    "castRevealed": false,
-    "votingOpen": false,
-    "currentRound": -1
+    "currentRoundIndex": -1
   }
 }

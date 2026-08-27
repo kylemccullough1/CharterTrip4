@@ -10,10 +10,15 @@ namespace CharterTrip.Core.Services;
 /// to be refreshed from the real trip as the weekend gets planned.
 ///
 /// The line drawn here is between what the host wrote and what happened during play. Everything
-/// authored survives: the itinerary, the roster, the Jeopardy board, the mystery cast and their
-/// secrets. Everything earned or issued does not: scores, buzzer codes, which clues have been
-/// used, which round the mystery is on. A seed that restored a half-finished game would be worse
-/// than useless — it would put a stale scoreboard back on the wall.
+/// authored survives: the itinerary, the roster, the Jeopardy board. Everything earned or issued
+/// does not: scores, buzzer codes, join tokens, and the whole of the murder mystery. A seed that
+/// restored a half-finished game would be worse than useless — it would put a stale scoreboard
+/// back on the wall.
+///
+/// "Issued" is the important half, because this file goes into git. Buzzer codes were always
+/// cleared here; join tokens have to be too, and for a stronger reason — a buzzer code is worth
+/// one evening's mischief, while a join token is somebody's identity for the weekend. Twenty-five
+/// of them committed to a repository is twenty-five accounts anybody who can read it can use.
 /// </summary>
 public static class SeedPreparation
 {
@@ -36,14 +41,14 @@ public static class SeedPreparation
         // The board is content; the game on top of it is not.
         trip.Jeopardy.Game = new JeopardyGame();
 
-        var mystery = trip.Mystery;
-        mystery.Active = false;
-        mystery.CastRevealed = false;
-        mystery.VotingOpen = false;
-        mystery.CurrentRound = -1;
+        // The murder mystery keeps nothing. Everything in it — the cast, the guilty list, the clue
+        // layout, the votes — is generated from the script and a seed at deal time, so there is no
+        // authored half to preserve. This used to be a field-by-field reset because the old game's
+        // characters and clue cards were typed in by hand.
+        trip.Mystery = new MysteryState();
 
-        // Clue cards are written by the host, so they stay — but a released clue is a played one.
-        foreach (var clue in mystery.Clues)
-            clue.Released = false;
+        // Issued identity, not authored content, and this file is committed. See the class note.
+        foreach (var person in trip.Roster)
+            person.JoinToken = null;
     }
 }

@@ -275,7 +275,7 @@ still credits *Murder at West Egg Manor* as a source — true of the old seed, m
 
 §2.5. Before any ability, vote or scan is written, so a refusal has somewhere to be reported.
 
-### Phase 5 — `Dealer`
+### Phase 5 — `Dealer` ✅
 
 The nine generator steps from `README.md` plus its five post-simulation rules: dual-tag
 half-weighting, lone-guilty-witness rejection, route-preference override, clue spillover, cross-zone

@@ -66,6 +66,14 @@ public sealed class MysteryDeal
     /// <summary>Which of the three routes the access killer came by.</summary>
     public string AccessRoute { get; set; } = "";
 
+    /// <summary>
+    /// Extra observations granted across a zone boundary — "seen from the doorway".
+    ///
+    /// The fifth post-simulation rule: a killer with exactly one co-located witness gets a second
+    /// thread from an adjacent room, so no killer is ever one conversation away from invisible.
+    /// </summary>
+    public List<MysterySighting> CrossZoneSightings { get; set; } = [];
+
     /// <summary>Killers by guilt slot, for composing the study scene and the reveal.</summary>
     public string? KillerFor(string slot) =>
         Cast.FirstOrDefault(c => c.GuiltSlot == slot)?.CharacterId;
@@ -112,6 +120,17 @@ public sealed class MysteryCastMember
     public bool ShowsGuilty => GuiltSlot is not null || IsHerring;
 
     public bool IsKiller => GuiltSlot is not null;
+}
+
+/// <summary>
+/// One character seeing another from the next room over.
+/// </summary>
+public sealed class MysterySighting
+{
+    /// <summary>Who saw it — a player in a zone adjacent to the subject's.</summary>
+    public string ObserverCharacterId { get; set; } = "";
+
+    public string SubjectCharacterId { get; set; } = "";
 }
 
 /// <summary>

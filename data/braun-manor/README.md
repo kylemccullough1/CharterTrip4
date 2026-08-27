@@ -96,7 +96,32 @@ equalizer.
 4. **Clue spillover:** if a zone already holds a clue, portable traces (no anchor_zone) shift to an adjacent clueless zone. Anchored traces never move.
 5. **Cross-zone sighting (recommended):** any killer with exactly 1 co-located witness gets one additional observation assigned to a player in an adjacent zone ("seen from the doorway"). Keeps every killer at >=2 threads.
 
-Post-fix killer distribution: measured at a 12-24% band across 15 eligible characters (uniform ideal ~16%) — **stale, needs re-simulation.** Unpinning the inheritance claim added Harry to the eligible pool, so it is 16 characters now and the uniform ideal is ~15%. Harry is access-only, so the change concentrates in the access slot rather than spreading evenly: that slot went from 7 candidates to 8.
+## Killer distribution, re-simulated
+
+2000 seeds through the implemented generator, 16 eligible characters, zero failed deals. Uniform ideal is 3/16 = **18.75%**.
+
+| | rate | | rate |
+|---|---|---|---|
+| harry | **28.2%** | solomon | 20.6% |
+| sutton | 24.2% | wilhelm | 17.4% |
+| cairo | 24.1% | carla | 17.1% |
+| priya | 23.2% | yousef | 14.4% |
+| florence | 22.3% | giuliana | 12.2% |
+| nishimoto | 21.6% | daquan | 12.0% |
+| martha | 20.8% | imogen | 11.2% |
+| hugo | 20.6% | santiago | 10.0% |
+
+Never a killer: molly, isla, emilia, sharkeisha, remington — no slots.
+
+The band is **10.0–28.2%**, wider than the 12–24% the pre-implementation simulation reported, and the top of it is a consequence of unpinning the inheritance claim.
+
+**Harry at 28.2% is the outlier, and the cause is his zone whitelist rather than his slots.** He is access-only, and all three rooms he can be placed in — lawn, driveway, entry — grant access to the study. So he is eligible for the ACCESS draw in every single game, while the other seven access-tagged characters are only eligible in the games where they happen to land somewhere that reaches the study.
+
+This is the same shape as the Carla fix already recorded above: she was access-only at a 46% killer rate until the kitchen was added to her whitelist. Adding one non-access-granting room to Harry's whitelist would pull him back toward the band the same way. That is a content decision and has not been made.
+
+Dual-tag half-weighting is working as intended and is not the problem here: Solomon and Wilhelm, the two dual-tagged characters, sit at 20.6% and 17.4% — right on the ideal, which is what the rule was added to achieve.
+
+The inheritance claim is now spread across all 21 characters at 5.4–13.4% (ideal 2/18 = 11.1%), against 100% for Harry and Isla before.
 Data changes applied: Carla is access-only with kitchen added to her whitelist (was 46% killer rate); her snail glove button stays — a snail-carrier who can never be the signature killer is a free red herring on the signature thread.
 Never-killers by design: Molly, **Isla**, Emilia, Sharkeisha, Remington — five characters with no slots, so no guilt slot to fill. Irrelevant for a one-shot; a meta risk only on replays with the same group.
 

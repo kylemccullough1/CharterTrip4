@@ -175,15 +175,11 @@ else
         {
             var clue = MysteryService.ClueByToken(t, token);
             if (clue is null) return AbilityResult.No("That card is gone.");
-            if (clue.Tamper is not null) return AbilityResult.No("Somebody got here first.");
 
-            var fired = MysteryService.TryFire(
-                t, Script, me.CharacterId, abilityId, mode, target, clue.Id, null, Clock.UtcNow);
-
-            if (!fired.Fired) return fired;
-
-            MysteryService.TryTamper(clue, mode, me.CharacterId, target, Clock.UtcNow);
-            return AbilityResult.Yes("Done. Nobody saw you.");
+            // Spending the charge and marking the card are one decision, made inside the lock —
+            // two jesters reaching the same card at the same moment must not both succeed.
+            return MysteryService.TryTamperWithAbility(
+                t, Script, me.CharacterId, abilityId, mode, target, clue.Id, Clock.UtcNow);
         }, TripArea.Mystery);
 
         // An ability firing is one of the few things worth forcing to disk immediately: it is

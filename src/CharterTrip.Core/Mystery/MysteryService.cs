@@ -438,6 +438,41 @@ public static class MysteryService
         return true;
     }
 
+    /// <summary>
+    /// Spend a tamper charge and mark the clue, as one operation.
+    ///
+    /// <see cref="TryFire"/> and <see cref="TryTamper"/> exist separately because not every ability
+    /// touches a clue — but calling them in sequence lets the two drift: a charge spent on a card
+    /// that was already tampered, or a card marked by somebody with nothing left to spend. Both
+    /// halves belong to the same decision, so they are made here, together, and either both happen
+    /// or neither does.
+    /// </summary>
+    public static AbilityResult TryTamperWithAbility(
+        TripData trip,
+        MysteryScript script,
+        string characterId,
+        string abilityId,
+        string mode,
+        string? targetCharacterId,
+        string clueId,
+        DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(trip);
+        ArgumentNullException.ThrowIfNull(script);
+
+        var clue = trip.Mystery.Clues.FirstOrDefault(c => c.Id == clueId);
+        if (clue is null) return AbilityResult.No("That card is gone.");
+
+        // Checked before the charge, so a refused tamper costs nothing.
+        if (clue.Tamper is not null) return AbilityResult.No("Somebody got here first.");
+
+        var fired = TryFire(trip, script, characterId, abilityId, mode, targetCharacterId, clueId, null, now);
+        if (!fired.Fired) return fired;
+
+        TryTamper(clue, mode, characterId, targetCharacterId, now);
+        return AbilityResult.Yes("Done. Nobody saw you.");
+    }
+
     /// <summary>True if any clue has been tampered with since the given time — the round announce.</summary>
     public static bool TamperedSince(TripData trip, DateTimeOffset since)
     {

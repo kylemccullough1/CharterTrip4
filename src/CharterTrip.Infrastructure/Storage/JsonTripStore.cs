@@ -58,17 +58,28 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
 
     public event Func<TripChanged, Task>? Changed;
 
-    public async Task MutateAsync(Action<TripData> mutate, TripArea area, CancellationToken ct = default)
+    public Task MutateAsync(Action<TripData> mutate, TripArea area, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(mutate);
+
+        // Expressed in terms of the generic one so there is a single implementation of the lock,
+        // the revision bump and the change notification. Two copies of that would eventually
+        // disagree about the order of them.
+        return MutateAsync<object?>(trip => { mutate(trip); return null; }, area, ct);
+    }
+
+    public async Task<T> MutateAsync<T>(Func<TripData, T> mutate, TripArea area, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(mutate);
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         TripChanged change;
+        T result;
 
         await _stateGate.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            mutate(_current);
+            result = mutate(_current);
             _current.Revision++;
             _current.UpdatedUtc = _clock.UtcNow;
             change = new TripChanged(area, _current.Revision);
@@ -80,6 +91,8 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
 
         ScheduleFlush();
         await RaiseChangedAsync(change).ConfigureAwait(false);
+
+        return result;
     }
 
     public async Task ReplaceAsync(TripData replacement, CancellationToken ct = default)

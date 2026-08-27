@@ -263,4 +263,48 @@ public class JsonTripStoreTests
         Assert.Equal(40, fx.Store.Current.Superlatives.Count(s => s.Id.StartsWith("concurrent-")));
         Assert.Equal(40, fx.Store.Current.Superlatives.Select(s => s.Id).Distinct().Count(id => id.StartsWith("concurrent-")));
     }
+
+    [Fact]
+    public async Task A_mutation_can_report_what_it_decided()
+    {
+        await using var fx = new StoreFixture();
+
+        var revision = await fx.Store.MutateAsync(t =>
+        {
+            t.Trip.Venue = "Braun Manor";
+            return t.Revision;
+        }, TripArea.Trip);
+
+        // The value comes from inside the lock, so it is the state the mutation actually saw.
+        Assert.Equal(fx.Store.Current.Revision - 1, revision);
+        Assert.Equal("Braun Manor", fx.Store.Current.Trip.Venue);
+    }
+
+    [Fact]
+    public async Task Exactly_one_of_forty_racing_callers_wins_a_single_shared_charge()
+    {
+        await using var fx = new StoreFixture();
+
+        await fx.Store.MutateAsync(t => t.Superlatives.Clear(), TripArea.Trip);
+
+        // A stand-in for the killers' one collective charge: check and spend, both inside the
+        // lock, with the verdict coming back out. TESTING.md calls this out by name — hammer it
+        // with simultaneous requests, this WILL race — and it is the whole reason the generic
+        // overload exists. Forty callers, one charge, and thirty-nine have to be told no.
+        var granted = await Task.WhenAll(Enumerable.Range(0, 40).Select(i =>
+            fx.Store.MutateAsync(t =>
+            {
+                if (t.Superlatives.Count > 0) return false;
+
+                t.Superlatives.Add(new CharterTrip.Core.Models.Superlative
+                {
+                    Id = "the-one-charge", Title = $"Spent by {i}"
+                });
+                return true;
+            }, TripArea.Trip)));
+
+        Assert.Single(granted, won => won);
+        Assert.Equal(39, granted.Count(won => !won));
+        Assert.Single(fx.Store.Current.Superlatives);
+    }
 }

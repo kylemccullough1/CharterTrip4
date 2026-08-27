@@ -271,7 +271,7 @@ West Egg out, Braun Manor in, per §2.1: the new model shape, the three seed ren
 decision, and the seven referencing files. Also the provenance line in the root `README.md`, which
 still credits *Murder at West Egg Manor* as a source — true of the old seed, misleading after this.
 
-### Phase 4 — the `MutateAsync<T>` overload
+### Phase 4 — the `MutateAsync<T>` overload ✅
 
 §2.5. Before any ability, vote or scan is written, so a refusal has somewhere to be reported.
 

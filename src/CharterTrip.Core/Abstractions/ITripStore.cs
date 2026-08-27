@@ -28,6 +28,20 @@ public interface ITripStore
     Task MutateAsync(Action<TripData> mutate, TripArea area, CancellationToken ct = default);
 
     /// <summary>
+    /// Apply a change under the same lock, and report what it decided.
+    ///
+    /// The <see cref="Action{TripData}"/> overload cannot answer "did that work?" except by
+    /// capturing a closure variable, which works and reads badly. That is fine for an itinerary
+    /// edit, where the answer is always yes. It is not fine for a game.
+    ///
+    /// The murder mystery has two abilities whose single charge belongs to a whole faction — the
+    /// killers' and the minions' — so "two people press the button at the same moment" is a case
+    /// that will actually happen, and the loser has to be told they lost. Checking the charge and
+    /// spending it both have to be inside the lock, and the verdict has to come back out.
+    /// </summary>
+    Task<T> MutateAsync<T>(Func<TripData, T> mutate, TripArea area, CancellationToken ct = default);
+
+    /// <summary>
     /// Replace the entire trip with <paramref name="replacement"/> — the import path.
     ///
     /// Separate from <see cref="MutateAsync"/> because it is a different kind of act: a mutation

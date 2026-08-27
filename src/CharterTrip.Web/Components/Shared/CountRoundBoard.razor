@@ -1,39 +1,42 @@
-@* Pool Noodle Cups and Beer Run are the same screen with a different noun: after each round,
-   say how many each team carried off and the points follow. One component rather than two
-   near-identical ones, because the only thing that differs is the word "cups". *@
+@* Pool Noodle Cups and Beer Run: after each round, say how many each team carried off.
+
+   There is no heading here. The round already announces itself above in letters an inch high,
+   and saying "Round 1" again immediately underneath it was the sort of thing you stop seeing
+   after a day and never stop paying for on a phone.
+
+   The cups in a round are a fixed pool — one player per team, one cup each — so the counters
+   share it rather than each offering the full four. Claiming one takes it away from everybody
+   else, which is what the round actually does. *@
 
 @inject ITripStore Store
 
-<SectionCard Title="@(State.IsSuddenDeath ? "Sudden death" : $"Round {State.Round}")"
-             Subtitle="@Sub">
-    <div class="count-grid">
-        @foreach (var team in Active)
-        {
-            var id = team.Id;
-            <div class="count-card" style="--team:@team.Color" @key="id">
-                <span class="count-team">@team.Name</span>
-                <div class="count-controls">
-                    <button type="button" class="btn btn-ghost btn-sm" @onclick="() => Nudge(id, -1)">−</button>
-                    <input class="numfield count-input" type="number" min="0" value="@Count(id)"
-                           @onchange="e => Set(id, e.Value?.ToString())" />
-                    <button type="button" class="btn btn-ghost btn-sm" @onclick="() => Nudge(id, 1)">+</button>
-                </div>
-                <span class="count-points">@(Count(id) * State.PointValue) pts</span>
-            </div>
-        }
-    </div>
-
-    <div class="row gap mt">
-        <button class="btn btn-gold" @onclick="ScoreRoundAsync" disabled="@(Total == 0)">
-            @(State.IsSuddenDeath ? "Score the run-off" : IsLastRound ? "Score the round and finish" : "Score the round")
-        </button>
-        <button class="btn btn-ghost btn-sm" @onclick="SkipAsync">Skip the round</button>
-    </div>
-    @if (Total == 0)
+<div class="count-grid">
+    @foreach (var team in Active)
     {
-        <p class="muted tiny">Nothing to score yet — add a @Unit.TrimEnd('s') to at least one team.</p>
+        var id = team.Id;
+        var mine = Count(id);
+        <div class="count-card @(mine > 0 ? "is-scoring" : null)" style="--team:@team.Color" @key="id">
+            <span class="count-team">@team.Name</span>
+            <div class="count-controls">
+                <button type="button" class="btn btn-ghost count-step"
+                        disabled="@(mine == 0)"
+                        @onclick="() => Nudge(id, -1)">−</button>
+                <span class="count-value">@mine</span>
+                <button type="button" class="btn btn-ghost count-step"
+                        disabled="@(Left == 0)"
+                        @onclick="() => Nudge(id, 1)">+</button>
+            </div>
+            <span class="count-points">@(mine * State.PointValue) pts</span>
+        </div>
     }
-</SectionCard>
+</div>
+
+<div class="count-go">
+    <button class="btn btn-gold btn-lg count-score @(Left == 0 ? "is-ready" : null)" @onclick="ScoreRoundAsync">
+        @(Total > 0 ? "Score the round" : "Nobody scored — next round")
+    </button>
+    <p class="muted tiny">@Hint</p>
+</div>
 
 @code {
     [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
@@ -49,41 +52,42 @@
     /// <summary>What the round paid out, so the page can put it on screen before moving on.</summary>
     [Parameter] public EventCallback<IReadOnlyList<ScoreRow>> OnScored { get; set; }
 
-    /// <summary>The round was a washout and the page should just move the game along.</summary>
-    [Parameter] public EventCallback OnSkipped { get; set; }
-
     /// <summary>This round's tally, per team. Local until the round is scored.</summary>
     private readonly Dictionary<string, int> _counts = new(StringComparer.Ordinal);
 
     private IReadOnlyList<Team> Active => RoundGameService.ActiveTeams(Trip, State);
 
-    private string Sub => State.IsSuddenDeath
-        ? $"Level at the top, so these two go again. {State.PointValue} points per {Unit.TrimEnd('s')}."
-        : $"{State.PointValue} points per {Unit.TrimEnd('s')}. Leave a team on zero and nothing is written down for them.";
+    /// <summary>
+    /// How many there are to go round: one player from each team in the round, one each. Two
+    /// teams in a sudden-death round means two, which is right for the same reason.
+    /// </summary>
+    private int Pool => Active.Count;
 
     private int Count(string teamId) => _counts.GetValueOrDefault(teamId);
 
     private int Total => Active.Sum(t => Count(t.Id));
 
-    private bool IsLastRound => State.Round >= State.RoundCount;
+    private int Left => Math.Max(0, Pool - Total);
 
-    private void Set(string teamId, string? raw) =>
-        _counts[teamId] = int.TryParse(raw, out var value) && value > 0 ? value : 0;
+    private string Hint => Left == 0
+        ? $"All {Pool} {Unit} accounted for."
+        : $"{Left} {(Left == 1 ? Unit.TrimEnd('s') : Unit)} left to place.";
 
-    private void Nudge(string teamId, int by) =>
-        _counts[teamId] = Math.Max(0, Count(teamId) + by);
+    private void Nudge(string teamId, int by)
+    {
+        var next = Count(teamId) + by;
+        if (next < 0) return;
+        if (by > 0 && Left == 0) return;
+
+        _counts[teamId] = next;
+    }
 
     private async Task ScoreRoundAsync()
     {
-        if (Total == 0) return;
-
         // Only the teams actually in play — a stale count left over from before a sudden death
         // must not quietly award points to somebody who is already out.
         var live = Active.Select(t => t.Id).ToHashSet(StringComparer.Ordinal);
         var counts = _counts.Where(kv => live.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
-
-        var unit = Unit;
-        var gameId = GameId;
 
         // Captured before the mutation: the round advances as it is scored, and the teams in play
         // can change with it if this was the round that sent two of them to sudden death.
@@ -92,17 +96,14 @@
             .Select(t => new ScoreRow(t, Count(t.Id) * State.PointValue))
             .ToList();
 
+        var unit = Unit;
+        var gameId = GameId;
+
         await Store.MutateAsync(
             t => RoundGameService.AwardRoundCounts(t, Select(t), gameId, counts, unit, DateTimeOffset.UtcNow),
             TripArea.Games);
 
         _counts.Clear();
         await OnScored.InvokeAsync(scored);
-    }
-
-    private async Task SkipAsync()
-    {
-        _counts.Clear();
-        await OnSkipped.InvokeAsync();
     }
 }

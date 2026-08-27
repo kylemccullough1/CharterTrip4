@@ -2888,19 +2888,44 @@ pre.code {
 }
 
 /* cups and beers: a counter per team */
-.count-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.count-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 22px; }
 .count-card {
-  display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 24px 16px;
   background: var(--panel); border: 1px solid var(--line-soft);
   border-top: 3px solid var(--team, var(--gold)); border-radius: var(--radius);
+  transition: border-color .15s, background .15s;
+}
+/* A team that has something this round wears its own colour, so a glance across the four says
+   where the cups went without reading a number off each one. */
+.count-card.is-scoring {
+  border-color: var(--team, var(--gold));
+  background: color-mix(in srgb, var(--team, #d4af37) 9%, var(--panel));
 }
 .count-team {
   font-family: var(--display); font-size: 1rem; letter-spacing: .04em; text-align: center;
   width: 100%; min-width: 0; overflow-wrap: anywhere; hyphens: auto;
 }
-.count-controls { display: flex; align-items: center; gap: 8px; }
-.count-input { width: 5ch; text-align: center; font-size: 1.25rem; }
-.count-points { font-size: 0.813rem; color: var(--team, var(--gold)); }
+.count-controls { display: flex; align-items: center; gap: 14px; }
+/* Round, big, and the same size as each other — this is tapped with a thumb, outdoors. */
+.count-step {
+  width: 46px; height: 46px; padding: 0; border-radius: 50%;
+  font-size: 1.375rem; line-height: 1;
+}
+.count-value {
+  min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums;
+  font-family: var(--display); font-size: 1.875rem; color: var(--team, var(--gold));
+}
+.count-points { font-size: 0.813rem; color: var(--text-dim); }
+
+/* One button, under the cards, in the middle. It starts pulsing once every cup in the round has
+   been placed — the point at which there is nothing left to do but press it. */
+.count-go { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 28px; }
+.count-score { min-width: 260px; }
+.count-score.is-ready { animation: count-ready 1.6s ease-in-out infinite; }
+@keyframes count-ready {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(var(--gold-rgb), .45); }
+  50%      { transform: scale(1.035); box-shadow: 0 0 0 14px rgba(var(--gold-rgb), 0); }
+}
 
 /* ------------------------------------------------------- the score drawer --
    Shut by default. It used to sit under the game and push the thing you were
@@ -3021,10 +3046,14 @@ pre.code {
   .page-game .card { padding: 16px 15px; }
   .score-tab.is-open { right: 88vw; }
   .round-result { padding: 34px 16px; }
+  .count-grid { gap: 14px; }
+  .count-score { width: 100%; min-width: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .round-splash, .round-result-who, .round-result-pts, .round-result-rest, .star { animation: none; }
   .star-burst { display: none; }
   .score-sidebar { transition: none; }
+  /* The pulse is the only thing saying the round is ready to score, so it becomes a ring. */
+  .count-score.is-ready { animation: none; box-shadow: 0 0 0 3px rgba(var(--gold-rgb), .5); }
 }

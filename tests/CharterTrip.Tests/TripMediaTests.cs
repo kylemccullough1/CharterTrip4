@@ -100,6 +100,25 @@ public class TripMediaTests
         Assert.Contains("shared.jpg", TripMedia.ReferencedIn(trip));
     }
 
+    /// <summary>
+    /// A face uploaded for one of Police Sketch's characters is a file the trip is using. Without
+    /// this, replacing a second character's picture would delete the first one — release decides
+    /// by asking what the trip still points at.
+    /// </summary>
+    [Fact]
+    public void Finds_a_face_uploaded_for_a_sketch_character()
+    {
+        var trip = TripWithBoard();
+        trip.Party.Sketch.Characters.Add(new SketchCharacter { Name = "Shrek", ImageUrl = TripMedia.PathFor("shrek.jpg") });
+        trip.Party.Sketch.Characters.Add(new SketchCharacter { Name = "Snoopy", ImageUrl = "https://example.com/snoopy.png" });
+        trip.Party.Sketch.Characters.Add(new SketchCharacter { Name = "Pikachu" });
+
+        var found = TripMedia.ReferencedIn(trip);
+
+        Assert.Contains("shrek.jpg", found);
+        Assert.Single(found);       // the pasted link is not ours, and the empty one is nothing
+    }
+
     [Fact]
     public void A_trip_with_no_photos_references_none() =>
         Assert.Empty(TripMedia.ReferencedIn(TripWithBoard()));

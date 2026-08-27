@@ -2679,7 +2679,7 @@ pre.code {
 .when-sep { color: var(--text-faint); }
 
 /* ==========================================================================
-   The four games played on their feet â€” Police Sketch, Pool Noodle Cups,
+   The four games played on their feet — Police Sketch, Pool Noodle Cups,
    Beer Run, the Relay Race.
 
    Nobody playing these ever looks at the screen: one committee member is
@@ -2692,7 +2692,6 @@ pre.code {
 .page-game .section { margin: calc(var(--section-gap) * 1.35) 0; }
 .page-game .card { padding: 20px 22px; }
 .page-game .section-body > .card + .card { margin-top: 14px; }
-.page-game .hero-board { margin-top: 22px; }
 
 /* the rules card, before anyone has started */
 .game-structure p { margin: 0 0 10px; }
@@ -2709,23 +2708,53 @@ pre.code {
 
 /* Police Sketch's cast, in the settings drawer */
 .cast-list { margin-top: 6px; }
-.cast-line { padding: 8px 0; }
-.cast-line-main { display: flex; align-items: center; gap: 10px; }
-.cast-line .cast-name { flex: 1 1 auto; min-width: 0; }
-.cast-url { display: block; margin: 4px 0 0 46px; }
-.cast-thumb {
-  flex: 0 0 auto; width: 36px; height: 36px; border-radius: 6px; object-fit: cover;
-  border: 1px solid var(--line-soft); background: var(--ink-2);
+.cast-line { padding: 12px 0; }
+.cast-line-main { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.cast-line .cast-name { flex: 1 1 auto; min-width: 0; font-weight: 600; }
+
+/* --------------------------------------------------- the round, announced --
+   Keyed on the round number in the markup, so this is a new element every
+   round and the animation runs again without anything having to schedule it. */
+.round-splash {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 18px 0 6px; text-align: center;
+  animation: round-in .7s cubic-bezier(.2, 1.4, .4, 1) both;
 }
-.cast-thumb.is-empty {
+.round-splash-kicker {
+  font-family: var(--display); font-size: clamp(1.75rem, 8vw, 3.25rem);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--gold); line-height: 1;
+}
+.round-splash-sub { font-size: 0.813rem; letter-spacing: .22em; text-transform: uppercase; color: var(--text-faint); }
+@keyframes round-in {
+  0%   { opacity: 0; transform: translateY(-14px) scale(.86); letter-spacing: .3em; }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ------------------------------------------------------ picking the character */
+.sketch-pick { padding: 0 !important; background: none; border: 0; box-shadow: none; }
+.cast-picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
+.cast-pick {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 12px 10px; cursor: pointer;
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--line-soft); border-radius: var(--radius);
+}
+.cast-pick:hover { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, var(--panel)); }
+.cast-pick-face {
+  width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius-sm);
+  background: var(--ink-2); border: 1px solid var(--line-soft);
+}
+.cast-pick-face.is-empty {
   display: flex; align-items: center; justify-content: center;
-  color: var(--text-faint); font-size: 0.875rem;
+  color: var(--text-faint); font-family: var(--display); font-size: 1.75rem;
 }
+.cast-pick-name { font-size: 0.813rem; text-align: center; line-height: 1.25; }
 
 /* the character up for this round, with a picture to describe from */
 .sketch-now { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
 .sketch-image {
-  max-height: 34vh; max-width: 100%; border-radius: var(--radius-sm);
+  max-height: 40vh; max-width: 100%; border-radius: var(--radius-sm);
   border: 1px solid var(--line-soft);
 }
 .sketch-current {
@@ -2745,34 +2774,57 @@ pre.code {
 .team-pick:hover { border-color: var(--team, var(--gold)); background: color-mix(in srgb, var(--team, #d4af37) 12%, var(--panel)); }
 .team-pick-name { font-family: var(--display); font-size: 1.063rem; letter-spacing: .04em; }
 .team-pick-pts { color: var(--team, var(--gold)); font-size: 0.813rem; font-variant-numeric: tabular-nums; }
-.team-pick.is-scoring { animation: pick-score 1.6s ease-out both; }
-@keyframes pick-score {
-  0%   { transform: scale(1); }
-  16%  { transform: scale(1.06); background: color-mix(in srgb, var(--team) 38%, var(--panel)); }
-  100% { transform: scale(1); }
-}
 
-/* The moment a team scores a round. Brief, loud, and gone â€” the one point in the
-   round when everybody looks up from the paper. */
-.score-flash {
-  position: fixed; inset: 0; z-index: 60; pointer-events: none;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-  background: radial-gradient(circle at center, color-mix(in srgb, var(--team) 30%, transparent), transparent 62%);
-  animation: flash-fade 1.6s ease-out both;
+/* ------------------------------------------------------------ the round won --
+   Stars, briefly, in the winning team's colour. It replaces the round rather
+   than covering the screen, because the next thing to do is pick again and a
+   full-screen overlay just got in the way of that. */
+.sketch-result {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 44px 20px; text-align: center;
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-top: 3px solid var(--team, var(--gold)); border-radius: var(--radius);
 }
-.score-flash-name {
-  font-family: var(--display); font-size: clamp(2rem, 11vw, 5.5rem); letter-spacing: .06em;
-  color: var(--team); line-height: 1;
-  text-shadow: 0 0 60px color-mix(in srgb, var(--team) 60%, transparent);
+.sketch-result-who {
+  font-family: var(--display); font-size: clamp(1.75rem, 8vw, 3.5rem); letter-spacing: .06em;
+  margin: 0; line-height: 1; color: var(--team, var(--gold));
+  text-shadow: 0 0 50px color-mix(in srgb, var(--team, #d4af37) 55%, transparent);
   animation: win-pop .55s cubic-bezier(.2, 1.5, .4, 1) both;
 }
-.score-flash-pts {
-  font-family: var(--display); font-size: clamp(1.25rem, 5vw, 2.25rem);
-  color: var(--gold-light); animation: win-pop .55s .08s cubic-bezier(.2, 1.5, .4, 1) both;
+.sketch-result-pts {
+  margin: 0; font-family: var(--display); font-size: 1.5rem; color: var(--gold-light);
+  animation: win-pop .55s .09s cubic-bezier(.2, 1.5, .4, 1) both;
 }
-@keyframes flash-fade {
-  0%, 62% { opacity: 1; }
-  100%    { opacity: 0; }
+.sketch-result .muted { margin: 4px 0 0; }
+
+/* Twelve five-pointed stars thrown out from the middle. The star itself is a
+   clip-path rather than a glyph, so it is the same shape on every device. */
+.star-burst { position: absolute; inset: 0; pointer-events: none; }
+.star {
+  position: absolute; top: 50%; left: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px;
+  background: var(--gold); opacity: 0;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  animation: star-fly 2.2s ease-out both;
+  animation-delay: calc(var(--i) * 45ms);
+}
+.star:nth-child(even) { background: var(--team, var(--gold-light)); width: 13px; height: 13px; margin: -7px 0 0 -7px; }
+.star:nth-child(1)  { rotate: 0deg; }
+.star:nth-child(2)  { rotate: 30deg; }
+.star:nth-child(3)  { rotate: 60deg; }
+.star:nth-child(4)  { rotate: 90deg; }
+.star:nth-child(5)  { rotate: 120deg; }
+.star:nth-child(6)  { rotate: 150deg; }
+.star:nth-child(7)  { rotate: 180deg; }
+.star:nth-child(8)  { rotate: 210deg; }
+.star:nth-child(9)  { rotate: 240deg; }
+.star:nth-child(10) { rotate: 270deg; }
+.star:nth-child(11) { rotate: 300deg; }
+.star:nth-child(12) { rotate: 330deg; }
+@keyframes star-fly {
+  0%   { opacity: 0; transform: rotate(0deg) translate(0, 0) scale(.3); }
+  14%  { opacity: 1; }
+  100% { opacity: 0; transform: rotate(220deg) translate(0, -190px) scale(1.15); }
 }
 
 /* cups and beers: a counter per team */
@@ -2786,6 +2838,44 @@ pre.code {
 .count-controls { display: flex; align-items: center; gap: 8px; }
 .count-input { width: 5ch; text-align: center; font-size: 1.25rem; }
 .count-points { font-size: 0.813rem; color: var(--team, var(--gold)); }
+
+/* ------------------------------------------------------- the score drawer --
+   Shut by default. It used to sit under the game and push the thing you were
+   actually working off a phone screen. */
+.score-tab {
+  position: fixed; right: 0; top: 50%; transform: translateY(-50%); z-index: 55;
+  display: flex; align-items: center; gap: 7px;
+  padding: 14px 10px; cursor: pointer;
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--line-soft); border-right: 0;
+  border-radius: var(--radius) 0 0 var(--radius);
+  box-shadow: var(--shadow-sm);
+  writing-mode: vertical-rl;
+}
+.score-tab:hover { color: var(--gold-light); border-color: var(--gold-dim); }
+.score-tab.is-open { right: min(360px, 88vw); }
+.score-tab-label { font-size: 0.75rem; letter-spacing: .18em; text-transform: uppercase; }
+.score-tab-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+.score-sidebar {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 56;
+  width: min(360px, 88vw);
+  display: flex; flex-direction: column;
+  background: var(--ink-2); border-left: 1px solid var(--line);
+  box-shadow: -18px 0 50px rgba(0, 0, 0, .5);
+  transform: translateX(100%);
+  transition: transform .22s ease;
+  overflow-y: auto;
+}
+.score-sidebar.is-open { transform: translateX(0); }
+.score-sidebar-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 18px 18px 10px;
+}
+.score-sidebar-head .section-title { margin: 0; }
+.score-sidebar-body { padding: 0 18px 24px; }
+
+.score-scrim { position: fixed; inset: 0; z-index: 54; background: rgba(0, 0, 0, .45); }
 
 /* what a game has paid out so far. Folds away, because it only ever grows. */
 .score-recent { margin-top: 16px; }
@@ -2854,14 +2944,17 @@ pre.code {
 
 @media (max-width: 620px) {
   .team-picks, .count-grid, .relay-grid { grid-template-columns: 1fr; }
+  .cast-picks { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
   .settings-row { gap: 12px; }
   .relay-action, .relay-go { width: 100%; min-width: 0; padding-left: 0; padding-right: 0; }
   .score-recent-note { display: none; }
   .page-game .card { padding: 16px 15px; }
-  .cast-url { margin-left: 0; }
+  .score-tab.is-open { right: 88vw; }
+  .sketch-result { padding: 34px 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .score-flash, .score-flash-name, .score-flash-pts, .team-pick.is-scoring { animation: none; }
-  .score-flash { opacity: 0; }
+  .round-splash, .sketch-result-who, .sketch-result-pts, .star { animation: none; }
+  .star-burst { display: none; }
+  .score-sidebar { transition: none; }
 }

@@ -275,11 +275,16 @@ else
             }
             else if (Game.BuzzersOpen)
             {
-                <p class="jeo-open">Buzzers are open@(Game.LockedOutTeamIds.Count > 0 ? $" — {Game.LockedOutTeamIds.Count} locked out" : "")</p>
+                <p class="jeo-open @(_justOpened ? "is-flash" : null)">Buzzers are open@(Game.LockedOutTeamIds.Count > 0 ? $" — {Game.LockedOutTeamIds.Count} locked out" : "")</p>
             }
             else
             {
-                <p class="jeo-open">Reading the clue…</p>
+                <div class="jeo-countdown">
+                    @for (var i = 1; i <= 3; i++)
+                    {
+                        <span class="jeo-diamond @(i <= _diamondCount ? "is-lit" : null)" aria-hidden="true"></span>
+                    }
+                </div>
             }
         </section>
     }
@@ -389,6 +394,14 @@ else
     private CancellationTokenSource? _pickCard;
 
     private bool ShowingPickCard => _showPickCard && Game.PickingTeamId is not null;
+
+    /// <summary>How long the "buzzers just opened" flash holds before the plain status text settles.</summary>
+    private static readonly TimeSpan OpenFlashDuration = TimeSpan.FromMilliseconds(700);
+
+    private int _diamondCount;
+    private bool _justOpened;
+    private CancellationTokenSource? _diamondTimer;
+    private CancellationTokenSource? _openFlash;
 
     private JeopardyBoard Board => Trip.Jeopardy;
     private JeopardyGame Game => Trip.Jeopardy.Game;
@@ -529,6 +542,56 @@ else
         });
     }
 
+    /// <summary>
+    /// Ticks the diamond counter up once a second (evenly over the read delay) while the room
+    /// waits for buzzers to open. Purely a view state, same as <see cref="ShowPickCard"/> — the
+    /// real gate is <c>Game.BuzzersOpen</c>, this is just what it looks like counting down to it.
+    /// </summary>
+    private void StartDiamondCountdown()
+    {
+        _diamondTimer?.Cancel();
+        _diamondTimer?.Dispose();
+        _diamondTimer = new CancellationTokenSource();
+        var token = _diamondTimer.Token;
+        _diamondCount = 0;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var step = JeopardyService.ClueReadDelay / 3;
+                for (var i = 1; i <= 3; i++)
+                {
+                    await Task.Delay(step, token);
+                    _diamondCount = i;
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+            catch (OperationCanceledException) { /* superseded, or the page went away */ }
+        });
+    }
+
+    /// <summary>Brief pulse on the status line the moment buzzers actually go live.</summary>
+    private void FlashBuzzersOpen()
+    {
+        _openFlash?.Cancel();
+        _openFlash?.Dispose();
+        _openFlash = new CancellationTokenSource();
+        var token = _openFlash.Token;
+        _justOpened = true;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(OpenFlashDuration, token);
+                _justOpened = false;
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (OperationCanceledException) { /* superseded, or the page went away */ }
+        });
+    }
+
     private Task ContinueAsync() => MutateAsync(JeopardyService.Continue);
 
     private async Task StartFinalAsync()
@@ -662,6 +725,11 @@ else
             StateHasChanged();
         }
 
+        // The moment buzzers actually go live on a clue, past the reading pause — worth a beat
+        // of its own, distinct from the opening race's pick card above.
+        if (!_lastBuzzersOpen && Game.BuzzersOpen && Game.Phase is JeopardyPhase.Clue or JeopardyPhase.Final)
+            FlashBuzzersOpen();
+
         _lastBuzzersOpen = Game.BuzzersOpen;
 
         if (_audio is null) return;
@@ -672,7 +740,10 @@ else
         try
         {
             if (clueId != _lastClueId && clueId is not null)
+            {
                 await _audio.InvokeVoidAsync("reveal");
+                StartDiamondCountdown();
+            }
 
             if (phase != _lastPhase)
             {
@@ -716,6 +787,10 @@ else
     {
         _pickCard?.Cancel();
         _pickCard?.Dispose();
+        _diamondTimer?.Cancel();
+        _diamondTimer?.Dispose();
+        _openFlash?.Cancel();
+        _openFlash?.Dispose();
 
         if (_audio is not null)
         {

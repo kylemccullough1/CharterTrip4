@@ -30,7 +30,7 @@ version), badge-driven detective sync, ghost whispers as a live channel, the map
 facilitator console, and everything in the instrumentation list. A killer's plant currently inserts
 their own belongings rather than a chosen target's — the phone has no target picker yet.
 
-Two content decisions are still open and both are flagged in §4.
+Four content decisions are still open, all flagged in §4.
 
 ---
 

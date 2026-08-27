@@ -288,7 +288,7 @@ constraints are unsatisfiable and no amount of reshuffling will help.
 
 Casting is straight assignment, hand-picked or randomised. Gender is not an input.
 
-### Phase 6 — `Compiler`
+### Phase 6 — `Compiler` ✅
 
 Study scene, killer briefings, witness statements, cover stories, clue texts. Pure substitution per
 `assembly_rules`.

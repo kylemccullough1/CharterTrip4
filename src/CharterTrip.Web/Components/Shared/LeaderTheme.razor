@@ -8,15 +8,18 @@
    would be a new box in the middle of a layout that has a fixed topbar and a centred page, and
    custom properties inherit down the DOM whether or not there is anything to inherit through.
 
-   Committee only. The standings are deliberately not shown to guests — see the note on the home
-   page — and a site that turns red the moment Kyle goes ahead would tell them anyway.
+   Everybody sees it, guests included. The standings themselves are still the committee's to
+   read, and strictly this does leak which team is ahead to anyone who works out that the site
+   is wearing their colour — which is the point rather than a flaw. Nobody has the four team
+   colours memorised, and a site that quietly changes character as the weekend goes on is worth
+   more than the secret it gives away.
 
    Which colour, and whether it is safe to write into a stylesheet at all, is AccentPalette's
    business; this only decides where it goes. *@
 
 @inherits TripAwareComponent
 
-@if (CanEdit && AccentPalette.Leader(Trip) is { } accent)
+@if (AccentPalette.Leader(Trip) is { } accent)
 {
     <style>
         :root {

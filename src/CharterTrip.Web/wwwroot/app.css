@@ -2942,3 +2942,264 @@ pre.code {
   padding-top: 10px;
   border-top: 1px solid var(--line-soft);
 }
+
+/* --- main screen ---------------------------------------------------------------
+   Pointed at a room and read from across it, so everything scales with viewport
+   width rather than being fixed. Nothing on this page ever knows who is guilty.
+   ------------------------------------------------------------------------------ */
+
+.ms {
+  min-height: 100vh;
+  padding: clamp(16px, 2.5vw, 40px);
+  display: grid;
+  gap: clamp(12px, 1.6vw, 26px);
+  align-content: start;
+}
+
+.ms-idle, .ms-reveal, .ms-trial {
+  min-height: 84vh;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: clamp(14px, 2vw, 30px);
+  text-align: center;
+  max-width: 60rem;
+  margin: 0 auto;
+}
+.ms-idle h1, .ms-reveal-head, .ms-trial-head {
+  font-family: var(--display);
+  font-size: clamp(2rem, 5.5vw, 4.4rem);
+  line-height: 1.05;
+  color: var(--gold-light);
+}
+.ms-idle p { font-size: clamp(1rem, 1.7vw, 1.5rem); color: var(--text-dim); max-width: 50rem; }
+
+.ms-reveal-para {
+  font-size: clamp(1rem, 1.75vw, 1.6rem);
+  line-height: 1.5;
+  max-width: 52rem;
+}
+.ms-winners { margin-top: 1em; }
+.ms-winners h2 {
+  font-family: var(--display);
+  font-size: clamp(1rem, 1.6vw, 1.5rem);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.ms-winner-list { font-size: clamp(1.1rem, 2.2vw, 2rem); color: var(--gold-light); }
+
+.ms-trial-sub { font-size: clamp(1rem, 1.8vw, 1.6rem); color: var(--text-dim); }
+
+/* Counts without names. A live named tally turns a secret ballot into a
+   bandwagon, so the room sees how many have voted and nothing else. */
+.ms-silhouettes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(6px, 1vw, 14px);
+  justify-content: center;
+  max-width: 44rem;
+}
+.ms-silhouette {
+  width: clamp(20px, 2.6vw, 40px);
+  height: clamp(28px, 3.6vw, 56px);
+  border-radius: 999px 999px 6px 6px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-dim));
+}
+.ms-count { font-size: clamp(1rem, 1.6vw, 1.4rem); color: var(--text-dim); }
+
+.ms-nominees { display: grid; gap: 10px; width: min(40rem, 90vw); }
+.ms-nominee {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: clamp(8px, 1.2vw, 18px) clamp(12px, 1.6vw, 24px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.ms-nominee-name { font-family: var(--display); font-size: clamp(1.1rem, 2.2vw, 2rem); }
+.ms-nominee-votes { font-size: clamp(1rem, 1.8vw, 1.6rem); color: var(--gold-light); }
+
+.ms-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  border-bottom: 1px solid var(--line-soft);
+  padding-bottom: clamp(8px, 1vw, 16px);
+}
+.ms-round {
+  font-family: var(--display);
+  font-size: clamp(1.4rem, 3.4vw, 3rem);
+  color: var(--gold-light);
+}
+.ms-line { font-size: clamp(0.9rem, 1.4vw, 1.25rem); color: var(--text-dim); max-width: 46rem; }
+
+.ms-counter { flex: 0 0 auto; text-align: right; }
+.ms-counter-n {
+  display: block;
+  font-family: var(--display);
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 1;
+  color: var(--ruby);
+}
+.ms-counter-l {
+  font-size: clamp(0.7rem, 1vw, 0.9rem);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.ms-alert {
+  padding: clamp(8px, 1vw, 14px) clamp(12px, 1.4vw, 20px);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  background: rgba(212,175,55,.12);
+  font-size: clamp(0.95rem, 1.5vw, 1.3rem);
+  text-align: center;
+  color: var(--gold-light);
+}
+
+.ms-body {
+  display: grid;
+  gap: clamp(12px, 1.6vw, 26px);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 1000px) {
+  .ms-body { grid-template-columns: 1.1fr 1fr; }
+}
+
+.ms-roster h2, .ms-feed h2 {
+  font-family: var(--display);
+  font-size: clamp(0.85rem, 1.2vw, 1.1rem);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 10px;
+}
+
+.ms-grid {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(140px, 12vw, 210px), 1fr));
+}
+.ms-guest {
+  display: grid;
+  gap: 1px;
+  padding: clamp(6px, .8vw, 12px) clamp(8px, 1vw, 14px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+}
+.ms-guest.out { opacity: .32; text-decoration: line-through; }
+.ms-guest-name { font-family: var(--display); font-size: clamp(0.85rem, 1.2vw, 1.15rem); }
+.ms-guest-title { font-size: clamp(0.65rem, .85vw, 0.8rem); color: var(--text-faint); }
+
+.ms-feed { display: grid; align-content: start; }
+.ms-empty { color: var(--text-faint); }
+.ms-clue {
+  padding: clamp(8px, 1vw, 14px) clamp(10px, 1.2vw, 18px);
+  margin-bottom: 8px;
+  border-left: 3px solid var(--sapphire);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--panel);
+}
+.ms-clue header { display: flex; justify-content: space-between; gap: 10px; }
+.ms-clue-zone, .ms-clue-finder {
+  font-size: clamp(0.65rem, .85vw, 0.8rem);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.ms-clue h3 { font-family: var(--display); font-size: clamp(0.95rem, 1.4vw, 1.25rem); color: var(--gold-light); }
+.ms-clue p { font-size: clamp(0.85rem, 1.2vw, 1.1rem); line-height: 1.45; }
+
+.ms-cards {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(240px, 24vw, 420px), 1fr));
+}
+.ms-card {
+  padding: clamp(12px, 1.6vw, 24px);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(212,175,55,.1), var(--panel));
+  font-family: var(--display);
+  font-size: clamp(1rem, 1.7vw, 1.5rem);
+  line-height: 1.35;
+  text-align: center;
+}
+
+/* --- print sheets -------------------------------------------------------------
+   Nine cards to cut out and twenty-one name tags. Paper is white and ink is
+   expensive, so this surface abandons the dark palette entirely.
+   ------------------------------------------------------------------------------ */
+
+.pr { padding: 20px; }
+
+.pr-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.pr-h1 {
+  font-family: var(--display);
+  font-size: 1.3rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin: 24px 0 12px;
+}
+.pr-note { color: var(--text-dim); max-width: 46rem; margin-bottom: 12px; }
+
+.pr-sheet {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+
+.pr-clue, .pr-badge {
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  break-inside: avoid;
+}
+.pr-clue-head { margin-bottom: 8px; }
+.pr-zone {
+  display: block;
+  font-size: 0.688rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.pr-name { display: block; font-family: var(--display); font-size: 1rem; }
+.pr-where { font-size: 0.75rem; color: var(--text-dim); margin-top: 6px; }
+.pr-token { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.688rem; letter-spacing: .1em; color: var(--text-faint); }
+
+.pr-badge-title { font-size: 0.688rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-faint); }
+.pr-badge-name { font-family: var(--display); font-size: 1.25rem; margin-bottom: 8px; }
+.pr-badge-who { font-size: 0.75rem; color: var(--text-dim); margin-top: 6px; }
+
+.pr-links { width: 100%; border-collapse: collapse; font-size: 0.813rem; }
+.pr-links th, .pr-links td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line-soft); }
+.pr-link { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; }
+
+@media print {
+  .no-print { display: none !important; }
+
+  /* Ink, and legibility on paper. */
+  body, .pr { background: #fff !important; color: #000 !important; }
+  .pr-clue, .pr-badge { border-color: #999 !important; }
+  .pr-zone, .pr-where, .pr-token, .pr-badge-title, .pr-badge-who { color: #444 !important; }
+  .pr-break { break-before: page; }
+  .pr-h1 { color: #000 !important; }
+  .pr-links th, .pr-links td { border-color: #ccc !important; }
+}

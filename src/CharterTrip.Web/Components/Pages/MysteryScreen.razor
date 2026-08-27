@@ -1,0 +1,263 @@
+@page "/games/mystery/screen"
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+@using CharterTrip.Core.Mystery.Script
+@using CharterTrip.Core.Mystery.Text
+@inherits TripAwareComponent
+@inject MysteryScript Script
+@layout CharterTrip.Web.Components.Layout.BareLayout
+
+<PageTitle>Braun Manor · the room</PageTitle>
+
+@* The screen in the corner of the room, read from across it.
+
+   Everything here is public by definition, which is the constraint that shapes it: the open-vote
+   tally shows counts without names until the vote closes, because a live named tally turns a
+   secret ballot into a bandwagon. Nothing on this page ever knows who is guilty. *@
+<div class="ms">
+
+@if (Trip.Mystery.Outcome is not null)
+{
+    @* --- the reveal (phase 12) ------------------------------------------------ *@
+    <div class="ms-reveal">
+        <h1 class="ms-reveal-head">@(Trip.Mystery.Outcome.TownWon ? "The house has its answer" : "The Syndicate walks out")</h1>
+
+        @foreach (var paragraph in Compiler.Endgame(Script, Trip.Mystery))
+        {
+            <p class="ms-reveal-para">@paragraph</p>
+        }
+
+        @if (Winners.Count > 0)
+        {
+            <div class="ms-winners">
+                <h2>Tonight's winners</h2>
+                <p class="ms-winner-list">@string.Join(" · ", Winners)</p>
+            </div>
+        }
+    </div>
+}
+else if (Trip.Mystery.Deal is null)
+{
+    <div class="ms-idle">
+        <h1>Braun Manor</h1>
+        <p>@Script.StoryBeats.Spine.Premise</p>
+    </div>
+}
+else if (ActiveTrial is { } trial && trial.Phase != MysteryTrialPhase.Revealed)
+{
+    @* --- trial takeover ------------------------------------------------------- *@
+    <div class="ms-trial">
+        <h1 class="ms-trial-head">@TrialName</h1>
+
+        @switch (trial.Phase)
+        {
+            case MysteryTrialPhase.OpenVote:
+                <p class="ms-trial-sub">Everybody votes. Three minutes.</p>
+
+                @* Silhouettes, not names. A live named tally is a bandwagon. *@
+                <div class="ms-silhouettes">
+                    @for (var i = 0; i < trial.OpenVotes.Count; i++)
+                    {
+                        <span class="ms-silhouette"></span>
+                    }
+                </div>
+                <p class="ms-count">@trial.OpenVotes.Count of @LivingCount voted</p>
+                break;
+
+            case MysteryTrialPhase.Defence:
+                <p class="ms-trial-sub">Forty-five seconds each. Fewest votes first.</p>
+                <div class="ms-nominees">
+                    @foreach (var id in NomineesInOrder(trial))
+                    {
+                        <div class="ms-nominee">
+                            <span class="ms-nominee-name">@Name(id)</span>
+                            <span class="ms-nominee-votes">@OpenVotesFor(trial, id)</span>
+                        </div>
+                    }
+                </div>
+                break;
+
+            case MysteryTrialPhase.FinalVote:
+                <p class="ms-trial-sub">Final vote. Nominees only. Two minutes.</p>
+                <div class="ms-nominees">
+                    @foreach (var id in trial.NomineeCharacterIds)
+                    {
+                        <div class="ms-nominee">
+                            <span class="ms-nominee-name">@Name(id)</span>
+                        </div>
+                    }
+                </div>
+                <p class="ms-count">@trial.FinalVotes.Count votes in</p>
+                break;
+        }
+    </div>
+}
+else
+{
+    @* --- the ordinary evening ------------------------------------------------- *@
+    <header class="ms-head">
+        <div>
+            <h1 class="ms-round">@RoundName</h1>
+            @if (RoundScreen is { Length: > 0 } line)
+            {
+                <p class="ms-line">@line</p>
+            }
+        </div>
+        <div class="ms-counter">
+            <span class="ms-counter-n">@PublicKillersCaught</span>
+            <span class="ms-counter-l">of 3 caught</span>
+        </div>
+    </header>
+
+    @if (Tampered)
+    {
+        @* Never which clue. Knowing that somebody tampered is a real cost; knowing where would
+           hand the room the answer for free. *@
+        <div class="ms-alert">A clue has been tampered with.</div>
+    }
+
+    <div class="ms-body">
+        <section class="ms-roster">
+            <h2>The guests</h2>
+            <div class="ms-grid">
+                @foreach (var member in Cast)
+                {
+                    var dead = MysteryService.IsGhost(Trip, member.CharacterId);
+                    <div class="ms-guest @(dead ? "out" : "")">
+                        <span class="ms-guest-name">@Name(member.CharacterId)</span>
+                        <span class="ms-guest-title">@Title(member.CharacterId)</span>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="ms-feed">
+            <h2>Found</h2>
+            @if (FoundClues.Count == 0)
+            {
+                <p class="ms-empty">Nothing yet. Nine cards, one per room.</p>
+            }
+            @foreach (var clue in FoundClues)
+            {
+                <article class="ms-clue">
+                    <header>
+                        <span class="ms-clue-zone">@ZoneName(clue.ZoneId)</span>
+                        @if (FinderShown && clue.FoundByCharacterId is { } finder)
+                        {
+                            <span class="ms-clue-finder">@Name(finder)</span>
+                        }
+                    </header>
+                    <h3>@Compiler.ClueName(Script, clue)</h3>
+                    <p>@Compiler.ClueText(Script, clue)</p>
+                </article>
+            }
+        </section>
+    </div>
+
+    @if (LastTrial is { Phase: MysteryTrialPhase.Revealed } closed)
+    {
+        <div class="ms-cards">
+            @foreach (var id in closed.ConvictedCharacterIds)
+            {
+                <div class="ms-card">@ConvictionCard(id)</div>
+            }
+        </div>
+    }
+}
+
+</div>
+
+@code {
+    protected override TripArea Watching => TripArea.Mystery;
+
+    private MysteryDeal? Deal => Trip.Mystery.Deal;
+
+    private IReadOnlyList<MysteryCastMember> Cast =>
+        [.. (Deal?.Cast ?? []).OrderBy(c => Name(c.CharacterId), StringComparer.Ordinal)];
+
+    private MysteryTrial? ActiveTrial => MysteryService.CurrentTrial(Trip);
+    private MysteryTrial? LastTrial => Trip.Mystery.Trials.LastOrDefault();
+
+    private int LivingCount => MysteryService.Living(Trip).Count();
+
+    private List<MysteryClue> FoundClues =>
+        [.. Trip.Mystery.Clues.Where(c => c.Found).OrderByDescending(c => c.FoundAt)];
+
+    /// <summary>
+    /// main_screen.json flags this as a deliberate knob: showing the finder credits hunters and
+    /// makes re-scanning a tampered clue a public act. Flip it if playtest shows scan-shyness.
+    /// </summary>
+    private const bool FinderShown = true;
+
+    private string RoundName => MysteryService.CurrentRound(Trip, Script)?.Name ?? "Braun Manor";
+
+    private string? RoundScreen => MysteryService.CurrentRound(Trip, Script)?.Screen;
+
+    private string TrialName => ActiveTrial is { } t
+        ? Script.Rounds.ById(t.RoundId)?.Name ?? "Trial"
+        : "Trial";
+
+    private bool Tampered => Trip.Mystery.Clues.Any(c => c.Tamper is not null);
+
+    /// <summary>
+    /// The public counter, which is allowed to be a lie.
+    ///
+    /// A minion's shield suppresses the tick on a convicted killer, and a decoy adds one for a
+    /// convicted minion. Both manipulate only what the room believes — the true count that decides
+    /// the game and the early end is never this number.
+    /// </summary>
+    private int PublicKillersCaught
+    {
+        get
+        {
+            if (Deal is null) return 0;
+
+            var convicted = Trip.Mystery.ConvictedCharacterIds.ToHashSet(StringComparer.Ordinal);
+            var uses = Trip.Mystery.AbilityUses.Where(u => u.AbilityId == "loyalty").ToList();
+
+            var shielded = uses.Count(u => u.Mode == "shield");
+            var decoyed = uses.Count(u => u.Mode == "decoy");
+
+            var real = Deal.Killers.Count(k => convicted.Contains(k.CharacterId));
+            return Math.Clamp(real - shielded + decoyed, 0, 3);
+        }
+    }
+
+    private List<string> Winners
+    {
+        get
+        {
+            if (Trip.Mystery.Outcome is not { } outcome || Deal is null) return [];
+
+            var names = new List<string>();
+
+            // Town or the Syndicate, whichever the tally says, then everybody who scored a
+            // personal win on top of it.
+            names.AddRange(outcome.TownWon
+                ? Deal.InFaction("detective").Concat(Deal.InFaction("villager")).Select(m => Name(m.CharacterId))
+                : Deal.InFaction("killer").Concat(Deal.InFaction("minion")).Select(m => Name(m.CharacterId)));
+
+            names.AddRange(outcome.PersonalWinnerCharacterIds.Select(Name));
+
+            return [.. names.Distinct().Order(StringComparer.Ordinal)];
+        }
+    }
+
+    private IEnumerable<string> NomineesInOrder(MysteryTrial trial) =>
+        trial.NomineeCharacterIds.OrderBy(id => OpenVotesFor(trial, id));
+
+    private int OpenVotesFor(MysteryTrial trial, string characterId) =>
+        trial.OpenVotes.Count(v => v.TargetCharacterId == characterId);
+
+    private string ConvictionCard(string characterId) =>
+        Deal is null ? "" : Compiler.ConvictionCard(Script, Deal, characterId, BlameTaken(characterId));
+
+    /// <summary>A minion spent their shield on this conviction, so the card reads softer.</summary>
+    private bool BlameTaken(string characterId) =>
+        Trip.Mystery.AbilityUses.Any(u =>
+            u.AbilityId == "loyalty" && u.Mode == "shield" && u.TargetCharacterId == characterId);
+
+    private string Name(string characterId) => Script.CharacterById(characterId)?.Name ?? characterId;
+    private string Title(string characterId) => Script.CharacterById(characterId)?.Title ?? "";
+    private string ZoneName(string zoneId) => Script.Zones.ById(zoneId)?.Name ?? zoneId;
+}

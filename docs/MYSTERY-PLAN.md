@@ -315,18 +315,18 @@ force-advance for the case nobody predicted.
 The early-end rule is the subtle one: it fires only on all three killers convicted, **not** on the
 two that win town the game. See §4.
 
-### Phase 10 — the main screen
+### Phase 10 — the main screen ✅
 
 `/games/mystery/screen`. Roster grid, clue feed, trial takeover, conviction cards. The map panel
 comes later.
 
-### Phase 11 — the print route
+### Phase 11 — the print route ✅
 
 Nine clue QR sheets and 21 badges. `QrImage.razor` already renders these and needs no new
 dependency. Without this there is no physical game — and while §2.7 stands, the printed packets are
 the only fallback, so this is worth pulling earlier than its number suggests.
 
-### Phase 12 — the reveal
+### Phase 12 — the reveal ✅
 
 Every endgame template in `story_beats.json` is already written; this screen fills them in and reads
 them out.

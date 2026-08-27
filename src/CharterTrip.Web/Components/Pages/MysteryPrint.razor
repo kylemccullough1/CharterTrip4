@@ -1,0 +1,132 @@
+@page "/games/mystery/print"
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+@using CharterTrip.Core.Mystery.Script
+@using CharterTrip.Core.Mystery.Text
+@inherits TripAwareComponent
+@inject MysteryScript Script
+@inject NavigationManager Nav
+@layout CharterTrip.Web.Components.Layout.BareLayout
+
+<PageTitle>Print · Braun Manor</PageTitle>
+
+@* The physical half of the game: nine clue cards to place in nine rooms, and twenty-one name tags.
+
+   Without this there is no game — the clue text only reaches a player who walked to the room and
+   pointed a camera at a card. It is also the fallback for everything else, so it is worth printing
+   even if nothing on the night works.
+
+   Admin-only, and not merely unlinked. This page carries every clue token and every guest's
+   personal join link: a player who reached it could read all nine clues without leaving the sofa
+   and sign in as anybody in the house.
+
+   Styled for paper. The no-print class hides the screen-only chrome. *@
+<AdminOnly>
+<div class="pr">
+
+<div class="no-print pr-bar">
+    @if (Deal is null)
+    {
+        <p>Nothing dealt yet — <a href="/games/mystery">deal a game first</a>.</p>
+    }
+    else
+    {
+        <div>
+            <b>Seed @Deal.Seed</b> · @Trip.Mystery.Clues.Count clue cards · @Deal.Cast.Count name tags
+            <p class="muted tiny">
+                Print at 100%. Cut the clue cards and place each one at the spot named on it.
+                Reprint if the game is dealt again — the tokens change.
+            </p>
+        </div>
+        <button class="btn btn-gold btn-sm" onclick="window.print()">Print</button>
+    }
+</div>
+
+@if (Deal is not null)
+{
+    <h1 class="pr-h1">Clue cards</h1>
+    <div class="pr-sheet">
+        @foreach (var clue in Trip.Mystery.Clues)
+        {
+            <div class="pr-clue">
+                <div class="pr-clue-head">
+                    <span class="pr-zone">@ZoneName(clue.ZoneId)</span>
+                    <span class="pr-name">@Compiler.ClueName(Script, clue)</span>
+                </div>
+
+                <QrImage Content="@ClueUrl(clue)" Size="150" Alt="@($"Clue in {ZoneName(clue.ZoneId)}")" />
+
+                <p class="pr-where">@ClueSpot(clue.ZoneId)</p>
+                <p class="pr-token">@clue.Token</p>
+            </div>
+        }
+    </div>
+
+    <h1 class="pr-h1 pr-break">Name tags</h1>
+    <div class="pr-sheet">
+        @foreach (var member in Deal.Cast.OrderBy(c => Name(c.CharacterId), StringComparer.Ordinal))
+        {
+            <div class="pr-badge">
+                <p class="pr-badge-title">@Title(member.CharacterId)</p>
+                <p class="pr-badge-name">@Name(member.CharacterId)</p>
+
+                <QrImage Content="@BadgeUrl(member)" Size="110" Alt="@($"Badge for {Name(member.CharacterId)}")" />
+
+                <p class="pr-badge-who">@PersonName(member.PersonId)</p>
+            </div>
+        }
+    </div>
+
+    <h1 class="pr-h1 pr-break">Personal links</h1>
+    <p class="pr-note">
+        One row per guest. Hand these out privately — a join link is the whole proof of somebody's
+        identity, so it is not the code on their name tag and must not be read aloud.
+    </p>
+    <table class="pr-links">
+        <thead><tr><th>Guest</th><th>Character</th><th>Link</th></tr></thead>
+        <tbody>
+        @foreach (var member in Deal.Cast.Where(c => c.PersonId is not null))
+        {
+            <tr>
+                <td>@PersonName(member.PersonId)</td>
+                <td>@Name(member.CharacterId)</td>
+                <td class="pr-link">@LoginPath(member.PersonId!)</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+</div>
+</AdminOnly>
+
+@code {
+    protected override TripArea Watching => TripArea.Mystery;
+
+    private MysteryDeal? Deal => Trip.Mystery.Deal;
+
+    private string Origin => new Uri(Nav.BaseUri).GetLeftPart(UriPartial.Authority);
+
+    /// <summary>
+    /// Absolute, because a phone camera opens whatever the code says and a relative path is not a
+    /// URL. Short on purpose — <c>/m/clue/…</c> rather than something under /games — so the code
+    /// stays sparse enough to scan off a card in low light.
+    /// </summary>
+    private string ClueUrl(MysteryClue clue) => $"{Origin}/m/clue/{clue.Token}";
+
+    private string BadgeUrl(MysteryCastMember member) => $"{Origin}/m/meet/{member.BadgeToken}";
+
+    private string LoginPath(string personId)
+    {
+        var token = Trip.Roster.FirstOrDefault(p => p.Id == personId)?.JoinToken;
+        return token is null ? "—" : $"{Origin}/login/{token}";
+    }
+
+    private string Name(string characterId) => Script.CharacterById(characterId)?.Name ?? characterId;
+    private string Title(string characterId) => Script.CharacterById(characterId)?.Title ?? "";
+    private string ZoneName(string zoneId) => Script.Zones.ById(zoneId)?.Name ?? zoneId;
+    private string ClueSpot(string zoneId) => Script.Zones.ById(zoneId)?.ClueSpot ?? "";
+
+    private string PersonName(string? personId) =>
+        personId is null ? "uncast" : Trip.Roster.FirstOrDefault(p => p.Id == personId)?.Name ?? personId;
+}

@@ -637,11 +637,17 @@ select.textfield { cursor: pointer; }
      shown and how tightly, never the direction — mixing row and column layouts by height
      was what made the board look inconsistent. */
   display: flex; flex-direction: column; gap: 1px;
-  cursor: pointer; touch-action: none; transition: border-color .15s, box-shadow .15s;
+  /* No touch-action here on purpose. Pinning it to `none` handed every gesture starting on a
+     card to JS, and on a phone a full day is nearly all cards — so the page could only be
+     scrolled from the hour gutter. drag-gesture.js separates the two by intent instead: a
+     finger that moves is scrolling, a finger that holds still is grabbing. */
+  cursor: pointer; transition: border-color .15s, box-shadow .15s;
 }
 .planner-card:hover, .planner-card:focus-visible { border-color: var(--gold-dim); box-shadow: var(--shadow-sm); outline: none; }
 .planner-card.is-editing { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold-dim); }
 .planner-card.is-dragging { opacity: .85; box-shadow: var(--shadow); z-index: 30; cursor: grabbing; }
+/* Once a card is genuinely being dragged there is no gesture left for the browser to want. */
+.planner-card.is-dragging, .planner-card.is-resizing { touch-action: none; }
 /* Live resize feedback. Uses a custom property so the height Blazor renders in the style
    attribute is never overwritten — see the note in planner.js. */
 .planner-card.is-resizing { z-index: 30; height: var(--drag-h) !important; }
@@ -680,6 +686,29 @@ select.textfield { cursor: pointer; }
 .card-resize {
   position: absolute; left: 0; right: 0; bottom: 0; height: 8px;
   cursor: ns-resize; touch-action: none;
+}
+/* The grip only ever appears on hover, so on a touch screen this was an invisible 8px strip
+   along the bottom of every card that silently refused to scroll. Nothing is lost by dropping
+   it there — the editor sets a duration from a list, which is the easier gesture on a phone
+   anyway. Keyed to the pointer rather than the width: a small laptop still has a mouse. */
+@media (pointer: coarse) {
+  .card-resize { display: none; }
+}
+
+/* Holding a finger on a card is now a real gesture, and iOS answers a long press on text with
+   the selection magnifier and the copy/lookup callout. Both would fight the drag, so on touch
+   the card's own text stops being selectable — the fields inside it, which people do need to
+   select in, are put back. Mouse and pen never hold, so they keep normal selection. */
+@media (pointer: coarse) {
+  .planner-card, .person, .menu-meal {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none; user-select: none;
+  }
+  .planner-card input, .planner-card textarea,
+  .person input, .person textarea,
+  .menu-meal input, .menu-meal textarea {
+    -webkit-user-select: text; user-select: text;
+  }
 }
 .card-resize::after {
   content: ''; position: absolute; left: 50%; bottom: 2px; width: 22px; height: 2px;
@@ -747,11 +776,11 @@ select.textfield { cursor: pointer; }
   display: flex; align-items: center; gap: 7px;
   padding: 6px 9px; border-radius: var(--radius-sm);
   background: var(--panel-2); border: 1px solid transparent;
-  font-size: 0.844rem; cursor: grab; touch-action: none;
+  font-size: 0.844rem; cursor: grab;   /* touch-action: see the note on .planner-card */
   transition: border-color .15s, box-shadow .15s;
 }
 .person:hover { border-color: var(--line); }
-.person.is-dragging { opacity: .9; box-shadow: var(--shadow); border-color: var(--gold-dim); z-index: 40; position: relative; cursor: grabbing; }
+.person.is-dragging { opacity: .9; box-shadow: var(--shadow); border-color: var(--gold-dim); z-index: 40; position: relative; cursor: grabbing; touch-action: none; }
 .person.is-lead { background: rgba(212,175,55,.08); cursor: default; }
 .person.is-lead:hover { border-color: transparent; }
 .person-name { flex: 1; min-width: 0; }
@@ -2218,13 +2247,13 @@ pre.code {
 }
 .menu-meal {
   position: relative; display: flex; align-items: flex-start; gap: 6px;
-  padding: 7px 9px; border-radius: 7px; cursor: grab; touch-action: none;
+  padding: 7px 9px; border-radius: 7px; cursor: grab;   /* touch-action: see .planner-card */
   background: var(--panel-2); border: 1px solid var(--line);
   border-left: 3px solid var(--accent, var(--ruby));
   font-size: 0.813rem; line-height: 1.45;
 }
 .menu-meal .editable { white-space: pre-wrap; }
-.menu-meal.is-dragging { opacity: .85; z-index: 40; box-shadow: var(--shadow); cursor: grabbing; }
+.menu-meal.is-dragging { opacity: .85; z-index: 40; box-shadow: var(--shadow); cursor: grabbing; touch-action: none; }
 .menu-clear {
   margin-left: auto; padding: 0 2px; background: none; border: 0; cursor: pointer;
   color: var(--text-faint); font-size: 0.656rem; opacity: 0; transition: opacity .15s;

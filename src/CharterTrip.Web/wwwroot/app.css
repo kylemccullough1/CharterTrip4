@@ -2694,6 +2694,11 @@ pre.code {
    matters more here than anywhere else on the site.
    ========================================================================== */
 
+/* A game page ends on whatever it ends on — often a single button — and the page's usual
+   generous tail left it floating a long way above the footer. */
+.page-game { padding-bottom: 16px; }
+.page-game > :last-child { margin-bottom: 0; }
+
 .page-game .section { margin: calc(var(--section-gap) * 1.35) 0; }
 .page-game .card { padding: 20px 22px; }
 .page-game .section-body > .card + .card { margin-top: 14px; }
@@ -2917,14 +2922,17 @@ pre.code {
 }
 .count-points { font-size: 0.813rem; color: var(--text-dim); }
 
-/* One button, under the cards, in the middle. It starts pulsing once every cup in the round has
-   been placed — the point at which there is nothing left to do but press it. */
-.count-go { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 28px; }
+/* One button, under the cards, in the middle — and only once every cup in the round has been
+   placed. It arrives rather than sitting there greyed out, so the round finishing is something
+   that happens on the screen rather than something you have to notice. */
+.count-go {
+  display: flex; justify-content: center; margin-top: 30px;
+  animation: count-arrive .5s cubic-bezier(.2, 1.5, .4, 1) both;
+}
 .count-score { min-width: 260px; }
-.count-score.is-ready { animation: count-ready 1.6s ease-in-out infinite; }
-@keyframes count-ready {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(var(--gold-rgb), .45); }
-  50%      { transform: scale(1.035); box-shadow: 0 0 0 14px rgba(var(--gold-rgb), 0); }
+@keyframes count-arrive {
+  0%   { opacity: 0; transform: translateY(10px) scale(.94); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* ------------------------------------------------------- the score drawer --
@@ -2945,8 +2953,11 @@ pre.code {
 .score-tab-label { font-size: 0.75rem; letter-spacing: .18em; text-transform: uppercase; }
 .score-tab-dot { width: 8px; height: 8px; border-radius: 50%; }
 
+/* Starts below the topbar rather than at the top of the window. The topbar is fixed and
+   translucent, so a drawer running under it put this panel's own heading behind the site's
+   navigation and blurred it. */
 .score-sidebar {
-  position: fixed; top: 0; right: 0; bottom: 0; z-index: 56;
+  position: fixed; top: var(--topbar-h); right: 0; bottom: 0; z-index: 56;
   width: min(360px, 88vw);
   display: flex; flex-direction: column;
   background: var(--ink-2); border-left: 1px solid var(--line);
@@ -3054,6 +3065,5 @@ pre.code {
   .round-splash, .round-result-who, .round-result-pts, .round-result-rest, .star { animation: none; }
   .star-burst { display: none; }
   .score-sidebar { transition: none; }
-  /* The pulse is the only thing saying the round is ready to score, so it becomes a ring. */
-  .count-score.is-ready { animation: none; box-shadow: 0 0 0 3px rgba(var(--gold-rgb), .5); }
+  .count-go { animation: none; }
 }

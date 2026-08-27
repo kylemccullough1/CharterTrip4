@@ -43,9 +43,7 @@
     else if (State.Phase == PartyGamePhase.Playing)
     {
         <GamePlayHead Title="@Title" OnReset="ConfirmReset">
-            <Detail>
-                @State.PointValue points a @One · a cast of @Active.Count teams in play
-            </Detail>
+            <Detail>@State.PointValue points a @One</Detail>
         </GamePlayHead>
 
         <RoundSplash Game="State" Active="Active" />

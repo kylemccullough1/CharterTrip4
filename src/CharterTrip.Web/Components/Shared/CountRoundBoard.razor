@@ -31,12 +31,15 @@
     }
 </div>
 
-<div class="count-go">
-    <button class="btn btn-gold btn-lg count-score @(Left == 0 ? "is-ready" : null)" @onclick="ScoreRoundAsync">
-        @(Total > 0 ? "Score the round" : "Nobody scored — next round")
-    </button>
-    <p class="muted tiny">@Hint</p>
-</div>
+@* Nothing to press until the round is actually over — every cup placed. Before that the only
+   thing to do is keep counting, and a button offering to end it early is just a way to end it
+   early by accident. *@
+@if (Left == 0)
+{
+    <div class="count-go">
+        <button class="btn btn-gold btn-lg count-score" @onclick="ScoreRoundAsync">Score the round</button>
+    </div>
+}
 
 @code {
     [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
@@ -68,10 +71,6 @@
     private int Total => Active.Sum(t => Count(t.Id));
 
     private int Left => Math.Max(0, Pool - Total);
-
-    private string Hint => Left == 0
-        ? $"All {Pool} {Unit} accounted for."
-        : $"{Left} {(Left == 1 ? Unit.TrimEnd('s') : Unit)} left to place.";
 
     private void Nudge(string teamId, int by)
     {

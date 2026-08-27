@@ -3,6 +3,7 @@
 @inherits TripAwareComponent
 @implements IAsyncDisposable
 @inject IJSRuntime JS
+@inject IWebHostEnvironment Env
 @layout CharterTrip.Web.Components.Layout.BareLayout
 
 <PageTitle>Buzzer · Charter Trip</PageTitle>
@@ -58,6 +59,11 @@ else if (IsHost)
                     <button class="btn btn-lg jeo-right" @onclick="CorrectAsync">Correct</button>
                     <button class="btn btn-lg jeo-wrong" @onclick="WrongAsync">Wrong</button>
                 </div>
+            }
+            else if (Game.FinalTimerExpired)
+            {
+                <p class="buzz-buzzed">🍺 Take a shot!</p>
+                <button class="btn btn-gold btn-lg btn-block" @onclick="RestartFinalTimerAsync">Restart the timer</button>
             }
             else
             {
@@ -116,7 +122,13 @@ else
             <button class="buzz-button @BuzzClass" disabled="@(!CanBuzz)" @onclick="BuzzAsync">
                 @BuzzLabel
             </button>
-            <p class="buzz-status">@StatusLine</p>
+            <p class="buzz-status">
+                @StatusLine
+                @if (FinalInPlay && Game.BuzzersOpen)
+                {
+                    <Countdown Deadline="@FinalDeadline"> @FormatRemaining(context) left.</Countdown>
+                }
+            </p>
 
             @* A place to work the final out together before ringing in. Deliberately local to
                this phone: nothing is sent, nothing is stored, and the host never sees it. The
@@ -145,17 +157,47 @@ else
     private JeopardyBoard Board => Trip.Jeopardy;
     private JeopardyGame Game => Trip.Jeopardy.Game;
 
+    /// <summary>Acting as, for the sim strip. See <see cref="ActAs"/>.</summary>
+    private const string HostActor = "host";
+
+    /// <summary>
+    /// Pretend to be somebody, for the sim strip on the Jeopardy board. Development only.
+    ///
+    /// That strip embeds five real buzzers side by side, and identity now lives in a cookie —
+    /// which same-origin iframes share with the page around them. Five frames each signing in
+    /// would race over one cookie, and the last one home would sign the committee out of the very
+    /// board they were testing from. So this reads the query string and writes nothing.
+    ///
+    /// It replaces the old "TEST" code, which only ever covered the host frame; naming the actor
+    /// covers the team frames too, which is what makes the whole strip work rather than one fifth
+    /// of it.
+    /// </summary>
+    [SupplyParameterFromQuery(Name = "as")]
+    private string? ActAs { get; set; }
+
+    /// <summary>False the moment this is deployed — Azure runs Production.</summary>
+    private bool DevActing => Env.IsDevelopment() && ActAs is { Length: > 0 };
+
     /// <summary>
     /// The team this phone buzzes for, from the signed-in session.
     ///
     /// Guarded against a stale cookie: a team that has been renamed away or a game that has been
     /// reset should land the phone back on "enter a code", not have it buzzing for a team that no
-    /// longer exists.
+    /// longer exists. The same guard covers a bad <c>?as=</c> value.
     /// </summary>
     private string? TeamId =>
-        Permissions.TeamId is { } id && Trip.Teams.Any(t => t.Id == id) ? id : null;
+        DevActing
+            ? (ActAs == HostActor ? null : Trip.Teams.FirstOrDefault(t => t.Id == ActAs)?.Id)
+            : Permissions.TeamId is { } id && Trip.Teams.Any(t => t.Id == id) ? id : null;
 
-    private bool IsHost => Permissions.IsBuzzerHost;
+    private bool IsHost => DevActing ? ActAs == HostActor : Permissions.IsBuzzerHost;
+
+    private DateTimeOffset? FinalDeadline =>
+        Game.Phase == JeopardyPhase.Final && Game.BuzzersOpen && Game.BuzzOpenedAt is { } opened
+            ? opened + TimeSpan.FromSeconds(Board.Final.TimeLimitSeconds)
+            : null;
+
+    private static string FormatRemaining(TimeSpan remaining) => $"{(int)remaining.TotalMinutes}:{remaining.Seconds:00}";
 
     private ClueInPlay? InPlay => JeopardyService.InPlay(Trip);
 
@@ -192,11 +234,11 @@ else
     {
         JeopardyPhase.NotStarted => "not started",
         JeopardyPhase.Board => Game.BuzzersOpen ? "buzz-off" : "picking",
-        JeopardyPhase.Clue => "buzzers open",
+        JeopardyPhase.Clue => Game.BuzzersOpen ? "buzzers open" : "reading the clue",
         JeopardyPhase.Judging => "your call",
         JeopardyPhase.Revealed => "answer up",
         JeopardyPhase.FinalIntro => "final titles",
-        JeopardyPhase.Final => "final — buzzers open",
+        JeopardyPhase.Final => Game.FinalTimerExpired ? "final — take a shot" : Game.BuzzersOpen ? "final — buzzers open" : "final — reading the clue",
         _ => "finished"
     };
 
@@ -211,10 +253,12 @@ else
         {
             if (LockedOut) return "Wrong answer — you're out of this clue.";
             if (AlreadyBuzzed) return Game.LeadingBuzzTeamId == TeamId ? "You're in! Answer it." : "Someone beat you to it.";
+            if (Game.FinalTimerExpired) return "Time's up — take a shot! 🍺";
             if (Game.Phase == JeopardyPhase.Board && Game.BuzzersOpen) return "Buzz to win the first pick.";
             if (Game.Phase == JeopardyPhase.FinalIntro) return "Final Jeopardy is next.";
             if (FinalInPlay && Game.BuzzersOpen) return "Final Jeopardy — buzz when your team has it.";
             if (Game.BuzzersOpen) return "Buzzers are open.";
+            if (Game.Phase is JeopardyPhase.Clue or JeopardyPhase.Final) return "Get ready — buzzers open in a moment.";
             if (Game.Phase == JeopardyPhase.Judging) return $"{TeamName(Game.LeadingBuzzTeamId)} is answering.";
             if (Game.Phase == JeopardyPhase.Revealed) return "Answer's up on the screen.";
             if (Game.Phase == JeopardyPhase.Board) return $"{TeamName(Game.PickingTeamId)} is picking.";
@@ -234,7 +278,35 @@ else
     private async Task PickAsync(string clueId)
     {
         await Cue("pick");
-        await MutateAsync(t => JeopardyService.PickClue(t, clueId, DateTimeOffset.UtcNow));
+        await MutateAsync(t => JeopardyService.PickClue(t, clueId));
+        ScheduleBuzzersOpen(clueId);
+    }
+
+    /// <summary>
+    /// Opens the buzzers after the room's had a moment to read the clue. Runs detached from this
+    /// circuit on purpose — the buzzers open on schedule even if whoever picked navigates away.
+    /// </summary>
+    private void ScheduleBuzzersOpen(string clueId) => _ = Task.Run(async () =>
+    {
+        await Task.Delay(JeopardyService.ClueReadDelay);
+        await Store.MutateAsync(t => JeopardyService.OpenBuzzers(t, clueId, DateTimeOffset.UtcNow), Watching);
+        if (clueId == JeopardyService.FinalClueId) ScheduleFinalExpiry();
+    });
+
+    /// <summary>
+    /// Closes Final's buzzers if nobody's rung in once the time limit elapses. Fired once when
+    /// Final's buzzers first open, and again each time the host restarts the timer.
+    /// </summary>
+    private void ScheduleFinalExpiry() => _ = Task.Run(async () =>
+    {
+        await Task.Delay(TimeSpan.FromSeconds(Board.Final.TimeLimitSeconds));
+        await Store.MutateAsync(t => JeopardyService.ExpireFinalTimer(t, DateTimeOffset.UtcNow), Watching);
+    });
+
+    private async Task RestartFinalTimerAsync()
+    {
+        await MutateAsync(t => JeopardyService.RestartFinalTimer(t, DateTimeOffset.UtcNow));
+        ScheduleFinalExpiry();
     }
 
     /// <summary>
@@ -271,6 +343,9 @@ else
     private Task NobodyAsync() => MutateAsync(JeopardyService.NobodyGotIt);
     private Task ContinueAsync() => MutateAsync(JeopardyService.Continue);
 
-    private Task StartFinalAsync() =>
-        MutateAsync(t => JeopardyService.StartFinal(t, DateTimeOffset.UtcNow));
+    private async Task StartFinalAsync()
+    {
+        await MutateAsync(t => JeopardyService.StartFinal(t));
+        ScheduleBuzzersOpen(JeopardyService.FinalClueId);
+    }
 }

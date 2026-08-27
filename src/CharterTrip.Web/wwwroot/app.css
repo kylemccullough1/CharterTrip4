@@ -957,6 +957,79 @@ select.textfield { cursor: pointer; }
 .jeo-clue-text { font-size: clamp(1.375rem, 3.4vw, 2.75rem); line-height: 1.25; max-width: 22ch; margin: 0; font-weight: 600; }
 .jeo-clue-img { max-height: 44vh; max-width: 100%; border-radius: var(--radius-sm); }
 .jeo-open { color: var(--text-dim); margin: 0; }
+
+/* The reading pause before buzzers open — one diamond lights per second, centered under the
+   clue, so the room can see the wait has an end rather than wondering if the screen has hung. */
+.jeo-countdown { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.jeo-diamond {
+  width: 12px; height: 12px; border-radius: 3px; background: var(--line-soft);
+  transform: rotate(45deg);
+  transition: background .2s, box-shadow .2s;
+}
+.jeo-diamond.is-lit {
+  background: var(--gold); box-shadow: 0 0 10px var(--gold-dim);
+  animation: jeo-diamond-lit .3s ease-out both;
+}
+
+@keyframes jeo-diamond-lit {
+  from { transform: rotate(45deg) scale(.3); opacity: 0; }
+  to   { transform: rotate(45deg) scale(1); opacity: 1; }
+}
+
+.jeo-open.is-flash { animation: jeo-buzzers-live .6s ease-out both; }
+
+@keyframes jeo-buzzers-live {
+  0%   { transform: scale(.6); opacity: 0; color: var(--gold); }
+  45%  { transform: scale(1.2); opacity: 1; color: var(--gold); }
+  100% { transform: scale(1); color: var(--text-dim); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jeo-diamond.is-lit, .jeo-open.is-flash { animation: none; }
+}
+
+/* Final Jeopardy's clock, and the "take a shot" beat when it runs out unbuzzed. */
+.jeo-final-timer {
+  font-family: var(--display); font-size: clamp(2rem, 5vw, 3.375rem);
+  font-variant-numeric: tabular-nums; letter-spacing: .04em; color: var(--text);
+}
+.jeo-final-timer.is-urgent { color: var(--ruby); animation: jeo-timer-pulse 1s ease-in-out infinite; }
+
+@keyframes jeo-timer-pulse {
+  0%, 100% { opacity: 1; } 50% { opacity: .55; }
+}
+
+.jeo-shot { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.jeo-shot-text {
+  font-family: var(--display); font-size: clamp(1.375rem, 3vw, 2rem); margin: 0; color: var(--gold);
+  animation: jeo-shot-shake .5s ease-in-out;
+}
+
+@keyframes jeo-shot-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  20%      { transform: translateX(-6px) rotate(-2deg); }
+  40%      { transform: translateX(6px) rotate(2deg); }
+  60%      { transform: translateX(-4px) rotate(-1deg); }
+  80%      { transform: translateX(4px) rotate(1deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jeo-final-timer.is-urgent, .jeo-shot-text { animation: none; }
+}
+
+/* Local-only testing panel: collapsed behind one toggle, holding real /buzz pages embedded per
+   team plus the host, so what's being tested is exactly what a phone would show — not a stand-in. */
+.jeo-testing { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line-soft); }
+.jeo-testing-panel { margin-top: 12px; }
+.jeo-simstrip-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.jeo-simcard {
+  flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 6px;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
+  padding: 10px;
+}
+.jeo-simcard-label { font-size: 0.813rem; font-weight: 600; }
+.jeo-simframe { width: 100%; height: 420px; border: 0; border-radius: var(--radius-sm); background: var(--ink-2); }
+
 .jeo-answer { font-size: clamp(1.125rem, 2.2vw, 1.875rem); color: var(--emerald); margin: 0; }
 .jeo-buzzed { display: flex; flex-direction: column; gap: 4px; }
 .jeo-buzzed-team { font-family: var(--display); font-size: clamp(1.5rem, 3vw, 2.5rem); color: var(--team, var(--gold)); }
@@ -1039,11 +1112,24 @@ select.textfield { cursor: pointer; }
 
 .buzz-team { flex: 1; display: flex; flex-direction: column; gap: 14px; }
 .buzz-button {
-  flex: 1; border-radius: var(--radius); cursor: pointer; touch-action: manipulation;
-  font-family: var(--display); font-size: clamp(2.875rem, 16vw, 5.625rem); letter-spacing: .1em;
+  --buzz-size: clamp(180px, min(62vw, 42vh), 300px);
+  flex: none;
+  align-self: center;
+  margin: auto 0;
+  width: var(--buzz-size);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer; touch-action: manipulation;
+  font-family: var(--display); font-size: clamp(1.75rem, 10vw, 3.25rem); letter-spacing: .1em;
   border: 3px solid var(--line); background: var(--panel); color: var(--text-faint);
   transition: transform .06s, background .12s;
   -webkit-user-select: none; user-select: none;
+}
+.buzz-team:has(.buzz-final-input) .buzz-button {
+  --buzz-size: clamp(150px, min(48vw, 30vh), 230px);
 }
 .buzz-button.is-live { background: var(--team, var(--gold)); border-color: var(--team, var(--gold)); color: #0a0c10; }
 .buzz-button.is-live:active { transform: scale(.97); }

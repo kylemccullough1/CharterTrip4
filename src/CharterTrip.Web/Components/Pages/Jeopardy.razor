@@ -5,6 +5,7 @@
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 @inject CharterTrip.Web.Services.ToastService Toasts
+@inject IWebHostEnvironment Env
 
 <PageTitle>Jeopardy · Charter Trip 2026</PageTitle>
 
@@ -95,6 +96,13 @@
                        @onchange="@(e => SetFinalValueAsync(e.Value?.ToString()))" />
 
                 <div class="jeo-editor-fields">
+                    <div class="jeo-editor-field is-aside">
+                        <span class="jeo-editor-label">Time limit (minutes)</span>
+                        <input class="inline-edit" type="number" min="1" step="1"
+                               aria-label="Final Jeopardy time limit, in minutes"
+                               value="@(Board.Final.TimeLimitSeconds / 60)"
+                               @onchange="@(e => SetFinalTimerMinutesAsync(e.Value?.ToString()))" />
+                    </div>
                     <div class="jeo-editor-field">
                         <span class="jeo-editor-label">Clue</span>
                         <EditableText Value="@Board.Final.Clue" Multiline="true"
@@ -273,9 +281,40 @@ else
                     <span class="muted">buzzed in @Reaction(Game.Buzzes.FirstOrDefault()?.Milliseconds ?? 0)</span>
                 </div>
             }
+            else if (Game.FinalTimerExpired)
+            {
+                <div class="jeo-shot">
+                    <p class="jeo-shot-text">🍺 Nobody buzzed in time — take a shot! 🍺</p>
+                    @if (CanEdit)
+                    {
+                        <button class="btn btn-gold btn-lg" @onclick="RestartFinalTimerAsync">Restart the timer</button>
+                    }
+                </div>
+            }
+            else if (Game.BuzzersOpen)
+            {
+                @if (inPlay.IsFinal)
+                {
+                    <Countdown Deadline="@FinalDeadline">
+                        <p class="jeo-open jeo-final-timer @(context.TotalSeconds <= 30 ? "is-urgent" : null)">@FormatRemaining(context)</p>
+                    </Countdown>
+                }
+                else
+                {
+                    <p class="jeo-open @(_justOpened ? "is-flash" : null)">Buzzers are open@(Game.LockedOutTeamIds.Count > 0 ? $" — {Game.LockedOutTeamIds.Count} locked out" : "")</p>
+                }
+            }
             else
             {
-                <p class="jeo-open">Buzzers are open@(Game.LockedOutTeamIds.Count > 0 ? $" — {Game.LockedOutTeamIds.Count} locked out" : "")</p>
+                <Countdown Deadline="@_diamondDeadline">
+                    <div class="jeo-countdown">
+                        @{ var lit = Math.Clamp((int)Math.Round((JeopardyService.ClueReadDelay - context).TotalSeconds), 0, 3); }
+                        @for (var i = 1; i <= 3; i++)
+                        {
+                            <span class="jeo-diamond @(i <= lit ? "is-lit" : null)" aria-hidden="true"></span>
+                        }
+                    </div>
+                </Countdown>
             }
         </section>
     }
@@ -361,6 +400,46 @@ else
     }
 }
 
+@if (IsDev)
+{
+    @* Local-only testing aid. Never reaches Azure — IsDev is IWebHostEnvironment.IsDevelopment(). *@
+    <section class="jeo-testing">
+        <button class="btn btn-ghost btn-sm" @onclick="() => _testingOpen = !_testingOpen">
+            🧪 Testing tools @(_testingOpen ? "▲" : "▼")
+        </button>
+
+        @if (_testingOpen)
+        {
+            <div class="jeo-testing-panel">
+                @if (Game.Phase is not (JeopardyPhase.Final or JeopardyPhase.FinalIntro or JeopardyPhase.Finished))
+                {
+                    <button class="btn btn-ghost btn-xs" @onclick="SkipToFinalAsync">⚡ Skip to Final Jeopardy</button>
+                }
+
+                @* Real /buzz pages, embedded — not a hand-rolled stand-in — so what you're testing
+                   against is exactly what a real phone would show, judging order included.
+
+                   They go through SimUrl rather than the codes on the wall: a code now signs you
+                   in, and five iframes sharing this page's cookie would fight over one session and
+                   sign you out of your own board. *@
+                <div class="jeo-simstrip-row">
+                    @foreach (var team in Trip.Teams)
+                    {
+                        <div class="jeo-simcard" @key="team.Id">
+                            <span class="jeo-simcard-label" style="color:@team.Color">@team.Name</span>
+                            <iframe class="jeo-simframe" src="@SimUrl(team.Id)" title="@($"Test buzzer — {team.Name}")"></iframe>
+                        </div>
+                    }
+                    <div class="jeo-simcard">
+                        <span class="jeo-simcard-label">Host</span>
+                        <iframe class="jeo-simframe" src="@SimUrl("host")" title="Test host view"></iframe>
+                    </div>
+                </div>
+            </div>
+        }
+    </section>
+}
+
 </div>
 </AdminOnly>
 
@@ -386,9 +465,25 @@ else
 
     private bool ShowingPickCard => _showPickCard && Game.PickingTeamId is not null;
 
+    /// <summary>How long the "buzzers just opened" flash holds before the plain status text settles.</summary>
+    private static readonly TimeSpan OpenFlashDuration = TimeSpan.FromMilliseconds(700);
+
+    private DateTimeOffset? _diamondDeadline;
+    private bool _justOpened;
+    private CancellationTokenSource? _openFlash;
+    private bool _testingOpen;
+
     private JeopardyBoard Board => Trip.Jeopardy;
     private JeopardyGame Game => Trip.Jeopardy.Game;
     private bool Muted { get; set; }
+    private bool IsDev => Env.IsDevelopment();
+
+    private DateTimeOffset? FinalDeadline =>
+        Game.Phase == JeopardyPhase.Final && Game.BuzzersOpen && Game.BuzzOpenedAt is { } opened
+            ? opened + TimeSpan.FromSeconds(Board.Final.TimeLimitSeconds)
+            : null;
+
+    private static string FormatRemaining(TimeSpan remaining) => $"{(int)remaining.TotalMinutes}:{remaining.Seconds:00}";
 
     /// <summary>Whatever is on the wall — a clue, the final, or the answer to either.</summary>
     private ClueInPlay? InPlay => JeopardyService.InPlay(Trip);
@@ -400,7 +495,19 @@ else
     private string? BuzzedFirst => Game.LeadingBuzzTeamId;
 
     private string JoinHost => new Uri(Nav.BaseUri).Authority;
+
+    /// <summary>What goes in the QR codes on the wall: a code, exchanged for a session.</summary>
     private string BuzzUrl(string code) => Nav.ToAbsoluteUri($"/login/{code}").ToString();
+
+    /// <summary>
+    /// A buzzer view for the sim strip, and deliberately not <see cref="BuzzUrl"/>.
+    ///
+    /// These are iframes sharing this page's cookies. Sending them through /login would have five
+    /// of them signing in at once, and the winner would replace the committee's own session — so
+    /// the strip says who to act as instead, which /buzz honours in Development only.
+    /// </summary>
+    private string SimUrl(string actor) => Nav.ToAbsoluteUri($"/buzz?as={actor}").ToString();
+
     private string CodeFor(string teamId) => Game.BuzzerCodes.GetValueOrDefault(teamId, "—");
 
     /// <summary>
@@ -485,8 +592,39 @@ else
         // Fired here rather than off the phase change so the click is answered on the device
         // that made it, without waiting for the round trip.
         await Cue("pick");
-        await MutateAsync(t => JeopardyService.PickClue(t, clueId, DateTimeOffset.UtcNow));
+        await MutateAsync(t => JeopardyService.PickClue(t, clueId));
+        ScheduleBuzzersOpen(clueId);
     }
+
+    /// <summary>
+    /// Opens the buzzers after the room's had a moment to read the clue. Runs detached from this
+    /// circuit on purpose — the buzzers open on schedule even if whoever picked navigates away.
+    /// </summary>
+    private void ScheduleBuzzersOpen(string clueId) => _ = Task.Run(async () =>
+    {
+        await Task.Delay(JeopardyService.ClueReadDelay);
+        await Store.MutateAsync(t => JeopardyService.OpenBuzzers(t, clueId, DateTimeOffset.UtcNow), Watching);
+        if (clueId == JeopardyService.FinalClueId) ScheduleFinalExpiry();
+    });
+
+    /// <summary>
+    /// Closes Final's buzzers if nobody's rung in once the time limit elapses. Runs detached from
+    /// this circuit, same as ScheduleBuzzersOpen — fired once when Final's buzzers first open, and
+    /// again each time the host restarts the timer after a "take a shot" round.
+    /// </summary>
+    private void ScheduleFinalExpiry() => _ = Task.Run(async () =>
+    {
+        await Task.Delay(TimeSpan.FromSeconds(Board.Final.TimeLimitSeconds));
+        await Store.MutateAsync(t => JeopardyService.ExpireFinalTimer(t, DateTimeOffset.UtcNow), Watching);
+    });
+
+    private async Task RestartFinalTimerAsync()
+    {
+        await MutateAsync(t => JeopardyService.RestartFinalTimer(t, DateTimeOffset.UtcNow));
+        ScheduleFinalExpiry();
+    }
+
+    private Task SkipToFinalAsync() => MutateAsync(JeopardyService.SkipToFinal);
 
     /// <summary>
     /// Give the winner of the opening race the screen for a moment. Purely a view state — it is
@@ -514,10 +652,34 @@ else
         });
     }
 
+    /// <summary>Brief pulse on the status line the moment buzzers actually go live.</summary>
+    private void FlashBuzzersOpen()
+    {
+        _openFlash?.Cancel();
+        _openFlash?.Dispose();
+        _openFlash = new CancellationTokenSource();
+        var token = _openFlash.Token;
+        _justOpened = true;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(OpenFlashDuration, token);
+                _justOpened = false;
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (OperationCanceledException) { /* superseded, or the page went away */ }
+        });
+    }
+
     private Task ContinueAsync() => MutateAsync(JeopardyService.Continue);
 
-    private Task StartFinalAsync() =>
-        MutateAsync(t => JeopardyService.StartFinal(t, DateTimeOffset.UtcNow));
+    private async Task StartFinalAsync()
+    {
+        await MutateAsync(t => JeopardyService.StartFinal(t));
+        ScheduleBuzzersOpen(JeopardyService.FinalClueId);
+    }
 
     private void ConfirmReset() =>
         _confirm?.Show("Reset the whole game? Every clue comes back and the Jeopardy points leave the standings.",
@@ -551,6 +713,11 @@ else
 
     private Task SetFinalValueAsync(string? raw) =>
         ParseValue(raw) is { } value ? EditFinalAsync(f => f.Value = value) : Task.CompletedTask;
+
+    private Task SetFinalTimerMinutesAsync(string? raw) =>
+        ParseValue(raw) is { } minutes && minutes >= 1
+            ? EditFinalAsync(f => f.TimeLimitSeconds = minutes * 60)
+            : Task.CompletedTask;
 
     private static int? ParseValue(string? raw) =>
         int.TryParse(raw, out var value) && value >= 0 ? value : null;
@@ -644,6 +811,11 @@ else
             StateHasChanged();
         }
 
+        // The moment buzzers actually go live on a clue, past the reading pause — worth a beat
+        // of its own, distinct from the opening race's pick card above.
+        if (!_lastBuzzersOpen && Game.BuzzersOpen && Game.Phase is JeopardyPhase.Clue or JeopardyPhase.Final)
+            FlashBuzzersOpen();
+
         _lastBuzzersOpen = Game.BuzzersOpen;
 
         if (_audio is null) return;
@@ -654,7 +826,11 @@ else
         try
         {
             if (clueId != _lastClueId && clueId is not null)
+            {
                 await _audio.InvokeVoidAsync("reveal");
+                _diamondDeadline = DateTimeOffset.UtcNow + JeopardyService.ClueReadDelay;
+                StateHasChanged();
+            }
 
             if (phase != _lastPhase)
             {
@@ -698,6 +874,8 @@ else
     {
         _pickCard?.Cancel();
         _pickCard?.Dispose();
+        _openFlash?.Cancel();
+        _openFlash?.Dispose();
 
         if (_audio is not null)
         {

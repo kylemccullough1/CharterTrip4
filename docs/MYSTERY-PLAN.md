@@ -293,7 +293,7 @@ Casting is straight assignment, hand-picked or randomised. Gender is not an inpu
 Study scene, killer briefings, witness statements, cover stories, clue texts. Pure substitution per
 `assembly_rules`.
 
-### Phase 7 — the host console
+### Phase 7 — the host console ✅
 
 `/games/mystery` becomes the host console: manual round advance, the full guilty list, and an
 override for everything. **This is the safety net for every phase after it** — anything the app

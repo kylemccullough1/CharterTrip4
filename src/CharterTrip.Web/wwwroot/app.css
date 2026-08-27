@@ -2675,3 +2675,120 @@ pre.code {
 /* The street address under the Where row: its own line, quieter than the name of the house. */
 .ess-address { display: block; margin-top: 3px; color: var(--text-dim); font-size: 0.844rem; }
 .when-sep { color: var(--text-faint); }
+
+/* =============================================================================
+   Murder at Braun Manor.
+
+   Three surfaces, and they want different things. The host console is dense —
+   Braun's player is reading the whole game off one page in a back room. The
+   player phone is the opposite: one thing at a time, thumb-sized, no chrome.
+   The main screen is pointed at a room from across it, so everything is big.
+   ============================================================================= */
+
+/* --- shared: naming the guilty ------------------------------------------------ */
+
+.mys-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  margin-right: 5px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-2);
+  font-size: 0.719rem;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.mys-tag.killer  { border-color: var(--ruby);    color: #e8919a; }
+.mys-tag.herring { border-color: var(--gold-dim); color: var(--gold-light); }
+
+.mys-list { list-style: none; display: grid; gap: 4px; }
+
+/* --- host console ------------------------------------------------------------- */
+
+.mys-warn { border-color: var(--gold-dim); }
+.mys-error { color: #e8919a; margin-top: 8px; }
+
+.mys-deal { margin-top: 12px; }
+.mys-seed {
+  width: 8.5ch;
+  margin-left: 6px;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--ink-2);
+  color: var(--text);
+  font: inherit;
+}
+
+/* The evening as a strip of nine. Scrolls rather than wraps, so the shape of the
+   night stays readable on a laptop in a dark room. */
+.mys-rounds {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+}
+.mys-round {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--text-dim);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.mys-round:hover { border-color: #3a465a; }
+.mys-round.done { opacity: .55; }
+.mys-round.now {
+  border-color: var(--gold);
+  background: var(--panel-2);
+  color: var(--text);
+}
+.mys-round-name {
+  font-family: var(--display);
+  font-size: 0.813rem;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.mys-guilty, .mys-factions, .mys-zones, .mys-clues {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.mys-killer { border-color: rgba(201,79,90,.4); }
+.mys-name {
+  font-family: var(--display);
+  font-size: 1.06rem;
+  color: var(--gold-light);
+}
+.mys-killer h4 { text-transform: uppercase; letter-spacing: .12em; color: #e8919a; }
+
+.mys-tampered { color: var(--gold-light); }
+.mys-token { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
+
+.mys-tie {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
+  background: rgba(212,175,55,.07);
+}
+.mys-force { margin-top: 12px; }
+
+.mys-chips { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0; }
+.mys-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text-dim);
+  font-size: 0.719rem;
+  cursor: pointer;
+}
+.mys-chip.on { border-color: var(--ruby); background: rgba(201,79,90,.18); color: #fff; }

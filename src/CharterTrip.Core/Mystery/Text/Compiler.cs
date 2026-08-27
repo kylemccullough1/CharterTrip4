@@ -422,12 +422,9 @@ public static class Compiler
     /// Known gap today: <c>detective_reveal</c> wants a <c>{result_line}</c> that nothing in
     /// <c>story_beats.json</c> provides.
     /// </summary>
-    public static IReadOnlyList<string> MissingFragments(MysteryScript script, MysteryState state)
+    public static IReadOnlyList<string> MissingFragments(MysteryScript script)
     {
         ArgumentNullException.ThrowIfNull(script);
-        ArgumentNullException.ThrowIfNull(state);
-
-        if (state.Deal is null) return [];
 
         var gaps = new List<string>();
 

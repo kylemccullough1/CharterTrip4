@@ -1,36 +1,551 @@
 @page "/games/mystery"
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
 @using CharterTrip.Core.Mystery.Script
+@using CharterTrip.Core.Mystery.Text
+@inherits TripAwareComponent
 @inject MysteryScript Script
+@inject IClock Clock
+@inject NavigationManager Nav
 
 <PageTitle>Murder at Braun Manor · Charter Trip 2026</PageTitle>
 
-@* The games and the roster are the committee's working area, not part of what a
-   guest came here for. AdminOnly guards the page itself, so typing the URL lands
-   on the same polite refusal as following a link that is not in their menu.
+@* The host console. Braun's player runs the evening from here.
 
-   This becomes the host console — round control, the guilty list, and an override for
-   everything the app cannot do. Until then it reports what the content actually holds, so the
-   page is at least true. *@
+   Its real job is to be the safety net for everything else: any feature that does not exist, or
+   that misbehaves on the night, is something a person does by hand from this page. That is why
+   every control has a force next to it, and why the guilty list is on screen rather than hidden
+   behind a reveal. *@
 <AdminOnly>
-<ComingSoon Title="Murder at Braun Manor"
-            Subtitle="Saturday, 8:00 PM — two hours, nine rounds, three trials."
-            Phase="3"
-            Description="@Description"
-            Bullets="_bullets" />
+<div class="page">
+
+    <SectionCard Title="Murder at Braun Manor"
+                 Subtitle="@HeaderLine">
+        <Actions>
+            <a class="btn btn-sm" href="/games/mystery/screen" target="_blank">Main screen ↗</a>
+            <a class="btn btn-sm" href="/games/mystery/print" target="_blank">Print sheets ↗</a>
+        </Actions>
+        <ChildContent>
+
+        @if (Warnings.Count > 0)
+        {
+            @* Content problems the compiler found. Better here, now, than on the wall later. *@
+            <div class="card mys-warn">
+                <h4>Content gaps</h4>
+                <ul class="mys-list">
+                    @foreach (var warning in Warnings)
+                    {
+                        <li class="tiny">@warning</li>
+                    }
+                </ul>
+                <p class="muted tiny">
+                    Each of these is a fragment nobody has written. The affected line is left out
+                    rather than shown with a hole in it.
+                </p>
+            </div>
+        }
+
+        @if (Deal is null)
+        {
+            <div class="card">
+                <h3>No game dealt</h3>
+                <p class="muted">
+                    Dealing places all @Script.Characters.Count characters, draws three killers and
+                    three red herrings, assigns every faction, and lays out nine clue cards. The
+                    same seed always deals the same game.
+                </p>
+                <div class="row gap wrap center mys-deal">
+                    <label class="tiny">
+                        Seed
+                        <input class="mys-seed" type="number" @bind="_seed" />
+                    </label>
+                    <button class="btn btn-xs" @onclick="() => _seed = Random.Shared.Next(1, 999999)">Random</button>
+                    <span class="grow"></span>
+                    <button class="btn btn-gold" @onclick="DealAsync">Deal a game</button>
+                </div>
+                @if (_error is not null)
+                {
+                    <p class="mys-error" role="alert">@_error</p>
+                }
+                <p class="muted tiny">
+                    Casting the @Players.Count non-committee guests in roster order. The four
+                    organizers play Braun and the three facilitators and are not cast.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="card">
+                <div class="row between center wrap gap">
+                    <div>
+                        <h3>Seed @Deal.Seed</h3>
+                        <p class="muted tiny">
+                            @Deal.Cast.Count(c => c.PersonId is not null) of @Deal.Cast.Count roles cast ·
+                            access by the @RouteLabel
+                        </p>
+                    </div>
+                    <div class="row gap wrap">
+                        @if (!Trip.Mystery.Active)
+                        {
+                            <button class="btn btn-gold btn-sm" @onclick="StartAsync">Start the evening</button>
+                        }
+                        <button class="btn btn-danger-ghost btn-sm" @onclick="() => _confirmClear = true">Discard</button>
+                    </div>
+                </div>
+            </div>
+
+            @if (_confirmClear)
+            {
+                <ConfirmDialog Title="Discard this game?"
+                               Message="The cast, the guilty list and every clue card go. Anything already printed stops matching."
+                               ConfirmText="Discard"
+                               OnConfirm="ClearAsync"
+                               OnCancel="() => _confirmClear = false" />
+            }
+        }
+
+        </ChildContent>
+    </SectionCard>
+
+    @if (Deal is not null)
+    {
+        <SectionCard Title="The evening" Subtitle="@RoundLine">
+            <Actions>
+                <button class="btn btn-sm" @onclick="() => GoToRoundAsync(Trip.Mystery.CurrentRoundIndex - 1)">← Back</button>
+                <button class="btn btn-gold btn-sm" @onclick="() => GoToRoundAsync(Trip.Mystery.CurrentRoundIndex + 1)">Next →</button>
+            </Actions>
+            <ChildContent>
+
+            <div class="mys-rounds">
+                @for (var i = 0; i < Script.Rounds.Rounds.Count; i++)
+                {
+                    var index = i;
+                    var round = Script.Rounds.Rounds[i];
+                    var state = index == Trip.Mystery.CurrentRoundIndex ? "now"
+                        : index < Trip.Mystery.CurrentRoundIndex ? "done" : "";
+
+                    <button class="mys-round @state" @onclick="() => GoToRoundAsync(index)">
+                        <span class="mys-round-name">@round.Name</span>
+                        <span class="muted tiny">@round.Minutes min@(round.IsTrial ? " · trial" : "")</span>
+                    </button>
+                }
+            </div>
+
+            @if (CurrentRound is { } current)
+            {
+                <div class="card">
+                    <h4>@current.Name</h4>
+                    @if (!string.IsNullOrWhiteSpace(current.Screen))
+                    {
+                        <p>@current.Screen</p>
+                    }
+                    @if (current.Mechanics.Count > 0)
+                    {
+                        <ul class="mys-list">
+                            @foreach (var line in current.Mechanics)
+                            {
+                                <li class="tiny muted">@line</li>
+                            }
+                        </ul>
+                    }
+                </div>
+            }
+
+            </ChildContent>
+        </SectionCard>
+
+        @* --- trials ------------------------------------------------------------------- *@
+        <SectionCard Title="Trials" Subtitle="@TrialLine">
+            @if (CurrentRound is { IsTrial: true } trialRound)
+            {
+                var trial = Trip.Mystery.Trials.FirstOrDefault(t => t.RoundId == trialRound.Id);
+
+                <div class="card">
+                    @if (trial is null)
+                    {
+                        <p class="muted">Not open yet. Opening it puts the vote on every phone.</p>
+                        <button class="btn btn-gold btn-sm" @onclick="() => OpenTrialAsync(trialRound.Id)">
+                            Open @trialRound.Name
+                        </button>
+                    }
+                    else
+                    {
+                        <p class="row between center">
+                            <span><b>@trial.Phase</b></span>
+                            <span class="muted tiny">
+                                @trial.OpenVotes.Count open · @trial.FinalVotes.Count final
+                            </span>
+                        </p>
+
+                        @switch (trial.Phase)
+                        {
+                            case MysteryTrialPhase.OpenVote:
+                                <p class="muted tiny">@Script.Rounds.TrialProcedure.Phase1</p>
+                                <button class="btn btn-gold btn-sm" @onclick="() => CloseOpenAsync(trial)">
+                                    Close the vote and nominate
+                                </button>
+                                break;
+
+                            case MysteryTrialPhase.Defence:
+                                <p class="muted tiny">@Script.Rounds.TrialProcedure.Phase3</p>
+                                <p>Nominated: <b>@Names(trial.NomineeCharacterIds)</b></p>
+                                <button class="btn btn-gold btn-sm" @onclick="() => OpenFinalAsync(trial)">
+                                    Open the final vote
+                                </button>
+                                break;
+
+                            case MysteryTrialPhase.FinalVote:
+                                <p class="muted tiny">@Script.Rounds.TrialProcedure.Phase4</p>
+                                <button class="btn btn-gold btn-sm" @onclick="() => CloseFinalAsync(trial)">
+                                    Close and convict
+                                </button>
+                                break;
+
+                            case MysteryTrialPhase.Revealed:
+                                <p>Convicted: <b>@Names(trial.ConvictedCharacterIds)</b></p>
+                                break;
+                        }
+
+                        @if (_tied.Count > 0)
+                        {
+                            @* The one place a trial can genuinely stop. Both routes out are here. *@
+                            <div class="mys-tie">
+                                <h4>Tied at the cut</h4>
+                                <p class="tiny">@Names(_tied) — @Script.Rounds.TrialProcedure.Phase5</p>
+                                <div class="row gap wrap">
+                                    <button class="btn btn-sm" @onclick="() => ResolveTieAsync(trial)">
+                                        Use the earlier tally
+                                    </button>
+                                    @foreach (var id in _tied)
+                                    {
+                                        var pick = id;
+                                        <button class="btn btn-xs" @onclick="() => ForceConvictAsync(trial, pick)">
+                                            Convict @Name(pick)
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <details class="mys-force">
+                            <summary class="tiny muted">Force a conviction</summary>
+                            <p class="tiny muted">
+                                For the case nobody predicted. Picks two and closes the trial.
+                            </p>
+                            <div class="mys-chips">
+                                @foreach (var member in Living)
+                                {
+                                    var id = member.CharacterId;
+                                    var picked = _forced.Contains(id);
+                                    <button class="mys-chip @(picked ? "on" : "")" @onclick="() => Toggle(id)">
+                                        @Name(id)
+                                    </button>
+                                }
+                            </div>
+                            <button class="btn btn-danger-ghost btn-sm" disabled="@(_forced.Count == 0)"
+                                    @onclick="() => ForceConvictManyAsync(trial)">
+                                Convict @_forced.Count and close
+                            </button>
+                        </details>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="muted">
+                    The current round is not a trial. @(Trip.Mystery.Trials.Count(t => t.ClosedAt is not null))
+                    of @Script.Rounds.Trials.Count() done.
+                </p>
+            }
+
+            @if (Trip.Mystery.Trials.Any(t => t.ClosedAt is not null))
+            {
+                <div class="card">
+                    <h4>Convicted so far</h4>
+                    <ul class="mys-list">
+                        @foreach (var trial in Trip.Mystery.Trials.Where(t => t.ClosedAt is not null))
+                        {
+                            <li>
+                                <span class="muted tiny">@RoundName(trial.RoundId)</span>
+                                @foreach (var id in trial.ConvictedCharacterIds)
+                                {
+                                    <span class="mys-tag @(IsKiller(id) ? "killer" : "")">@Name(id)</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                    <p class="tiny">
+                        Killers caught: <b>@KillersConvicted of 3</b> —
+                        @(KillersConvicted >= 2 ? "town has won on the tally" : "killers ahead")@(EndsEarly ? ", and that is a clean sweep" : "")
+                    </p>
+                    @if (EndsEarly || AllTrialsDone)
+                    {
+                        <button class="btn btn-gold btn-sm" @onclick="EndAsync">Go to the reveal</button>
+                    }
+                </div>
+            }
+        </SectionCard>
+
+        @* --- the guilty list -------------------------------------------------------- *@
+        <SectionCard Title="Who did it"
+                     Subtitle="The whole solution. This page is the fallback for anything the app cannot do.">
+            <div class="mys-guilty">
+                @foreach (var slot in new[] { "access", "means", "signature" })
+                {
+                    var killer = Deal.Cast.FirstOrDefault(c => c.GuiltSlot == slot);
+                    if (killer is null) continue;
+
+                    <div class="card mys-killer">
+                        <h4>@slot</h4>
+                        <p class="mys-name">@Name(killer.CharacterId)</p>
+                        <p class="muted tiny">
+                            @ZoneName(killer.ZoneId) · played by @PersonName(killer.PersonId)
+                        </p>
+                        <p class="tiny">Points at <b>@Name(Compiler.HerringFor(Deal, slot)?.CharacterId)</b></p>
+                    </div>
+                }
+            </div>
+
+            <div class="card">
+                <h4>Red herrings</h4>
+                <p>@Names([.. Deal.Herrings.Select(h => h.CharacterId)])</p>
+                <p class="muted tiny">
+                    Innocent, showing their guilty reading. Cleared by name at the reveal.
+                </p>
+            </div>
+
+            <div class="mys-factions">
+                @foreach (var faction in Script.Factions.Factions.Where(f => f.Id != "killer"))
+                {
+                    <div class="card">
+                        <h4>@faction.Name</h4>
+                        <p class="tiny">@Names([.. Deal.InFaction(faction.Id).Select(m => m.CharacterId)])</p>
+                    </div>
+                }
+            </div>
+
+            <details>
+                <summary class="tiny muted">The whole cast, by room</summary>
+                <div class="mys-zones">
+                    @foreach (var zone in Script.Zones.Playable)
+                    {
+                        <div class="card">
+                            <h4>@zone.Name</h4>
+                            <ul class="mys-list">
+                                @foreach (var member in Deal.InZone(zone.Id))
+                                {
+                                    <li class="tiny">
+                                        <span class="mys-tag @TagFor(member)">@Name(member.CharacterId)</span>
+                                        <span class="muted">@PersonName(member.PersonId)</span>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </details>
+        </SectionCard>
+
+        @* --- clues ------------------------------------------------------------------- *@
+        <SectionCard Title="Clue cards" Subtitle="@ClueLine">
+            <div class="mys-clues">
+                @foreach (var clue in Trip.Mystery.Clues)
+                {
+                    <div class="card">
+                        <div class="row between center">
+                            <h4>@ZoneName(clue.ZoneId)</h4>
+                            @if (clue.Found)
+                            {
+                                <span class="mys-tag">found</span>
+                            }
+                        </div>
+                        <p class="tiny">@Compiler.ClueText(Script, clue)</p>
+                        @if (clue.TraceCharacterId is { } owner)
+                        {
+                            <p class="muted tiny">@Name(owner)'s trace</p>
+                        }
+                        @if (clue.Tamper is { } tamper)
+                        {
+                            <p class="mys-tampered tiny">
+                                tampered — @tamper.Mode by @Name(tamper.ByCharacterId)
+                            </p>
+                        }
+                        <p class="muted tiny mys-token">@clue.Token</p>
+                    </div>
+                }
+            </div>
+        </SectionCard>
+    }
+
+</div>
 </AdminOnly>
 
 @code {
-    private string Description =>
-        $"{Script.Characters.Count} characters across {Script.Zones.Playable.Count()} rooms, " +
-        $"{Script.Factions.Factions.Count} factions, and every line of it already written. " +
-        "What is left is dealing a game and putting it on the phones.";
+    protected override TripArea Watching => TripArea.Mystery;
 
-    private readonly string[] _bullets =
-    [
-        "Deal a game from a seed — three killers, three red herrings, everyone placed",
-        "Compose 21 private briefings and the witness web from the authored blocks",
-        "Nine printed clue QRs, one per room, found by walking there",
-        "Three trials on phones, with both tie rules and a force-advance",
-        "The reveal, which is already written and only needs filling in",
-    ];
+    private int _seed = Random.Shared.Next(1, 999999);
+    private string? _error;
+    private bool _confirmClear;
+    private List<string> _tied = [];
+    private readonly HashSet<string> _forced = [];
+
+    private MysteryDeal? Deal => Trip.Mystery.Deal;
+    private ScriptRound? CurrentRound => MysteryService.CurrentRound(Trip, Script);
+    private IReadOnlyList<MysteryCastMember> Living => [.. MysteryService.Living(Trip)];
+
+    /// <summary>The 21 guests. The four organizers run the evening and are not cast.</summary>
+    private List<RosterPerson> Players => [.. Trip.Roster.Where(p => p.Role != TripRole.Admin)];
+
+    private int KillersConvicted =>
+        Deal is null ? 0 : Deal.Killers.Count(k => MysteryService.IsGhost(Trip, k.CharacterId));
+
+    private bool EndsEarly => MysteryService.ShouldEndEarly(Trip);
+    private bool AllTrialsDone => MysteryService.AllTrialsComplete(Trip, Script);
+
+    private string HeaderLine => Deal is null
+        ? $"{Script.Characters.Count} characters, {Script.Zones.Playable.Count()} rooms, {Script.Rounds.ScheduledMinutes} minutes."
+        : Trip.Mystery.Active ? "Running." : "Dealt, not started.";
+
+    private string RoundLine => CurrentRound is { } round
+        ? $"{round.Name} — {round.Minutes} minutes"
+        : "Not started.";
+
+    private string TrialLine =>
+        $"Top four nominated, top two convicted. Town wins at two killers caught, evaluated after the third trial.";
+
+    private string ClueLine =>
+        $"{Trip.Mystery.Clues.Count(c => c.Found)} of {Trip.Mystery.Clues.Count} found · " +
+        $"{Trip.Mystery.Clues.Count(c => c.Tamper is not null)} tampered";
+
+    private string RouteLabel => Deal is not null
+        && Script.Zones.AccessRoutes.TryGetValue(Deal.AccessRoute, out var route)
+            ? route.Label
+            : "—";
+
+    /// <summary>
+    /// Content the compiler cannot fill, and abilities that could never unlock. Both are failures
+    /// that otherwise stay invisible until the moment they matter.
+    /// </summary>
+    private List<string> Warnings
+    {
+        get
+        {
+            var warnings = new List<string>();
+            warnings.AddRange(MysteryService.UnreachableUnlocks(Script).Select(u => $"Ability never unlocks: {u}"));
+            warnings.AddRange(Compiler.MissingFragments(Script).Select(m => $"Missing text: {m}"));
+            return warnings;
+        }
+    }
+
+    private string Name(string? characterId) =>
+        characterId is null ? "—" : Script.CharacterById(characterId)?.Name ?? characterId;
+
+    private string Names(IReadOnlyList<string> ids) =>
+        ids.Count == 0 ? "—" : string.Join(", ", ids.Select(Name));
+
+    private string ZoneName(string zoneId) => Script.Zones.ById(zoneId)?.Name ?? zoneId;
+
+    private string RoundName(string roundId) => Script.Rounds.ById(roundId)?.Name ?? roundId;
+
+    private string PersonName(string? personId) =>
+        personId is null ? "uncast" : Trip.Roster.FirstOrDefault(p => p.Id == personId)?.Name ?? personId;
+
+    private bool IsKiller(string characterId) =>
+        Deal?.Cast.Any(c => c.CharacterId == characterId && c.IsKiller) == true;
+
+    private string TagFor(MysteryCastMember member) => member switch
+    {
+        { IsKiller: true } => "killer",
+        { IsHerring: true } => "herring",
+        _ => ""
+    };
+
+    private void Toggle(string characterId)
+    {
+        if (!_forced.Remove(characterId)) _forced.Add(characterId);
+    }
+
+    // ---- actions ---------------------------------------------------------------------------
+
+    private async Task DealAsync()
+    {
+        _error = null;
+        var people = Players.Select(p => p.Id).ToList();
+
+        var failure = await Store.MutateAsync(
+            t => MysteryService.DealGame(t, Script, _seed, people), TripArea.Mystery);
+
+        if (failure is not null) _error = failure.Reason;
+    }
+
+    private async Task ClearAsync()
+    {
+        _confirmClear = false;
+        await MutateAsync(MysteryService.Clear);
+    }
+
+    private Task StartAsync() => Flush(MysteryService.Start);
+
+    private Task GoToRoundAsync(int index) =>
+        Flush(t => MysteryService.GoToRound(t, Script, index));
+
+    private Task OpenTrialAsync(string roundId) =>
+        Flush(t => MysteryService.OpenTrial(t, roundId, Clock.UtcNow));
+
+    private async Task CloseOpenAsync(MysteryTrial trial)
+    {
+        await Flush(t => MysteryService.CloseOpenVote(t, trial));
+        _tied = [];
+    }
+
+    private Task OpenFinalAsync(MysteryTrial trial) =>
+        Flush(_ => MysteryService.OpenFinalVote(trial));
+
+    private async Task CloseFinalAsync(MysteryTrial trial)
+    {
+        var close = await Store.MutateAsync(
+            t => MysteryService.CloseFinalVote(t, trial, Clock.UtcNow), TripArea.Mystery);
+
+        _tied = close.Kind == VoteCloseKind.RevoteNeeded ? [.. close.CharacterIds] : [];
+        await Store.FlushAsync();
+    }
+
+    private async Task ResolveTieAsync(MysteryTrial trial)
+    {
+        var tied = _tied;
+        var close = await Store.MutateAsync(
+            t => MysteryService.ResolveTieFromOpenVote(t, trial, tied, Clock.UtcNow), TripArea.Mystery);
+
+        _tied = close.Kind == VoteCloseKind.RevoteNeeded ? [.. close.CharacterIds] : [];
+        await Store.FlushAsync();
+    }
+
+    private async Task ForceConvictAsync(MysteryTrial trial, string characterId)
+    {
+        await Flush(t => MysteryService.ForceConvict(t, trial, [characterId], Clock.UtcNow));
+        _tied = [];
+    }
+
+    private async Task ForceConvictManyAsync(MysteryTrial trial)
+    {
+        var picked = _forced.ToList();
+        await Flush(t => MysteryService.ForceConvict(t, trial, picked, Clock.UtcNow));
+        _forced.Clear();
+        _tied = [];
+    }
+
+    private Task EndAsync() => Flush(t => MysteryService.End(t, Clock.UtcNow));
+
+    /// <summary>
+    /// Mutate and force the write out immediately.
+    ///
+    /// Round advances, convictions and abilities are the handful of events that would be miserable
+    /// to reconstruct after a restart mid-evening, so they do not ride the debounce. Scans, shares
+    /// and votes still do.
+    /// </summary>
+    private async Task Flush(Action<TripData> mutate)
+    {
+        await MutateAsync(mutate);
+        await Store.FlushAsync();
+    }
 }

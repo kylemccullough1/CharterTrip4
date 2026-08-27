@@ -427,7 +427,7 @@ public class CompilerTests
     public void The_one_missing_content_fragment_is_reported_rather_than_guessed_at()
     {
         var deal = Deal();
-        var gaps = Compiler.MissingFragments(Script, StateWith(deal));
+        var gaps = Compiler.MissingFragments(Script);
 
         // story_beats.json's detective_reveal wants a {result_line} that nothing provides. The
         // compiler will not invent it, Endgame omits that paragraph, and it shows up here so it

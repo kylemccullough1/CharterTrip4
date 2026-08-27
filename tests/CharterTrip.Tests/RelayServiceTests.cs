@@ -40,29 +40,48 @@ public class RelayServiceTests
         return trip;
     }
 
+    /// <summary>Clocks on the line, gun fired — the state the race spends its whole length in.</summary>
     private static RelayGame Started(TripData trip)
     {
         var game = new RelayGame();
-        RelayService.Begin(game, trip.Teams);
+        RelayService.Arm(game, trip.Teams);
+        RelayService.StartAll(game, trip.Teams, T0);
         return game;
     }
 
-    private static void Run(RelayGame game, string teamId, double seconds)
-    {
-        RelayService.StartTimer(game, teamId, T0);
+    private static void Run(RelayGame game, string teamId, double seconds) =>
         RelayService.StopTimer(game, teamId, At(seconds));
-    }
 
     [Fact]
-    public void Beginning_the_race_gives_every_team_a_clock()
+    public void Arming_the_race_puts_every_team_on_the_line()
     {
         var trip = Jake();
-        var game = Started(trip);
+        var game = new RelayGame();
+
+        RelayService.Arm(game, trip.Teams);
 
         Assert.Equal(PartyGamePhase.Playing, game.Phase);
         Assert.Equal(4, game.Timers.Count);
-        Assert.All(game.Timers.Values, t => Assert.False(t.Running));
-        Assert.All(game.Timers.Values, t => Assert.False(t.Stopped));
+        Assert.All(game.Timers.Values, t => Assert.True(t.Armed));
+        Assert.True(RelayService.NotYetRun(game, trip.Teams));
+    }
+
+    /// <summary>
+    /// The whole reason there is one button rather than four: four thumbs are not simultaneous,
+    /// and the gap between them is the same size as the gap between the teams.
+    /// </summary>
+    [Fact]
+    public void The_gun_starts_every_clock_on_the_same_instant()
+    {
+        var trip = Jake();
+        var game = new RelayGame();
+        RelayService.Arm(game, trip.Teams);
+
+        RelayService.StartAll(game, trip.Teams, T0);
+
+        Assert.All(game.Timers.Values, t => Assert.Equal(T0, t.StartedAt));
+        Assert.All(game.Timers.Values, t => Assert.True(t.Running));
+        Assert.False(RelayService.NotYetRun(game, trip.Teams));
     }
 
     [Fact]
@@ -71,7 +90,6 @@ public class RelayServiceTests
         var trip = Jake();
         var game = Started(trip);
 
-        RelayService.StartTimer(game, "kyle", T0);
         Assert.True(game.Timers["kyle"].Running);
 
         RelayService.StopTimer(game, "kyle", At(92.5));
@@ -82,29 +100,33 @@ public class RelayServiceTests
     }
 
     [Fact]
-    public void Starting_a_running_clock_again_does_not_restart_it()
+    public void The_gun_does_not_restart_a_clock_that_is_already_running()
     {
         var trip = Jake();
         var game = Started(trip);
 
-        RelayService.StartTimer(game, "kyle", T0);
-        RelayService.StartTimer(game, "kyle", At(10));
+        RelayService.StartAll(game, trip.Teams, At(10));
         RelayService.StopTimer(game, "kyle", At(30));
 
         Assert.Equal(30_000, game.Timers["kyle"].ElapsedMs);
     }
 
+    /// <summary>
+    /// A clock stopped by mistake picks up where the race is, not where the thumb was — nobody
+    /// gets seconds back for being quick on the button.
+    /// </summary>
     [Fact]
-    public void A_mis_tapped_clock_can_be_put_back()
+    public void Un_stopping_a_clock_keeps_the_time_it_had_already_run()
     {
         var trip = Jake();
         var game = Started(trip);
-        RelayService.StartTimer(game, "kyle", T0);
+        RelayService.StopTimer(game, "kyle", At(20));
 
-        RelayService.ResetTimer(game, "kyle");
+        RelayService.ResumeTimer(game, "kyle");
+        Assert.True(game.Timers["kyle"].Running);
 
-        Assert.False(game.Timers["kyle"].Running);
-        Assert.False(game.Timers["kyle"].Stopped);
+        RelayService.StopTimer(game, "kyle", At(50));
+        Assert.Equal(50_000, game.Timers["kyle"].ElapsedMs);
     }
 
     [Fact]
@@ -147,6 +169,80 @@ public class RelayServiceTests
         Run(game, "em", 90);
 
         Assert.Null(RelayService.WinningTeamId(game));
+    }
+
+    // ------------------------------------------------------------------ the run-off
+
+    [Fact]
+    public void A_dead_heat_sends_exactly_those_teams_back_to_the_line()
+    {
+        var trip = Jake();
+        var game = Started(trip);
+
+        Run(game, "jou", 100);
+        Run(game, "ali", 110);
+        Run(game, "kyle", 90);
+        Run(game, "em", 90);        // level with kyle
+
+        RelayService.StartRunOff(game);
+
+        Assert.True(game.IsRunOff);
+        Assert.Equal(["em", "kyle"], game.TieBreakTeamIds.Order());
+        Assert.Equal(["em", "kyle"], RelayService.InPlay(game, trip.Teams).Select(t => t.Id).Order());
+        Assert.True(RelayService.NotYetRun(game, trip.Teams));
+    }
+
+    [Fact]
+    public void The_run_off_is_only_over_when_both_of_them_are_in()
+    {
+        var trip = Jake();
+        var game = Started(trip);
+        Run(game, "jou", 100);
+        Run(game, "ali", 110);
+        Run(game, "kyle", 90);
+        Run(game, "em", 90);
+        RelayService.StartRunOff(game);
+        RelayService.StartAll(game, trip.Teams, T0);
+
+        Run(game, "kyle", 40);
+        Assert.False(RelayService.AllStopped(game, trip.Teams));
+
+        Run(game, "em", 45);
+        Assert.True(RelayService.AllStopped(game, trip.Teams));
+        Assert.Equal("kyle", RelayService.WinningTeamId(game));
+    }
+
+    [Fact]
+    public void Only_a_run_off_winner_is_paid_when_the_race_was_a_dead_heat()
+    {
+        var trip = Jake();
+        var game = Started(trip);
+        Run(game, "jou", 100);
+        Run(game, "ali", 110);
+        Run(game, "kyle", 90);
+        Run(game, "em", 90);
+        RelayService.StartRunOff(game);
+        RelayService.StartAll(game, trip.Teams, T0);
+        Run(game, "kyle", 40);
+        Run(game, "em", 45);
+
+        RelayService.Finish(trip, game, At(200));
+
+        var entry = Assert.Single(trip.Scores);
+        Assert.Equal("kyle", entry.TeamId);
+    }
+
+    [Fact]
+    public void A_run_off_is_not_set_up_when_somebody_actually_won()
+    {
+        var trip = Jake();
+        var game = Started(trip);
+        Run(game, "kyle", 90);
+        Run(game, "em", 95);
+
+        RelayService.StartRunOff(game);
+
+        Assert.False(game.IsRunOff);
     }
 
     [Fact]
@@ -208,6 +304,7 @@ public class RelayServiceTests
 
         Assert.Equal(PartyGamePhase.NotStarted, game.Phase);
         Assert.Empty(game.Timers);
+        Assert.Empty(game.TieBreakTeamIds);
         Assert.Equal(0, ScoreService.ScoreFor(trip, RelayService.GameId, "kyle"));
         Assert.Equal(20, ScoreService.ScoreFor(trip, "sketch", "kyle"));
     }

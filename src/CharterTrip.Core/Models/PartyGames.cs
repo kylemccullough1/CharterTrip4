@@ -14,6 +14,19 @@ public enum PartyGamePhase
 }
 
 /// <summary>
+/// Someone for a team to draw, and a picture of them for whoever is describing it.
+///
+/// The picture is a link rather than a copy: these are all somebody else's characters, and the
+/// host wants to glance at one for thirty seconds, not own it. Blank is fine — the game page
+/// offers to look one up, and whatever is pasted back is kept for next time.
+/// </summary>
+public sealed class SketchCharacter
+{
+    public string Name { get; set; } = "";
+    public string ImageUrl { get; set; } = "";
+}
+
+/// <summary>
 /// Police Sketch, Pool Noodle Cups and Beer Run are the same game to a scoreboard: a fixed
 /// number of rounds, a point value per unit, and a result to record before moving on. They
 /// share this rather than each carrying its own near-identical copy.
@@ -34,18 +47,29 @@ public sealed class RoundGame
     /// <summary>1-based. Means nothing until Phase is Playing.</summary>
     public int Round { get; set; } = 1;
 
-    /// <summary>Sketch's characters to draw. Empty for the games that have nothing to pick from.</summary>
-    public List<string> Prompts { get; set; } = [];
+    /// <summary>Sketch's cast. Empty for the games that have nothing to pick from.</summary>
+    public List<SketchCharacter> Characters { get; set; } = [];
 
-    /// <summary>Prompts already played, so a character cannot come up twice.</summary>
-    public List<string> UsedPrompts { get; set; } = [];
+    /// <summary>Characters already drawn, by name, so nobody comes up twice.</summary>
+    public List<string> UsedCharacters { get; set; } = [];
 
-    public string? CurrentPrompt { get; set; }
+    public string? CurrentCharacter { get; set; }
+
+    /// <summary>
+    /// Who is still in it, when the last round ended level. Empty for an ordinary round.
+    ///
+    /// A weekend-long scoreboard cannot end a game "joint second", so a tie at the top sends
+    /// exactly the teams who tied into a sudden-death round and keeps doing it until somebody
+    /// is actually ahead. See <c>RoundGameService.NextRound</c>.
+    /// </summary>
+    public List<string> TieBreakTeamIds { get; set; } = [];
+
+    [JsonIgnore] public bool IsSuddenDeath => TieBreakTeamIds.Count > 0;
 }
 
 /// <summary>
-/// The relay is four clocks rather than rounds: every team runs the same legs at once and the
-/// fastest one wins. Only the winner scores.
+/// The relay is four clocks rather than rounds: one gun starts every team at once, each lead
+/// stops their own, and the fastest wins. Only the winner scores.
 /// </summary>
 public sealed class RelayGame
 {
@@ -61,6 +85,11 @@ public sealed class RelayGame
 
     /// <summary>Keyed by TeamId.</summary>
     public Dictionary<string, RelayTimer> Timers { get; set; } = [];
+
+    /// <summary>Who is in the run-off, when two clocks came back identical. Empty for an ordinary race.</summary>
+    public List<string> TieBreakTeamIds { get; set; } = [];
+
+    [JsonIgnore] public bool IsRunOff => TieBreakTeamIds.Count > 0;
 }
 
 /// <summary>
@@ -76,6 +105,9 @@ public sealed class RelayTimer
 
     [JsonIgnore] public bool Running => StartedAt is not null && ElapsedMs is null;
     [JsonIgnore] public bool Stopped => ElapsedMs is not null;
+
+    /// <summary>Waiting on the gun.</summary>
+    [JsonIgnore] public bool Armed => StartedAt is null;
 }
 
 /// <summary>

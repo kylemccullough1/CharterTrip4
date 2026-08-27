@@ -1,16 +1,18 @@
 @page "/games/relay"
 @inherits TripAwareComponent
 
-@* The relay is four clocks. Each team lead opens this on their own phone and claims the team
-   they are running, which makes that clock the big one with the button under it; the other
-   three stay small so they can still see the race. The claim is this phone's business only —
-   it is not written down, because it says nothing about the race, only about who is holding
-   which handset. Starting and stopping is written down, which is what keeps all four in step. *@
+@* The relay is four clocks on one gun. Somebody hits START and every team's clock starts on the
+   same instant — four thumbs are not simultaneous, and the difference between them is the same
+   size as the difference between the teams. Each lead then says which team is theirs and gets a
+   stop button in that team's colour.
+
+   Which team you are holding is this phone's business only. It is not written down, because it
+   says nothing about the race — only about who is holding which handset. *@
 
 <PageTitle>Relay Race · Charter Trip 2026</PageTitle>
 
 <AdminOnly>
-<div class="page">
+<div class="page page-game">
     @if (Game is null)
     {
         <SectionCard Title="Relay Race" Subtitle="This game is not in the trip data.">
@@ -19,13 +21,14 @@
     }
     else if (State.Phase == PartyGamePhase.NotStarted)
     {
-        <GameSetup Game="Game" OnStart="StartAsync" StartLabel="Set up the clocks">
+        <GameSetup Game="Game" OnStart="ArmAsync" StartLabel="Take the clocks to the line">
             <Structure>
                 <p><b>@State.WinnerPoints points</b> to the first team to finish — and nobody else.</p>
                 <p>
                     <b>@State.SmallTeamPoints points</b> instead if the winning team is
                     @State.SmallTeamSize or fewer, for running the same legs a person short.
                 </p>
+                <p class="muted tiny">Two identical times go to a run-off, so this cannot finish in a tie.</p>
             </Structure>
             <Settings>
                 <div class="settings-row">
@@ -58,20 +61,32 @@
             <div class="grow">
                 <h1 class="game-title">Relay Race</h1>
                 <p class="game-meta">
-                    @if (_claimed is null)
+                    @if (State.IsRunOff)
                     {
-                        <text>Tap your team to take their clock.</text>
+                        <b class="is-sudden">Run-off</b>
+                        <text> · @string.Join(" v ", Field.Select(t => t.Name))</text>
+                    }
+                    else if (NotYetRun)
+                    {
+                        <text>On the line. Anyone can start it.</text>
                     }
                     else
                     {
-                        <text>You have <b>@(TeamService.FindTeam(Trip, _claimed)?.Name)</b>.</text>
+                        <text>Running. Stop your own clock as your team comes in.</text>
                     }
                 </p>
             </div>
             <button class="btn btn-ghost btn-sm" @onclick="ConfirmReset">Reset</button>
         </div>
 
-        @if (_claimed is { } mine && Timer(mine) is { } myTimer)
+        @if (NotYetRun)
+        {
+            <section class="relay-gun">
+                <button class="btn btn-gold relay-go" @onclick="StartAllAsync">START</button>
+                <p class="muted">Starts all @Field.Count clocks together.</p>
+            </section>
+        }
+        else if (_mine is { } mine && Timer(mine) is { } myTimer)
         {
             var team = TeamService.FindTeam(Trip, mine);
             <section class="relay-mine" style="--team:@(team?.Color ?? "var(--gold)")">
@@ -80,40 +95,52 @@
 
                 @if (myTimer.Stopped)
                 {
-                    <p class="muted">Finished. Waiting on the rest of the race.</p>
-                    <button class="btn btn-ghost btn-sm" @onclick="() => ResetTimerAsync(mine)">Undo the finish</button>
-                }
-                else if (myTimer.Running)
-                {
-                    <button class="btn btn-lg btn-danger relay-action" @onclick="() => StopAsync(mine)">Stop</button>
+                    <p class="muted">In. Waiting on the rest of the race.</p>
+                    <button class="btn btn-ghost btn-sm" @onclick="() => ResumeAsync(mine)">Started them too early</button>
                 }
                 else
                 {
-                    <button class="btn btn-lg btn-gold relay-action" @onclick="() => StartAsync(mine)">Start</button>
+                    <button class="btn btn-lg relay-action relay-stop" @onclick="() => StopAsync(mine)">STOP</button>
                 }
 
-                <button class="btn btn-ghost btn-xs" @onclick="() => _claimed = null">Hand this clock back</button>
+                <button class="btn btn-ghost btn-xs" @onclick="() => _mine = null">Not my team</button>
             </section>
+        }
+        else
+        {
+            <SectionCard Title="Which team are you running?"
+                         Subtitle="Pick yours and you get a stop button in their colour.">
+                <div class="team-picks">
+                    @foreach (var team in Field)
+                    {
+                        var id = team.Id;
+                        <button type="button" class="team-pick" style="--team:@team.Color"
+                                @onclick="() => _mine = id" @key="id">
+                            <span class="team-pick-name">@team.Name</span>
+                            <span class="team-pick-pts">@Clock(Timer(id))</span>
+                        </button>
+                    }
+                </div>
+            </SectionCard>
         }
 
         <SectionCard Title="The race">
             <div class="relay-grid">
-                @foreach (var team in Trip.Teams)
+                @foreach (var team in Field)
                 {
                     var id = team.Id;
                     var timer = Timer(id);
-                    var isMine = _claimed == id;
-                    <div class="relay-card @(isMine ? "is-mine" : null) @(timer?.Running == true ? "is-running" : null)"
+                    <div class="relay-card @(_mine == id ? "is-mine" : null) @(timer.Running ? "is-running" : null)"
                          style="--team:@team.Color" @key="id">
                         <span class="relay-team">@team.Name</span>
                         <span class="relay-clock">@Clock(timer)</span>
-                        @if (isMine)
+                        @if (timer.Stopped)
+                        {
+                            <span class="chip ok">In</span>
+                        }
+                        else if (_mine == id)
                         {
                             <span class="chip on">Yours</span>
-                        }
-                        else
-                        {
-                            <button type="button" class="btn btn-ghost btn-xs" @onclick="() => _claimed = id">Take this clock</button>
                         }
                     </div>
                 }
@@ -129,12 +156,17 @@
                             <b>@winner?.Name</b> took it in <b>@Clock(Timer(winnerId))</b> —
                             <b>@RelayService.PointsForWinner(Trip, State, winnerId) points</b>.
                         </p>
+                        <button class="btn btn-gold btn-lg" @onclick="FinishAsync">End the race</button>
                     }
                     else
                     {
-                        <p class="muted">A dead heat. Nobody can be paid for this one — reset a clock and run it again.</p>
+                        <p>
+                            A dead heat on <b>@Clock(Timer(RelayService.Fastest(State)[0]))</b>.
+                            @string.Join(" and ", RelayService.Fastest(State).Select(id => TeamService.FindTeam(Trip, id)?.Name))
+                            run it again.
+                        </p>
+                        <button class="btn btn-gold btn-lg" @onclick="RunOffAsync">Set up the run-off</button>
                     }
-                    <button class="btn btn-gold btn-lg" @onclick="FinishAsync">End the race</button>
                 </div>
             }
         </SectionCard>
@@ -163,15 +195,19 @@
     private ConfirmDialog? _confirm;
 
     /// <summary>Which clock this phone is working. Local on purpose — see the note at the top.</summary>
-    private string? _claimed;
+    private string? _mine;
 
     private CancellationTokenSource? _ticking;
 
     private Game? Game => Trip.Games.FirstOrDefault(g => g.Id == RelayService.GameId);
     private RelayGame State => Trip.Party.Relay;
 
-    private RelayTimer? Timer(string teamId) => State.Timers.GetValueOrDefault(teamId);
+    private IReadOnlyList<Team> Field => RelayService.InPlay(State, Trip.Teams);
 
+    private RelayTimer Timer(string teamId) =>
+        State.Timers.TryGetValue(teamId, out var t) ? t : new RelayTimer();
+
+    private bool NotYetRun => RelayService.NotYetRun(State, Trip.Teams);
     private bool AllStopped => RelayService.AllStopped(State, Trip.Teams);
 
     private string FinishedSubtitle =>
@@ -180,9 +216,8 @@
             : "";
 
     /// <summary>A running clock is read off the start instant, so every phone shows the same time.</summary>
-    private string Clock(RelayTimer? timer)
+    private string Clock(RelayTimer timer)
     {
-        if (timer is null) return RelayService.Clock(0);
         if (timer.ElapsedMs is { } done) return RelayService.Clock(done);
         if (timer.StartedAt is { } started)
             return RelayService.Clock((int)(DateTimeOffset.UtcNow - started).TotalMilliseconds);
@@ -190,16 +225,24 @@
         return RelayService.Clock(0);
     }
 
-    private Task StartAsync() => MutateAsync(t => RelayService.Begin(t.Party.Relay, t.Teams));
+    private Task ArmAsync() => MutateAsync(t => RelayService.Arm(t.Party.Relay, t.Teams));
 
-    private Task StartAsync(string teamId) =>
-        MutateAsync(t => RelayService.StartTimer(t.Party.Relay, teamId, DateTimeOffset.UtcNow));
+    private Task StartAllAsync() =>
+        MutateAsync(t => RelayService.StartAll(t.Party.Relay, t.Teams, DateTimeOffset.UtcNow));
 
     private Task StopAsync(string teamId) =>
         MutateAsync(t => RelayService.StopTimer(t.Party.Relay, teamId, DateTimeOffset.UtcNow));
 
-    private Task ResetTimerAsync(string teamId) =>
-        MutateAsync(t => RelayService.ResetTimer(t.Party.Relay, teamId));
+    private Task ResumeAsync(string teamId) =>
+        MutateAsync(t => RelayService.ResumeTimer(t.Party.Relay, teamId));
+
+    private async Task RunOffAsync()
+    {
+        await MutateAsync(t => RelayService.StartRunOff(t.Party.Relay));
+
+        // The clocks are back on the line, so a lead holding a team that is out should be asked again.
+        if (_mine is { } mine && !State.TieBreakTeamIds.Contains(mine)) _mine = null;
+    }
 
     private Task FinishAsync() =>
         MutateAsync(t => RelayService.Finish(t, t.Party.Relay, DateTimeOffset.UtcNow));
@@ -224,7 +267,7 @@
     /// </summary>
     protected override void OnAfterRender(bool firstRender)
     {
-        var anyRunning = State.Timers.Values.Any(t => t.Running);
+        var anyRunning = RelayService.AnyRunning(State, Trip.Teams);
 
         if (anyRunning && _ticking is null) StartTicking();
         else if (!anyRunning && _ticking is not null) StopTicking();

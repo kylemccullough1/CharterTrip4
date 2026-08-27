@@ -13,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 19;
+    public const int CurrentVersion = 20;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -34,6 +34,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 13) changed |= ToV13_MenuBoard(trip);
         if (trip.SchemaVersion < 14) changed |= ToV14_GroupedEssentials(trip);
         if (trip.SchemaVersion < 19) changed |= ToV19_PartyGames(trip);
+        if (trip.SchemaVersion < 20) changed |= ToV20_SketchCharactersHavePictures(trip);
 
         // v18 gave a carpool's ETA a day to go with the time. No step, same as the two
         // before it: the field defaults to empty and an older file simply has not said.
@@ -357,12 +358,34 @@ public static class TripMigrations
     {
         var party = trip.Party;
         var untouched =
-            party.Sketch.PointValue == 0 && party.Sketch.Prompts.Count == 0 &&
+            party.Sketch.PointValue == 0 &&
             party.NoodleCup.PointValue == 0 && party.BeerRun.PointValue == 0;
 
         if (!untouched) return false;
 
         trip.Party = SeedLoader.Load().Party;
+        return true;
+    }
+
+    /// <summary>
+    /// A Police Sketch character used to be a name and nothing else. It is now a name and a
+    /// picture of them, so whoever is describing one has something to describe.
+    ///
+    /// The list moved from <c>prompts</c> to <c>characters</c> rather than changing shape under
+    /// the same key, which is what makes this safe to load: a v19 file's array of bare strings is
+    /// simply a key the model no longer has, ignored on read and gone on the next write, instead
+    /// of a type mismatch that would fail the whole document before any migration could run.
+    ///
+    /// Refilled from the seed, like the board at v9 — nobody has had a chance to edit this list
+    /// yet, and the names in it are the ones off the budget sheet either way.
+    /// </summary>
+    private static bool ToV20_SketchCharactersHavePictures(TripData trip)
+    {
+        if (trip.Party.Sketch.Characters.Count > 0) return false;
+
+        trip.Party.Sketch.Characters = SeedLoader.Load().Party.Sketch.Characters;
+        trip.Party.Sketch.UsedCharacters.Clear();
+        trip.Party.Sketch.CurrentCharacter = null;
         return true;
     }
 

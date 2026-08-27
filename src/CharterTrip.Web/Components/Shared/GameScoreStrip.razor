@@ -1,7 +1,10 @@
 @* Where a game stands, and the way to take back the last thing that was tapped.
 
    Both read from the trip's score log rather than anything this component keeps, so an undo
-   is a deletion and the board underneath it cannot end up disagreeing. *@
+   is a deletion and the board underneath it cannot end up disagreeing.
+
+   The list of awards folds away because it only grows: by the sixth round of cups it is longer
+   than the board above it and pushes the thing you actually came to look at off the screen. *@
 
 @inject ITripStore Store
 
@@ -35,26 +38,41 @@
     </div>
 </div>
 
-@{ var recent = ScoreService.RecentFor(Trip, GameId).Take(Take).ToList(); }
-@if (recent.Count > 0)
+@{ var awards = ScoreService.RecentFor(Trip, GameId).ToList(); }
+@if (awards.Count > 0)
 {
     <div class="score-recent">
-        <p class="hb-label">Awarded so far</p>
-        @foreach (var entry in recent)
+        <button type="button" class="score-recent-head" @onclick="() => _open = !_open"
+                aria-expanded="@(_open ? "true" : "false")">
+            <span class="caret @(_open ? "is-open" : null)" aria-hidden="true">▾</span>
+            <span class="hb-label">Awarded so far</span>
+            <span class="chip tiny">@awards.Count</span>
+        </button>
+
+        @if (_open)
         {
-            var team = TeamService.FindTeam(Trip, entry.TeamId);
-            <div class="score-recent-row" @key="entry.Id">
-                <span class="hb-dot" style="background: @(team?.Color ?? "var(--gold)")"></span>
-                <span class="score-recent-team">@(team?.Name ?? entry.TeamId)</span>
-                <span class="score-recent-pts">@(entry.Points > 0 ? "+" : "")@entry.Points</span>
-                <span class="score-recent-note muted">@entry.Note</span>
-                @if (CanEdit)
+            <div class="score-recent-list">
+                @foreach (var entry in awards.Take(Take))
                 {
-                    <IconButton Icon="IconButtonIcon.Close"
-                                Tone="danger"
-                                Title="Take this back"
-                                CssClass="score-undo"
-                                OnClick="@(() => UndoAsync(entry.Id))" />
+                    var team = TeamService.FindTeam(Trip, entry.TeamId);
+                    <div class="score-recent-row" @key="entry.Id">
+                        <span class="hb-dot" style="background: @(team?.Color ?? "var(--gold)")"></span>
+                        <span class="score-recent-team">@(team?.Name ?? entry.TeamId)</span>
+                        <span class="score-recent-pts">@(entry.Points > 0 ? "+" : "")@entry.Points</span>
+                        <span class="score-recent-note muted">@entry.Note</span>
+                        @if (CanEdit)
+                        {
+                            <IconButton Icon="IconButtonIcon.Close"
+                                        Tone="danger"
+                                        Title="Take this back"
+                                        CssClass="score-undo"
+                                        OnClick="@(() => UndoAsync(entry.Id))" />
+                        }
+                    </div>
+                }
+                @if (awards.Count > Take)
+                {
+                    <p class="muted tiny">@(awards.Count - Take) older not shown.</p>
                 }
             </div>
         }
@@ -73,6 +91,8 @@
     [Parameter] public int Take { get; set; } = 8;
 
     [Parameter] public RenderFragment? Actions { get; set; }
+
+    private bool _open = true;
 
     private bool CanEdit => Permissions.CanEdit;
 

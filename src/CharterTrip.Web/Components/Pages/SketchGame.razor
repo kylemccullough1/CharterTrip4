@@ -2,13 +2,13 @@
 @inherits TripAwareComponent
 
 @* Police Sketch. Nobody playing ever looks at this screen — the drawing happens on paper and
-   the describing happens out loud. All this has to do is remember which character is up, whose
-   turn it was to guess first, and keep the points straight. *@
+   the describing happens out loud. All this has to do is show the host who they are describing,
+   remember who has come up already, and keep the points straight. *@
 
 <PageTitle>Police Sketch · Charter Trip 2026</PageTitle>
 
 <AdminOnly>
-<div class="page">
+<div class="page page-game">
     @if (Game is null)
     {
         <SectionCard Title="Police Sketch" Subtitle="This game is not in the trip data.">
@@ -18,11 +18,12 @@
     else if (State.Phase == PartyGamePhase.NotStarted)
     {
         <GameSetup Game="Game" OnStart="StartAsync"
-                   CanStart="@(State.Prompts.Count > 0)"
+                   CanStart="@(State.Characters.Count > 0)"
                    StartBlockedReason="Add at least one character before starting.">
             <Structure>
                 <p><b>@State.PointValue points</b> to the first team to name the character.</p>
-                <p><b>@State.RoundCount rounds</b>, from a list of @State.Prompts.Count characters.</p>
+                <p><b>@State.RoundCount rounds</b>, from a cast of @State.Characters.Count.</p>
+                <p class="muted tiny">Level at the end goes to sudden death, so this cannot finish in a tie.</p>
             </Structure>
             <Settings>
                 <div class="settings-row">
@@ -38,21 +39,43 @@
                     </label>
                 </div>
 
-                <p class="hb-label mt">Characters</p>
-                <ul class="plain prompt-list">
-                    @for (var i = 0; i < State.Prompts.Count; i++)
+                <p class="hb-label mt">The cast</p>
+                <p class="muted tiny">
+                    A picture is optional. Paste a link to one and it is kept for next year;
+                    “Find one” opens an image search in a new tab.
+                </p>
+                <ul class="plain cast-list">
+                    @for (var i = 0; i < State.Characters.Count; i++)
                     {
                         var index = i;
-                        <li class="prompt-line" @key="index">
-                            <EditableText Value="@State.Prompts[index]"
-                                          ValueChanged="@(v => EditPromptAsync(index, v))"
-                                          Placeholder="—" />
-                            <button type="button" class="pack-del" title="Remove"
-                                    @onclick="() => RemovePromptAsync(index)">✕</button>
+                        var character = State.Characters[index];
+                        <li class="cast-line" @key="index">
+                            <div class="cast-line-main">
+                                @if (character.ImageUrl is { Length: > 0 })
+                                {
+                                    <img class="cast-thumb" src="@character.ImageUrl" alt="" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span class="cast-thumb is-empty" aria-hidden="true">?</span>
+                                }
+                                <EditableText Value="@character.Name"
+                                              CssClass="cast-name"
+                                              ValueChanged="@(v => EditNameAsync(index, v))"
+                                              Placeholder="—" />
+                                <a class="btn btn-ghost btn-xs" href="@SearchHref(character.Name)"
+                                   target="_blank" rel="noopener">Find one</a>
+                                <button type="button" class="pack-del" title="Remove"
+                                        @onclick="() => RemoveAsync(index)">✕</button>
+                            </div>
+                            <EditableText Value="@character.ImageUrl"
+                                          CssClass="cast-url muted tiny"
+                                          ValueChanged="@(v => EditImageAsync(index, v))"
+                                          Placeholder="paste an image link" />
                         </li>
                     }
                 </ul>
-                <button class="btn btn-ghost btn-sm" @onclick="AddPromptAsync">Add a character</button>
+                <button class="btn btn-ghost btn-sm" @onclick="AddAsync">Add a character</button>
             </Settings>
         </GameSetup>
     }
@@ -61,42 +84,72 @@
         <div class="game-head">
             <div class="grow">
                 <h1 class="game-title">Police Sketch</h1>
-                <p class="game-meta">Round <b>@State.Round</b> of <b>@State.RoundCount</b> · @State.PointValue points a round</p>
+                <p class="game-meta">
+                    @if (State.IsSuddenDeath)
+                    {
+                        <b class="is-sudden">Sudden death</b>
+                        <text> · </text>
+                        <text>@string.Join(" v ", Active.Select(t => t.Name))</text>
+                    }
+                    else
+                    {
+                        <text>Round <b>@State.Round</b> of <b>@State.RoundCount</b></text>
+                    }
+                    <text> · @State.PointValue points a round</text>
+                </p>
             </div>
             <button class="btn btn-ghost btn-sm" @onclick="ConfirmReset">Reset</button>
         </div>
 
-        <SectionCard Title="@(State.CurrentPrompt is null ? "Pick a character" : "Drawing now")">
+        <SectionCard Title="@(State.CurrentCharacter is null ? "Pick a character" : "Describing now")">
             <div class="card sketch-now">
-                @if (State.CurrentPrompt is { Length: > 0 } current)
+                @if (Current is { } current)
                 {
-                    <p class="sketch-current">@current</p>
-                    <button class="btn btn-ghost btn-sm" @onclick="ClearPromptAsync">Pick a different one</button>
+                    @if (current.ImageUrl is { Length: > 0 })
+                    {
+                        <img class="sketch-image" src="@current.ImageUrl" alt="@current.Name" />
+                    }
+                    <p class="sketch-current">@current.Name</p>
+                    <div class="row gap wrap center">
+                        @if (current.ImageUrl is not { Length: > 0 })
+                        {
+                            <a class="btn btn-ghost btn-sm" href="@SearchHref(current.Name)"
+                               target="_blank" rel="noopener">Find a picture</a>
+                        }
+                        <button class="btn btn-ghost btn-sm" @onclick="ClearAsync">Pick a different one</button>
+                    </div>
                 }
                 else
                 {
-                    <div class="chip-row">
-                        @foreach (var prompt in RoundGameService.RemainingPrompts(State))
-                        {
-                            var pick = prompt;
-                            <button type="button" class="chip tap" @onclick="() => PickAsync(pick)" @key="pick">@pick</button>
-                        }
-                    </div>
-                    @if (RoundGameService.RemainingPrompts(State).Count == 0)
+                    @if (Remaining.Count > 0)
                     {
-                        <p class="muted">Every character has been drawn. Add more, or end the game.</p>
+                        <div class="chip-row">
+                            @foreach (var character in Remaining)
+                            {
+                                var pick = character.Name;
+                                <button type="button" class="chip tap" @onclick="() => PickAsync(pick)" @key="pick">
+                                    @character.Name
+                                </button>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="muted">Everyone has been drawn. Reset to use the cast again.</p>
                     }
                 }
             </div>
         </SectionCard>
 
         <SectionCard Title="Who guessed it first?"
-                     Subtitle="@($"Awards {State.PointValue} points and moves to the next round.")">
+                     Subtitle="@($"Awards {State.PointValue} points and moves on.")">
             <div class="team-picks">
-                @foreach (var team in Trip.Teams)
+                @foreach (var team in Active)
                 {
                     var pick = team;
-                    <button type="button" class="team-pick" style="--team:@team.Color"
+                    <button type="button"
+                            class="team-pick @(_celebrating == team.Id ? "is-scoring" : null)"
+                            style="--team:@team.Color"
                             @onclick="() => AwardAsync(pick.Id)" @key="team.Id">
                         <span class="team-pick-name">@team.Name</span>
                         <span class="team-pick-pts">+@State.PointValue</span>
@@ -122,6 +175,16 @@
     }
 </div>
 
+@* The flash of colour when a team scores. It lives outside the section so it can cover the
+   screen — this is the one moment of the round everybody looks up for. *@
+@if (_scored is { } scored)
+{
+    <div class="score-flash" style="--team:@scored.Color" aria-hidden="true">
+        <span class="score-flash-name">@scored.Name</span>
+        <span class="score-flash-pts">+@State.PointValue</span>
+    </div>
+}
+
 <ConfirmDialog @ref="_confirm" />
 </AdminOnly>
 
@@ -130,33 +193,94 @@
 
     private ConfirmDialog? _confirm;
 
+    /// <summary>Who just scored, for as long as the flash is on screen. Not persisted — it is an animation.</summary>
+    private Team? _scored;
+    private string? _celebrating;
+    private CancellationTokenSource? _flash;
+
+    private static readonly TimeSpan FlashFor = TimeSpan.FromMilliseconds(1600);
+
     private Game? Game => Trip.Games.FirstOrDefault(g => g.Id == RoundGameService.SketchId);
     private RoundGame State => Trip.Party.Sketch;
 
+    private IReadOnlyList<Team> Active => RoundGameService.ActiveTeams(Trip, State);
+    private IReadOnlyList<SketchCharacter> Remaining => RoundGameService.RemainingCharacters(State);
+    private SketchCharacter? Current => RoundGameService.Find(State, State.CurrentCharacter);
+
+    /// <summary>An image search for the character, so nobody has to type one out mid-game.</summary>
+    private static string SearchHref(string name) =>
+        $"https://www.google.com/search?tbm=isch&q={Uri.EscapeDataString(name + " character")}";
+
     private Task StartAsync() => MutateAsync(t => RoundGameService.Begin(t.Party.Sketch));
 
-    private Task PickAsync(string prompt) =>
-        MutateAsync(t => RoundGameService.PickPrompt(t.Party.Sketch, prompt));
+    private Task PickAsync(string name) =>
+        MutateAsync(t => RoundGameService.PickCharacter(t.Party.Sketch, name));
 
-    /// <summary>Puts the character back in the hat as well as off the screen — it was never drawn.</summary>
-    private Task ClearPromptAsync() => MutateAsync(t =>
+    /// <summary>Puts the character back in the hat as well as off the screen — they were never drawn.</summary>
+    private Task ClearAsync() => MutateAsync(t =>
     {
         var game = t.Party.Sketch;
-        if (game.CurrentPrompt is { } prompt)
-            game.UsedPrompts.RemoveAll(p => string.Equals(p, prompt, StringComparison.OrdinalIgnoreCase));
-        game.CurrentPrompt = null;
+        if (game.CurrentCharacter is { } name)
+            game.UsedCharacters.RemoveAll(u => string.Equals(u, name, StringComparison.OrdinalIgnoreCase));
+        game.CurrentCharacter = null;
     });
 
-    private Task AwardAsync(string teamId) => MutateAsync(t =>
-        RoundGameService.AwardRoundWinner(t, t.Party.Sketch, RoundGameService.SketchId, teamId, DateTimeOffset.UtcNow));
+    private async Task AwardAsync(string teamId)
+    {
+        var team = TeamService.FindTeam(Trip, teamId);
 
-    private Task SkipAsync() => MutateAsync(t => RoundGameService.NextRound(t.Party.Sketch));
+        await MutateAsync(t =>
+            RoundGameService.AwardRoundWinner(
+                t, t.Party.Sketch, RoundGameService.SketchId, teamId, DateTimeOffset.UtcNow));
+
+        // Not awaited: a circuit handles its events one at a time, so waiting out the animation
+        // here would leave the next tap queued behind it for a second and a half.
+        _ = FlashAsync(team);
+    }
+
+    private Task SkipAsync() =>
+        MutateAsync(t => RoundGameService.NextRound(t, t.Party.Sketch, RoundGameService.SketchId));
+
+    /// <summary>
+    /// Show who scored, then take it away again. Cancelling the previous one matters: two quick
+    /// rounds would otherwise leave the first timer to clear the second team's flash early.
+    /// </summary>
+    private async Task FlashAsync(Team? team)
+    {
+        if (team is null) return;
+
+        _flash?.Cancel();
+        _flash?.Dispose();
+        var cts = new CancellationTokenSource();
+        _flash = cts;
+
+        _scored = team;
+        _celebrating = team.Id;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            await Task.Delay(FlashFor, cts.Token);
+            _scored = null;
+            _celebrating = null;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException) { /* another team scored first */ }
+        catch (ObjectDisposedException) { /* the page went away mid-flash */ }
+    }
 
     private void ConfirmReset() => _confirm?.Show(
         "This clears Police Sketch's points and puts the game back to the rules card. Nothing else is touched.",
         () => MutateAsync(t => RoundGameService.Reset(t, t.Party.Sketch, RoundGameService.SketchId)),
         "Reset the game",
         "Reset Police Sketch");
+
+    public override void Dispose()
+    {
+        _flash?.Cancel();
+        _flash?.Dispose();
+        base.Dispose();
+    }
 
     // ------------------------------------------------------------------ settings
 
@@ -170,17 +294,24 @@
             ? MutateAsync(t => t.Party.Sketch.RoundCount = value)
             : Task.CompletedTask;
 
-    private Task AddPromptAsync() => MutateAsync(t => t.Party.Sketch.Prompts.Add("New character"));
+    private Task AddAsync() =>
+        MutateAsync(t => t.Party.Sketch.Characters.Add(new SketchCharacter { Name = "New character" }));
 
-    private Task EditPromptAsync(int index, string value) => MutateAsync(t =>
+    private Task EditNameAsync(int index, string value) => MutateAsync(t =>
     {
-        var prompts = t.Party.Sketch.Prompts;
-        if (index >= 0 && index < prompts.Count && value.Trim().Length > 0) prompts[index] = value.Trim();
+        var cast = t.Party.Sketch.Characters;
+        if (index >= 0 && index < cast.Count && value.Trim().Length > 0) cast[index].Name = value.Trim();
     });
 
-    private Task RemovePromptAsync(int index) => MutateAsync(t =>
+    private Task EditImageAsync(int index, string value) => MutateAsync(t =>
     {
-        var prompts = t.Party.Sketch.Prompts;
-        if (index >= 0 && index < prompts.Count) prompts.RemoveAt(index);
+        var cast = t.Party.Sketch.Characters;
+        if (index >= 0 && index < cast.Count) cast[index].ImageUrl = value.Trim();
+    });
+
+    private Task RemoveAsync(int index) => MutateAsync(t =>
+    {
+        var cast = t.Party.Sketch.Characters;
+        if (index >= 0 && index < cast.Count) cast.RemoveAt(index);
     });
 }

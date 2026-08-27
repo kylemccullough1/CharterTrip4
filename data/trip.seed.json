@@ -809,46 +809,50 @@
       "pointValue": 20,
       "roundCount": 5,
       "round": 1,
-      "prompts": [
-        "Shrek",
-        "Edna Mode",
-        "Snoopy",
-        "Charlie Brown",
-        "Caillou",
-        "Dora",
-        "Minion",
-        "Phineas and Ferb",
-        "Winnie the Pooh",
-        "Buzz Lightyear",
-        "Pikachu",
-        "Johnny Bravo",
-        "Sid the Sloth",
-        "Hyperpigmentation"
+      "characters": [
+        { "name": "Shrek", "imageUrl": "" },
+        { "name": "Edna Mode", "imageUrl": "" },
+        { "name": "Snoopy", "imageUrl": "" },
+        { "name": "Charlie Brown", "imageUrl": "" },
+        { "name": "Caillou", "imageUrl": "" },
+        { "name": "Dora", "imageUrl": "" },
+        { "name": "Minion", "imageUrl": "" },
+        { "name": "Phineas and Ferb", "imageUrl": "" },
+        { "name": "Winnie the Pooh", "imageUrl": "" },
+        { "name": "Buzz Lightyear", "imageUrl": "" },
+        { "name": "Pikachu", "imageUrl": "" },
+        { "name": "Johnny Bravo", "imageUrl": "" },
+        { "name": "Sid the Sloth", "imageUrl": "" },
+        { "name": "Hyperpigmentation", "imageUrl": "" }
       ],
-      "usedPrompts": []
+      "usedCharacters": [],
+      "tieBreakTeamIds": []
     },
     "noodleCup": {
       "phase": "notStarted",
       "pointValue": 10,
       "roundCount": 6,
       "round": 1,
-      "prompts": [],
-      "usedPrompts": []
+      "characters": [],
+      "usedCharacters": [],
+      "tieBreakTeamIds": []
     },
     "beerRun": {
       "phase": "notStarted",
       "pointValue": 10,
       "roundCount": 4,
       "round": 1,
-      "prompts": [],
-      "usedPrompts": []
+      "characters": [],
+      "usedCharacters": [],
+      "tieBreakTeamIds": []
     },
     "relay": {
       "phase": "notStarted",
       "winnerPoints": 100,
       "smallTeamPoints": 120,
       "smallTeamSize": 5,
-      "timers": {}
+      "timers": {},
+      "tieBreakTeamIds": []
     }
   },
   "jeopardy": {

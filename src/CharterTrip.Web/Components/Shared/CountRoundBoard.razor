@@ -4,10 +4,10 @@
 
 @inject ITripStore Store
 
-<SectionCard Title="@($"Round {State.Round}")"
-             Subtitle="@($"{State.PointValue} points per {Unit}. Leave a team on zero and nothing is written down for them.")">
+<SectionCard Title="@(State.IsSuddenDeath ? "Sudden death" : $"Round {State.Round}")"
+             Subtitle="@Sub">
     <div class="count-grid">
-        @foreach (var team in Trip.Teams)
+        @foreach (var team in Active)
         {
             var id = team.Id;
             <div class="count-card" style="--team:@team.Color" @key="id">
@@ -25,13 +25,13 @@
 
     <div class="row gap mt">
         <button class="btn btn-gold" @onclick="ScoreRoundAsync" disabled="@(Total == 0)">
-            @(IsLastRound ? "Score the round and finish" : "Score the round")
+            @(State.IsSuddenDeath ? "Score the run-off" : IsLastRound ? "Score the round and finish" : "Score the round")
         </button>
         <button class="btn btn-ghost btn-sm" @onclick="SkipAsync">Skip the round</button>
     </div>
     @if (Total == 0)
     {
-        <p class="muted tiny">Nothing to score yet — add a @Unit to at least one team.</p>
+        <p class="muted tiny">Nothing to score yet — add a @Unit.TrimEnd('s') to at least one team.</p>
     }
 </SectionCard>
 
@@ -49,9 +49,15 @@
     /// <summary>This round's tally, per team. Local until the round is scored.</summary>
     private readonly Dictionary<string, int> _counts = new(StringComparer.Ordinal);
 
+    private IReadOnlyList<Team> Active => RoundGameService.ActiveTeams(Trip, State);
+
+    private string Sub => State.IsSuddenDeath
+        ? $"Level at the top, so these two go again. {State.PointValue} points per {Unit.TrimEnd('s')}."
+        : $"{State.PointValue} points per {Unit.TrimEnd('s')}. Leave a team on zero and nothing is written down for them.";
+
     private int Count(string teamId) => _counts.GetValueOrDefault(teamId);
 
-    private int Total => Trip.Teams.Sum(t => Count(t.Id));
+    private int Total => Active.Sum(t => Count(t.Id));
 
     private bool IsLastRound => State.Round >= State.RoundCount;
 
@@ -65,7 +71,11 @@
     {
         if (Total == 0) return;
 
-        var counts = _counts.ToDictionary(kv => kv.Key, kv => kv.Value);
+        // Only the teams actually in play — a stale count left over from before a sudden death
+        // must not quietly award points to somebody who is already out.
+        var live = Active.Select(t => t.Id).ToHashSet(StringComparer.Ordinal);
+        var counts = _counts.Where(kv => live.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
+
         var unit = Unit;
         var gameId = GameId;
 
@@ -78,7 +88,9 @@
 
     private async Task SkipAsync()
     {
-        await Store.MutateAsync(t => RoundGameService.NextRound(Select(t)), TripArea.Games);
+        var gameId = GameId;
+
+        await Store.MutateAsync(t => RoundGameService.NextRound(t, Select(t), gameId), TripArea.Games);
         _counts.Clear();
     }
 }

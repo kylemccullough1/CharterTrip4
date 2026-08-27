@@ -107,6 +107,45 @@ public class NavHighlightTests
         Assert.Equal(venue.Href, venue.LinkHref);
     }
 
+    /// <summary>
+    /// "All games" shares its address with the branch it hangs under, so under the branch's own
+    /// rule — a path covers everything beneath it — it lit up on every game page at once. A
+    /// child is judged exactly instead.
+    /// </summary>
+    [Theory]
+    [InlineData("games", true)]
+    [InlineData("games/sketch", false)]
+    [InlineData("games/jeopardy", false)]
+    [InlineData("games/relay", false)]
+    public void All_games_is_lit_on_the_list_and_not_on_a_game(string current, bool expected)
+    {
+        Assert.Equal(expected, NavTree.IsCurrent("/games", current, exact: true));
+    }
+
+    [Fact]
+    public void Every_game_in_the_menu_lights_up_on_its_own_and_alone()
+    {
+        var games = NavTree.All.Single(e => e.Label == "Games");
+
+        foreach (var game in games.Children!)
+        {
+            var here = game.Href.TrimStart('/');
+            var lit = games.Children!.Where(c => NavTree.IsCurrent(c.Href, here, exact: true)).ToList();
+
+            Assert.Equal([game.Label], lit.Select(c => c.Label));
+        }
+    }
+
+    /// <summary>The branch itself still covers every game underneath it — that part was right.</summary>
+    [Fact]
+    public void The_games_branch_stays_lit_on_every_game()
+    {
+        var games = NavTree.All.Single(e => e.Label == "Games");
+
+        foreach (var game in games.Children!)
+            Assert.True(NavTree.IsCurrent(games.Href, game.Href.TrimStart('/')));
+    }
+
     [Fact]
     public void Every_itinerary_section_in_the_menu_lights_up_on_its_own_and_alone()
     {

@@ -1,0 +1,66 @@
+{
+  "engine": {
+    "cadence_minutes": 5,
+    "priority_order": [
+      "underserved",
+      "contradiction",
+      "proximity",
+      "clue_linked",
+      "faction"
+    ],
+    "delivery": "Silent push to the phone's prompt tray. Never on the main screen. One active prompt per player at a time.",
+    "facilitator_override": "Facilitators can fire any template, or free text, at any player from their console."
+  },
+  "templates": {
+    "underserved": [
+      "You haven't spoken to {name} yet. People who stay quiet at parties are usually holding something.",
+      "{name} has been on the edge of every conversation and inside none of them. Fix that."
+    ],
+    "contradiction": [
+      "Two people have told you different stories about the same hour. One of them was {name}. Ask again, and watch their hands this time.",
+      "Something about {name}'s account doesn't sit right with what you heard elsewhere tonight. Find the seam."
+    ],
+    "proximity": [
+      "You spent the evening in {zone}. So did {name}. They saw what you saw \u2014 or they'll claim they didn't.",
+      "Someone else was in {zone} when it mattered. Compare notes with {name}, carefully."
+    ],
+    "clue_linked": [
+      "The board shows the {clue_name}. You know something about it nobody has said out loud: whose it is.",
+      "Everyone can read the {clue_name} on the screen. Only you can put a name to it. Decide what that's worth."
+    ],
+    "faction": {
+      "killer": [
+        "Someone is getting close to {herring_name}. Help them get closer.",
+        "You've said too little about where you were. Volunteer your alibi to someone before they come asking for it."
+      ],
+      "detective": [
+        "You still hold a sync. {name} has been talking a great deal without saying anything. Consider them.",
+        "Compare your syncs with the other investigators before the vote. A contradiction between two accounts is worth more than either alone."
+      ],
+      "jester": [
+        "You look far too innocent right now. The {clue_name} is unattended.",
+        "Deflect a little worse. Deny a little too loudly. You know how this works."
+      ],
+      "minion": [
+        "One of yours is drawing votes. Be seen doubting the case against them \u2014 gently."
+      ],
+      "inheritance": [
+        "Your rival was seen {rival_seen_snippet}. You could let that circulate without your fingerprints on it."
+      ],
+      "villager": [
+        "You know one true thing nobody has said out loud yet. Say it to the right person.",
+        "Ask {name} where they were when the lights went out. Watch the pause before the answer."
+      ]
+    }
+  },
+  "badge_scanning": {
+    "mechanic": "Every name tag carries a QR. Scanning someone logs an interaction edge with timestamp and both players' zones.",
+    "feeds": [
+      "underserved detection",
+      "contradiction routing (who has told what to whom)",
+      "proximity prompts",
+      "endgame stats screen: most-scanned, least-scanned, the pair who never spoke"
+    ],
+    "player_framing": "Pitched at the party as a mingle game \u2014 scan everyone you meet. Never explained as telemetry."
+  }
+}

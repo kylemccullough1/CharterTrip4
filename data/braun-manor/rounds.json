@@ -1,0 +1,84 @@
+{
+  "rounds": [
+    {
+      "id": "r1_arrival",
+      "name": "The Party",
+      "minutes": 15,
+      "screen": "Welcome to Braun Manor. Mingle. Introduce yourself. Enjoy the evening.",
+      "mechanics": ["No roles exist yet.", "Host (Braun) explains phones, map tab, notes tab, badge scanning — framed as party novelty.", "Badge scans begin populating the interaction graph."]
+    },
+    {
+      "id": "murder",
+      "name": "The Murder",
+      "minutes": 3,
+      "screen": "WHITE FLASH → lightning crack → the scream.",
+      "mechanics": [
+        "Facilitators kill the lights and place all 9 physical clue QRs (pre-printed per this game's generation).",
+        "Braun's player exits play; switches to game-master screen.",
+        "Roles, factions, briefings, and cover stories push to all phones.",
+        "Main screen: the study scene text. The bloody QR is live at the study for anyone who walks there."
+      ]
+    },
+    {
+      "id": "r2_investigation",
+      "name": "Investigation",
+      "minutes": 30,
+      "screen": "James Braun is dead. His body is missing. Everyone here saw something. Find out what.",
+      "unlocks": ["clue_qrs", "detective_sync", "jester_self_frame", "prompt_engine"],
+      "mechanics": ["Prompt engine begins 5-minute cadence.", "Witness statements live on each phone: 2-3 facts about co-located characters."]
+    },
+    {
+      "id": "trial_1",
+      "name": "First Trial",
+      "minutes": 14,
+      "convictions": 2,
+      "procedure": "see trial_procedure"
+    },
+    {
+      "id": "r3_discussion",
+      "name": "The House Settles",
+      "minutes": 10,
+      "screen": "Announces IF any clue has been tampered with (never which).",
+      "unlocks": ["detective_tamper_check", "braun_dig_dirt"]
+    },
+    {
+      "id": "trial_2",
+      "name": "Second Trial",
+      "minutes": 14,
+      "convictions": 2,
+      "procedure": "see trial_procedure"
+    },
+    {
+      "id": "r4_endgame",
+      "name": "Last Hours",
+      "minutes": 10,
+      "screen": "Tampering status update. The walls feel closer.",
+      "unlocks": ["detective_killer_check", "minion_blame_take", "killer_false_plant"]
+    },
+    {
+      "id": "trial_3",
+      "name": "Final Trial",
+      "minutes": 14,
+      "convictions": 2,
+      "procedure": "see trial_procedure"
+    },
+    {
+      "id": "reveal",
+      "name": "The Whole Truth",
+      "minutes": 10,
+      "screen": "Full solution: the killers, the method, the route, the order. Then every faction, every winner — jesters and Braun claimants folded into the winners' list here, first anyone's heard of it.",
+      "mechanics": ["Reveal order: the murder reconstruction → killers → minions → detectives → jesters → Braun claim → winners list."]
+    }
+  ],
+  "trial_procedure": {
+    "phase_1": "Open vote, 3 minutes, all living players, on phones. Live tally on main screen as silhouettes, not names, until close.",
+    "phase_2": "Top 4 vote-getters are nominated. Ties at the cut: all tied players nominated.",
+    "phase_3": "Each nominee gets 45 seconds of final words. Order: fewest votes first.",
+    "phase_4": "Final vote among nominees only, 2 minutes. Every living non-nominee votes.",
+    "phase_5": "Top 2 convicted. Tie at the cut: revote between tied players only; if still tied, the earlier open-vote tally decides.",
+    "phase_6": "Conviction reveal: faction card on the main screen. Killers show as KILLER (unless blame-taken). Minions as SYNDICATE ASSOCIATE. Jesters and Braun claimants show as GUEST. Detectives and villagers show as GUEST. Full truth waits for endgame.",
+    "early_end": "If all 3 killers are convicted (truly — blame-take suppresses the tick), the game ends at that trial. Killers caught, town wins, straight to reveal. Jesters and Brauns who haven't scored by then are out of time — they know this, and it should make them reckless."
+  },
+  "reveal_card_note": "Non-killer convictions all show as GUEST during play. Revealing 'detective' or 'villager' mid-game hands the killers a kill-list confirmation for free; revealing 'jester' ends the fun of the silent win. GUEST keeps every conviction ambiguous.",
+  "total_runtime_minutes": 110
+}

@@ -1,0 +1,56 @@
+{
+  "main_screen": {
+    "states": {
+      "party": {
+        "when": "Round 1",
+        "layout": "Full roster grid + timer + phase banner ('Mingle. Introduce yourself.'). No map, no clues \u2014 nothing has happened yet."
+      },
+      "murder_cinematic": {
+        "when": "The murder trigger",
+        "layout": "White flash \u2192 lightning crack audio \u2192 the scream \u2192 cut to black \u2192 the announcement text. Overrides everything for 3 minutes."
+      },
+      "investigation": {
+        "when": "R2, R3, R4",
+        "layout": "Three-panel: MAP (left), CLUE FEED (right), ROSTER (bottom strip). Header: round name, countdown, phase instruction, tamper announce banner when active."
+      },
+      "trial": {
+        "when": "All trials",
+        "layout": "Full takeover: nominee photos large, open-vote tally as anonymous silhouettes until close, 45s defense timer per nominee, then conviction reveal cards. Ghost reaction emoji float up the sides."
+      },
+      "reveal": {
+        "when": "Endgame",
+        "layout": "The reconstruction, then faction-by-faction reveals per story_beats reveal order, then the winners screen, then the stats screen."
+      }
+    },
+    "panels": {
+      "roster": {
+        "shows": [
+          "player photo (from invitation flow)",
+          "chosen name",
+          "character title",
+          "status"
+        ],
+        "status_states": {
+          "alive": "full color",
+          "convicted": "greyscale + revealed card label (KILLER / SYNDICATE ASSOCIATE / GUEST per reveal policy) + a small ghost icon",
+          "braun": "James Braun's portrait gains a black ribbon after the murder. He stays on the board all night."
+        }
+      },
+      "map": {
+        "shows": "Floor plan, west wing greyed out. Each zone's clue spot renders as: UNSEARCHED (dim pin) / FOUND (lit pin, links to clue feed entry). Pins pulse for 30s when a new clue is scanned.",
+        "note": "Zone occupancy of players is NEVER shown. The map tracks evidence, not people \u2014 badge data stays with the engine."
+      },
+      "clue_feed": {
+        "shows": "Every scanned clue: zone name, clue title, full current text, finder's character name, scan timestamp.",
+        "version_rule": "The feed displays the LATEST-SCANNED version of each clue's text. Tampering does not auto-update the board \u2014 the lie propagates only when someone physically re-scans the clue. Forensics results are never shown here; they go to the detective's phone alone.",
+        "finder_shown": true,
+        "finder_note": "Finder visibility is a deliberate knob: it credits hunters, and it makes re-scanning a tampered clue a public act. Flip to anonymous if playtest shows scan-shyness."
+      },
+      "tamper_banner": {
+        "shows": "'A CLUE HAS BEEN TAMPERED WITH' \u2014 persistent banner from the round after any tamper, per existing announce rules. Never says which clue, which round it happened, or how many.",
+        "design_intent": "The room re-reads the whole feed and argues about what changed. Players who photographed or noted early clue text become suddenly valuable."
+      }
+    },
+    "data_sources": "Roster from registration flow. Map/clue feed from the clue-scan graph. Status from trial results + reveal policy (rounds.json). Trial panels from the vote service. Ghost overlay from the ghost message service."
+  }
+}

@@ -1,0 +1,85 @@
+@* Where a game stands, and the way to take back the last thing that was tapped.
+
+   Both read from the trip's score log rather than anything this component keeps, so an undo
+   is a deletion and the board underneath it cannot end up disagreeing. *@
+
+@inject ITripStore Store
+
+<div class="hero-board">
+    <div class="hero-board-head">
+        <span class="hb-label">@Label</span>
+        @if (Actions is not null)
+        {
+            <div class="row gap">@Actions</div>
+        }
+    </div>
+
+    <div class="hb-rows">
+        @{
+            var rows = ScoreService.Scoreboard(Trip, GameId).OrderByDescending(r => r.Score).ToList();
+            var top = rows.Count > 0 ? Math.Max(1, rows[0].Score) : 1;
+            var anyScores = rows.Any(r => r.Score > 0);
+        }
+        @for (var i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            var pct = Math.Max(3, (int)(Math.Max(0, row.Score) / (double)top * 100));
+            <div class="hb-row @(i == 0 && anyScores ? "hb-lead" : null)" @key="row.Team.Id">
+                <span class="hb-rank">@(i + 1)</span>
+                <span class="hb-dot" style="background: @row.Team.Color"></span>
+                <span class="hb-name">@row.Team.Name</span>
+                <span class="hb-bar"><i style="width: @pct%; background: @row.Team.Color"></i></span>
+                <span class="hb-pts">@row.Score</span>
+            </div>
+        }
+    </div>
+</div>
+
+@{ var recent = ScoreService.RecentFor(Trip, GameId).Take(Take).ToList(); }
+@if (recent.Count > 0)
+{
+    <div class="score-recent">
+        <p class="hb-label">Awarded so far</p>
+        @foreach (var entry in recent)
+        {
+            var team = TeamService.FindTeam(Trip, entry.TeamId);
+            <div class="score-recent-row" @key="entry.Id">
+                <span class="hb-dot" style="background: @(team?.Color ?? "var(--gold)")"></span>
+                <span class="score-recent-team">@(team?.Name ?? entry.TeamId)</span>
+                <span class="score-recent-pts">@(entry.Points > 0 ? "+" : "")@entry.Points</span>
+                <span class="score-recent-note muted">@entry.Note</span>
+                @if (CanEdit)
+                {
+                    <IconButton Icon="IconButtonIcon.Close"
+                                Tone="danger"
+                                Title="Take this back"
+                                CssClass="score-undo"
+                                OnClick="@(() => UndoAsync(entry.Id))" />
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [CascadingParameter] private TripPermissions Permissions { get; set; } = new(false, "Guest");
+
+    [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
+    [Parameter, EditorRequired] public string GameId { get; set; } = "";
+
+    [Parameter] public string Label { get; set; } = "This game";
+
+    /// <summary>How many of the most recent awards to offer an undo for.</summary>
+    [Parameter] public int Take { get; set; } = 8;
+
+    [Parameter] public RenderFragment? Actions { get; set; }
+
+    private bool CanEdit => Permissions.CanEdit;
+
+    /// <summary>
+    /// No confirmation on the way out: one row is a small, obvious thing to lose and putting
+    /// it back is another tap. The dialog is saved for resetting the whole game.
+    /// </summary>
+    private Task UndoAsync(string entryId) =>
+        Store.MutateAsync(t => ScoreService.Undo(t, entryId), TripArea.Games);
+}

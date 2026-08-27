@@ -1,0 +1,84 @@
+@* Pool Noodle Cups and Beer Run are the same screen with a different noun: after each round,
+   say how many each team carried off and the points follow. One component rather than two
+   near-identical ones, because the only thing that differs is the word "cups". *@
+
+@inject ITripStore Store
+
+<SectionCard Title="@($"Round {State.Round}")"
+             Subtitle="@($"{State.PointValue} points per {Unit}. Leave a team on zero and nothing is written down for them.")">
+    <div class="count-grid">
+        @foreach (var team in Trip.Teams)
+        {
+            var id = team.Id;
+            <div class="count-card" style="--team:@team.Color" @key="id">
+                <span class="count-team">@team.Name</span>
+                <div class="count-controls">
+                    <button type="button" class="btn btn-ghost btn-sm" @onclick="() => Nudge(id, -1)">−</button>
+                    <input class="numfield count-input" type="number" min="0" value="@Count(id)"
+                           @onchange="e => Set(id, e.Value?.ToString())" />
+                    <button type="button" class="btn btn-ghost btn-sm" @onclick="() => Nudge(id, 1)">+</button>
+                </div>
+                <span class="count-points">@(Count(id) * State.PointValue) pts</span>
+            </div>
+        }
+    </div>
+
+    <div class="row gap mt">
+        <button class="btn btn-gold" @onclick="ScoreRoundAsync" disabled="@(Total == 0)">
+            @(IsLastRound ? "Score the round and finish" : "Score the round")
+        </button>
+        <button class="btn btn-ghost btn-sm" @onclick="SkipAsync">Skip the round</button>
+    </div>
+    @if (Total == 0)
+    {
+        <p class="muted tiny">Nothing to score yet — add a @Unit to at least one team.</p>
+    }
+</SectionCard>
+
+@code {
+    [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
+    [Parameter, EditorRequired] public RoundGame State { get; set; } = default!;
+    [Parameter, EditorRequired] public string GameId { get; set; } = "";
+
+    /// <summary>What is being counted, plural: "cups", "beers".</summary>
+    [Parameter, EditorRequired] public string Unit { get; set; } = "";
+
+    /// <summary>Reaches into the live trip to find this game's state, since the parameter is a snapshot.</summary>
+    [Parameter, EditorRequired] public Func<TripData, RoundGame> Select { get; set; } = default!;
+
+    /// <summary>This round's tally, per team. Local until the round is scored.</summary>
+    private readonly Dictionary<string, int> _counts = new(StringComparer.Ordinal);
+
+    private int Count(string teamId) => _counts.GetValueOrDefault(teamId);
+
+    private int Total => Trip.Teams.Sum(t => Count(t.Id));
+
+    private bool IsLastRound => State.Round >= State.RoundCount;
+
+    private void Set(string teamId, string? raw) =>
+        _counts[teamId] = int.TryParse(raw, out var value) && value > 0 ? value : 0;
+
+    private void Nudge(string teamId, int by) =>
+        _counts[teamId] = Math.Max(0, Count(teamId) + by);
+
+    private async Task ScoreRoundAsync()
+    {
+        if (Total == 0) return;
+
+        var counts = _counts.ToDictionary(kv => kv.Key, kv => kv.Value);
+        var unit = Unit;
+        var gameId = GameId;
+
+        await Store.MutateAsync(
+            t => RoundGameService.AwardRoundCounts(t, Select(t), gameId, counts, unit, DateTimeOffset.UtcNow),
+            TripArea.Games);
+
+        _counts.Clear();
+    }
+
+    private async Task SkipAsync()
+    {
+        await Store.MutateAsync(t => RoundGameService.NextRound(Select(t)), TripArea.Games);
+        _counts.Clear();
+    }
+}

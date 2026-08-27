@@ -13,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 18;
+    public const int CurrentVersion = 19;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -33,6 +33,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 12) changed |= ToV12_CheckInIsTwo(trip);
         if (trip.SchemaVersion < 13) changed |= ToV13_MenuBoard(trip);
         if (trip.SchemaVersion < 14) changed |= ToV14_GroupedEssentials(trip);
+        if (trip.SchemaVersion < 19) changed |= ToV19_PartyGames(trip);
 
         // v18 gave a carpool's ETA a day to go with the time. No step, same as the two
         // before it: the field defaults to empty and an older file simply has not said.
@@ -340,6 +341,28 @@ public static class TripMigrations
         game.BuzzersOpen = false;
         game.Buzzes.Clear();
         game.LockedOutTeamIds.Clear();
+        return true;
+    }
+
+    /// <summary>
+    /// The four games played on their feet got screens of their own, which means point values,
+    /// round counts and Police Sketch's character list now have to live somewhere rather than
+    /// being written on the back of the budget sheet.
+    ///
+    /// Taken from the seed, like the board at v9 and the guide at v11, so the numbers have one
+    /// home. Only ever fills a set that has never been played or edited — a point value someone
+    /// has since changed is left alone.
+    /// </summary>
+    private static bool ToV19_PartyGames(TripData trip)
+    {
+        var party = trip.Party;
+        var untouched =
+            party.Sketch.PointValue == 0 && party.Sketch.Prompts.Count == 0 &&
+            party.NoodleCup.PointValue == 0 && party.BeerRun.PointValue == 0;
+
+        if (!untouched) return false;
+
+        trip.Party = SeedLoader.Load().Party;
         return true;
     }
 

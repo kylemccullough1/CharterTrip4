@@ -1,0 +1,263 @@
+@page "/games/relay"
+@inherits TripAwareComponent
+
+@* The relay is four clocks. Each team lead opens this on their own phone and claims the team
+   they are running, which makes that clock the big one with the button under it; the other
+   three stay small so they can still see the race. The claim is this phone's business only —
+   it is not written down, because it says nothing about the race, only about who is holding
+   which handset. Starting and stopping is written down, which is what keeps all four in step. *@
+
+<PageTitle>Relay Race · Charter Trip 2026</PageTitle>
+
+<AdminOnly>
+<div class="page">
+    @if (Game is null)
+    {
+        <SectionCard Title="Relay Race" Subtitle="This game is not in the trip data.">
+            <a class="btn btn-gold btn-sm" href="/games">See all games</a>
+        </SectionCard>
+    }
+    else if (State.Phase == PartyGamePhase.NotStarted)
+    {
+        <GameSetup Game="Game" OnStart="StartAsync" StartLabel="Set up the clocks">
+            <Structure>
+                <p><b>@State.WinnerPoints points</b> to the first team to finish — and nobody else.</p>
+                <p>
+                    <b>@State.SmallTeamPoints points</b> instead if the winning team is
+                    @State.SmallTeamSize or fewer, for running the same legs a person short.
+                </p>
+            </Structure>
+            <Settings>
+                <div class="settings-row">
+                    <label class="field">
+                        <span>Winner</span>
+                        <input class="numfield" type="number" min="0" value="@State.WinnerPoints"
+                               @onchange="e => SetAsync(e.Value?.ToString(), (g, v) => g.WinnerPoints = v)" />
+                    </label>
+                    <label class="field">
+                        <span>Short-handed winner</span>
+                        <input class="numfield" type="number" min="0" value="@State.SmallTeamPoints"
+                               @onchange="e => SetAsync(e.Value?.ToString(), (g, v) => g.SmallTeamPoints = v)" />
+                    </label>
+                    <label class="field">
+                        <span>Short-handed at</span>
+                        <input class="numfield" type="number" min="1" value="@State.SmallTeamSize"
+                               @onchange="e => SetAsync(e.Value?.ToString(), (g, v) => g.SmallTeamSize = v)" />
+                    </label>
+                </div>
+                <p class="muted tiny">
+                    Team sizes come from the roster:
+                    @string.Join(", ", TeamService.Rosters(Trip).Select(r => $"{r.Team.Name} {r.Count}")).
+                </p>
+            </Settings>
+        </GameSetup>
+    }
+    else if (State.Phase == PartyGamePhase.Playing)
+    {
+        <div class="game-head">
+            <div class="grow">
+                <h1 class="game-title">Relay Race</h1>
+                <p class="game-meta">
+                    @if (_claimed is null)
+                    {
+                        <text>Tap your team to take their clock.</text>
+                    }
+                    else
+                    {
+                        <text>You have <b>@(TeamService.FindTeam(Trip, _claimed)?.Name)</b>.</text>
+                    }
+                </p>
+            </div>
+            <button class="btn btn-ghost btn-sm" @onclick="ConfirmReset">Reset</button>
+        </div>
+
+        @if (_claimed is { } mine && Timer(mine) is { } myTimer)
+        {
+            var team = TeamService.FindTeam(Trip, mine);
+            <section class="relay-mine" style="--team:@(team?.Color ?? "var(--gold)")">
+                <p class="hb-label">@team?.Name</p>
+                <p class="relay-clock-big @(myTimer.Running ? "is-running" : null)">@Clock(myTimer)</p>
+
+                @if (myTimer.Stopped)
+                {
+                    <p class="muted">Finished. Waiting on the rest of the race.</p>
+                    <button class="btn btn-ghost btn-sm" @onclick="() => ResetTimerAsync(mine)">Undo the finish</button>
+                }
+                else if (myTimer.Running)
+                {
+                    <button class="btn btn-lg btn-danger relay-action" @onclick="() => StopAsync(mine)">Stop</button>
+                }
+                else
+                {
+                    <button class="btn btn-lg btn-gold relay-action" @onclick="() => StartAsync(mine)">Start</button>
+                }
+
+                <button class="btn btn-ghost btn-xs" @onclick="() => _claimed = null">Hand this clock back</button>
+            </section>
+        }
+
+        <SectionCard Title="The race">
+            <div class="relay-grid">
+                @foreach (var team in Trip.Teams)
+                {
+                    var id = team.Id;
+                    var timer = Timer(id);
+                    var isMine = _claimed == id;
+                    <div class="relay-card @(isMine ? "is-mine" : null) @(timer?.Running == true ? "is-running" : null)"
+                         style="--team:@team.Color" @key="id">
+                        <span class="relay-team">@team.Name</span>
+                        <span class="relay-clock">@Clock(timer)</span>
+                        @if (isMine)
+                        {
+                            <span class="chip on">Yours</span>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-ghost btn-xs" @onclick="() => _claimed = id">Take this clock</button>
+                        }
+                    </div>
+                }
+            </div>
+
+            @if (AllStopped)
+            {
+                <div class="relay-finish">
+                    @if (RelayService.WinningTeamId(State) is { } winnerId)
+                    {
+                        var winner = TeamService.FindTeam(Trip, winnerId);
+                        <p>
+                            <b>@winner?.Name</b> took it in <b>@Clock(Timer(winnerId))</b> —
+                            <b>@RelayService.PointsForWinner(Trip, State, winnerId) points</b>.
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="muted">A dead heat. Nobody can be paid for this one — reset a clock and run it again.</p>
+                    }
+                    <button class="btn btn-gold btn-lg" @onclick="FinishAsync">End the race</button>
+                </div>
+            }
+        </SectionCard>
+
+        <GameScoreStrip Trip="Trip" GameId="@RelayService.GameId" Label="Relay Race" />
+    }
+    else
+    {
+        <GameVictory Rows="ScoreService.Scoreboard(Trip, RelayService.GameId)"
+                     Winner="ScoreService.Leader(Trip, RelayService.GameId)"
+                     Kicker="Relay Race"
+                     Subtitle="@FinishedSubtitle">
+            <Actions>
+                <button class="btn btn-ghost btn-lg" @onclick="ConfirmReset">Run it again</button>
+            </Actions>
+        </GameVictory>
+    }
+</div>
+
+<ConfirmDialog @ref="_confirm" />
+</AdminOnly>
+
+@code {
+    protected override TripArea Watching => TripArea.Games;
+
+    private ConfirmDialog? _confirm;
+
+    /// <summary>Which clock this phone is working. Local on purpose — see the note at the top.</summary>
+    private string? _claimed;
+
+    private CancellationTokenSource? _ticking;
+
+    private Game? Game => Trip.Games.FirstOrDefault(g => g.Id == RelayService.GameId);
+    private RelayGame State => Trip.Party.Relay;
+
+    private RelayTimer? Timer(string teamId) => State.Timers.GetValueOrDefault(teamId);
+
+    private bool AllStopped => RelayService.AllStopped(State, Trip.Teams);
+
+    private string FinishedSubtitle =>
+        RelayService.WinningTeamId(State) is { } id && Timer(id) is { ElapsedMs: { } ms }
+            ? RelayService.Clock(ms)
+            : "";
+
+    /// <summary>A running clock is read off the start instant, so every phone shows the same time.</summary>
+    private string Clock(RelayTimer? timer)
+    {
+        if (timer is null) return RelayService.Clock(0);
+        if (timer.ElapsedMs is { } done) return RelayService.Clock(done);
+        if (timer.StartedAt is { } started)
+            return RelayService.Clock((int)(DateTimeOffset.UtcNow - started).TotalMilliseconds);
+
+        return RelayService.Clock(0);
+    }
+
+    private Task StartAsync() => MutateAsync(t => RelayService.Begin(t.Party.Relay, t.Teams));
+
+    private Task StartAsync(string teamId) =>
+        MutateAsync(t => RelayService.StartTimer(t.Party.Relay, teamId, DateTimeOffset.UtcNow));
+
+    private Task StopAsync(string teamId) =>
+        MutateAsync(t => RelayService.StopTimer(t.Party.Relay, teamId, DateTimeOffset.UtcNow));
+
+    private Task ResetTimerAsync(string teamId) =>
+        MutateAsync(t => RelayService.ResetTimer(t.Party.Relay, teamId));
+
+    private Task FinishAsync() =>
+        MutateAsync(t => RelayService.Finish(t, t.Party.Relay, DateTimeOffset.UtcNow));
+
+    private void ConfirmReset() => _confirm?.Show(
+        "This clears the Relay Race's points and all four clocks. Nothing else is touched.",
+        () => MutateAsync(t => RelayService.Reset(t, t.Party.Relay)),
+        "Reset the race",
+        "Reset Relay Race");
+
+    private Task SetAsync(string? raw, Action<RelayGame, int> apply) =>
+        int.TryParse(raw, out var value) && value >= 0
+            ? MutateAsync(t => apply(t.Party.Relay, value))
+            : Task.CompletedTask;
+
+    // ------------------------------------------------------------------ the tick
+
+    /// <summary>
+    /// A running clock has to redraw itself: nothing is being written down while it runs, so no
+    /// change notification is coming. Ten frames a second is enough to read a tenth, and the
+    /// loop only spins while a clock is actually going.
+    /// </summary>
+    protected override void OnAfterRender(bool firstRender)
+    {
+        var anyRunning = State.Timers.Values.Any(t => t.Running);
+
+        if (anyRunning && _ticking is null) StartTicking();
+        else if (!anyRunning && _ticking is not null) StopTicking();
+    }
+
+    private void StartTicking()
+    {
+        var cts = new CancellationTokenSource();
+        _ticking = cts;
+
+        _ = Task.Run(async () =>
+        {
+            using var beat = new PeriodicTimer(TimeSpan.FromMilliseconds(100));
+            try
+            {
+                while (await beat.WaitForNextTickAsync(cts.Token))
+                    await InvokeAsync(StateHasChanged);
+            }
+            catch (OperationCanceledException) { /* the last clock stopped */ }
+            catch (ObjectDisposedException) { /* the page went away mid-tick */ }
+        }, cts.Token);
+    }
+
+    private void StopTicking()
+    {
+        _ticking?.Cancel();
+        _ticking?.Dispose();
+        _ticking = null;
+    }
+
+    public override void Dispose()
+    {
+        StopTicking();
+        base.Dispose();
+    }
+}

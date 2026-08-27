@@ -19,7 +19,7 @@
         }
 
         <SectionCard Title="Games"
-                     Subtitle="@($"{Trip.Games.Count + 1} events across the weekend. Rules are live; scoring arrives in phase 4.")">
+                     Subtitle="@($"{Trip.Games.Count + 1} events across the weekend.")">
             <div class="game-grid">
                 @foreach (var game in Trip.Games)
                 {
@@ -71,18 +71,13 @@
             </div>
         </SectionCard>
 
+        @* Every game that has a screen of its own claims its route ahead of this one, so what
+           lands here is a game still played entirely off the site — the spelling bee. It gets
+           its rules and the weekend scoreboard, which is all it needs. *@
         <SectionCard Title="Scoring">
-            <div class="card coming-soon">
-                <p class="coming-badge">Phase 4</p>
-                <p>
-                    Live scoring for this game lands with the rest of the games work.
-                    @if (Game.Id == "jeopardy")
-                    {
-                        <text>
-                            The full board — 25 clues, both image clues, and phone buzzers — is already
-                            seeded in <code>trip.json</code> and just needs its screen.
-                        </text>
-                    }
+            <div class="card">
+                <p class="muted">
+                    Scored on paper. Add the points from the standings on the home page when it's done.
                 </p>
             </div>
         </SectionCard>

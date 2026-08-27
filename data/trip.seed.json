@@ -803,6 +803,54 @@
       ]
     }
   ],
+  "party": {
+    "sketch": {
+      "phase": "notStarted",
+      "pointValue": 20,
+      "roundCount": 5,
+      "round": 1,
+      "prompts": [
+        "Shrek",
+        "Edna Mode",
+        "Snoopy",
+        "Charlie Brown",
+        "Caillou",
+        "Dora",
+        "Minion",
+        "Phineas and Ferb",
+        "Winnie the Pooh",
+        "Buzz Lightyear",
+        "Pikachu",
+        "Johnny Bravo",
+        "Sid the Sloth",
+        "Hyperpigmentation"
+      ],
+      "usedPrompts": []
+    },
+    "noodleCup": {
+      "phase": "notStarted",
+      "pointValue": 10,
+      "roundCount": 6,
+      "round": 1,
+      "prompts": [],
+      "usedPrompts": []
+    },
+    "beerRun": {
+      "phase": "notStarted",
+      "pointValue": 10,
+      "roundCount": 4,
+      "round": 1,
+      "prompts": [],
+      "usedPrompts": []
+    },
+    "relay": {
+      "phase": "notStarted",
+      "winnerPoints": 100,
+      "smallTeamPoints": 120,
+      "smallTeamSize": 5,
+      "timers": {}
+    }
+  },
   "jeopardy": {
     "title": "4th Annual Charter Trip Jeopardy",
     "categories": [

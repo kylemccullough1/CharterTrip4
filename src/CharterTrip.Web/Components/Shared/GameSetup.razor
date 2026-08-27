@@ -1,0 +1,90 @@
+@* The card every game opens on: what the rules are, what the points are worth, and the button
+   that starts it. Settings hide behind Edit so the ordinary case — walk up, read it, start —
+   is not a screen full of input boxes. *@
+
+<div class="game-head">
+    <div class="grow">
+        <h1 class="game-title">@Game.Name</h1>
+        <p class="game-meta"><b>@Game.When</b> · hosted by <b>@Game.Host</b></p>
+        <p class="game-blurb">@Game.Blurb</p>
+    </div>
+    <a class="btn btn-ghost btn-sm" href="/games">← All games</a>
+</div>
+
+<SectionCard Title="How it scores">
+    <Actions>
+        @if (CanEdit)
+        {
+            <button class="btn btn-ghost btn-sm" @onclick="() => _editing = !_editing">
+                @(_editing ? "Done" : "Edit")
+            </button>
+        }
+    </Actions>
+    <ChildContent>
+        <div class="card game-structure">
+            @Structure
+        </div>
+
+        @if (_editing && CanEdit && Settings is not null)
+        {
+            <div class="card game-settings">
+                <p class="hb-label">Settings</p>
+                @Settings
+            </div>
+        }
+    </ChildContent>
+</SectionCard>
+
+<SectionCard Title="Rules">
+    <div class="card rules-card">
+        <ul class="rules">
+            @foreach (var rule in Game.Rules)
+            {
+                <li>@rule</li>
+            }
+        </ul>
+        @if (Game.Legs.Count > 0)
+        {
+            <h4 class="mt">Legs</h4>
+            <ol class="rules">
+                @foreach (var leg in Game.Legs)
+                {
+                    <li>@leg</li>
+                }
+            </ol>
+        }
+    </div>
+</SectionCard>
+
+@if (CanEdit)
+{
+    <div class="game-start">
+        <button class="btn btn-gold btn-lg" @onclick="OnStart" disabled="@(!CanStart)">@StartLabel</button>
+        @if (!CanStart && StartBlockedReason is { Length: > 0 })
+        {
+            <p class="muted tiny">@StartBlockedReason</p>
+        }
+    </div>
+}
+
+@code {
+    [CascadingParameter] private TripPermissions Permissions { get; set; } = new(false, "Guest");
+
+    [Parameter, EditorRequired] public Game Game { get; set; } = default!;
+
+    /// <summary>What the points are worth, in words. Always on show.</summary>
+    [Parameter] public RenderFragment? Structure { get; set; }
+
+    /// <summary>The same numbers, editable. Behind the Edit button.</summary>
+    [Parameter] public RenderFragment? Settings { get; set; }
+
+    [Parameter] public EventCallback OnStart { get; set; }
+    [Parameter] public string StartLabel { get; set; } = "Start the game";
+
+    [Parameter] public bool CanStart { get; set; } = true;
+    [Parameter] public string? StartBlockedReason { get; set; }
+
+    private bool _editing;
+
+    private bool CanEdit => Permissions.CanEdit;
+}

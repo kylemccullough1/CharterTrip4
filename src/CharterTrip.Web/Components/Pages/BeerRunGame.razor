@@ -1,0 +1,94 @@
+@page "/games/beerrun"
+@inherits TripAwareComponent
+
+@* Beer Run. Same shape as the cups: one player per team per round, count what they got home. *@
+
+<PageTitle>Beer Run · Charter Trip 2026</PageTitle>
+
+<AdminOnly>
+<div class="page">
+    @if (Game is null)
+    {
+        <SectionCard Title="Beer Run" Subtitle="This game is not in the trip data.">
+            <a class="btn btn-gold btn-sm" href="/games">See all games</a>
+        </SectionCard>
+    }
+    else if (State.Phase == PartyGamePhase.NotStarted)
+    {
+        <GameSetup Game="Game" OnStart="StartAsync">
+            <Structure>
+                <p><b>@State.PointValue points</b> for every beer collected.</p>
+                <p><b>@State.RoundCount rounds</b>, one player per team per round.</p>
+            </Structure>
+            <Settings>
+                <div class="settings-row">
+                    <label class="field">
+                        <span>Points per beer</span>
+                        <input class="numfield" type="number" min="0" value="@State.PointValue"
+                               @onchange="e => SetPointValueAsync(e.Value?.ToString())" />
+                    </label>
+                    <label class="field">
+                        <span>Rounds</span>
+                        <input class="numfield" type="number" min="1" value="@State.RoundCount"
+                               @onchange="e => SetRoundCountAsync(e.Value?.ToString())" />
+                    </label>
+                </div>
+            </Settings>
+        </GameSetup>
+    }
+    else if (State.Phase == PartyGamePhase.Playing)
+    {
+        <div class="game-head">
+            <div class="grow">
+                <h1 class="game-title">Beer Run</h1>
+                <p class="game-meta">Round <b>@State.Round</b> of <b>@State.RoundCount</b> · @State.PointValue points a beer</p>
+            </div>
+            <button class="btn btn-ghost btn-sm" @onclick="ConfirmReset">Reset</button>
+        </div>
+
+        <CountRoundBoard Trip="Trip" State="State" GameId="@RoundGameService.BeerRunId"
+                         Unit="beers" Select="t => t.Party.BeerRun" />
+
+        <GameScoreStrip Trip="Trip" GameId="@RoundGameService.BeerRunId" Label="Beer Run" />
+    }
+    else
+    {
+        <GameVictory Rows="ScoreService.Scoreboard(Trip, RoundGameService.BeerRunId)"
+                     Winner="ScoreService.Leader(Trip, RoundGameService.BeerRunId)"
+                     Kicker="Beer Run">
+            <Actions>
+                <button class="btn btn-ghost btn-lg" @onclick="ConfirmReset">Play again</button>
+            </Actions>
+        </GameVictory>
+    }
+</div>
+
+<ConfirmDialog @ref="_confirm" />
+</AdminOnly>
+
+@code {
+    protected override TripArea Watching => TripArea.Games;
+
+    private ConfirmDialog? _confirm;
+
+    private Game? Game => Trip.Games.FirstOrDefault(g => g.Id == RoundGameService.BeerRunId);
+    private RoundGame State => Trip.Party.BeerRun;
+
+    private Task StartAsync() => MutateAsync(t => RoundGameService.Begin(t.Party.BeerRun));
+
+    private void ConfirmReset() => _confirm?.Show(
+        "This clears Beer Run's points and puts the game back to the rules card. Nothing else is touched.",
+        () => MutateAsync(t => RoundGameService.Reset(t, t.Party.BeerRun, RoundGameService.BeerRunId)),
+        "Reset the game",
+        "Reset Beer Run");
+
+    private Task SetPointValueAsync(string? raw) =>
+        int.TryParse(raw, out var value) && value >= 0
+            ? MutateAsync(t => t.Party.BeerRun.PointValue = value)
+            : Task.CompletedTask;
+
+    private Task SetRoundCountAsync(string? raw) =>
+        int.TryParse(raw, out var value) && value >= 1
+            ? MutateAsync(t => t.Party.BeerRun.RoundCount = value)
+            : Task.CompletedTask;
+}

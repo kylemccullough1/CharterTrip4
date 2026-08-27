@@ -1,0 +1,58 @@
+@* The end of a game: who won, what everybody finished on, and the way back out.
+
+   The celebration itself is Jeopardy's — same diamonds, same pop — because a second one that
+   was almost the same would only be a second thing to keep in step. *@
+
+@using CharterTrip.Core.Models
+
+<section class="jeo-win">
+    <div class="jeo-win-burst" aria-hidden="true">
+        @for (var i = 0; i < 12; i++)
+        {
+            <span style="--i:@i"></span>
+        }
+    </div>
+
+    <p class="jeo-kicker">@Kicker</p>
+    <h1 class="jeo-win-name" style="--team:@(Winner?.Color ?? "var(--gold)")">@(Winner?.Name ?? "No winner")</h1>
+
+    @if (Subtitle is { Length: > 0 })
+    {
+        <p class="jeo-reveal-who">@Subtitle</p>
+    }
+
+    <div class="jeo-final-grid">
+        @foreach (var (team, score) in Rows.OrderByDescending(r => r.Score))
+        {
+            <div class="jeo-final-card @(Winner is not null && team.Id == Winner.Id ? "is-winner" : null)"
+                 style="--team:@team.Color" @key="team.Id">
+                <span class="jeo-join-team">@team.Name</span>
+                <p class="jeo-final-score">@score</p>
+            </div>
+        }
+    </div>
+
+    <div class="jeo-title-actions">
+        <a class="btn btn-gold btn-lg" href="/">Home</a>
+        @if (Actions is not null)
+        {
+            @Actions
+        }
+    </div>
+</section>
+
+@code {
+    /// <summary>Every team and what they finished this game on.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<(Team Team, int Score)> Rows { get; set; } = [];
+
+    /// <summary>The winner, or null for a tie or a game nobody scored in.</summary>
+    [Parameter] public Team? Winner { get; set; }
+
+    [Parameter] public string Kicker { get; set; } = "Final scores";
+
+    /// <summary>A line under the name — the winning time, say.</summary>
+    [Parameter] public string? Subtitle { get; set; }
+
+    /// <summary>Anything to offer beside the way home, such as playing it again.</summary>
+    [Parameter] public RenderFragment? Actions { get; set; }
+}

@@ -1527,7 +1527,9 @@ pre.code {
 .jeo-reveal-label { font-size: 0.688rem; letter-spacing: .22em; text-transform: uppercase; color: var(--text-faint); margin: 0; }
 .jeo-reveal-who { font-size: clamp(0.938rem, 1.8vw, 1.313rem); margin: 4px 0 0; }
 
-/* the winner */
+/* The winner. Shared by every game that ends in one — Jeopardy named these first, and the
+   four games played on their feet render the same celebration through GameVictory rather
+   than each growing a near-identical copy of it. */
 .jeo-win {
   position: relative; flex: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -2675,3 +2677,107 @@ pre.code {
 /* The street address under the Where row: its own line, quieter than the name of the house. */
 .ess-address { display: block; margin-top: 3px; color: var(--text-dim); font-size: 0.844rem; }
 .when-sep { color: var(--text-faint); }
+
+/* ==========================================================================
+   The four games played on their feet — Police Sketch, Pool Noodle Cups,
+   Beer Run, the Relay Race.
+
+   Nobody playing these ever looks at the screen: one committee member is
+   holding a phone at arm's length in a garden, mid-game, probably one-handed.
+   So the tap targets are big, the numbers are big, and the phone breakpoint
+   matters more here than anywhere else on the site.
+   ========================================================================== */
+
+/* the rules card, before anyone has started */
+.game-structure p { margin: 0 0 6px; }
+.game-structure p:last-child { margin-bottom: 0; }
+.game-settings { margin-top: 12px; }
+.settings-row { display: flex; flex-wrap: wrap; gap: 14px; }
+.settings-row .field { flex: 0 1 auto; }
+.settings-row .numfield { width: 8ch; }
+
+.game-start { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 0 28px; }
+
+/* Police Sketch's character list, in the settings drawer */
+.prompt-list { margin-top: 4px; }
+.prompt-line { display: flex; align-items: center; gap: 8px; }
+.prompt-line .editable { flex: 1 1 auto; }
+
+/* the character up for this round */
+.sketch-now { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.sketch-current {
+  font-family: var(--display); font-size: clamp(2rem, 7vw, 3.75rem);
+  color: var(--gold); margin: 0; line-height: 1.05; letter-spacing: .04em;
+}
+
+/* "who guessed it first" — four buttons, thumb-sized */
+.team-picks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.team-pick {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 18px 12px; cursor: pointer;
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--line-soft); border-top: 3px solid var(--team, var(--gold));
+  border-radius: var(--radius);
+}
+.team-pick:hover { border-color: var(--team, var(--gold)); background: color-mix(in srgb, var(--team, #d4af37) 12%, var(--panel)); }
+.team-pick-name { font-family: var(--display); font-size: 1.063rem; letter-spacing: .04em; }
+.team-pick-pts { color: var(--team, var(--gold)); font-size: 0.813rem; }
+
+/* cups and beers: a counter per team */
+.count-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.count-card {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 10px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-top: 3px solid var(--team, var(--gold)); border-radius: var(--radius);
+}
+.count-team { font-family: var(--display); font-size: 1rem; letter-spacing: .04em; text-align: center; }
+.count-controls { display: flex; align-items: center; gap: 6px; }
+.count-input { width: 5ch; text-align: center; font-size: 1.25rem; }
+.count-points { font-size: 0.813rem; color: var(--team, var(--gold)); }
+
+/* what a game has paid out so far, newest first, each one takeable back */
+.score-recent { margin-top: 14px; display: flex; flex-direction: column; gap: 4px; }
+.score-recent-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 4px; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 0.844rem;
+}
+.score-recent-row:last-child { border-bottom: 0; }
+.score-recent-team { font-weight: 600; }
+.score-recent-pts { color: var(--gold); font-variant-numeric: tabular-nums; }
+.score-recent-note { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.score-undo { flex: 0 0 auto; }
+
+/* the relay: the clock this phone is working, and then all four */
+.relay-mine {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 22px 16px; margin-bottom: 16px; text-align: center;
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-top: 3px solid var(--team, var(--gold)); border-radius: var(--radius);
+}
+.relay-clock-big {
+  font-family: var(--display); font-size: clamp(3rem, 15vw, 6rem); line-height: 1;
+  margin: 0; color: var(--team, var(--gold)); font-variant-numeric: tabular-nums;
+}
+.relay-clock-big.is-running { text-shadow: 0 0 40px color-mix(in srgb, var(--team, #d4af37) 45%, transparent); }
+.relay-action { min-width: 220px; }
+
+.relay-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.relay-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 10px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-top: 3px solid var(--team, var(--gold)); border-radius: var(--radius);
+}
+.relay-card.is-mine { border-color: var(--team, var(--gold)); }
+.relay-card.is-running { background: color-mix(in srgb, var(--team, #d4af37) 10%, var(--panel)); }
+.relay-team { font-family: var(--display); font-size: 0.938rem; letter-spacing: .04em; text-align: center; }
+.relay-clock { font-size: 1.375rem; color: var(--team, var(--gold)); font-variant-numeric: tabular-nums; }
+
+.relay-finish { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 16px; text-align: center; }
+.relay-finish p { margin: 0; }
+
+@media (max-width: 620px) {
+  .team-picks, .count-grid, .relay-grid { grid-template-columns: 1fr; }
+  .settings-row { gap: 10px; }
+  .relay-action { width: 100%; min-width: 0; }
+  .score-recent-note { display: none; }
+}

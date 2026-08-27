@@ -39,5 +39,6 @@ public static class TripReplace
         target.Superlatives = source.Superlatives;
         target.Jeopardy = source.Jeopardy;
         target.Mystery = source.Mystery;
+        target.Party = source.Party;
     }
 }

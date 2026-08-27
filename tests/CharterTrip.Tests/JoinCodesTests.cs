@@ -190,11 +190,11 @@ public class JoinCodesTests
     }
 
     [Fact]
-    public void The_path_for_a_person_is_their_login_link()
+    public void The_path_for_a_person_is_their_join_link()
     {
         var trip = Trip();
         var person = trip.Roster[0];
 
-        Assert.Equal($"/login/{person.JoinToken}", JoinCodes.PathFor(person));
+        Assert.Equal($"/join/{person.JoinToken}", JoinCodes.PathFor(person));
     }
 }

@@ -80,8 +80,7 @@
                     <div>
                         <h3>Seed @Deal.Seed</h3>
                         <p class="muted tiny">
-                            @Deal.Cast.Count(c => c.PersonId is not null) of @Deal.Cast.Count roles cast ·
-                            access by the @RouteLabel
+                            @Claimed of @Deal.Cast.Count parts taken · access by the @RouteLabel
                         </p>
                     </div>
                     <div class="row gap wrap">
@@ -92,6 +91,33 @@
                         <button class="btn btn-danger-ghost btn-sm" @onclick="() => _confirmClear = true">Discard</button>
                     </div>
                 </div>
+            </div>
+
+            @* The one thing on this page anybody else needs to see. Everything else here is the
+               solution; this is the door. *@
+            <div class="card mys-party">
+                <div class="row between center wrap gap">
+                    <div>
+                        <h4>The code for the room</h4>
+                        <p class="mys-code">@Trip.Mystery.PartyCode</p>
+                        <p class="muted tiny">
+                            Guests go to <b>@JoinHost/join</b>, type this, and tap their own name.
+                            They're dealt a part on the spot — nothing to hand out.
+                        </p>
+                    </div>
+                    <QrImage Content="@JoinUrl" Size="120" Alt="Join the mystery" />
+                </div>
+
+                @if (Waiting.Count > 0)
+                {
+                    <p class="tiny">
+                        Still to arrive: <b>@string.Join(", ", Waiting.Select(p => p.Name))</b>
+                    </p>
+                }
+                else
+                {
+                    <p class="tiny">Everybody's here.</p>
+                }
             </div>
 
             @if (_confirmClear)
@@ -396,6 +422,16 @@
     /// <summary>The 21 guests. The four organizers run the evening and are not cast.</summary>
     private List<RosterPerson> Players => [.. Trip.Roster.Where(p => p.Role != TripRole.Admin)];
 
+    /// <summary>Guests who have not picked up a part yet — the arrivals list.</summary>
+    private IReadOnlyList<RosterPerson> Waiting => MysteryService.Unclaimed(Trip);
+
+    private int Claimed => Deal?.Cast.Count(c => c.PersonId is not null) ?? 0;
+
+    private string JoinHost => new Uri(Nav.BaseUri).Authority;
+
+    /// <summary>The QR for the wall: scanning it lands on the name picker, code already filled in.</summary>
+    private string JoinUrl => Nav.ToAbsoluteUri($"/join/{Trip.Mystery.PartyCode}").ToString();
+
     private int KillersConvicted =>
         Deal is null ? 0 : Deal.Killers.Count(k => MysteryService.IsGhost(Trip, k.CharacterId));
 
@@ -470,10 +506,11 @@
     private async Task DealAsync()
     {
         _error = null;
-        var people = Players.Select(p => p.Id).ToList();
 
+        // Nobody is cast here. The deal decides what the 21 characters are; guests pick up a part
+        // themselves by typing the party code and tapping their name.
         var failure = await Store.MutateAsync(
-            t => MysteryService.DealGame(t, Script, _seed, people), TripArea.Mystery);
+            t => MysteryService.DealGame(t, Script, _seed), TripArea.Mystery);
 
         if (failure is not null) _error = failure.Reason;
     }

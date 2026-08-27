@@ -3289,3 +3289,93 @@ pre.code {
   .pr-h1 { color: #000 !important; }
   .pr-links th, .pr-links td { border-color: #ccc !important; }
 }
+
+/* --- joining ------------------------------------------------------------------
+   One code for the whole party. Nobody has an account, so none of this is a
+   sign-in: type the code, tap your name, get a part. The committee's password
+   lives on its own page and the two never share a screen.
+   ------------------------------------------------------------------------------ */
+
+/* Names are buttons rather than a dropdown. On a phone, in a dark room, one tap
+   beats a select plus a submit — and twenty-one names fit fine in a wrap. */
+.join-names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  justify-content: center;
+  margin: 6px 0 14px;
+}
+.join-name {
+  padding: 11px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.938rem;
+  cursor: pointer;
+}
+.join-name:hover  { border-color: var(--gold); background: var(--panel-2); }
+.join-name:active { transform: translateY(1px); }
+
+/* --- the code, wherever it is shown ------------------------------------------- */
+
+.mys-party { border-color: var(--gold-dim); }
+.mys-code {
+  font-family: var(--display);
+  font-size: 2rem;
+  letter-spacing: .22em;
+  color: var(--gold-light);
+}
+
+/* On the main screen, until the last part is taken. It is the only instruction
+   anybody needs all evening, so while it is true it is the biggest thing there. */
+.ms-join {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: clamp(12px, 1.8vw, 26px);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  background: rgba(212,175,55,.09);
+  text-align: center;
+}
+.ms-join-label {
+  font-size: clamp(0.9rem, 1.4vw, 1.3rem);
+  letter-spacing: .08em;
+  color: var(--text-dim);
+}
+.ms-join-code {
+  font-family: var(--display);
+  font-size: clamp(2.6rem, 8vw, 6rem);
+  line-height: 1;
+  letter-spacing: .18em;
+  color: var(--gold-light);
+}
+.ms-join-sub { font-size: clamp(0.8rem, 1.1vw, 1.05rem); color: var(--text-dim); }
+
+/* The printed sign for the door. */
+.pr-poster {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 28px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  text-align: center;
+  break-inside: avoid;
+}
+.pr-poster-label { font-size: 1rem; letter-spacing: .06em; }
+.pr-poster-code {
+  font-family: var(--display);
+  font-size: 3.2rem;
+  letter-spacing: .2em;
+  line-height: 1.1;
+}
+.pr-poster-sub { font-size: 0.813rem; color: var(--text-dim); }
+
+@media print {
+  .pr-poster { border-color: #000 !important; }
+  .pr-poster-code, .pr-poster-label { color: #000 !important; }
+  .pr-poster-sub { color: #444 !important; }
+}

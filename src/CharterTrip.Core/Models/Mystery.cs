@@ -22,6 +22,16 @@ public sealed class MysteryState
     /// <summary>Index into <c>rounds.json</c>. -1 before the first round starts.</summary>
     public int CurrentRoundIndex { get; set; } = -1;
 
+    /// <summary>
+    /// The one code for the whole party, shown on the screen and typed by everybody.
+    ///
+    /// There used to be twenty-one personal links to hand out at the door. One code is a great deal
+    /// less to go wrong on the night: it goes on the wall, everybody types it, picks their own name,
+    /// and is dealt a character. Nothing is printed per guest and nobody can be handed the wrong
+    /// envelope.
+    /// </summary>
+    public string PartyCode { get; set; } = "";
+
     /// <summary>Null until the host deals. Everything else here is meaningless without it.</summary>
     public MysteryDeal? Deal { get; set; }
 

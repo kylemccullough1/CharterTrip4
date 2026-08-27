@@ -5,6 +5,7 @@
 @using CharterTrip.Core.Mystery.Text
 @inherits TripAwareComponent
 @inject MysteryScript Script
+@inject NavigationManager Nav
 @layout CharterTrip.Web.Components.Layout.BareLayout
 
 <PageTitle>Braun Manor · the room</PageTitle>
@@ -95,6 +96,17 @@ else if (ActiveTrial is { } trial && trial.Phase != MysteryTrialPhase.Revealed)
 else
 {
     @* --- the ordinary evening ------------------------------------------------- *@
+    @if (SeatsLeft > 0)
+    {
+        @* The door, while there are still parts going. This is the only instruction anybody needs
+           all evening, so it is the biggest thing on the screen until it stops being true. *@
+        <div class="ms-join">
+            <p class="ms-join-label">Join at @JoinHost/join</p>
+            <p class="ms-join-code">@Trip.Mystery.PartyCode</p>
+            <p class="ms-join-sub">Type the code, tap your name. @SeatsLeft parts still going.</p>
+        </div>
+    }
+
     <header class="ms-head">
         <div>
             <h1 class="ms-round">@RoundName</h1>
@@ -188,6 +200,10 @@ else
     /// makes re-scanning a tampered clue a public act. Flip it if playtest shows scan-shyness.
     /// </summary>
     private const bool FinderShown = true;
+
+    private int SeatsLeft => MysteryService.SeatsLeft(Trip);
+
+    private string JoinHost => new Uri(Nav.BaseUri).Authority;
 
     private string RoundName => MysteryService.CurrentRound(Trip, Script)?.Name ?? "Braun Manor";
 

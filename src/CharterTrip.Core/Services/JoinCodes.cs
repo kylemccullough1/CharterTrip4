@@ -12,6 +12,14 @@ public enum CodeKind
     /// <summary>A roster person's own link — this is how somebody becomes themselves.</summary>
     Person,
 
+    /// <summary>
+    /// The murder mystery's one party code.
+    ///
+    /// Unlike every other kind, this signs nobody in on its own — it only proves you are in the
+    /// house. Who you are is the next question, and the answer comes from tapping your own name.
+    /// </summary>
+    MysteryParty,
+
     /// <summary>A Jeopardy buzzer code, shared by everyone on that team.</summary>
     BuzzerTeam,
 
@@ -31,7 +39,7 @@ public readonly record struct CodeMatch(CodeKind Kind, string? PersonId = null, 
 /// There used to be a per-game entrance: /buzz/{code} resolved a Jeopardy team and nothing else
 /// could use it. That does not survive a second game — the murder mystery needs each of 21 people
 /// to be a distinct person on their own phone, not a team sharing a code. So codes resolve here
-/// instead, and the route that consumes this is /login/{code} for all of them.
+/// instead, and the route that consumes this is /join/{code} for all of them.
 ///
 /// Resolution order matters: a person's own token wins over anything else, because being yourself
 /// is the identity every game can derive from. Somebody signed in as themselves already has a team.
@@ -109,6 +117,13 @@ public static class JoinCodes
         if (person is not null)
             return new CodeMatch(CodeKind.Person, PersonId: person.Id, TeamId: NullIfBlank(person.TeamId));
 
+        // The party code, which is a door rather than an identity.
+        if (trip.Mystery.PartyCode is { Length: > 0 } party &&
+            string.Equals(Clean(party), cleaned, StringComparison.OrdinalIgnoreCase))
+        {
+            return new CodeMatch(CodeKind.MysteryParty);
+        }
+
         if (JeopardyService.TeamForCode(trip, cleaned) is { } teamId)
             return new CodeMatch(CodeKind.BuzzerTeam, TeamId: teamId);
 
@@ -119,7 +134,7 @@ public static class JoinCodes
     }
 
     /// <summary>The link to hand one person, for the print sheet and the roster admin page.</summary>
-    public static string PathFor(RosterPerson person) => $"/login/{person.JoinToken}";
+    public static string PathFor(RosterPerson person) => $"/join/{person.JoinToken}";
 
     private static string NewToken() =>
         new(Enumerable.Range(0, TokenLength)

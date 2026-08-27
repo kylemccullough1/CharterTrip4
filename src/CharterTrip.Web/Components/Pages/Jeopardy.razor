@@ -146,7 +146,7 @@ else if (Game.Phase == JeopardyPhase.NotStarted)
             </div>
         </div>
 
-        <p class="jeo-hint">Scan a code, or go to <b>@JoinHost/login</b> and type it in.</p>
+        <p class="jeo-hint">Scan a code, or go to <b>@JoinHost/join</b> and type it in.</p>
 
         @if (CanEdit)
         {
@@ -497,7 +497,7 @@ else
     private string JoinHost => new Uri(Nav.BaseUri).Authority;
 
     /// <summary>What goes in the QR codes on the wall: a code, exchanged for a session.</summary>
-    private string BuzzUrl(string code) => Nav.ToAbsoluteUri($"/login/{code}").ToString();
+    private string BuzzUrl(string code) => Nav.ToAbsoluteUri($"/join/{code}").ToString();
 
     /// <summary>
     /// A buzzer view for the sim strip, and deliberately not <see cref="BuzzUrl"/>.

@@ -77,24 +77,17 @@
         }
     </div>
 
-    <h1 class="pr-h1 pr-break">Personal links</h1>
+    <h1 class="pr-h1 pr-break">The code for the room</h1>
     <p class="pr-note">
-        One row per guest. Hand these out privately — a join link is the whole proof of somebody's
-        identity, so it is not the code on their name tag and must not be read aloud.
+        One sign, for the door or the wall. There is nothing to hand out per guest: everybody types
+        this, taps their own name, and is dealt a part on the spot.
     </p>
-    <table class="pr-links">
-        <thead><tr><th>Guest</th><th>Character</th><th>Link</th></tr></thead>
-        <tbody>
-        @foreach (var member in Deal.Cast.Where(c => c.PersonId is not null))
-        {
-            <tr>
-                <td>@PersonName(member.PersonId)</td>
-                <td>@Name(member.CharacterId)</td>
-                <td class="pr-link">@LoginPath(member.PersonId!)</td>
-            </tr>
-        }
-        </tbody>
-    </table>
+    <div class="pr-poster">
+        <p class="pr-poster-label">Join at @Origin.Replace("https://", "").Replace("http://", "")/join</p>
+        <p class="pr-poster-code">@Trip.Mystery.PartyCode</p>
+        <QrImage Content="@JoinUrl" Size="200" Alt="Join the mystery" />
+        <p class="pr-poster-sub">Or point your camera here.</p>
+    </div>
 }
 
 </div>
@@ -116,11 +109,8 @@
 
     private string BadgeUrl(MysteryCastMember member) => $"{Origin}/m/meet/{member.BadgeToken}";
 
-    private string LoginPath(string personId)
-    {
-        var token = Trip.Roster.FirstOrDefault(p => p.Id == personId)?.JoinToken;
-        return token is null ? "—" : $"{Origin}/login/{token}";
-    }
+    /// <summary>The poster QR: scanning it lands on the name picker with the code already given.</summary>
+    private string JoinUrl => $"{Origin}/join/{Trip.Mystery.PartyCode}";
 
     private string Name(string characterId) => Script.CharacterById(characterId)?.Name ?? characterId;
     private string Title(string characterId) => Script.CharacterById(characterId)?.Title ?? "";

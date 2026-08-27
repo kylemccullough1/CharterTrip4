@@ -54,7 +54,7 @@ public interface ICurrentUser
 /// mere fact of being authenticated:
 ///
 ///   the committee's username and password   → admin, no person
-///   a person's own /login/{token} link      → that person, admin only if the roster says so
+///   a person's own /join/{token} link       → that person, admin only if the roster says so
 ///   a Jeopardy buzzer or host code          → a team or the host job, no person
 ///
 /// Being authenticated used to be the same fact as being an admin, because there was one account.

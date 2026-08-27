@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using CharterTrip.Core.Models;
 using CharterTrip.Core.Mystery.Deal;
 using CharterTrip.Core.Mystery.Script;
@@ -57,23 +58,93 @@ public static class MysteryService
     /// Returns the failure reason on a roster the constraints cannot satisfy, rather than throwing
     /// or spinning — the host console shows it and the evening carries on by hand.
     /// </summary>
-    public static DealFailure? DealGame(
-        TripData trip, MysteryScript script, int seed, IReadOnlyList<string> personIds)
+    public static DealFailure? DealGame(TripData trip, MysteryScript script, int seed)
     {
         ArgumentNullException.ThrowIfNull(trip);
         ArgumentNullException.ThrowIfNull(script);
 
-        var result = Dealer.Deal(script, personIds, seed);
+        var result = Dealer.Deal(script, seed);
         if (!result.Ok) return result.Failure;
 
         trip.Mystery = new MysteryState
         {
             Deal = result.Deal,
-            CurrentRoundIndex = -1
+            CurrentRoundIndex = -1,
+            PartyCode = NewPartyCode()
         };
 
         trip.Mystery.Clues.AddRange(Dealer.LayOutClues(script, result.Deal!));
         return null;
+    }
+
+    /// <summary>
+    /// The code on the wall. Five characters from the same unambiguous alphabet as everything else
+    /// somebody has to read across a room and type while holding a drink.
+    ///
+    /// Fresh on every deal, so a code that leaked before the night stops working the moment the
+    /// game is re-dealt.
+    /// </summary>
+    private static string NewPartyCode()
+    {
+        const string alphabet = "ACDEFGHJKMNPQRTUVWXY34679";
+
+        return new string(Enumerable.Range(0, 5)
+            .Select(_ => alphabet[RandomNumberGenerator.GetInt32(alphabet.Length)])
+            .ToArray());
+    }
+
+    /// <summary>
+    /// Give somebody a character, or hand back the one they already have.
+    ///
+    /// This is how casting happens now: a guest types the party code, taps their own name, and is
+    /// dealt whatever role is still going. Twenty-one envelopes to hand out at the door became one
+    /// code on a screen, and nobody can be given the wrong one.
+    ///
+    /// Idempotent by person, which is the property that makes it survivable. A phone that loses its
+    /// cookie — cleared data, a flat battery, a borrowed handset — comes back to the same character
+    /// rather than claiming a second one and leaving the game a player short.
+    ///
+    /// Meant to be called inside <c>MutateAsync</c>: two people tapping their names at the same
+    /// moment must not be dealt the same character.
+    /// </summary>
+    public static MysteryCastMember? ClaimCharacter(TripData trip, string personId, Random random)
+    {
+        ArgumentNullException.ThrowIfNull(trip);
+        ArgumentNullException.ThrowIfNull(random);
+
+        if (trip.Mystery.Deal is not { } deal) return null;
+        if (string.IsNullOrWhiteSpace(personId)) return null;
+
+        var existing = deal.Cast.FirstOrDefault(c => c.PersonId == personId);
+        if (existing is not null) return existing;
+
+        var unclaimed = deal.Cast.Where(c => c.PersonId is null).ToList();
+        if (unclaimed.Count == 0) return null;
+
+        var chosen = unclaimed[random.Next(unclaimed.Count)];
+        chosen.PersonId = personId;
+        return chosen;
+    }
+
+    /// <summary>Roster people who have not yet picked up a character.</summary>
+    public static IReadOnlyList<RosterPerson> Unclaimed(TripData trip)
+    {
+        ArgumentNullException.ThrowIfNull(trip);
+
+        var taken = (trip.Mystery.Deal?.Cast ?? [])
+            .Select(c => c.PersonId)
+            .Where(id => id is not null)
+            .ToHashSet(StringComparer.Ordinal)!;
+
+        // The four organizers play Braun and the facilitators, so they are never on this list.
+        return [.. trip.Roster.Where(p => p.Role != TripRole.Admin && !taken.Contains(p.Id))];
+    }
+
+    /// <summary>How many roles are still going, for the screen and the host console.</summary>
+    public static int SeatsLeft(TripData trip)
+    {
+        ArgumentNullException.ThrowIfNull(trip);
+        return trip.Mystery.Deal?.Cast.Count(c => c.PersonId is null) ?? 0;
     }
 
     /// <summary>Wipe the game back to before it was dealt. The host console's undo.</summary>

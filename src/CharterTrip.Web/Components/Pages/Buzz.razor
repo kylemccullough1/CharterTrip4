@@ -11,14 +11,14 @@
 <div class="buzz-root">
 
 @* Who this phone is comes from the cookie now, not from the URL. A code is exchanged for a
-   session once, at /login/{code}, which is the same door the murder mystery uses — so a player
+   session once, at /join/{code}, which is the same door the murder mystery uses — so a player
    signed in as themselves already has their team here and never types a code at all. *@
 @if (TeamId is null && !IsHost)
 {
     <div class="buzz-enter">
         <h1>Buzzer</h1>
         <p class="muted">Scan your code, or type it in to connect.</p>
-        <a class="btn btn-gold btn-lg btn-block" href="/login?returnUrl=%2Fbuzz">Enter a code</a>
+        <a class="btn btn-gold btn-lg btn-block" href="/join?returnUrl=%2Fbuzz">Enter a code</a>
     </div>
 }
 else if (IsHost)

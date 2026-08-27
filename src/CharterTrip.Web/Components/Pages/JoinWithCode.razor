@@ -1,7 +1,9 @@
-@page "/login/{Code}"
+@page "/join/{Code}"
 @attribute [ExcludeFromInteractiveRouting]
 @layout BareLayout
 @using CharterTrip.Core.Abstractions
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
 @using CharterTrip.Core.Services
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
@@ -9,38 +11,83 @@
 @inject NavigationManager Nav
 @inject ILogger<JoinWithCode> Log
 
-@* The one front door for every code on this trip.
+@* The one door for every code on this trip.
 
-   Static SSR on purpose, for the same reason as the sign-in page: signing somebody in means
-   writing a cookie, and a cookie needs an HTTP response to be written to. An interactive circuit
-   is a WebSocket long after the response has gone.
+   Static SSR on purpose: taking a code and turning it into a session means writing a cookie, and a
+   cookie needs an HTTP response to be written to. An interactive circuit is a WebSocket long after
+   the response has gone.
 
-   Nothing here is interactive anyway — the page resolves the code, writes the cookie, and
-   redirects. The only thing it ever renders is the failure. *@
+   Most codes resolve to somebody and this page redirects without rendering. The party code is the
+   exception — it proves you are in the house but says nothing about who you are, so it stops here
+   and asks. *@
 
-<PageTitle>Signing in · Charter Trip 2026</PageTitle>
+<PageTitle>Join · Charter Trip 2026</PageTitle>
 
 <div class="login-page">
     <div class="login-card">
-        <h1 class="login-title">That code isn't live</h1>
+
+@if (_state == State.PickName)
+{
+    <h1 class="login-title">Who are you?</h1>
+    <p class="login-sub">Tap your name and the house will find you a part.</p>
+
+    @if (People.Count == 0)
+    {
         <p class="login-sub">
-            Check it against the card or the screen — codes skip the letters that look like
-            numbers, so there is no O, I, S or B to mistype.
+            Everyone's been given a character already. If that's wrong, find Bertram.
         </p>
-        <p class="row-actions">
-            <a class="btn btn-gold btn-sm" href="/login">Try another code</a>
-            <a class="btn btn-ghost btn-sm" href="/">Back to the trip</a>
+    }
+    else
+    {
+        @* A form per name rather than one form with a select: on a phone, in a dark room, one tap
+           beats a dropdown plus a submit. Static SSR, so each is a real post. *@
+        <div class="join-names">
+            @foreach (var person in People)
+            {
+                <EditForm Model="Picked" FormName="@($"claim-{person.Id}")" OnValidSubmit="() => ClaimAsync(person.Id)" method="post">
+                    <button type="submit" class="join-name">@person.Name</button>
+                </EditForm>
+            }
+        </div>
+        <p class="login-sub tiny">
+            Names disappear as people arrive. @SeatsLeft of @TotalSeats parts still going.
         </p>
+    }
+}
+else
+{
+    <h1 class="login-title">That code isn't live</h1>
+    <p class="login-sub">
+        Check it against the screen — codes skip the letters that look like numbers, so there's no
+        O, I, S or B to mistype.
+    </p>
+    <p class="row-actions">
+        <a class="btn btn-gold btn-sm" href="/join">Try again</a>
+        <a class="btn btn-ghost btn-sm" href="/">Back to the trip</a>
+    </p>
+}
+
     </div>
 </div>
 
 @code {
+    private enum State { Unknown, PickName }
+
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
     [Parameter] public string? Code { get; set; }
 
+    /// <summary>Unused as data — the name buttons are forms, and this satisfies EditForm.</summary>
+    [SupplyParameterFromForm] private Empty Picked { get; set; } = new();
+
     /// <summary>Where to land afterwards. Only ever a path on this site — see <see cref="SafeRedirect"/>.</summary>
     [SupplyParameterFromQuery(Name = "returnUrl")] private string? ReturnUrl { get; set; }
+
+    private State _state = State.Unknown;
+
+    private IReadOnlyList<RosterPerson> People => MysteryService.Unclaimed(Store.Current);
+    private int SeatsLeft => MysteryService.SeatsLeft(Store.Current);
+    private int TotalSeats => Store.Current.Mystery.Deal?.Cast.Count ?? 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -48,9 +95,16 @@
 
         if (!match.Found)
         {
-            // Never say which of the three kinds it failed to be — that turns a wrong guess into
-            // a hint about what sort of code exists. The rendered page above says the same.
+            // Never say which of the four kinds it failed to be — that turns a wrong guess into a
+            // hint about what sort of code exists.
             Log.LogWarning("Unrecognised join code from {Ip}.", HttpContext.Connection.RemoteIpAddress);
+            return;
+        }
+
+        if (match.Kind == CodeKind.MysteryParty)
+        {
+            // The party code is a door, not an identity. Ask who walked through it.
+            _state = State.PickName;
             return;
         }
 
@@ -71,15 +125,47 @@
 
         if (principal is null) return;
 
-        // Persistent, so closing the tab does not mean finding the link again halfway through
-        // Saturday. Signing in replaces whatever session was here before, which is what makes
+        await SignInAndGo(principal, landing);
+    }
+
+    /// <summary>
+    /// Take a name, deal a character, and land on the phone.
+    ///
+    /// The claim happens inside the mutation so that two people tapping their names at the same
+    /// moment cannot be dealt the same part. It is idempotent by person, so somebody coming back on
+    /// a new phone gets the character they already had rather than a second one.
+    /// </summary>
+    private async Task ClaimAsync(string personId)
+    {
+        var claimed = await Store.MutateAsync(
+            t => MysteryService.ClaimCharacter(t, personId, Random.Shared), TripArea.Mystery);
+
+        if (claimed is null)
+        {
+            _state = State.Unknown;
+            return;
+        }
+
+        // Casting is worth forcing to disk. Reconstructing who is playing whom after a restart
+        // means asking twenty-one people, in character, what their own name is.
+        await Store.FlushAsync();
+
+        var person = Store.Current.Roster.First(p => p.Id == personId);
+        await SignInAndGo(TripSignIn.ForPerson(person), "/m");
+    }
+
+    private async Task SignInAndGo(System.Security.Claims.ClaimsPrincipal principal, string landing)
+    {
+        // Persistent, so closing the tab does not mean finding the code again halfway through the
+        // evening. Signing in replaces whatever session was here before, which is what makes
         // handing a phone to somebody else work.
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             principal,
             new AuthenticationProperties { IsPersistent = true });
 
-        // An explicit returnUrl wins, so a link into a page can bounce through here and come back.
         Nav.NavigateTo(ReturnUrl is { Length: > 0 } ? SafeRedirect.Local(ReturnUrl) : landing);
     }
+
+    public sealed class Empty { }
 }

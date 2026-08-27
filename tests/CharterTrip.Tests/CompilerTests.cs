@@ -19,7 +19,7 @@ public class CompilerTests
 
     private static MysteryDeal Deal(int seed = 1234)
     {
-        var result = Dealer.Deal(Script, [.. Enumerable.Range(1, 21).Select(i => $"p-{i}")], seed);
+        var result = Dealer.Deal(Script, seed);
         Assert.True(result.Ok, result.Failure?.Reason);
         return result.Deal!;
     }

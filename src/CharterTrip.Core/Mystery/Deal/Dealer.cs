@@ -19,7 +19,7 @@ public sealed record DealResult(MysteryDeal? Deal, DealFailure? Failure)
 /// <summary>
 /// Turns the script and a seed into one specific evening.
 ///
-/// A pure function of <c>(script, personIds, seed)</c>, which is the property everything else rests
+/// A pure function of <c>(script, seed)</c>, which is the property everything else rests
 /// on: <c>?seed=1234</c> replays the same game, so the generator can be tested and a suspicious
 /// game can be reproduced without twenty-one phones. Nothing here reads the clock or global state
 /// — except the clue tokens, which are deliberately unguessable and therefore deliberately not
@@ -53,14 +53,15 @@ public static class Dealer
     /// <summary>
     /// Deal a game.
     ///
-    /// <paramref name="personIds"/> is who is actually playing, in the order they should be cast.
-    /// Fewer people than characters leaves the surplus roles uncast, which the host console fills
-    /// or leaves alone; more people than roles is the caller's problem to have trimmed already.
+    /// Nobody is cast here. The deal decides what each of the 21 characters is — where they stood,
+    /// who is guilty, which faction — and leaves every <c>PersonId</c> null. Guests claim a
+    /// character on arrival by typing the party code and tapping their own name, so casting is
+    /// something that happens over the first fifteen minutes rather than a decision made in
+    /// advance. A no-show then costs an empty seat instead of a reshuffle.
     /// </summary>
-    public static DealResult Deal(MysteryScript script, IReadOnlyList<string> personIds, int seed)
+    public static DealResult Deal(MysteryScript script, int seed)
     {
         ArgumentNullException.ThrowIfNull(script);
-        ArgumentNullException.ThrowIfNull(personIds);
 
         var problems = script.Validate();
         if (problems.Count > 0)
@@ -92,7 +93,6 @@ public static class Dealer
 
             DrawFactions(script, cast, rng);
             PairInheritanceRivals(cast);
-            Cast(cast, personIds);
 
             var deal = new MysteryDeal
             {
@@ -425,18 +425,6 @@ public static class Dealer
         }
 
         return sightings;
-    }
-
-    /// <summary>
-    /// Put people in the roles, in the order given.
-    ///
-    /// Straight assignment. Gender is not an input, and the caller decides the order — shuffled for
-    /// a random cast, or arranged for a hand-picked one.
-    /// </summary>
-    private static void Cast(List<MysteryCastMember> cast, IReadOnlyList<string> personIds)
-    {
-        for (var i = 0; i < cast.Count && i < personIds.Count; i++)
-            cast[i].PersonId = personIds[i];
     }
 
     // ---- clue placement helpers -----------------------------------------------------------

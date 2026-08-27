@@ -16,13 +16,9 @@ public class DealerTests
 {
     private static readonly MysteryScript Script = ScriptLoader.Load();
 
-    /// <summary>Twenty-one players, named the way the roster would name them.</summary>
-    private static List<string> People(int count = 21) =>
-        [.. Enumerable.Range(1, count).Select(i => $"p-{i}")];
-
-    private static MysteryDeal DealOrFail(int seed, int people = 21)
+    private static MysteryDeal DealOrFail(int seed)
     {
-        var result = Dealer.Deal(Script, People(people), seed);
+        var result = Dealer.Deal(Script, seed);
         Assert.True(result.Ok, result.Failure?.Reason);
         return result.Deal!;
     }
@@ -322,23 +318,15 @@ public class DealerTests
     }
 
     [Fact]
-    public void Casting_fills_roles_in_the_order_the_caller_gave()
+    public void The_deal_casts_nobody()
     {
         var deal = DealOrFail(7);
 
-        Assert.Equal(21, deal.Cast.Count(c => c.PersonId is not null));
-        Assert.Equal(21, deal.Cast.Select(c => c.PersonId).Distinct().Count());
-    }
-
-    [Fact]
-    public void A_short_roster_leaves_the_surplus_roles_uncast_rather_than_failing()
-    {
-        // Friday cancellations. The game still deals; the host console decides what to do with
-        // the empty seats.
-        var deal = DealOrFail(9, people: 18);
-
-        Assert.Equal(18, deal.Cast.Count(c => c.PersonId is not null));
-        Assert.Equal(3, deal.Cast.Count(c => c.PersonId is null));
+        // Who plays what is not a decision made in advance any more. The deal says what the 21
+        // characters are; guests pick one up at the door by typing the party code and tapping
+        // their own name. A no-show then costs an empty seat instead of a reshuffle.
+        Assert.All(deal.Cast, c => Assert.Null(c.PersonId));
+        Assert.Equal(21, deal.Cast.Count);
     }
 
     [Fact]
@@ -348,7 +336,7 @@ public class DealerTests
         // will help. TESTING.md expects this to be a message on the host console, not a hang.
         var thin = Script with { Characters = [.. Script.Characters.Take(16)] };
 
-        var result = Dealer.Deal(thin, People(16), 1);
+        var result = Dealer.Deal(thin, 1);
 
         Assert.False(result.Ok);
         Assert.NotNull(result.Failure);
@@ -363,7 +351,7 @@ public class DealerTests
             Characters = [.. Script.Characters.Select((c, i) => i == 0 ? c with { Zones = ["nowhere"] } : c)]
         };
 
-        var result = Dealer.Deal(broken, People(), 1);
+        var result = Dealer.Deal(broken, 1);
 
         Assert.False(result.Ok);
         Assert.Contains("nowhere", result.Failure!.Reason);

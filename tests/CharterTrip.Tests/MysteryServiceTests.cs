@@ -2,6 +2,7 @@ using CharterTrip.Core.Abstractions;
 using CharterTrip.Core.Models;
 using CharterTrip.Core.Mystery;
 using CharterTrip.Core.Mystery.Script;
+using CharterTrip.Core.Services;
 using CharterTrip.Infrastructure.Mystery;
 using CharterTrip.Infrastructure.Seed;
 
@@ -21,7 +22,7 @@ public class MysteryServiceTests
         var trip = SeedLoader.Load();
         var people = trip.Roster.Take(21).Select(p => p.Id).ToList();
 
-        var failure = MysteryService.DealGame(trip, Script, seed, people);
+        var failure = MysteryService.DealGame(trip, Script, seed);
         Assert.Null(failure?.Reason);
 
         MysteryService.Start(trip);
@@ -74,22 +75,109 @@ public class MysteryServiceTests
     }
 
     [Fact]
-    public void Dealing_for_fewer_people_than_roles_leaves_the_surplus_uncast()
+    public void A_dealt_game_starts_with_a_party_code_and_nobody_cast()
     {
-        var trip = SeedLoader.Load();
+        var trip = Dealt();
 
-        var failure = MysteryService.DealGame(trip, Script, 1, ["p-1", "p-2"]);
+        // Five characters off the same alphabet as everything else somebody reads across a room.
+        Assert.Equal(5, trip.Mystery.PartyCode.Length);
+        Assert.DoesNotContain(trip.Mystery.PartyCode, c => "O0I1S5B8".Contains(c));
 
-        // The game is always the same 21 characters — personIds only decides who plays them. So a
-        // thin roster does not fail, it leaves empty seats for the host console to deal with.
-        //
-        // Which means the 17-player floor is about characters, not attendance: dropping characters
-        // for a genuine no-show ("regen for 18 in the morning", TESTING.md §3) is a separate thing
-        // and is not built.
-        Assert.Null(failure);
-        Assert.NotNull(trip.Mystery.Deal);
-        Assert.Equal(21, trip.Mystery.Deal!.Cast.Count);
-        Assert.Equal(2, trip.Mystery.Deal.Cast.Count(c => c.PersonId is not null));
+        // Twenty-one parts, all of them still going. Who plays what is decided at the door.
+        Assert.All(trip.Mystery.Deal!.Cast, c => Assert.Null(c.PersonId));
+        Assert.Equal(21, MysteryService.SeatsLeft(trip));
+        Assert.Equal(21, MysteryService.Unclaimed(trip).Count);
+    }
+
+    [Fact]
+    public void The_party_code_opens_the_door_without_being_anybody()
+    {
+        var trip = Dealt();
+
+        var match = JoinCodes.Resolve(trip, trip.Mystery.PartyCode);
+
+        // Every other kind of code says who you are. This one only says you are in the house —
+        // the name picker is what turns it into an identity.
+        Assert.Equal(CodeKind.MysteryParty, match.Kind);
+        Assert.Null(match.PersonId);
+        Assert.Null(match.TeamId);
+
+        // And it is case- and punctuation-tolerant like the rest.
+        Assert.Equal(CodeKind.MysteryParty,
+            JoinCodes.Resolve(trip, $" {trip.Mystery.PartyCode.ToLowerInvariant()} ").Kind);
+    }
+
+    [Fact]
+    public void Claiming_deals_a_part_and_takes_the_name_off_the_list()
+    {
+        var trip = Dealt();
+        var person = MysteryService.Unclaimed(trip)[0];
+
+        var claimed = MysteryService.ClaimCharacter(trip, person.Id, new Random(1));
+
+        Assert.NotNull(claimed);
+        Assert.Equal(person.Id, claimed!.PersonId);
+        Assert.Equal(20, MysteryService.SeatsLeft(trip));
+        Assert.DoesNotContain(person.Id, MysteryService.Unclaimed(trip).Select(p => p.Id));
+    }
+
+    [Fact]
+    public void Coming_back_on_a_new_phone_returns_the_same_character()
+    {
+        var trip = Dealt();
+        var person = MysteryService.Unclaimed(trip)[0];
+
+        var first = MysteryService.ClaimCharacter(trip, person.Id, new Random(1));
+        var again = MysteryService.ClaimCharacter(trip, person.Id, new Random(99));
+
+        // The property that makes this survivable. A cleared cookie, a flat battery, a borrowed
+        // handset — none of them may hand somebody a second character and leave the game short.
+        Assert.Equal(first!.CharacterId, again!.CharacterId);
+        Assert.Equal(20, MysteryService.SeatsLeft(trip));
+    }
+
+    [Fact]
+    public void Everybody_can_claim_and_nobody_gets_the_same_part()
+    {
+        var trip = Dealt();
+        var rng = new Random(7);
+
+        foreach (var person in MysteryService.Unclaimed(trip).ToList())
+            Assert.NotNull(MysteryService.ClaimCharacter(trip, person.Id, rng));
+
+        var cast = trip.Mystery.Deal!.Cast;
+
+        Assert.Equal(0, MysteryService.SeatsLeft(trip));
+        Assert.Equal(21, cast.Select(c => c.PersonId).Distinct().Count());
+        Assert.All(cast, c => Assert.NotNull(c.PersonId));
+
+        // The four organizers play Braun and the facilitators, so they never appear.
+        var admins = trip.Roster.Where(p => p.Role == TripRole.Admin).Select(p => p.Id);
+        Assert.All(admins, id => Assert.DoesNotContain(id, cast.Select(c => c.PersonId)));
+    }
+
+    [Fact]
+    public void A_latecomer_to_a_full_house_is_turned_away_rather_than_given_somebody_elses_part()
+    {
+        var trip = Dealt();
+        var rng = new Random(3);
+
+        foreach (var person in MysteryService.Unclaimed(trip).ToList())
+            MysteryService.ClaimCharacter(trip, person.Id, rng);
+
+        Assert.Null(MysteryService.ClaimCharacter(trip, "p-nobody", rng));
+    }
+
+    [Fact]
+    public void Re_dealing_mints_a_new_party_code()
+    {
+        var trip = Dealt();
+        var first = trip.Mystery.PartyCode;
+
+        MysteryService.DealGame(trip, Script, 999);
+
+        // A code that leaked before the night stops working the moment the game is re-dealt.
+        Assert.NotEqual(first, trip.Mystery.PartyCode);
     }
 
     [Fact]
@@ -630,7 +718,7 @@ public class MysteryServiceTests
 
         await fx.Store.MutateAsync(t =>
         {
-            MysteryService.DealGame(t, Script, 1234, [.. t.Roster.Take(21).Select(p => p.Id)]);
+            MysteryService.DealGame(t, Script, 1234);
             MysteryService.Start(t);
             MysteryService.GoToRound(t, Script, Script.Rounds.Rounds.Count - 1);
         }, TripArea.Mystery);

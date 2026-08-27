@@ -32,13 +32,28 @@ public class FullEveningTests
         var now = Start;
 
         // --- deal ---------------------------------------------------------------------------
-        var failure = await store.MutateAsync(t =>
-        {
-            var people = t.Roster.Where(p => p.Role != TripRole.Admin).Select(p => p.Id).ToList();
-            return MysteryService.DealGame(t, Script, seed, people);
-        }, TripArea.Mystery);
+        var failure = await store.MutateAsync(
+            t => MysteryService.DealGame(t, Script, seed), TripArea.Mystery);
 
         Assert.Null(failure?.Reason);
+
+        var rngForClaims = new Random(seed);
+
+        // --- everybody arrives and picks up a part --------------------------------------------
+        // Casting is not part of the deal any more: guests type the party code, tap their own name,
+        // and are dealt whatever is still going. Twenty-one separate claims, the way the door works.
+        foreach (var personId in store.Current.Roster
+                     .Where(p => p.Role != TripRole.Admin)
+                     .Select(p => p.Id)
+                     .ToList())
+        {
+            var claimed = await store.MutateAsync(
+                t => MysteryService.ClaimCharacter(t, personId, rngForClaims), TripArea.Mystery);
+
+            Assert.NotNull(claimed);
+        }
+
+        Assert.Equal(0, MysteryService.SeatsLeft(store.Current));
 
         await store.MutateAsync(MysteryService.Start, TripArea.Mystery);
 
@@ -338,8 +353,7 @@ public class FullEveningTests
 
         await fx.Store.MutateAsync(t =>
         {
-            var people = t.Roster.Where(p => p.Role != TripRole.Admin).Select(p => p.Id).ToList();
-            MysteryService.DealGame(t, Script, 606, people);
+            MysteryService.DealGame(t, Script, 606);
             MysteryService.Start(t);
             MysteryService.GoToRound(t, Script, 3);
             MysteryService.OpenTrial(t, "trial_1", Start);

@@ -300,12 +300,12 @@ override for everything. **This is the safety net for every phase after it** —
 cannot do, Braun's player does by hand from this page. That is why it comes before the player-facing
 screens rather than after them.
 
-### Phase 8 — the player phone
+### Phase 8 — the player phone ✅
 
 `/m`. Character tab, knowledge tab as a card hand, prompts tab as a static list. Map and notes come
 later.
 
-### Phase 9 — trials
+### Phase 9 — trials ✅
 
 The six phases from `rounds.json`, votes on phones, tally on the screen. Both tie rules are fully
 specified in the file — all tied players nominated at the top-4 cut; revote then the earlier open

@@ -1,0 +1,131 @@
+@page "/m/meet/{Token}"
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+@using CharterTrip.Core.Mystery.Script
+@inherits TripAwareComponent
+@inject MysteryScript Script
+@inject IClock Clock
+@layout CharterTrip.Web.Components.Layout.BareLayout
+
+<PageTitle>Met · Braun Manor</PageTitle>
+
+@* Two people scanned each other's name tags.
+
+   Pitched to the room as a mingle game and never explained as what it is: the interaction graph
+   that tells the prompt engine who nobody has spoken to, which is the actual failure mode of a
+   party. It also gates the detective's sync — you can only pull the phone of somebody you have
+   actually met.
+
+   A badge token is not a join token. Printing the latter on a name tag would mean anybody who
+   photographed a badge could sign in as that player. *@
+<div class="mp">
+
+@if (Them is null)
+{
+    <div class="mp-empty">
+        <h1>Unknown badge</h1>
+        <p class="muted">That tag isn't part of this game.</p>
+        <a class="btn btn-gold btn-lg btn-block" href="/m">Back to your character</a>
+    </div>
+}
+else if (Me is null)
+{
+    <div class="mp-empty">
+        <h1>@Name(Them.CharacterId)</h1>
+        <p class="muted">Sign in first and the two of you will count as having met.</p>
+        <a class="btn btn-gold btn-lg btn-block" href="@($"/login?returnUrl=%2Fm%2Fmeet%2F{Token}")">Enter a code</a>
+    </div>
+}
+else if (Them.CharacterId == Me.CharacterId)
+{
+    <div class="mp-empty">
+        <h1>That's you</h1>
+        <p class="muted">Scan somebody else's.</p>
+        <a class="btn btn-gold btn-lg btn-block" href="/m">Back to your character</a>
+    </div>
+}
+else
+{
+    var character = Script.CharacterById(Them.CharacterId)!;
+
+    <header class="mp-head">
+        <div>
+            <p class="mp-title">@character.Title</p>
+            <h1 class="mp-name">@character.Name</h1>
+        </div>
+    </header>
+
+    <div class="mp-note">You've met. @Encounters</div>
+
+    <div class="mp-card">
+        <h3>What you can see</h3>
+        <p class="muted tiny">
+            A name and a face. Everything else they have to tell you themselves — and they do not
+            have to tell you the truth.
+        </p>
+    </div>
+
+    @if (SawThem is { } statement)
+    {
+        <div class="mp-card mp-seen">
+            <h3>You saw them</h3>
+            <p>@statement</p>
+        </div>
+    }
+
+    <a class="btn btn-gold btn-lg btn-block" href="/m">Back to your character</a>
+}
+
+</div>
+
+@code {
+    protected override TripArea Watching => TripArea.Mystery;
+
+    [Parameter] public string? Token { get; set; }
+
+    private MysteryCastMember? Them => MysteryService.ByBadge(Trip, Token);
+
+    private MysteryCastMember? Me =>
+        Permissions.PersonId is { } personId ? Trip.Mystery.ForPerson(personId) : null;
+
+    private string Encounters
+    {
+        get
+        {
+            if (Me is null || Them is null) return "";
+
+            var count = Trip.Mystery.Scans.Count(s =>
+                (s.ByCharacterId == Me.CharacterId && s.MetCharacterId == Them.CharacterId) ||
+                (s.ByCharacterId == Them.CharacterId && s.MetCharacterId == Me.CharacterId));
+
+            return count > 1 ? $"That's {count} times tonight." : "";
+        }
+    }
+
+    /// <summary>If this person was in your room, you already have an account of them.</summary>
+    private string? SawThem
+    {
+        get
+        {
+            if (Me is null || Them is null || Trip.Mystery.Deal is null) return null;
+
+            return Core.Mystery.Text.Compiler
+                .WitnessStatementsFor(Script, Trip.Mystery.Deal, Me.CharacterId)
+                .FirstOrDefault(w => w.AboutCharacterId == Them.CharacterId)?.Text;
+        }
+    }
+
+    private string Name(string characterId) => Script.CharacterById(characterId)?.Name ?? characterId;
+
+    protected override void OnParametersSet()
+    {
+        if (Me is null || Them is null || Them.CharacterId == Me.CharacterId) return;
+
+        // Scans ride the debounce: there will be hundreds of them, they are cheap to lose, and
+        // nothing in the game turns on the last one having reached disk.
+        var me = Me.CharacterId;
+        var them = Them.CharacterId;
+
+        _ = MutateAsync(t => MysteryService.RecordScan(t, me, them, Clock.UtcNow));
+    }
+}

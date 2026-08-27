@@ -459,6 +459,29 @@ public class MysteryServiceTests
     }
 
     [Fact]
+    public void A_badge_token_is_not_a_login_token()
+    {
+        var trip = Dealt();
+
+        var badges = trip.Mystery.Deal!.Cast.Select(c => c.BadgeToken).ToList();
+
+        Assert.All(badges, b => Assert.Equal(12, b.Length));
+        Assert.Equal(21, badges.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+
+        // A badge is meant to be scanned by other people — that is the mechanic. If it were the
+        // join token, anybody who photographed a name tag could sign in as that player, read their
+        // secrets and vote as them.
+        var joinTokens = trip.Roster.Select(p => p.JoinToken).Where(t => t is not null).ToHashSet();
+        Assert.All(badges, b => Assert.DoesNotContain(b, joinTokens));
+
+        // And a badge resolves to a character rather than to an account.
+        var member = trip.Mystery.Deal!.Cast[3];
+        Assert.Equal(member.CharacterId, MysteryService.ByBadge(trip, member.BadgeToken)?.CharacterId);
+        Assert.Null(MysteryService.ByBadge(trip, "NOTABADGE123"));
+        Assert.Null(MysteryService.ByBadge(trip, null));
+    }
+
+    [Fact]
     public void Badge_scans_build_the_interaction_graph_both_ways()
     {
         var trip = Dealt();

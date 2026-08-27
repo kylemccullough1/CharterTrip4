@@ -235,7 +235,8 @@ public static class Dealer
         [.. script.Characters.Select(c => new MysteryCastMember
         {
             CharacterId = c.Id,
-            ZoneId = placement[c.Id]
+            ZoneId = placement[c.Id],
+            BadgeToken = NewToken()
         })];
 
     // ---- the draws -------------------------------------------------------------------------
@@ -494,7 +495,14 @@ public static class Dealer
     /// deal nothing to be unpredictable — a replayed seed produces the same game with different
     /// tokens, which is what you want anyway when reprinting cards.
     /// </summary>
-    private static string NewClueToken()
+    private static string NewClueToken() => NewToken();
+
+    /// <summary>
+    /// A twelve-character token for a printed QR — a clue card or a name tag.
+    ///
+    /// Same unambiguous alphabet as everything else that gets read off paper.
+    /// </summary>
+    private static string NewToken()
     {
         const string alphabet = "ACDEFGHJKMNPQRTUVWXY34679";
 

@@ -448,6 +448,21 @@ public static class MysteryService
     // ---- badges ----------------------------------------------------------------------------
 
     /// <summary>
+    /// Whose name tag this is. Badge tokens are separate from join tokens on purpose — see
+    /// <see cref="MysteryCastMember.BadgeToken"/>.
+    /// </summary>
+    public static MysteryCastMember? ByBadge(TripData trip, string? token)
+    {
+        ArgumentNullException.ThrowIfNull(trip);
+
+        if (string.IsNullOrWhiteSpace(token)) return null;
+
+        return trip.Mystery.Deal?.Cast.FirstOrDefault(c =>
+            c.BadgeToken.Length > 0 &&
+            string.Equals(c.BadgeToken, token, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
     /// Log an interaction edge. Repeat scans of the same person are kept: how often two people
     /// talk is exactly what the prompt engine wants to know.
     /// </summary>

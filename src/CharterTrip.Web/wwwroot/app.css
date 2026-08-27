@@ -2792,3 +2792,153 @@ pre.code {
   cursor: pointer;
 }
 .mys-chip.on { border-color: var(--ruby); background: rgba(201,79,90,.18); color: #fff; }
+
+/* --- player phone -------------------------------------------------------------
+   One thing at a time, thumb-sized, no chrome. For two hours this is a character
+   card rather than a page on a website. Type is a touch larger than the rest of
+   the site because it is read in a dark room by somebody holding a drink.
+   ------------------------------------------------------------------------------ */
+
+.mp {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 18px 16px 40px;
+  display: grid;
+  gap: 12px;
+}
+
+.mp-empty {
+  display: grid;
+  gap: 12px;
+  padding: 32px 4px;
+  text-align: center;
+}
+.mp-empty h1 { font-family: var(--display); font-size: 1.6rem; color: var(--gold-light); }
+
+.mp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.mp-title {
+  font-size: 0.75rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.mp-name {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  line-height: 1.15;
+  color: var(--gold-light);
+}
+.mp-ghost-badge {
+  flex: 0 0 auto;
+  padding: 3px 9px;
+  border: 1px solid var(--sapphire);
+  border-radius: 999px;
+  font-size: 0.688rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #9dbaf0;
+}
+
+/* Tabs scroll rather than shrink: five labels do not fit a narrow phone, and
+   squeezing them to fit makes every one harder to hit. */
+.mp-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.mp-tab {
+  flex: 0 0 auto;
+  padding: 9px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.mp-tab.on { border-color: var(--gold); background: var(--panel-2); color: var(--gold-light); }
+
+.mp-card {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  display: grid;
+  gap: 7px;
+}
+.mp-card h2 {
+  font-family: var(--display);
+  font-size: 0.813rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.mp-card h3 {
+  font-family: var(--display);
+  font-size: 0.938rem;
+  letter-spacing: .05em;
+  color: var(--gold-light);
+}
+.mp-card p { font-size: 0.938rem; line-height: 1.5; }
+.mp-card.mp-dim { opacity: .5; }
+
+.mp-card-guilty { border-color: rgba(201,79,90,.45); background: linear-gradient(180deg, rgba(201,79,90,.09), var(--panel)); }
+.mp-card-guilty h2 { color: #e8919a; }
+
+.mp-zone { font-family: var(--display); font-size: 1.25rem; color: var(--text); }
+.mp-rival { color: var(--gold-light); }
+.mp-mode { padding-left: 10px; border-left: 2px solid var(--line); }
+.mp-whisper { padding: 5px 0; border-bottom: 1px solid var(--line-soft); }
+
+.mp-seen { border-left: 3px solid var(--gold-dim); }
+.mp-clue { border-left: 3px solid var(--sapphire); }
+.mp-clue-text { font-size: 1.06rem !important; line-height: 1.55; }
+
+.mp-note {
+  padding: 11px 14px;
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
+  background: rgba(212,175,55,.09);
+  font-size: 0.875rem;
+}
+.mp-note-quiet { border-color: var(--line); background: var(--panel); color: var(--text-dim); }
+.mp-note-ghost { border-color: var(--sapphire); background: rgba(74,127,214,.1); }
+.mp-note-no    { border-color: var(--ruby); background: rgba(201,79,90,.12); }
+
+/* Vote buttons are deliberately large. Twenty-one names on a phone in a dark
+   room, and a mis-tap convicts the wrong person. */
+.mp-votes { display: grid; gap: 7px; }
+.mp-vote {
+  display: grid;
+  gap: 2px;
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.mp-vote:active { transform: translateY(1px); }
+.mp-vote.on { border-color: var(--ruby); background: rgba(201,79,90,.16); }
+.mp-vote-name { font-family: var(--display); font-size: 1rem; letter-spacing: .03em; }
+.mp-voted { color: var(--gold-light); }
+
+.mp-tamper { margin-bottom: 6px; text-transform: capitalize; }
+
+.mp-foot {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+}

@@ -98,6 +98,16 @@ public sealed class MysteryCastMember
     /// <summary>The <c>RosterPerson.Id</c> playing them. Null if the seat is uncast.</summary>
     public string? PersonId { get; set; }
 
+    /// <summary>
+    /// What goes in the QR on this character's name tag, at <c>/m/meet/{token}</c>.
+    ///
+    /// Deliberately not their join token. A badge is meant to be scanned by other people — that is
+    /// the entire mechanic — and a join token is the credential that signs somebody in as
+    /// themselves. Printing one on a name tag would mean anybody who photographed a badge could
+    /// become that player, read their secrets and vote as them.
+    /// </summary>
+    public string BadgeToken { get; set; } = "";
+
     /// <summary>Where they spent the evening. Drives their witness statements.</summary>
     public string ZoneId { get; set; } = "";
 

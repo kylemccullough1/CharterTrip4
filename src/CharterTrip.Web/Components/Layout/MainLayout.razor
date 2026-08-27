@@ -17,6 +17,9 @@
 @if (_permissions is not null)
 {
     <CascadingValue Value="_permissions" IsFixed="true">
+        @* Repaints the site in the leading team's colours. Inside the cascade because it needs
+           to know who is looking; before the shell so the variables are set as it renders. *@
+        <LeaderTheme />
         @if (_permissions.IsAdmin)
         {
             <AdminShell>@Body</AdminShell>

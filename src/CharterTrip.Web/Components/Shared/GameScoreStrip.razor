@@ -1,12 +1,11 @@
-@* Where a game stands, and the way to take back the last thing that was tapped.
+@* Where a game stands, and what it has paid out to get there.
 
-   Both read from the trip's score log rather than anything this component keeps, so an undo
-   is a deletion and the board underneath it cannot end up disagreeing.
+   Both read from the trip's score log rather than anything this component keeps, so the board
+   and the history cannot end up disagreeing.
 
-   The list of awards folds away because it only grows: by the sixth round of cups it is longer
-   than the board above it and pushes the thing you actually came to look at off the screen. *@
-
-@inject ITripStore Store
+   The history is a record, not a control: taking a round back mid-game is the kind of thing
+   that gets tapped by accident on a phone in a garden and noticed three rounds later. Resetting
+   the game is the way back, and it says so. *@
 
 <div class="hero-board">
     <div class="hero-board-head">
@@ -60,14 +59,6 @@
                         <span class="score-recent-team">@(team?.Name ?? entry.TeamId)</span>
                         <span class="score-recent-pts">@(entry.Points > 0 ? "+" : "")@entry.Points</span>
                         <span class="score-recent-note muted">@entry.Note</span>
-                        @if (CanEdit)
-                        {
-                            <IconButton Icon="IconButtonIcon.Close"
-                                        Tone="danger"
-                                        Title="Take this back"
-                                        CssClass="score-undo"
-                                        OnClick="@(() => UndoAsync(entry.Id))" />
-                        }
                     </div>
                 }
                 @if (awards.Count > Take)
@@ -80,26 +71,15 @@
 }
 
 @code {
-    [CascadingParameter] private TripPermissions Permissions { get; set; } = new(false, "Guest");
-
     [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
     [Parameter, EditorRequired] public string GameId { get; set; } = "";
 
     [Parameter] public string Label { get; set; } = "This game";
 
-    /// <summary>How many of the most recent awards to offer an undo for.</summary>
+    /// <summary>How many of the most recent awards to list.</summary>
     [Parameter] public int Take { get; set; } = 8;
 
     [Parameter] public RenderFragment? Actions { get; set; }
 
     private bool _open = true;
-
-    private bool CanEdit => Permissions.CanEdit;
-
-    /// <summary>
-    /// No confirmation on the way out: one row is a small, obvious thing to lose and putting
-    /// it back is another tap. The dialog is saved for resetting the whole game.
-    /// </summary>
-    private Task UndoAsync(string entryId) =>
-        Store.MutateAsync(t => ScoreService.Undo(t, entryId), TripArea.Games);
 }

@@ -44,33 +44,33 @@
                     </label>
                 </div>
 
-                <p class="hb-label mt">The cast</p>
+                <div class="row between center mt">
+                    <span class="hb-label">The cast · @State.Characters.Count</span>
+                    <button class="btn btn-gold btn-sm" @onclick="AddAsync">Add a character</button>
+                </div>
                 <p class="muted tiny">
                     Give each one a picture so whoever is describing them has something to look at.
-                    Upload one, or paste a link.
                 </p>
-                <ul class="plain cast-list">
+
+                <div class="cast-list">
                     @for (var i = 0; i < State.Characters.Count; i++)
                     {
                         var index = i;
                         var character = State.Characters[index];
-                        <li class="cast-line" @key="index">
-                            <div class="cast-line-main">
-                                <EditableText Value="@character.Name"
-                                              CssClass="cast-name"
-                                              ValueChanged="@(v => EditNameAsync(index, v))"
-                                              Placeholder="—" />
-                                <button type="button" class="pack-del" title="Remove"
-                                        @onclick="() => RemoveAsync(index)">✕</button>
-                            </div>
+                        <div class="cast-line" @key="index">
+                            <EditableText Value="@character.Name"
+                                          CssClass="cast-name"
+                                          ValueChanged="@(v => EditNameAsync(index, v))"
+                                          Placeholder="Name them" />
                             <MediaField Value="@character.ImageUrl"
                                         Label="@character.Name"
-                                        Placeholder="no picture yet — upload one or paste a link"
+                                        ShowUrl="false"
                                         ValueChanged="@(v => EditImageAsync(index, v))" />
-                        </li>
+                            <button type="button" class="btn btn-danger-ghost btn-xs cast-delete"
+                                    @onclick="() => RemoveAsync(index)">Delete</button>
+                        </div>
                     }
-                </ul>
-                <button class="btn btn-ghost btn-sm" @onclick="AddAsync">Add a character</button>
+                </div>
             </Settings>
         </GameSetup>
     }

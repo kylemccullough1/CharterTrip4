@@ -21,7 +21,7 @@
     }
     else if (State.Phase == PartyGamePhase.NotStarted)
     {
-        <GameSetup Game="Game" OnStart="ArmAsync" StartLabel="Take the clocks to the line">
+        <GameSetup Game="Game" OnStart="ArmAsync" StartLabel="Take the clocks to the line" ShowLegs="true">
             <Structure>
                 <p><b>@State.WinnerPoints points</b> to the first team to finish — and nobody else.</p>
                 <p>

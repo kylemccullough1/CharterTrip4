@@ -121,7 +121,7 @@
                     {
                         <MediaView Src="@current.ImageUrl" CssClass="sketch-image" Alt="@current.Name" />
                     }
-                    <p class="sketch-current">@current.Name</p>
+                    <p class="sketch-current @(current.Name.Length > 14 ? "is-long" : null)">@current.Name</p>
                     <button class="btn btn-ghost btn-sm" @onclick="ClearAsync">Pick a different one</button>
                 </div>
             </SectionCard>

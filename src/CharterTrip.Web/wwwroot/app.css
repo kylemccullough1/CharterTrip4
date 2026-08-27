@@ -871,7 +871,10 @@ select.textfield { cursor: pointer; }
   border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; gap: 8px; align-items: center;
 }
 .jeo-join-card.is-host { border-top-color: var(--gold); }
-.jeo-join-team { font-family: var(--display); font-size: 0.75rem; letter-spacing: .12em; text-transform: uppercase; }
+.jeo-join-team {
+  font-family: var(--display); font-size: 0.75rem; letter-spacing: .12em; text-transform: uppercase;
+  text-align: center; max-width: 100%; overflow-wrap: anywhere;
+}
 .jeo-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.375rem; letter-spacing: .3em; color: var(--gold); }
 .qr { border-radius: 6px; display: block; background: #fff; padding: 6px; }
 
@@ -1538,7 +1541,8 @@ pre.code {
 }
 .jeo-win-name {
   font-family: var(--display); font-size: clamp(2.5rem, 9vw, 6.75rem); letter-spacing: .08em;
-  margin: 0; line-height: 1; color: var(--team, var(--gold));
+  margin: 0; line-height: 1.05; color: var(--team, var(--gold));
+  max-width: 100%; overflow-wrap: anywhere; hyphens: auto;
   text-shadow: 0 0 60px color-mix(in srgb, var(--team, #d4af37) 45%, transparent);
   animation: win-pop .9s cubic-bezier(.2, 1.5, .4, 1) both;
 }
@@ -2714,17 +2718,26 @@ pre.code {
   gap: 12px; margin-top: 10px;
 }
 .cast-line {
-  display: flex; flex-direction: column; gap: 8px; padding: 12px;
+  display: flex; flex-direction: column; gap: 8px; padding: 12px; min-width: 0;
   background: var(--ink-2); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
 }
-.cast-line .cast-name { font-weight: 600; }
-.cast-line .mediafield { gap: 8px; }
+/* "Hyperpigmentation" is one word and wider than the card. Left alone a long name simply runs
+   out of the card and over whatever is next to it, so names are allowed to break inside the
+   word — hyphenated where the browser can, mid-word where it cannot. */
+.cast-line .cast-name {
+  font-weight: 600; min-width: 0; max-width: 100%;
+  overflow-wrap: anywhere; hyphens: auto;
+}
+.cast-line .inline-edit { width: 100%; min-width: 0; }
+.cast-line .mediafield { gap: 8px; min-width: 0; }
+.cast-line .mediafield-row { flex-wrap: wrap; }
 .cast-line .mediafield-thumb { width: 100%; height: 110px; object-fit: cover; border-radius: var(--radius-sm); }
 .cast-delete { align-self: flex-start; }
 
 /* An editable rule, with its delete alongside. */
 .rule-line { display: flex; align-items: center; gap: 10px; }
 .rule-line .editable, .rule-line .inline-edit { flex: 1 1 auto; min-width: 0; }
+.rule-line .editable { overflow-wrap: anywhere; }
 
 /* --------------------------------------------------- the round, announced --
    Keyed on the round number in the markup, so this is a new element every
@@ -2747,10 +2760,12 @@ pre.code {
 
 /* ------------------------------------------------------ picking the character */
 .sketch-pick { padding: 0 !important; background: none; border: 0; box-shadow: none; }
-.cast-picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
+/* Wide enough that the longest name on the sheet — "Hyperpigmentation" — has a fighting chance
+   of fitting before anything has to break. */
+.cast-picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 .cast-pick {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 12px 10px; cursor: pointer;
+  padding: 12px 10px; cursor: pointer; min-width: 0;
   background: var(--panel); color: var(--text);
   border: 1px solid var(--line-soft); border-radius: var(--radius);
 }
@@ -2763,7 +2778,10 @@ pre.code {
   display: flex; align-items: center; justify-content: center;
   color: var(--text-faint); font-family: var(--display); font-size: 1.75rem;
 }
-.cast-pick-name { font-size: 0.813rem; text-align: center; line-height: 1.25; }
+.cast-pick-name {
+  font-size: 0.813rem; text-align: center; line-height: 1.25;
+  width: 100%; min-width: 0; overflow-wrap: anywhere; hyphens: auto;
+}
 
 /* the character up for this round, with a picture to describe from */
 .sketch-now { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
@@ -2771,10 +2789,15 @@ pre.code {
   max-height: 40vh; max-width: 100%; border-radius: var(--radius-sm);
   border: 1px solid var(--line-soft);
 }
+/* The name is set as big as it will go, which on a phone means a long one has to break rather
+   than run off the side. The letter-spacing comes off at the same time — tracking that flatters
+   a short name is what tips a long one over the edge in the first place. */
 .sketch-current {
-  font-family: var(--display); font-size: clamp(2rem, 7vw, 3.75rem);
+  font-family: var(--display); font-size: clamp(1.75rem, 6.5vw, 3.75rem);
   color: var(--gold); margin: 0; line-height: 1.05; letter-spacing: .04em;
+  max-width: 100%; overflow-wrap: anywhere; hyphens: auto;
 }
+.sketch-current.is-long { font-size: clamp(1.5rem, 5vw, 2.75rem); letter-spacing: 0; }
 
 /* four buttons, thumb-sized: who guessed it, or which team am I running */
 .team-picks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -2786,7 +2809,10 @@ pre.code {
   border-radius: var(--radius);
 }
 .team-pick:hover { border-color: var(--team, var(--gold)); background: color-mix(in srgb, var(--team, #d4af37) 12%, var(--panel)); }
-.team-pick-name { font-family: var(--display); font-size: 1.063rem; letter-spacing: .04em; }
+.team-pick-name {
+  font-family: var(--display); font-size: 1.063rem; letter-spacing: .04em;
+  text-align: center; width: 100%; min-width: 0; overflow-wrap: anywhere; hyphens: auto;
+}
 .team-pick-pts { color: var(--team, var(--gold)); font-size: 0.813rem; font-variant-numeric: tabular-nums; }
 
 /* ------------------------------------------------------------ the round won --
@@ -2801,8 +2827,9 @@ pre.code {
   border-top: 3px solid var(--team, var(--gold)); border-radius: var(--radius);
 }
 .sketch-result-who {
-  font-family: var(--display); font-size: clamp(1.75rem, 8vw, 3.5rem); letter-spacing: .06em;
-  margin: 0; line-height: 1; color: var(--team, var(--gold));
+  font-family: var(--display); font-size: clamp(1.5rem, 7vw, 3.5rem); letter-spacing: .06em;
+  margin: 0; line-height: 1.05; color: var(--team, var(--gold));
+  max-width: 100%; overflow-wrap: anywhere; hyphens: auto;
   text-shadow: 0 0 50px color-mix(in srgb, var(--team, #d4af37) 55%, transparent);
   animation: win-pop .55s cubic-bezier(.2, 1.5, .4, 1) both;
 }
@@ -2848,7 +2875,10 @@ pre.code {
   background: var(--panel); border: 1px solid var(--line-soft);
   border-top: 3px solid var(--team, var(--gold)); border-radius: var(--radius);
 }
-.count-team { font-family: var(--display); font-size: 1rem; letter-spacing: .04em; text-align: center; }
+.count-team {
+  font-family: var(--display); font-size: 1rem; letter-spacing: .04em; text-align: center;
+  width: 100%; min-width: 0; overflow-wrap: anywhere; hyphens: auto;
+}
 .count-controls { display: flex; align-items: center; gap: 8px; }
 .count-input { width: 5ch; text-align: center; font-size: 1.25rem; }
 .count-points { font-size: 0.813rem; color: var(--team, var(--gold)); }
@@ -2888,6 +2918,10 @@ pre.code {
 }
 .score-sidebar-head .section-title { margin: 0; }
 .score-sidebar-body { padding: 0 18px 24px; }
+/* The board sizes its name column to the longest name in it, which is fine across a page and
+   pushes the bar and the points off the edge of a drawer. In here the names give way instead. */
+.score-sidebar .hb-rows { grid-template-columns: 16px 9px minmax(0, 1.3fr) 1fr auto; }
+.score-sidebar .hb-pts { min-width: 34px; }
 
 .score-scrim { position: fixed; inset: 0; z-index: 54; background: rgba(0, 0, 0, .45); }
 
@@ -2907,7 +2941,7 @@ pre.code {
   padding: 7px 4px; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 0.844rem;
 }
 .score-recent-row:last-child { border-bottom: 0; }
-.score-recent-team { font-weight: 600; }
+.score-recent-team { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
 .score-recent-pts { color: var(--gold); font-variant-numeric: tabular-nums; }
 .score-recent-note { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .score-undo { flex: 0 0 auto; }
@@ -2950,7 +2984,10 @@ pre.code {
 }
 .relay-card.is-mine { border-color: var(--team, var(--gold)); }
 .relay-card.is-running { background: color-mix(in srgb, var(--team, #d4af37) 10%, var(--panel)); }
-.relay-team { font-family: var(--display); font-size: 0.938rem; letter-spacing: .04em; text-align: center; }
+.relay-team {
+  font-family: var(--display); font-size: 0.938rem; letter-spacing: .04em; text-align: center;
+  width: 100%; min-width: 0; overflow-wrap: anywhere; hyphens: auto;
+}
 .relay-clock { font-size: 1.375rem; color: var(--team, var(--gold)); font-variant-numeric: tabular-nums; }
 
 .relay-finish { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 18px; text-align: center; }

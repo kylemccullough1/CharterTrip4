@@ -1,0 +1,52 @@
+@* Ticks once a second toward a deadline and hands the caller the remaining time to render however
+   it likes — diamonds, a clock, whatever. Purely a display: the real gate always lives server-side,
+   this only drives what's on screen. Pass a new Deadline (or null) and it restarts/stops itself. *@
+@implements IDisposable
+
+@if (Deadline is not null && ChildContent is not null)
+{
+    @ChildContent(_remaining)
+}
+
+@code {
+    [Parameter] public DateTimeOffset? Deadline { get; set; }
+    [Parameter] public RenderFragment<TimeSpan>? ChildContent { get; set; }
+
+    private DateTimeOffset? _tracking;
+    private TimeSpan _remaining;
+    private CancellationTokenSource? _cts;
+
+    protected override void OnParametersSet()
+    {
+        if (Deadline == _tracking) return;
+        _tracking = Deadline;
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
+        if (Deadline is { } deadline) Start(deadline);
+    }
+
+    private void Start(DateTimeOffset deadline)
+    {
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    var left = deadline - DateTimeOffset.UtcNow;
+                    _remaining = left <= TimeSpan.Zero ? TimeSpan.Zero : left;
+                    await InvokeAsync(StateHasChanged);
+                    if (_remaining <= TimeSpan.Zero) break;
+                    await Task.Delay(TimeSpan.FromSeconds(1), token);
+                }
+            }
+            catch (OperationCanceledException) { /* superseded, or the page went away */ }
+        });
+    }
+
+    public void Dispose() { _cts?.Cancel(); _cts?.Dispose(); }
+}

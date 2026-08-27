@@ -987,6 +987,54 @@ select.textfield { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .jeo-diamond.is-lit, .jeo-open.is-flash { animation: none; }
 }
+
+/* Final Jeopardy's clock, and the "take a shot" beat when it runs out unbuzzed. */
+.jeo-final-timer {
+  font-family: var(--display); font-size: clamp(2rem, 5vw, 3.375rem);
+  font-variant-numeric: tabular-nums; letter-spacing: .04em; color: var(--text);
+}
+.jeo-final-timer.is-urgent { color: var(--ruby); animation: jeo-timer-pulse 1s ease-in-out infinite; }
+
+@keyframes jeo-timer-pulse {
+  0%, 100% { opacity: 1; } 50% { opacity: .55; }
+}
+
+.jeo-shot { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.jeo-shot-text {
+  font-family: var(--display); font-size: clamp(1.375rem, 3vw, 2rem); margin: 0; color: var(--gold);
+  animation: jeo-shot-shake .5s ease-in-out;
+}
+
+@keyframes jeo-shot-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  20%      { transform: translateX(-6px) rotate(-2deg); }
+  40%      { transform: translateX(6px) rotate(2deg); }
+  60%      { transform: translateX(-4px) rotate(-1deg); }
+  80%      { transform: translateX(4px) rotate(1deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jeo-final-timer.is-urgent, .jeo-shot-text { animation: none; }
+}
+
+/* Local-only testing strip: one mini buzzer per team, plus a host judging card. */
+.jeo-simstrip { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line-soft); }
+.jeo-simstrip-label { font-size: 0.688rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 8px; }
+.jeo-simstrip-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.jeo-simcard {
+  flex: 1; min-width: 130px; display: flex; flex-direction: column; gap: 8px;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
+  padding: 10px;
+}
+.jeo-simcard-head { display: flex; align-items: center; justify-content: space-between; font-size: 0.813rem; color: var(--team, var(--text-dim)); }
+.jeo-simcard-mute { display: flex; align-items: center; gap: 4px; font-size: 0.688rem; color: var(--text-faint); cursor: pointer; }
+.buzz-button.jeo-simcard-buzz {
+  flex: none; align-self: stretch; margin: 0; width: 100%; aspect-ratio: auto; height: 44px;
+  border-radius: var(--radius-sm); font-size: 1rem; letter-spacing: .06em; border-width: 2px;
+}
+.jeo-simcard-judge { display: flex; gap: 6px; }
+.jeo-simcard-judge .btn { flex: 1; }
+
 .jeo-answer { font-size: clamp(1.125rem, 2.2vw, 1.875rem); color: var(--emerald); margin: 0; }
 .jeo-buzzed { display: flex; flex-direction: column; gap: 4px; }
 .jeo-buzzed-team { font-family: var(--display); font-size: clamp(1.5rem, 3vw, 2.5rem); color: var(--team, var(--gold)); }

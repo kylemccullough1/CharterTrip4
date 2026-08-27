@@ -45,6 +45,7 @@ public static class JeopardyService
         game.Buzzes.Clear();
         game.LockedOutTeamIds.Clear();
         game.BuzzersOpen = false;
+        game.FinalTimerExpired = false;
 
         game.BuzzerCodes = trip.Teams.ToDictionary(t => t.Id, _ => NewCode(random), StringComparer.Ordinal);
         game.HostCode = NewCode(random);
@@ -237,6 +238,7 @@ public static class JeopardyService
 
         game.Phase = JeopardyPhase.Revealed;
         game.BuzzersOpen = false;
+        game.FinalTimerExpired = false;
         game.Buzzes.Clear();
         game.RevealedWinnerTeamId = winner;
     }
@@ -302,6 +304,52 @@ public static class JeopardyService
 
         game.BuzzersOpen = true;
         game.BuzzOpenedAt = now;
+    }
+
+    /// <summary>
+    /// Time's up on Final Jeopardy with nobody in: buzzers close and the room gets a beat before
+    /// the host restarts it — no auto-reveal. Guarded like OpenBuzzers, so a timer that fires
+    /// after the round already resolved (someone buzzed, or the host reset) does nothing.
+    /// </summary>
+    public static void ExpireFinalTimer(TripData trip, DateTimeOffset now)
+    {
+        var game = trip.Jeopardy.Game;
+        if (game.CurrentClueId != FinalClueId) return;
+        if (game.Phase != JeopardyPhase.Final) return;
+        if (!game.BuzzersOpen) return;
+
+        game.BuzzersOpen = false;
+        game.FinalTimerExpired = true;
+    }
+
+    /// <summary>Everyone's taken their shot — give the final another timed run at it.</summary>
+    public static void RestartFinalTimer(TripData trip, DateTimeOffset now)
+    {
+        var game = trip.Jeopardy.Game;
+        if (game.CurrentClueId != FinalClueId) return;
+        if (game.Phase != JeopardyPhase.Final) return;
+        if (!game.FinalTimerExpired) return;
+
+        game.FinalTimerExpired = false;
+        game.BuzzersOpen = true;
+        game.BuzzOpenedAt = now;
+    }
+
+    /// <summary>
+    /// Testing shortcut: marks every clue used and jumps straight to the Final Jeopardy titles,
+    /// skipping the board entirely. Scores earned so far are untouched.
+    /// </summary>
+    public static void SkipToFinal(TripData trip)
+    {
+        var game = trip.Jeopardy.Game;
+        game.UsedClueIds = trip.Jeopardy.Categories.SelectMany(c => c.Clues)
+            .Where(c => !c.IsEmpty).Select(c => c.Id).ToList();
+        game.CurrentClueId = null;
+        game.RevealedWinnerTeamId = null;
+        game.Buzzes.Clear();
+        game.LockedOutTeamIds.Clear();
+        game.BuzzersOpen = false;
+        game.Phase = JeopardyPhase.FinalIntro;
     }
 
     public static void Finish(TripData trip) => trip.Jeopardy.Game.Phase = JeopardyPhase.Finished;

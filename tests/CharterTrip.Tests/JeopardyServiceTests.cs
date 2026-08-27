@@ -473,6 +473,35 @@ public class JeopardyServiceTests
         Assert.Equal(JeopardyPhase.FinalIntro, trip.Jeopardy.Game.Phase);
     }
 
+    /// <summary>Testing shortcut: skips the whole board without touching what's already been earned.</summary>
+    [Fact]
+    public void Skipping_to_final_marks_every_real_clue_used_but_leaves_scores_alone()
+    {
+        var trip = Trip();
+        JeopardyService.Reset(trip, new Random(1));
+        trip.Scores.Add(new ScoreEntry { Id = "a", TeamId = "ali", GameId = "jeopardy", Points = 20 });
+
+        JeopardyService.SkipToFinal(trip);
+
+        Assert.Equal(JeopardyPhase.FinalIntro, trip.Jeopardy.Game.Phase);
+        Assert.True(JeopardyService.AllCluesUsed(trip));
+        Assert.Null(trip.Jeopardy.Game.CurrentClueId);
+        Assert.False(trip.Jeopardy.Game.BuzzersOpen);
+        Assert.Equal(20, JeopardyService.ScoreFor(trip, "ali"));
+    }
+
+    [Fact]
+    public void Skipping_to_final_is_fully_undone_by_a_reset()
+    {
+        var trip = Trip();
+        JeopardyService.SkipToFinal(trip);
+
+        JeopardyService.Reset(trip, new Random(1));
+
+        Assert.Empty(trip.Jeopardy.Game.UsedClueIds);
+        Assert.Equal(JeopardyPhase.NotStarted, trip.Jeopardy.Game.Phase);
+    }
+
     // ------------------------------------------------------------------ final
 
     /// <summary>
@@ -497,6 +526,65 @@ public class JeopardyServiceTests
         // Buzzing settles it the same way, straight into the host's call.
         Assert.True(JeopardyService.Buzz(trip, "ali", At(300)));
         Assert.Equal(JeopardyPhase.Judging, trip.Jeopardy.Game.Phase);
+    }
+
+    /// <summary>
+    /// Nobody rang in before time ran out: buzzers shut and the room gets a beat, but — unlike
+    /// every other way a clue ends — the answer does NOT go up. The clue stays in play so the
+    /// host can restart it.
+    /// </summary>
+    [Fact]
+    public void The_final_timer_running_out_closes_buzzers_without_revealing()
+    {
+        var trip = Trip();
+        OpenFinal(trip);
+
+        JeopardyService.ExpireFinalTimer(trip, At(5000));
+
+        Assert.False(trip.Jeopardy.Game.BuzzersOpen);
+        Assert.True(trip.Jeopardy.Game.FinalTimerExpired);
+        Assert.Equal(JeopardyPhase.Final, trip.Jeopardy.Game.Phase);
+        Assert.Equal(JeopardyService.FinalClueId, trip.Jeopardy.Game.CurrentClueId);
+    }
+
+    [Fact]
+    public void A_final_timer_that_fires_after_someone_already_buzzed_does_nothing()
+    {
+        var trip = Trip();
+        OpenFinal(trip);
+        JeopardyService.Buzz(trip, "ali", At(300));   // buzzers close, phase -> Judging
+
+        JeopardyService.ExpireFinalTimer(trip, At(5000));
+
+        Assert.False(trip.Jeopardy.Game.FinalTimerExpired);
+        Assert.Equal(JeopardyPhase.Judging, trip.Jeopardy.Game.Phase);
+    }
+
+    [Fact]
+    public void Restarting_the_final_timer_reopens_buzzers_for_another_run()
+    {
+        var trip = Trip();
+        OpenFinal(trip);
+        JeopardyService.ExpireFinalTimer(trip, At(5000));
+
+        JeopardyService.RestartFinalTimer(trip, At(6000));
+
+        Assert.False(trip.Jeopardy.Game.FinalTimerExpired);
+        Assert.True(trip.Jeopardy.Game.BuzzersOpen);
+        Assert.Equal(At(6000), trip.Jeopardy.Game.BuzzOpenedAt);
+        Assert.True(JeopardyService.Buzz(trip, "ali", At(6300)));
+    }
+
+    /// <summary>Restarting only makes sense from the expired state — it's not a generic re-open.</summary>
+    [Fact]
+    public void Restarting_the_final_timer_does_nothing_unless_it_actually_expired()
+    {
+        var trip = Trip();
+        OpenFinal(trip);
+
+        JeopardyService.RestartFinalTimer(trip, At(6000));
+
+        Assert.Equal(T0, trip.Jeopardy.Game.BuzzOpenedAt);   // OpenFinal's original open, untouched
     }
 
     [Fact]

@@ -5,6 +5,7 @@
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 @inject CharterTrip.Web.Services.ToastService Toasts
+@inject IWebHostEnvironment Env
 
 <PageTitle>Jeopardy · Charter Trip 2026</PageTitle>
 
@@ -95,6 +96,13 @@
                        @onchange="@(e => SetFinalValueAsync(e.Value?.ToString()))" />
 
                 <div class="jeo-editor-fields">
+                    <div class="jeo-editor-field is-aside">
+                        <span class="jeo-editor-label">Time limit (minutes)</span>
+                        <input class="inline-edit" type="number" min="1" step="1"
+                               aria-label="Final Jeopardy time limit, in minutes"
+                               value="@(Board.Final.TimeLimitSeconds / 60)"
+                               @onchange="@(e => SetFinalTimerMinutesAsync(e.Value?.ToString()))" />
+                    </div>
                     <div class="jeo-editor-field">
                         <span class="jeo-editor-label">Clue</span>
                         <EditableText Value="@Board.Final.Clue" Multiline="true"
@@ -144,6 +152,10 @@ else if (Game.Phase == JeopardyPhase.NotStarted)
         {
             <div class="jeo-title-actions">
                 <button class="btn btn-gold btn-lg" @onclick="BeginAsync">Start the game</button>
+                @if (IsDev)
+                {
+                    <button class="btn btn-ghost btn-sm" @onclick="SkipToFinalAsync">⚡ Skip to Final (testing)</button>
+                }
                 <button class="btn btn-ghost btn-sm" @onclick="() => _editingBoard = true">Edit questions</button>
                 <button class="btn btn-ghost btn-sm" @onclick="NewCodesAsync">New codes</button>
                 <button class="mini-btn" title="@(Muted ? "Unmute" : "Mute")" @onclick="ToggleMuteAsync">@(Muted ? "🔇" : "🔊")</button>
@@ -176,6 +188,10 @@ else
         {
             <div class="jeo-bar-actions">
                 <button class="mini-btn" title="@(Muted ? "Unmute" : "Mute")" @onclick="ToggleMuteAsync">@(Muted ? "🔇" : "🔊")</button>
+                @if (IsDev && Game.Phase is not (JeopardyPhase.Final or JeopardyPhase.FinalIntro or JeopardyPhase.Finished))
+                {
+                    <button class="btn btn-ghost btn-xs" @onclick="SkipToFinalAsync">⚡ Skip to Final</button>
+                }
                 <button class="btn btn-ghost btn-xs" @onclick="ConfirmReset">Reset</button>
             </div>
         }
@@ -273,18 +289,40 @@ else
                     <span class="muted">buzzed in @Reaction(Game.Buzzes.FirstOrDefault()?.Milliseconds ?? 0)</span>
                 </div>
             }
+            else if (Game.FinalTimerExpired)
+            {
+                <div class="jeo-shot">
+                    <p class="jeo-shot-text">🍺 Nobody buzzed in time — take a shot! 🍺</p>
+                    @if (CanEdit)
+                    {
+                        <button class="btn btn-gold btn-lg" @onclick="RestartFinalTimerAsync">Restart the timer</button>
+                    }
+                </div>
+            }
             else if (Game.BuzzersOpen)
             {
-                <p class="jeo-open @(_justOpened ? "is-flash" : null)">Buzzers are open@(Game.LockedOutTeamIds.Count > 0 ? $" — {Game.LockedOutTeamIds.Count} locked out" : "")</p>
+                @if (inPlay.IsFinal)
+                {
+                    <Countdown Deadline="@FinalDeadline">
+                        <p class="jeo-open jeo-final-timer @(context.TotalSeconds <= 30 ? "is-urgent" : null)">@FormatRemaining(context)</p>
+                    </Countdown>
+                }
+                else
+                {
+                    <p class="jeo-open @(_justOpened ? "is-flash" : null)">Buzzers are open@(Game.LockedOutTeamIds.Count > 0 ? $" — {Game.LockedOutTeamIds.Count} locked out" : "")</p>
+                }
             }
             else
             {
-                <div class="jeo-countdown">
-                    @for (var i = 1; i <= 3; i++)
-                    {
-                        <span class="jeo-diamond @(i <= _diamondCount ? "is-lit" : null)" aria-hidden="true"></span>
-                    }
-                </div>
+                <Countdown Deadline="@_diamondDeadline">
+                    <div class="jeo-countdown">
+                        @{ var lit = Math.Clamp((int)Math.Round((JeopardyService.ClueReadDelay - context).TotalSeconds), 0, 3); }
+                        @for (var i = 1; i <= 3; i++)
+                        {
+                            <span class="jeo-diamond @(i <= lit ? "is-lit" : null)" aria-hidden="true"></span>
+                        }
+                    </div>
+                </Countdown>
             }
         </section>
     }
@@ -370,6 +408,41 @@ else
     }
 }
 
+@if (IsDev && Game.Phase != JeopardyPhase.NotStarted)
+{
+    @* Local-only testing aid: simulated phones so the game can be played through without real
+       devices. Never reaches Azure — IsDev is IWebHostEnvironment.IsDevelopment(). *@
+    <section class="jeo-simstrip">
+        <p class="jeo-simstrip-label">Testing — simulated phones</p>
+        <div class="jeo-simstrip-row">
+            @foreach (var team in Trip.Teams)
+            {
+                <div class="jeo-simcard" style="--team:@team.Color" @key="team.Id">
+                    <div class="jeo-simcard-head">
+                        <span>@team.Name</span>
+                        <label class="jeo-simcard-mute">
+                            <input type="checkbox" checked="@IsSimMuted(team.Id)"
+                                   @onchange="@(e => SetSimMuted(team.Id, (bool)e.Value!))" /> mute
+                        </label>
+                    </div>
+                    <button class="buzz-button jeo-simcard-buzz @SimBuzzClass(team.Id)"
+                            disabled="@(!SimCanBuzz(team.Id))" @onclick="@(() => SimBuzzAsync(team.Id))">
+                        @SimBuzzLabel(team.Id)
+                    </button>
+                </div>
+            }
+            <div class="jeo-simcard is-host">
+                <div class="jeo-simcard-head"><span>Host</span></div>
+                <div class="jeo-simcard-judge">
+                    <button class="btn btn-xs jeo-right" disabled="@(!SimCanJudge)" @onclick="SimCorrectAsync">Correct</button>
+                    <button class="btn btn-xs jeo-wrong" disabled="@(!SimCanJudge)" @onclick="SimWrongAsync">Wrong</button>
+                    <button class="btn btn-xs btn-ghost" disabled="@(InPlay is null)" @onclick="SimNobodyAsync">Nobody</button>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
 </div>
 </AdminOnly>
 
@@ -398,14 +471,22 @@ else
     /// <summary>How long the "buzzers just opened" flash holds before the plain status text settles.</summary>
     private static readonly TimeSpan OpenFlashDuration = TimeSpan.FromMilliseconds(700);
 
-    private int _diamondCount;
+    private DateTimeOffset? _diamondDeadline;
     private bool _justOpened;
-    private CancellationTokenSource? _diamondTimer;
     private CancellationTokenSource? _openFlash;
+    private readonly HashSet<string> _simMuted = new();
 
     private JeopardyBoard Board => Trip.Jeopardy;
     private JeopardyGame Game => Trip.Jeopardy.Game;
     private bool Muted { get; set; }
+    private bool IsDev => Env.IsDevelopment();
+
+    private DateTimeOffset? FinalDeadline =>
+        Game.Phase == JeopardyPhase.Final && Game.BuzzersOpen && Game.BuzzOpenedAt is { } opened
+            ? opened + TimeSpan.FromSeconds(Board.Final.TimeLimitSeconds)
+            : null;
+
+    private static string FormatRemaining(TimeSpan remaining) => $"{(int)remaining.TotalMinutes}:{remaining.Seconds:00}";
 
     /// <summary>Whatever is on the wall — a clue, the final, or the answer to either.</summary>
     private ClueInPlay? InPlay => JeopardyService.InPlay(Trip);
@@ -514,7 +595,51 @@ else
     {
         await Task.Delay(JeopardyService.ClueReadDelay);
         await Store.MutateAsync(t => JeopardyService.OpenBuzzers(t, clueId, DateTimeOffset.UtcNow), Watching);
+        if (clueId == JeopardyService.FinalClueId) ScheduleFinalExpiry();
     });
+
+    /// <summary>
+    /// Closes Final's buzzers if nobody's rung in once the time limit elapses. Runs detached from
+    /// this circuit, same as ScheduleBuzzersOpen — fired once when Final's buzzers first open, and
+    /// again each time the host restarts the timer after a "take a shot" round.
+    /// </summary>
+    private void ScheduleFinalExpiry() => _ = Task.Run(async () =>
+    {
+        await Task.Delay(TimeSpan.FromSeconds(Board.Final.TimeLimitSeconds));
+        await Store.MutateAsync(t => JeopardyService.ExpireFinalTimer(t, DateTimeOffset.UtcNow), Watching);
+    });
+
+    private async Task RestartFinalTimerAsync()
+    {
+        await MutateAsync(t => JeopardyService.RestartFinalTimer(t, DateTimeOffset.UtcNow));
+        ScheduleFinalExpiry();
+    }
+
+    private Task SkipToFinalAsync() => MutateAsync(JeopardyService.SkipToFinal);
+
+    // -------------------------------------------------------- testing simulation
+
+    private bool IsSimMuted(string teamId) => _simMuted.Contains(teamId);
+    private void SetSimMuted(string teamId, bool muted) { if (muted) _simMuted.Add(teamId); else _simMuted.Remove(teamId); }
+
+    private bool SimLockedOut(string teamId) => Game.LockedOutTeamIds.Contains(teamId);
+    private bool SimAlreadyBuzzed(string teamId) => Game.Buzzes.Any(b => b.TeamId == teamId);
+    private bool SimCanBuzz(string teamId) => Game.BuzzersOpen && !SimLockedOut(teamId) && !SimAlreadyBuzzed(teamId);
+    private string SimBuzzLabel(string teamId) =>
+        SimLockedOut(teamId) ? "OUT" : SimAlreadyBuzzed(teamId) ? "IN" : Game.BuzzersOpen ? "BUZZ" : "WAIT";
+    private string SimBuzzClass(string teamId) =>
+        SimLockedOut(teamId) ? "is-out" : SimAlreadyBuzzed(teamId) ? "is-in" : Game.BuzzersOpen ? "is-live" : "is-idle";
+
+    private async Task SimBuzzAsync(string teamId)
+    {
+        if (!IsSimMuted(teamId)) await Cue("buzz");
+        await MutateAsync(t => JeopardyService.Buzz(t, teamId, DateTimeOffset.UtcNow));
+    }
+
+    private bool SimCanJudge => Game.Phase == JeopardyPhase.Judging;
+    private Task SimCorrectAsync() => MutateAsync(t => JeopardyService.JudgeCorrect(t, DateTimeOffset.UtcNow));
+    private Task SimWrongAsync() => MutateAsync(t => JeopardyService.JudgeWrong(t, DateTimeOffset.UtcNow));
+    private Task SimNobodyAsync() => MutateAsync(JeopardyService.NobodyGotIt);
 
     /// <summary>
     /// Give the winner of the opening race the screen for a moment. Purely a view state — it is
@@ -537,35 +662,6 @@ else
                 await Task.Delay(PickCardDuration, token);
                 _showPickCard = false;
                 await InvokeAsync(StateHasChanged);
-            }
-            catch (OperationCanceledException) { /* superseded, or the page went away */ }
-        });
-    }
-
-    /// <summary>
-    /// Ticks the diamond counter up once a second (evenly over the read delay) while the room
-    /// waits for buzzers to open. Purely a view state, same as <see cref="ShowPickCard"/> — the
-    /// real gate is <c>Game.BuzzersOpen</c>, this is just what it looks like counting down to it.
-    /// </summary>
-    private void StartDiamondCountdown()
-    {
-        _diamondTimer?.Cancel();
-        _diamondTimer?.Dispose();
-        _diamondTimer = new CancellationTokenSource();
-        var token = _diamondTimer.Token;
-        _diamondCount = 0;
-
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var step = JeopardyService.ClueReadDelay / 3;
-                for (var i = 1; i <= 3; i++)
-                {
-                    await Task.Delay(step, token);
-                    _diamondCount = i;
-                    await InvokeAsync(StateHasChanged);
-                }
             }
             catch (OperationCanceledException) { /* superseded, or the page went away */ }
         });
@@ -632,6 +728,11 @@ else
 
     private Task SetFinalValueAsync(string? raw) =>
         ParseValue(raw) is { } value ? EditFinalAsync(f => f.Value = value) : Task.CompletedTask;
+
+    private Task SetFinalTimerMinutesAsync(string? raw) =>
+        ParseValue(raw) is { } minutes && minutes >= 1
+            ? EditFinalAsync(f => f.TimeLimitSeconds = minutes * 60)
+            : Task.CompletedTask;
 
     private static int? ParseValue(string? raw) =>
         int.TryParse(raw, out var value) && value >= 0 ? value : null;
@@ -742,7 +843,7 @@ else
             if (clueId != _lastClueId && clueId is not null)
             {
                 await _audio.InvokeVoidAsync("reveal");
-                StartDiamondCountdown();
+                _diamondDeadline = DateTimeOffset.UtcNow + JeopardyService.ClueReadDelay;
             }
 
             if (phase != _lastPhase)
@@ -787,8 +888,6 @@ else
     {
         _pickCard?.Cancel();
         _pickCard?.Dispose();
-        _diamondTimer?.Cancel();
-        _diamondTimer?.Dispose();
         _openFlash?.Cancel();
         _openFlash?.Dispose();
 

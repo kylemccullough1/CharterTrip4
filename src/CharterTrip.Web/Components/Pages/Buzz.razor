@@ -4,6 +4,7 @@
 @inherits TripAwareComponent
 @implements IAsyncDisposable
 @inject IJSRuntime JS
+@inject IWebHostEnvironment Env
 @layout CharterTrip.Web.Components.Layout.BareLayout
 
 <PageTitle>Buzzer · Charter Trip</PageTitle>
@@ -65,6 +66,11 @@ else if (IsHost)
                     <button class="btn btn-lg jeo-wrong" @onclick="WrongAsync">Wrong</button>
                 </div>
             }
+            else if (Game.FinalTimerExpired)
+            {
+                <p class="buzz-buzzed">🍺 Take a shot!</p>
+                <button class="btn btn-gold btn-lg btn-block" @onclick="RestartFinalTimerAsync">Restart the timer</button>
+            }
             else
             {
                 <p class="muted tiny">Waiting for a buzz…</p>
@@ -122,7 +128,13 @@ else
             <button class="buzz-button @BuzzClass" disabled="@(!CanBuzz)" @onclick="BuzzAsync">
                 @BuzzLabel
             </button>
-            <p class="buzz-status">@StatusLine</p>
+            <p class="buzz-status">
+                @StatusLine
+                @if (FinalInPlay && Game.BuzzersOpen)
+                {
+                    <Countdown Deadline="@FinalDeadline"> @FormatRemaining(context) left.</Countdown>
+                }
+            </p>
 
             @* A place to work the final out together before ringing in. Deliberately local to
                this phone: nothing is sent, nothing is stored, and the host never sees it. The
@@ -156,7 +168,20 @@ else
     private JeopardyGame Game => Trip.Jeopardy.Game;
 
     private string? TeamId => Code is null ? null : JeopardyService.TeamForCode(Trip, Code);
-    private bool IsHost => Code is not null && JeopardyService.IsHostCode(Trip, Code);
+
+    // The "TEST" bypass can never collide with a real code — JeopardyService.CodeAlphabet
+    // excludes S — and Env.IsDevelopment() is false once deployed, so it's structurally
+    // unreachable outside a local run.
+    private bool IsHost => Code is not null &&
+        (JeopardyService.IsHostCode(Trip, Code) ||
+         (Env.IsDevelopment() && string.Equals(Code, "TEST", StringComparison.OrdinalIgnoreCase)));
+
+    private DateTimeOffset? FinalDeadline =>
+        Game.Phase == JeopardyPhase.Final && Game.BuzzersOpen && Game.BuzzOpenedAt is { } opened
+            ? opened + TimeSpan.FromSeconds(Board.Final.TimeLimitSeconds)
+            : null;
+
+    private static string FormatRemaining(TimeSpan remaining) => $"{(int)remaining.TotalMinutes}:{remaining.Seconds:00}";
 
     private ClueInPlay? InPlay => JeopardyService.InPlay(Trip);
 
@@ -197,7 +222,7 @@ else
         JeopardyPhase.Judging => "your call",
         JeopardyPhase.Revealed => "answer up",
         JeopardyPhase.FinalIntro => "final titles",
-        JeopardyPhase.Final => Game.BuzzersOpen ? "final — buzzers open" : "final — reading the clue",
+        JeopardyPhase.Final => Game.FinalTimerExpired ? "final — take a shot" : Game.BuzzersOpen ? "final — buzzers open" : "final — reading the clue",
         _ => "finished"
     };
 
@@ -212,6 +237,7 @@ else
         {
             if (LockedOut) return "Wrong answer — you're out of this clue.";
             if (AlreadyBuzzed) return Game.LeadingBuzzTeamId == TeamId ? "You're in! Answer it." : "Someone beat you to it.";
+            if (Game.FinalTimerExpired) return "Time's up — take a shot! 🍺";
             if (Game.Phase == JeopardyPhase.Board && Game.BuzzersOpen) return "Buzz to win the first pick.";
             if (Game.Phase == JeopardyPhase.FinalIntro) return "Final Jeopardy is next.";
             if (FinalInPlay && Game.BuzzersOpen) return "Final Jeopardy — buzz when your team has it.";
@@ -258,7 +284,24 @@ else
     {
         await Task.Delay(JeopardyService.ClueReadDelay);
         await Store.MutateAsync(t => JeopardyService.OpenBuzzers(t, clueId, DateTimeOffset.UtcNow), Watching);
+        if (clueId == JeopardyService.FinalClueId) ScheduleFinalExpiry();
     });
+
+    /// <summary>
+    /// Closes Final's buzzers if nobody's rung in once the time limit elapses. Fired once when
+    /// Final's buzzers first open, and again each time the host restarts the timer.
+    /// </summary>
+    private void ScheduleFinalExpiry() => _ = Task.Run(async () =>
+    {
+        await Task.Delay(TimeSpan.FromSeconds(Board.Final.TimeLimitSeconds));
+        await Store.MutateAsync(t => JeopardyService.ExpireFinalTimer(t, DateTimeOffset.UtcNow), Watching);
+    });
+
+    private async Task RestartFinalTimerAsync()
+    {
+        await MutateAsync(t => JeopardyService.RestartFinalTimer(t, DateTimeOffset.UtcNow));
+        ScheduleFinalExpiry();
+    }
 
     /// <summary>
     /// One sound on this phone.

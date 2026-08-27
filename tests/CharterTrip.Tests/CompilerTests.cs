@@ -302,14 +302,25 @@ public class CompilerTests
     }
 
     [Fact]
-    public void A_room_with_no_trace_shows_its_own_clue_spot_rather_than_invented_prose()
+    public void A_room_with_no_trace_shows_an_authored_spine_card()
     {
         var deal = Deal();
-        var clue = Dealer.LayOutClues(Script, deal).First(c => c.TraceCharacterId is null);
+        var clues = Dealer.LayOutClues(Script, deal);
 
-        // The content has no authored neutral-clue text. Describing where the card sits is the
-        // honest fallback; putting words in the author's mouth is not.
-        Assert.Equal(Script.Zones.ById(clue.ZoneId)!.ClueSpot, Compiler.ClueText(Script, clue));
+        // Neutral rooms carry one of the authored atmosphere lines — a nudge to keep talking,
+        // never evidence — chosen by zone position so a replay reads the same card.
+        var neutral = clues.First(c => c.TraceCharacterId is null && c.ZoneId != "study");
+        var text = Compiler.ClueText(Script, neutral, deal);
+        Assert.Contains(text, Script.StoryBeats.SpineClues.Generic);
+        Assert.Equal(text, Compiler.ClueText(Script, neutral, deal));
+
+        // The study's card is the scene itself: the composed base plus this deal's method flavour.
+        var study = clues.Single(c => c.ZoneId == "study");
+        Assert.Equal(Compiler.StudyScene(Script, deal), Compiler.ClueText(Script, study, deal));
+
+        // Without the deal the study cannot know its method, so it falls back to the placement
+        // note rather than showing a scene from the wrong game.
+        Assert.Equal(Script.Zones.ById("study")!.ClueSpot, Compiler.ClueText(Script, study));
     }
 
     [Theory]
@@ -424,27 +435,32 @@ public class CompilerTests
     }
 
     [Fact]
-    public void The_one_missing_content_fragment_is_reported_rather_than_guessed_at()
+    public void Every_content_fragment_now_has_a_source()
     {
-        var deal = Deal();
-        var gaps = Compiler.MissingFragments(Script);
-
-        // story_beats.json's detective_reveal wants a {result_line} that nothing provides. The
-        // compiler will not invent it, Endgame omits that paragraph, and it shows up here so it
-        // can be written. If this list grows, a new template arrived with a hole in it.
-        Assert.Equal(["detective_reveal → {result_line}"], gaps);
+        // detective_reveal's {result_line} was the one gap; the authored per-outcome lines closed
+        // it. Anything appearing here again is a new template that arrived with a hole in it.
+        Assert.Empty(Compiler.MissingFragments(Script));
     }
 
     [Fact]
-    public void A_paragraph_with_an_unfilled_placeholder_is_omitted_rather_than_shown()
+    public void The_detectives_are_named_with_the_line_their_outcome_earned()
     {
         var deal = Deal();
-        var paragraphs = Compiler.Endgame(Script, StateWith(deal, deal.Killers.First().CharacterId));
+        var killers = deal.Killers.Select(k => k.CharacterId).ToList();
+        var detective = Script.CharacterById(deal.InFaction("detective").First().CharacterId)!.Name;
 
-        // The detectives are named in the reveal only once {result_line} exists. Until then the
-        // paragraph is absent, which is better than a visible template hole on the wall.
-        Assert.DoesNotContain(paragraphs, p => p.Contains("The investigators were"));
-        Assert.All(paragraphs, p => Assert.DoesNotContain("{", p));
+        // Town won: they worked the room while the room worked them.
+        var townWon = Compiler.Endgame(Script, StateWith(deal, killers[0], killers[1]));
+        var townLine = townWon.Single(p => p.Contains("The investigators were"));
+        Assert.Contains(detective, townLine);
+        Assert.Contains("working the room while the room worked them", townLine);
+
+        // Killers won: close, and close doesn't convict.
+        var killersWon = Compiler.Endgame(Script, StateWith(deal));
+        var lostLine = killersWon.Single(p => p.Contains("The investigators were"));
+        Assert.Contains("close doesn't convict", lostLine);
+
+        Assert.All(townWon.Concat(killersWon), p => Assert.DoesNotContain("{", p));
     }
 
     [Fact]

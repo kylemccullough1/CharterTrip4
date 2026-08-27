@@ -214,11 +214,11 @@ public static class Compiler
     /// <summary>
     /// What a clue card reads right now — authored trace, or tampered, or scrubbed.
     ///
-    /// A room without a trace shows the zone's own <c>clue_spot</c> line. The content has no
-    /// authored text for neutral clues, and describing where the card sits is better than putting
-    /// words in the author's mouth.
+    /// Pass the deal when you have it: the study's card then reads the composed murder scene, which
+    /// is deal-dependent through the method flavour. Without it the study falls back to its
+    /// <c>clue_spot</c> line rather than showing a scene from the wrong game.
     /// </summary>
-    public static string ClueText(MysteryScript script, MysteryClue clue)
+    public static string ClueText(MysteryScript script, MysteryClue clue, MysteryDeal? deal = null)
     {
         ArgumentNullException.ThrowIfNull(script);
         ArgumentNullException.ThrowIfNull(clue);
@@ -228,9 +228,7 @@ public static class Compiler
         // A scrub replaces the reading entirely rather than adding to it.
         if (clue.Tamper is { Mode: "scrub" }) return tamper.ScrubRender;
 
-        var baseText = clue.TraceCharacterId is { } traceId
-            ? script.CharacterById(traceId)?.Trace.Text ?? ""
-            : script.Zones.ById(clue.ZoneId)?.ClueSpot ?? "";
+        var baseText = BaseClueText(script, clue, deal);
 
         if (clue.Tamper is not { } t) return baseText;
 
@@ -240,6 +238,44 @@ public static class Compiler
         var insert = script.CharacterById(t.TargetCharacterId)?.TamperInsert ?? "";
 
         return $"{baseText} {Fill(render, new() { ["tamper_insert"] = insert })}".Trim();
+    }
+
+    /// <summary>
+    /// The card as authored, before any tampering. One source for <see cref="ClueText"/> and
+    /// <see cref="Forensics"/>, so a tampered card and its forensics report cannot disagree about
+    /// what it originally said.
+    /// </summary>
+    private static string BaseClueText(MysteryScript script, MysteryClue clue, MysteryDeal? deal)
+    {
+        if (clue.TraceCharacterId is { } traceId)
+            return script.CharacterById(traceId)?.Trace.Text ?? "";
+
+        // The study's card is the scene itself — the composed base plus the method flavour that
+        // belongs to this deal's means killer. Without the deal it cannot know its method, so it
+        // takes the placement note rather than an atmosphere line that belongs to other rooms.
+        if (clue.ZoneId == "study")
+            return deal is not null
+                ? StudyScene(script, deal)
+                : script.Zones.ById(clue.ZoneId)?.ClueSpot ?? "";
+
+        // Any other traceless room gets a neutral spine card: atmosphere, never evidence, chosen
+        // by the zone's position so a replay reads the same. Fallback to the placement note only
+        // if the content stops carrying spine clues.
+        var generic = script.StoryBeats.SpineClues.Generic;
+        if (generic.Count > 0)
+        {
+            var index = Math.Abs(ZoneIndex(script, clue.ZoneId)) % generic.Count;
+            return generic[index];
+        }
+
+        return script.Zones.ById(clue.ZoneId)?.ClueSpot ?? "";
+    }
+
+    private static int ZoneIndex(MysteryScript script, string zoneId)
+    {
+        for (var i = 0; i < script.Zones.Zones.Count; i++)
+            if (script.Zones.Zones[i].Id == zoneId) return i;
+        return 0;
     }
 
     /// <summary>The name of the thing on the card, for a feed that lists clues by name.</summary>
@@ -254,7 +290,7 @@ public static class Compiler
     }
 
     /// <summary>What forensics reports about a clue. Reveals the original alongside the current.</summary>
-    public static string Forensics(MysteryScript script, MysteryClue clue)
+    public static string Forensics(MysteryScript script, MysteryClue clue, MysteryDeal? deal = null)
     {
         ArgumentNullException.ThrowIfNull(script);
         ArgumentNullException.ThrowIfNull(clue);
@@ -265,9 +301,7 @@ public static class Compiler
         if (clue.Tamper is null)
             return Fill(tamper.ForensicsClean, new() { ["clue_name"] = name });
 
-        var original = clue.TraceCharacterId is { } traceId
-            ? script.CharacterById(traceId)?.Trace.Text ?? ""
-            : script.Zones.ById(clue.ZoneId)?.ClueSpot ?? "";
+        var original = BaseClueText(script, clue, deal);
 
         return Fill(tamper.ForensicsResult, new()
         {
@@ -351,11 +385,20 @@ public static class Compiler
 
         paragraphs.Add(Fill(beats.EndgameReveals.GetValueOrDefault(townWon ? "town_win" : "killer_win", ""), fills));
 
-        // The investigators, then the associates. Both are named regardless of who won.
+        // The investigators, then the associates. Both are named regardless of who won. The
+        // result line is authored per outcome — detective_result_town / detective_result_killers.
         var detectives = NamesIn(script, deal, "detective");
         if (detectives.Count > 0)
-            paragraphs.Add(Fill(beats.EndgameReveals.GetValueOrDefault("detective_reveal", ""),
-                new() { ["names"] = Join(detectives) }));
+        {
+            var resultLine = beats.EndgameReveals.GetValueOrDefault(
+                townWon ? "detective_result_town" : "detective_result_killers", "");
+
+            paragraphs.Add(Fill(beats.EndgameReveals.GetValueOrDefault("detective_reveal", ""), new()
+            {
+                ["names"] = Join(detectives),
+                ["result_line"] = resultLine
+            }));
+        }
 
         var minions = NamesIn(script, deal, "minion");
         if (minions.Count > 0)
@@ -463,7 +506,7 @@ public static class Compiler
     {
         "killer_access", "access_route_reveal", "method_reveal", "signature_reveal",
         "surviving_killers", "name", "fear_line", "winner", "loser", "names",
-        "winner_list", "herring_truth", "clue_name", "original_text", "tamper_insert"
+        "winner_list", "herring_truth", "clue_name", "original_text", "tamper_insert", "result_line"
     };
 
     private static bool HasHole(string text) => Holes(text).Any();

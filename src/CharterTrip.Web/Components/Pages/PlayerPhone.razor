@@ -213,7 +213,7 @@ else
                         <h3>@Compiler.ClueName(Script, clue)</h3>
                         <span class="muted tiny">@ZoneName(clue.ZoneId)</span>
                     </div>
-                    <p>@Compiler.ClueText(Script, clue)</p>
+                    <p>@Compiler.ClueText(Script, clue, Deal)</p>
                     @if (clue.FoundByCharacterId is { } finder && Script.CharacterById(finder) is { } who)
                     {
                         <p class="muted tiny">Found by @who.Name</p>

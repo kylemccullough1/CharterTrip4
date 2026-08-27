@@ -33,6 +33,23 @@ public sealed record ScriptStoryBeats
     public ScriptAssemblyRules AssemblyRules { get; init; } = new();
 
     public ScriptTamperSystem TamperSystem { get; init; } = new();
+
+    public ScriptSpineClues SpineClues { get; init; } = new();
+}
+
+/// <summary>
+/// The neutral cards, for rooms that drew no trace.
+///
+/// Atmosphere and never evidence: they nudge people to keep talking and cannot mislead about the
+/// actual killers, which is what lets them be assigned to any room. The study is the exception —
+/// its card renders the composed study scene, because that is what a card reading "the scene
+/// itself" should say.
+/// </summary>
+public sealed record ScriptSpineClues
+{
+    public string Note { get; init; } = "";
+
+    public IReadOnlyList<string> Generic { get; init; } = [];
 }
 
 /// <summary>

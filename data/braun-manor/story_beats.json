@@ -71,7 +71,17 @@
     "braun_none": "The Braun claim settles in court, where it will outlive everyone in this room. Neither claimant managed it tonight.",
     "detective_reveal": "The investigators were {names} \u2014 {result_line}",
     "minion_reveal": "The Syndicate's associates: {names}. They carried nothing sharper than loyalty.",
-    "winners_screen": "TONIGHT'S WINNERS: {winner_list}. Some of you knew you'd won an hour ago and sat on it. That's the game."
+    "winners_screen": "TONIGHT'S WINNERS: {winner_list}. Some of you knew you'd won an hour ago and sat on it. That's the game.",
+    "detective_result_town": "working the room while the room worked them.",
+    "detective_result_killers": "close, and close doesn't convict."
+  },
+  "spine_clues": {
+    "note": "Neutral cards for rooms that drew no trace. Atmosphere, never evidence — they nudge people to keep talking and cannot mislead about the actual killers. The study's card renders the composed study scene instead.",
+    "generic": [
+      "A tray of abandoned drinks, one glass fuller than the rest.",
+      "An ashtray that was emptied tonight, in a house where nobody admits to smoking.",
+      "A window latch left open to the dark, in a room everyone swears was never empty."
+    ]
   },
   "assembly_rules": {
     "study_scene": "study_scene_base + method_beats[means_killer].scene_flavor",

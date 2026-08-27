@@ -3380,10 +3380,32 @@ pre.code {
   .pr-poster-sub { color: #444 !important; }
 }
 
-/* The organizers' door. Marked apart from the party code on purpose: one goes on
-   the wall, the other must not. */
-.mys-host-code { border-color: var(--ruby); background: rgba(201,79,90,.06); }
-.mys-host-code h4 { color: #e8919a; }
+/* Both doors side by side. The page is AdminOnly, so nothing here is hidden from
+   the reader -- the only distinction left is which one is safe to project. */
+.mys-doors {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin: 10px 0;
+}
+.mys-door {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--ink-2);
+  text-align: center;
+}
+.mys-door-host { border-color: rgba(201,79,90,.45); }
+.mys-door-who {
+  font-size: 0.719rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.mys-door-host .mys-door-who { color: #e8919a; }
 
 .join-roles { display: grid; gap: 8px; margin: 6px 0 12px; }
 .join-role {

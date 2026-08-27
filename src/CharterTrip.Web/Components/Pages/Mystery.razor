@@ -93,47 +93,31 @@
                 </div>
             </div>
 
-            @* The one thing on this page anybody else needs to see. Everything else here is the
-               solution; this is the door. *@
+            @* Both doors, side by side, because this whole page is AdminOnly and there is nothing
+               to hide from whoever is reading it. Getting everybody into the game is one job. *@
             <div class="card mys-party">
-                <div class="row between center wrap gap">
-                    <div>
-                        <h4>The code for the room</h4>
+                <h4>Getting everybody in</h4>
+
+                <div class="mys-doors">
+                    <div class="mys-door">
+                        <QrImage Content="@JoinUrl" Size="150" Alt="Join the mystery" />
                         <p class="mys-code">@Trip.Mystery.PartyCode</p>
+                        <p class="mys-door-who">The 21 guests</p>
                         <p class="muted tiny">
-                            Guests go to <b>@JoinHost/join</b>, type this, and tap their own name.
-                            They're dealt a part on the spot — nothing to hand out.
+                            Put this on the wall. They go to <b>@JoinHost/join</b>, type it, tap
+                            their own name, and are dealt a part on the spot.
                         </p>
                     </div>
-                    <QrImage Content="@JoinUrl" Size="120" Alt="Join the mystery" />
-                </div>
 
-                @if (Waiting.Count > 0)
-                {
-                    <p class="tiny">
-                        Still to arrive: <b>@string.Join(", ", Waiting.Select(p => p.Name))</b>
-                    </p>
-                }
-                else
-                {
-                    <p class="tiny">Everybody's here.</p>
-                }
-            </div>
-
-            @* The organizers' door, and the one code that must never reach the wall — it hands
-               out parts that come with the guilty list attached. This page is AdminOnly, which is
-               why it is the only screen it appears on. *@
-            <div class="card mys-party mys-host-code">
-                <div class="row between center wrap gap">
-                    <div>
-                        <h4>For the four of you</h4>
+                    <div class="mys-door mys-door-host">
+                        <QrImage Content="@HostUrl" Size="150" Alt="Take a house part" />
                         <p class="mys-code">@Trip.Mystery.HostCode</p>
+                        <p class="mys-door-who">The four of you</p>
                         <p class="muted tiny">
-                            Pick which of Braun, Leo, Chloe or Bertram you want to be. Keep this one
-                            off the wall — anybody who scans it can read the solution.
+                            Pick Braun, Leo, Chloe or Bertram. Don't project this one — it hands out
+                            parts that come with the guilty list.
                         </p>
                     </div>
-                    <QrImage Content="@HostUrl" Size="120" Alt="Take a house part" />
                 </div>
 
                 <p class="tiny">
@@ -145,6 +129,17 @@
                         </span>
                     }
                 </p>
+
+                @if (Waiting.Count > 0)
+                {
+                    <p class="tiny">
+                        Still to arrive: <b>@string.Join(", ", Waiting.Select(p => p.Name))</b>
+                    </p>
+                }
+                else
+                {
+                    <p class="tiny">Everybody's here.</p>
+                }
             </div>
 
             @if (_confirmClear)

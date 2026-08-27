@@ -405,6 +405,22 @@ public static class Compiler
             }));
         }
 
+        // The authored closer, last, with every winner in it — the winning side plus everybody
+        // who scored a personal win on the quiet.
+        var outcome = Outcome(state, default);
+        var winners = (townWon
+                ? deal.InFaction("detective").Concat(deal.InFaction("villager"))
+                : deal.InFaction("killer").Concat(deal.InFaction("minion")))
+            .Select(m => m.CharacterId)
+            .Concat(outcome.PersonalWinnerCharacterIds)
+            .Distinct()
+            .Select(id => Name(script, id))
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
+        paragraphs.Add(Fill(beats.EndgameReveals.GetValueOrDefault("winners_screen", ""),
+            new() { ["winner_list"] = Join(winners) }));
+
         // A paragraph with an unfilled placeholder is content that does not exist yet, and a
         // visible {result_line} on the wall is worse than the paragraph being absent. Dropped
         // here and reported by MissingFragments, so the gap is fixable rather than invisible.

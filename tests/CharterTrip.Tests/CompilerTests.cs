@@ -478,6 +478,25 @@ public class CompilerTests
     }
 
     [Fact]
+    public void The_reveal_closes_on_the_authored_winners_line()
+    {
+        var deal = Deal();
+        var killers = deal.Killers.Select(k => k.CharacterId).ToList();
+
+        var paragraphs = Compiler.Endgame(Script, StateWith(deal, killers[0], killers[1]));
+
+        // The last word of the night is the authored winners_screen text, not a list a page builds
+        // for itself — it sat unused in the content while the screen improvised its own.
+        Assert.StartsWith("TONIGHT'S WINNERS:", paragraphs[^1]);
+        Assert.Contains("That's the game.", paragraphs[^1]);
+        Assert.DoesNotContain("{winner_list}", paragraphs[^1]);
+
+        // Town won this one, so a detective is named and a killer is not.
+        var detective = Script.CharacterById(deal.InFaction("detective").First().CharacterId)!.Name;
+        Assert.Contains(detective, paragraphs[^1]);
+    }
+
+    [Fact]
     public void A_convicted_jester_wins_and_an_unconvicted_one_does_not()
     {
         var deal = Deal();

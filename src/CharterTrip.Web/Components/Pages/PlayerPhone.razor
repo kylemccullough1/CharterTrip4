@@ -326,7 +326,9 @@ else
             {
                 <div class="mp-card">
                     <h3>Whispers</h3>
-                    @foreach (var line in Script.Ghosts.Ghosts.CannedMessages.Take(6))
+                    @* Lines with a {name} slot wait for the live whisper channel, which is what
+                       fills them — showing the raw brace here would just look broken. *@
+                    @foreach (var line in Script.Ghosts.Ghosts.CannedMessages.Where(m => !m.Contains('{')).Take(6))
                     {
                         <p class="tiny mp-whisper">@line</p>
                     }

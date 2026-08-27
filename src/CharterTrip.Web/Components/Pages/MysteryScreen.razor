@@ -23,17 +23,11 @@
     <div class="ms-reveal">
         <h1 class="ms-reveal-head">@(Trip.Mystery.Outcome.TownWon ? "The house has its answer" : "The Syndicate walks out")</h1>
 
+        @* The winners line is the last composed paragraph — the authored winners_screen text,
+           not a list this page builds for itself. *@
         @foreach (var paragraph in Compiler.Endgame(Script, Trip.Mystery))
         {
             <p class="ms-reveal-para">@paragraph</p>
-        }
-
-        @if (Winners.Count > 0)
-        {
-            <div class="ms-winners">
-                <h2>Tonight's winners</h2>
-                <p class="ms-winner-list">@string.Join(" · ", Winners)</p>
-            </div>
         }
     </div>
 }
@@ -236,26 +230,6 @@ else
 
             var real = Deal.Killers.Count(k => convicted.Contains(k.CharacterId));
             return Math.Clamp(real - shielded + decoyed, 0, 3);
-        }
-    }
-
-    private List<string> Winners
-    {
-        get
-        {
-            if (Trip.Mystery.Outcome is not { } outcome || Deal is null) return [];
-
-            var names = new List<string>();
-
-            // Town or the Syndicate, whichever the tally says, then everybody who scored a
-            // personal win on top of it.
-            names.AddRange(outcome.TownWon
-                ? Deal.InFaction("detective").Concat(Deal.InFaction("villager")).Select(m => Name(m.CharacterId))
-                : Deal.InFaction("killer").Concat(Deal.InFaction("minion")).Select(m => Name(m.CharacterId)));
-
-            names.AddRange(outcome.PersonalWinnerCharacterIds.Select(Name));
-
-            return [.. names.Distinct().Order(StringComparer.Ordinal)];
         }
     }
 

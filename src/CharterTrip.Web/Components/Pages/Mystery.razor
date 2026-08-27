@@ -88,7 +88,7 @@
                         {
                             <button class="btn btn-gold btn-sm" @onclick="StartAsync">Start the evening</button>
                         }
-                        <button class="btn btn-danger-ghost btn-sm" @onclick="() => _confirmClear = true">Discard</button>
+                        <button class="btn btn-danger-ghost btn-sm" @onclick="AskToDiscard">Discard</button>
                     </div>
                 </div>
             </div>
@@ -142,15 +142,12 @@
                 }
             </div>
 
-            @if (_confirmClear)
-            {
-                <ConfirmDialog Title="Discard this game?"
-                               Message="The cast, the guilty list and every clue card go. Anything already printed stops matching."
-                               ConfirmText="Discard"
-                               OnConfirm="ClearAsync"
-                               OnCancel="() => _confirmClear = false" />
-            }
         }
+
+        @* One dialog for the page, driven by Show() — the component's actual contract. It was
+           being handed Title/Message parameters it does not have, which threw the moment it
+           rendered and took the whole circuit down with it. *@
+        <ConfirmDialog @ref="_confirm" />
 
         </ChildContent>
     </SectionCard>
@@ -433,7 +430,7 @@
 
     private int _seed = Random.Shared.Next(1, 999999);
     private string? _error;
-    private bool _confirmClear;
+    private ConfirmDialog? _confirm;
     private List<string> _tied = [];
     private readonly HashSet<string> _forced = [];
 
@@ -540,11 +537,13 @@
         if (failure is not null) _error = failure.Reason;
     }
 
-    private async Task ClearAsync()
-    {
-        _confirmClear = false;
-        await MutateAsync(MysteryService.Clear);
-    }
+    private void AskToDiscard() => _confirm?.Show(
+        "The cast, the guilty list and every clue card go. Anything already printed stops matching.",
+        ClearAsync,
+        confirmLabel: "Discard",
+        title: "Discard this game?");
+
+    private Task ClearAsync() => MutateAsync(MysteryService.Clear);
 
     private Task StartAsync() => Flush(MysteryService.Start);
 

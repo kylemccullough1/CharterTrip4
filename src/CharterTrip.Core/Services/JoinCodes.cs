@@ -20,6 +20,14 @@ public enum CodeKind
     /// </summary>
     MysteryParty,
 
+    /// <summary>
+    /// The organizers' code, which opens the picker for Braun and the three facilitators.
+    ///
+    /// Those parts see the guilty list, so this code never goes on the wall — it lives on the host
+    /// console and the organizers' own printed card.
+    /// </summary>
+    MysteryHost,
+
     /// <summary>A Jeopardy buzzer code, shared by everyone on that team.</summary>
     BuzzerTeam,
 
@@ -117,7 +125,14 @@ public static class JoinCodes
         if (person is not null)
             return new CodeMatch(CodeKind.Person, PersonId: person.Id, TeamId: NullIfBlank(person.TeamId));
 
-        // The party code, which is a door rather than an identity.
+        // The two mystery codes, which are doors rather than identities. The host one is checked
+        // first so a collision could never hand an organizer's door to a guest.
+        if (trip.Mystery.HostCode is { Length: > 0 } host &&
+            string.Equals(Clean(host), cleaned, StringComparison.OrdinalIgnoreCase))
+        {
+            return new CodeMatch(CodeKind.MysteryHost);
+        }
+
         if (trip.Mystery.PartyCode is { Length: > 0 } party &&
             string.Equals(Clean(party), cleaned, StringComparison.OrdinalIgnoreCase))
         {

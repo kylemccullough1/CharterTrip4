@@ -70,7 +70,8 @@ public static class MysteryService
         {
             Deal = result.Deal,
             CurrentRoundIndex = -1,
-            PartyCode = NewPartyCode()
+            PartyCode = NewPartyCode(),
+            HostCode = NewPartyCode()
         };
 
         trip.Mystery.Clues.AddRange(Dealer.LayOutClues(script, result.Deal!));
@@ -145,6 +146,70 @@ public static class MysteryService
     {
         ArgumentNullException.ThrowIfNull(trip);
         return trip.Mystery.Deal?.Cast.Count(c => c.PersonId is null) ?? 0;
+    }
+
+    // ---- the house parts ---------------------------------------------------------------------
+
+    /// <summary>
+    /// Take one of the four house parts — Braun, Leo, Chloe or Bertram.
+    ///
+    /// Organizers choose rather than being dealt, which is the difference that matters: Bertram is
+    /// on his feet all night placing clue cards, Braun spends the evening in a back room running
+    /// the game, and which of those you want is a real preference rather than a surprise.
+    ///
+    /// Idempotent by person like the guest claim, and it refuses a part somebody else already has.
+    /// Meant to run inside <c>MutateAsync</c>.
+    /// </summary>
+    public static bool ClaimNpc(TripData trip, MysteryScript script, string personId, string npcId)
+    {
+        ArgumentNullException.ThrowIfNull(trip);
+        ArgumentNullException.ThrowIfNull(script);
+
+        if (string.IsNullOrWhiteSpace(personId)) return false;
+        if (script.Ghosts.Npcs.RoleById(npcId) is not { } role) return false;
+
+        var mine = trip.Mystery.NpcFor(personId);
+        if (mine is not null)
+        {
+            // Changing your mind is fine, as long as the part you want is going.
+            if (string.Equals(mine.NpcId, role.Id, StringComparison.OrdinalIgnoreCase)) return true;
+            if (trip.Mystery.NpcClaims.Any(c => c.NpcId == role.Id)) return false;
+
+            mine.NpcId = role.Id;
+            return true;
+        }
+
+        if (trip.Mystery.NpcClaims.Any(c => c.NpcId == role.Id)) return false;
+
+        trip.Mystery.NpcClaims.Add(new MysteryNpcClaim { NpcId = role.Id, PersonId = personId });
+        return true;
+    }
+
+    /// <summary>The house parts nobody has taken yet.</summary>
+    public static IReadOnlyList<ScriptNpcRole> UnclaimedNpcs(TripData trip, MysteryScript script)
+    {
+        ArgumentNullException.ThrowIfNull(trip);
+        ArgumentNullException.ThrowIfNull(script);
+
+        var taken = trip.Mystery.NpcClaims.Select(c => c.NpcId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return [.. script.Ghosts.Npcs.Roles.Where(r => !taken.Contains(r.Id))];
+    }
+
+    /// <summary>Which house part this person is playing, if any.</summary>
+    public static ScriptNpcRole? NpcRoleFor(TripData trip, MysteryScript script, string? personId)
+    {
+        ArgumentNullException.ThrowIfNull(trip);
+        ArgumentNullException.ThrowIfNull(script);
+
+        if (personId is null) return null;
+        return trip.Mystery.NpcFor(personId) is { } claim ? script.Ghosts.Npcs.RoleById(claim.NpcId) : null;
+    }
+
+    /// <summary>The organizers, and whether each has picked a part yet.</summary>
+    public static IReadOnlyList<RosterPerson> Organizers(TripData trip)
+    {
+        ArgumentNullException.ThrowIfNull(trip);
+        return [.. trip.Roster.Where(p => p.Role == TripRole.Admin)];
     }
 
     /// <summary>Wipe the game back to before it was dealt. The host console's undo.</summary>

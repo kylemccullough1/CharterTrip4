@@ -43,10 +43,48 @@ public sealed record ScriptHaunt
 /// <summary>
 /// The four organizer seats: the host and three facilitators.
 /// </summary>
+/// <summary>
+/// One of the four parts the organizers play, in a single shape the pickers can render.
+///
+/// Braun and the three facilitators are different things in the content — he is the victim and
+/// then the game master, they are guests who are secretly staff — but from the outside they are
+/// the same question: which of these four are you tonight?
+/// </summary>
+/// <param name="Id">Stable, and derived from the first name — see <see cref="ScriptNpcs.Roles"/>.</param>
+/// <param name="IsHost">True for Braun alone. He runs the evening; they work the room.</param>
+public sealed record ScriptNpcRole(
+    string Id,
+    string Name,
+    string Title,
+    string Zone,
+    IReadOnlyList<string> Orders,
+    bool IsHost);
+
 public sealed record ScriptNpcs
 {
     public ScriptBraun Braun { get; init; } = new();
     public IReadOnlyList<ScriptFacilitator> Facilitators { get; init; } = [];
+
+    /// <summary>
+    /// The four organizer parts, Braun first.
+    ///
+    /// Ids come from the first name rather than the list position, so reordering the facilitators
+    /// in the content cannot silently reassign who somebody claimed to be.
+    /// </summary>
+    public IReadOnlyList<ScriptNpcRole> Roles =>
+    [
+        new("braun", Braun.Name, "Host of the evening", "the study, then the back room",
+            [Braun.AlivePhase, Braun.DeadPhase, Braun.HardRule], IsHost: true),
+
+        .. Facilitators.Select(f =>
+            new ScriptNpcRole(FirstName(f.Name), f.Name, f.Title, f.Zone, f.Orders, IsHost: false))
+    ];
+
+    public ScriptNpcRole? RoleById(string id) =>
+        Roles.FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase));
+
+    private static string FirstName(string name) =>
+        (name.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? name).ToLowerInvariant();
 }
 
 /// <summary>

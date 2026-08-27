@@ -83,10 +83,25 @@
         this, taps their own name, and is dealt a part on the spot.
     </p>
     <div class="pr-poster">
-        <p class="pr-poster-label">Join at @Origin.Replace("https://", "").Replace("http://", "")/join</p>
+        <p class="pr-poster-label">Join at @Host/join</p>
         <p class="pr-poster-code">@Trip.Mystery.PartyCode</p>
         <QrImage Content="@JoinUrl" Size="200" Alt="Join the mystery" />
         <p class="pr-poster-sub">Or point your camera here.</p>
+    </div>
+
+    <h1 class="pr-h1 pr-break">For the four of you</h1>
+    <p class="pr-note">
+        <b>Do not put this one on a wall.</b> It hands out Braun and the three facilitators, and
+        those parts come with the guilty list attached — anybody who scans it can read the solution.
+        One small card, four organizers.
+    </p>
+    <div class="pr-poster pr-poster-host">
+        <p class="pr-poster-label">@Host/join</p>
+        <p class="pr-poster-code">@Trip.Mystery.HostCode</p>
+        <QrImage Content="@HostUrl" Size="150" Alt="Take a house part" />
+        <p class="pr-poster-sub">
+            @string.Join(" · ", Script.Ghosts.Npcs.Roles.Select(r => r.Name))
+        </p>
     </div>
 }
 
@@ -111,6 +126,11 @@
 
     /// <summary>The poster QR: scanning it lands on the name picker with the code already given.</summary>
     private string JoinUrl => $"{Origin}/join/{Trip.Mystery.PartyCode}";
+
+    /// <summary>The organizers' card. Same shape, and it must not be enlarged onto a wall.</summary>
+    private string HostUrl => $"{Origin}/join/{Trip.Mystery.HostCode}";
+
+    private string Host => Origin.Replace("https://", "").Replace("http://", "");
 
     private string Name(string characterId) => Script.CharacterById(characterId)?.Name ?? characterId;
     private string Title(string characterId) => Script.CharacterById(characterId)?.Title ?? "";

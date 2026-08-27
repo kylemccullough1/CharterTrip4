@@ -68,8 +68,8 @@
                     <p class="mys-error" role="alert">@_error</p>
                 }
                 <p class="muted tiny">
-                    Casting the @Players.Count non-committee guests in roster order. The four
-                    organizers play Braun and the three facilitators and are not cast.
+                    Nobody is cast at deal time. Guests take a part at the door with the party
+                    code; the four of you pick Braun or a facilitator with the host code.
                 </p>
             </div>
         }
@@ -118,6 +118,33 @@
                 {
                     <p class="tiny">Everybody's here.</p>
                 }
+            </div>
+
+            @* The organizers' door, and the one code that must never reach the wall — it hands
+               out parts that come with the guilty list attached. This page is AdminOnly, which is
+               why it is the only screen it appears on. *@
+            <div class="card mys-party mys-host-code">
+                <div class="row between center wrap gap">
+                    <div>
+                        <h4>For the four of you</h4>
+                        <p class="mys-code">@Trip.Mystery.HostCode</p>
+                        <p class="muted tiny">
+                            Pick which of Braun, Leo, Chloe or Bertram you want to be. Keep this one
+                            off the wall — anybody who scans it can read the solution.
+                        </p>
+                    </div>
+                    <QrImage Content="@HostUrl" Size="120" Alt="Take a house part" />
+                </div>
+
+                <p class="tiny">
+                    @foreach (var role in Script.Ghosts.Npcs.Roles)
+                    {
+                        var who = Trip.Mystery.NpcClaims.FirstOrDefault(c => c.NpcId == role.Id);
+                        <span class="mys-tag @(who is null ? "" : "herring")">
+                            @role.Name@(who is null ? "" : $" — {PersonName(who.PersonId)}")
+                        </span>
+                    }
+                </p>
             </div>
 
             @if (_confirmClear)
@@ -431,6 +458,9 @@
 
     /// <summary>The QR for the wall: scanning it lands on the name picker, code already filled in.</summary>
     private string JoinUrl => Nav.ToAbsoluteUri($"/join/{Trip.Mystery.PartyCode}").ToString();
+
+    /// <summary>The organizers' QR. Only ever rendered on this page, which is AdminOnly.</summary>
+    private string HostUrl => Nav.ToAbsoluteUri($"/join/{Trip.Mystery.HostCode}").ToString();
 
     private int KillersConvicted =>
         Deal is null ? 0 : Deal.Killers.Count(k => MysteryService.IsGhost(Trip, k.CharacterId));

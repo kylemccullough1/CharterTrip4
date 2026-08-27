@@ -180,6 +180,112 @@ public class MysteryServiceTests
         Assert.NotEqual(first, trip.Mystery.PartyCode);
     }
 
+    // ---- the four house parts ----------------------------------------------------------------
+
+    [Fact]
+    public void There_are_four_house_parts_and_the_host_code_opens_them()
+    {
+        var trip = Dealt();
+
+        var roles = Script.Ghosts.Npcs.Roles;
+        Assert.Equal(4, roles.Count);
+        Assert.Equal("braun", roles[0].Id);
+        Assert.True(roles[0].IsHost);
+        Assert.Equal(["bertram", "braun", "chloe", "leo"], roles.Select(r => r.Id).Order());
+
+        // Its own code, and a different one from the party's — the two doors lead to different
+        // things and only one of them belongs on a wall.
+        Assert.Equal(5, trip.Mystery.HostCode.Length);
+        Assert.NotEqual(trip.Mystery.PartyCode, trip.Mystery.HostCode);
+        Assert.Equal(CodeKind.MysteryHost, JoinCodes.Resolve(trip, trip.Mystery.HostCode).Kind);
+    }
+
+    [Fact]
+    public void An_organizer_picks_the_part_they_want()
+    {
+        var trip = Dealt();
+        var organizers = MysteryService.Organizers(trip);
+
+        Assert.Equal(4, organizers.Count);
+        Assert.Equal(4, MysteryService.UnclaimedNpcs(trip, Script).Count);
+
+        // Unlike a guest, they choose. Bertram is on his feet all night; Braun spends the evening
+        // in a back room running the game, and which you want is a real preference.
+        Assert.True(MysteryService.ClaimNpc(trip, Script, organizers[0].Id, "bertram"));
+
+        Assert.Equal(3, MysteryService.UnclaimedNpcs(trip, Script).Count);
+        Assert.Equal("Bertram Ault", MysteryService.NpcRoleFor(trip, Script, organizers[0].Id)?.Name);
+    }
+
+    [Fact]
+    public void Two_organizers_cannot_be_the_same_person()
+    {
+        var trip = Dealt();
+        var organizers = MysteryService.Organizers(trip);
+
+        Assert.True(MysteryService.ClaimNpc(trip, Script, organizers[0].Id, "braun"));
+        Assert.False(MysteryService.ClaimNpc(trip, Script, organizers[1].Id, "braun"));
+
+        Assert.Null(MysteryService.NpcRoleFor(trip, Script, organizers[1].Id));
+    }
+
+    [Fact]
+    public void An_organizer_can_change_their_mind_while_a_part_is_going()
+    {
+        var trip = Dealt();
+        var organizers = MysteryService.Organizers(trip);
+
+        MysteryService.ClaimNpc(trip, Script, organizers[0].Id, "leo");
+        Assert.True(MysteryService.ClaimNpc(trip, Script, organizers[0].Id, "chloe"));
+
+        // Swapped, not doubled — Leo is going again and they hold exactly one part.
+        Assert.Equal("chloe", MysteryService.NpcRoleFor(trip, Script, organizers[0].Id)?.Id);
+        Assert.Single(trip.Mystery.NpcClaims);
+        Assert.Contains(MysteryService.UnclaimedNpcs(trip, Script), r => r.Id == "leo");
+
+        // But not into one somebody else is already playing.
+        MysteryService.ClaimNpc(trip, Script, organizers[1].Id, "braun");
+        Assert.False(MysteryService.ClaimNpc(trip, Script, organizers[0].Id, "braun"));
+        Assert.Equal("chloe", MysteryService.NpcRoleFor(trip, Script, organizers[0].Id)?.Id);
+    }
+
+    [Fact]
+    public void Claiming_the_same_part_twice_is_harmless()
+    {
+        var trip = Dealt();
+        var organizer = MysteryService.Organizers(trip)[0];
+
+        Assert.True(MysteryService.ClaimNpc(trip, Script, organizer.Id, "leo"));
+        Assert.True(MysteryService.ClaimNpc(trip, Script, organizer.Id, "leo"));
+
+        Assert.Single(trip.Mystery.NpcClaims);
+    }
+
+    [Fact]
+    public void A_part_that_does_not_exist_is_refused()
+    {
+        var trip = Dealt();
+        var organizer = MysteryService.Organizers(trip)[0];
+
+        Assert.False(MysteryService.ClaimNpc(trip, Script, organizer.Id, "butler"));
+        Assert.False(MysteryService.ClaimNpc(trip, Script, "", "leo"));
+        Assert.Empty(trip.Mystery.NpcClaims);
+    }
+
+    [Fact]
+    public void House_parts_and_guest_characters_are_separate_pools()
+    {
+        var trip = Dealt();
+        var organizer = MysteryService.Organizers(trip)[0];
+
+        MysteryService.ClaimNpc(trip, Script, organizer.Id, "braun");
+
+        // Taking Braun does not consume one of the 21, and an organizer never appears on the
+        // guests' name list. 21 characters for 21 guests, 4 house parts for 4 organizers.
+        Assert.Equal(21, MysteryService.SeatsLeft(trip));
+        Assert.DoesNotContain(organizer.Id, MysteryService.Unclaimed(trip).Select(p => p.Id));
+    }
+
     [Fact]
     public void Every_ability_can_eventually_unlock()
     {

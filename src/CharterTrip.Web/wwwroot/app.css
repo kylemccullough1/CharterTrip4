@@ -3379,3 +3379,29 @@ pre.code {
   .pr-poster-code, .pr-poster-label { color: #000 !important; }
   .pr-poster-sub { color: #444 !important; }
 }
+
+/* The organizers' door. Marked apart from the party code on purpose: one goes on
+   the wall, the other must not. */
+.mys-host-code { border-color: var(--ruby); background: rgba(201,79,90,.06); }
+.mys-host-code h4 { color: #e8919a; }
+
+.join-roles { display: grid; gap: 8px; margin: 6px 0 12px; }
+.join-role {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 13px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.join-role:hover  { border-color: var(--gold); background: var(--panel-2); }
+.join-role:active { transform: translateY(1px); }
+.join-role-name  { font-family: var(--display); font-size: 1.06rem; color: var(--gold-light); }
+.join-role-title { font-size: 0.781rem; color: var(--text-dim); }
+
+.pr-poster-host { border-style: dashed; }

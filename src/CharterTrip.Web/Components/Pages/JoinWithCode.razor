@@ -4,12 +4,15 @@
 @using CharterTrip.Core.Abstractions
 @using CharterTrip.Core.Models
 @using CharterTrip.Core.Mystery
+@using CharterTrip.Core.Mystery.Script
+@using CharterTrip.Web.Auth
 @using CharterTrip.Core.Services
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
 @inject ITripStore Store
 @inject NavigationManager Nav
 @inject ILogger<JoinWithCode> Log
+@inject CharterTrip.Core.Mystery.Script.MysteryScript Script
 
 @* The one door for every code on this trip.
 
@@ -26,7 +29,48 @@
 <div class="login-page">
     <div class="login-card">
 
-@if (_state == State.PickName)
+@if (_state == State.PickHostName)
+{
+    <h1 class="login-title">Which of you is this?</h1>
+    <p class="login-sub">Then you choose your part, rather than being dealt one.</p>
+
+    <div class="join-names">
+        @foreach (var person in Organizers)
+        {
+            <EditForm Model="Picked" FormName="@($"host-{person.Id}")" OnValidSubmit="() => PickOrganiser(person.Id)" method="post">
+                <button type="submit" class="join-name">@person.Name</button>
+            </EditForm>
+        }
+    </div>
+}
+else if (_state == State.PickNpc)
+{
+    <h1 class="login-title">Which part?</h1>
+    <p class="login-sub">
+        These four run the evening. Braun works the room, dies, and takes the game master's console;
+        the other three are guests who are secretly staff.
+    </p>
+
+    @if (Npcs.Count == 0)
+    {
+        <p class="login-sub">All four are taken. If that's wrong, somebody needs to hand one back.</p>
+    }
+    else
+    {
+        <div class="join-roles">
+            @foreach (var role in Npcs)
+            {
+                <EditForm Model="Picked" FormName="@($"npc-{role.Id}")" OnValidSubmit="() => ClaimNpcAsync(role.Id)" method="post">
+                    <button type="submit" class="join-role">
+                        <span class="join-role-name">@role.Name</span>
+                        <span class="join-role-title">@role.Title@(role.IsHost ? "" : $" · {role.Zone}")</span>
+                    </button>
+                </EditForm>
+            }
+        </div>
+    }
+}
+else if (_state == State.PickName)
 {
     <h1 class="login-title">Who are you?</h1>
     <p class="login-sub">Tap your name and the house will find you a part.</p>
@@ -71,7 +115,7 @@ else
 </div>
 
 @code {
-    private enum State { Unknown, PickName }
+    private enum State { Unknown, PickName, PickHostName, PickNpc }
 
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
@@ -85,7 +129,20 @@ else
 
     private State _state = State.Unknown;
 
+    /// <summary>Which organizer is choosing, once they have said. Kept across the two steps.</summary>
+    [SupplyParameterFromQuery(Name = "who")] private string? WhoQuery { get; set; }
+
+    private string? _organiserId;
+
     private IReadOnlyList<RosterPerson> People => MysteryService.Unclaimed(Store.Current);
+
+    private IReadOnlyList<RosterPerson> Organizers => MysteryService.Organizers(Store.Current);
+
+    private IReadOnlyList<ScriptNpcRole> Npcs => MysteryService.UnclaimedNpcs(Store.Current, Script);
+
+    /// <summary>Whoever is already signed in, if anybody.</summary>
+    private string? CurrentPersonId =>
+        HttpContext.User.FindFirst(TripClaims.PersonId)?.Value is { Length: > 0 } id ? id : null;
     private int SeatsLeft => MysteryService.SeatsLeft(Store.Current);
     private int TotalSeats => Store.Current.Mystery.Deal?.Cast.Count ?? 0;
 
@@ -105,6 +162,17 @@ else
         {
             // The party code is a door, not an identity. Ask who walked through it.
             _state = State.PickName;
+            return;
+        }
+
+        if (match.Kind == CodeKind.MysteryHost)
+        {
+            // Same shape, two questions: who, then which part. An organizer already signed in as
+            // themselves skips straight to choosing.
+            _organiserId = Store.Current.Roster
+                .FirstOrDefault(p => (p.Id == WhoQuery || p.Id == CurrentPersonId) && p.Role == TripRole.Admin)?.Id;
+
+            _state = _organiserId is null ? State.PickHostName : State.PickNpc;
             return;
         }
 
@@ -148,6 +216,45 @@ else
 
         // Casting is worth forcing to disk. Reconstructing who is playing whom after a restart
         // means asking twenty-one people, in character, what their own name is.
+        await Store.FlushAsync();
+
+        var person = Store.Current.Roster.First(p => p.Id == personId);
+        await SignInAndGo(TripSignIn.ForPerson(person), "/m");
+    }
+
+    /// <summary>
+    /// Step one of the organizers' door: remember who, then ask which part.
+    ///
+    /// Carried in the query rather than a field because this page is static SSR — each button is a
+    /// real post, and a field set on one request is gone by the next.
+    /// </summary>
+    private void PickOrganiser(string personId)
+    {
+        var target = $"/join/{Uri.EscapeDataString(Code ?? "")}?who={Uri.EscapeDataString(personId)}";
+        Nav.NavigateTo(target);
+    }
+
+    /// <summary>
+    /// Take a house part and sign in as the organizer holding it.
+    ///
+    /// Forced to disk: this is who is running the evening, and reconstructing it after a restart
+    /// means asking four people which of them was meant to be Bertram.
+    /// </summary>
+    private async Task ClaimNpcAsync(string npcId)
+    {
+        var personId = _organiserId ?? WhoQuery;
+        if (personId is null) { _state = State.Unknown; return; }
+
+        var ok = await Store.MutateAsync(
+            t => MysteryService.ClaimNpc(t, Script, personId, npcId), TripArea.Mystery);
+
+        if (!ok)
+        {
+            // Somebody else got there between the page rendering and the tap. Show what is left.
+            _state = State.PickNpc;
+            return;
+        }
+
         await Store.FlushAsync();
 
         var person = Store.Current.Roster.First(p => p.Id == personId);

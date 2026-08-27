@@ -32,6 +32,21 @@ public sealed class MysteryState
     /// </summary>
     public string PartyCode { get; set; } = "";
 
+    /// <summary>
+    /// The organizers' code, and the one thing on this page that must never reach the wall.
+    ///
+    /// It opens the picker for Braun and the three facilitators — parts that come with the guilty
+    /// list attached. A guest who scanned it could claim one and read the solution, so it lives
+    /// only on screens a guest cannot see.
+    /// </summary>
+    public string HostCode { get; set; } = "";
+
+    /// <summary>Which organizer is playing Braun, Leo, Chloe or Bertram.</summary>
+    public List<MysteryNpcClaim> NpcClaims { get; set; } = [];
+
+    public MysteryNpcClaim? NpcFor(string personId) =>
+        NpcClaims.FirstOrDefault(c => c.PersonId == personId);
+
     /// <summary>Null until the host deals. Everything else here is meaningless without it.</summary>
     public MysteryDeal? Deal { get; set; }
 
@@ -140,6 +155,21 @@ public sealed class MysteryCastMember
     public bool ShowsGuilty => GuiltSlot is not null || IsHerring;
 
     public bool IsKiller => GuiltSlot is not null;
+}
+
+/// <summary>
+/// An organizer who has picked up one of the four house parts.
+///
+/// Unlike a guest, they choose rather than being dealt. There are exactly four of them and four
+/// parts, and which one you want is a real preference — Bertram is on his feet all night, Braun
+/// spends the evening in a back room running the game.
+/// </summary>
+public sealed class MysteryNpcClaim
+{
+    /// <summary>braun, leo, chloe or bertram.</summary>
+    public string NpcId { get; set; } = "";
+
+    public string PersonId { get; set; } = "";
 }
 
 /// <summary>

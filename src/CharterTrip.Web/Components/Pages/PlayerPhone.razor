@@ -17,7 +17,53 @@
    the point, because everything here is secret. *@
 <div class="mp">
 
-@if (Me is null)
+@if (MyNpc is { } npc)
+{
+    @* An organizer, playing one of the four house parts. Not a suspect, not dealt a character —
+       they have standing orders instead, which is the whole job. *@
+    <header class="mp-head">
+        <div>
+            <p class="mp-title">@npc.Title</p>
+            <h1 class="mp-name">@npc.Name</h1>
+        </div>
+        <span class="mp-ghost-badge">house</span>
+    </header>
+
+    <div class="mp-card">
+        <h2>Where you are</h2>
+        <p class="mp-zone">@npc.Zone</p>
+    </div>
+
+    <div class="mp-card">
+        <h2>Your standing orders</h2>
+        @foreach (var order in npc.Orders.Where(o => !string.IsNullOrWhiteSpace(o)))
+        {
+            <p>@order</p>
+        }
+    </div>
+
+    @if (npc.IsHost)
+    {
+        <a class="btn btn-gold btn-lg btn-block" href="/games/mystery">Open the game master's console</a>
+    }
+    else
+    {
+        <div class="mp-card">
+            <h2>You know everything</h2>
+            <p class="muted tiny">
+                Your console shows the guilty list, which is what lets you steer a stuck room without
+                ever accusing anybody. Point, wonder, and walk away.
+            </p>
+            <a class="btn btn-sm btn-block" href="/games/mystery">The guilty list</a>
+        </div>
+    }
+
+    <footer class="mp-foot">
+        <span class="muted tiny">@RoundName</span>
+        <a class="muted tiny" href="/logout">not you?</a>
+    </footer>
+}
+else if (Me is null)
 {
     <div class="mp-empty">
         <h1>Braun Manor</h1>
@@ -308,6 +354,9 @@ else
     /// <summary>Which character this phone is holding, from the signed-in person.</summary>
     private MysteryCastMember? Me =>
         Permissions.PersonId is { } personId ? Trip.Mystery.ForPerson(personId) : null;
+
+    /// <summary>The house part this organizer took, if they are one.</summary>
+    private ScriptNpcRole? MyNpc => MysteryService.NpcRoleFor(Trip, Script, Permissions.PersonId);
 
     private bool AmGhost => Me is not null && MysteryService.IsGhost(Trip, Me.CharacterId);
 

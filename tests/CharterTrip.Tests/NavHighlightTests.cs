@@ -83,6 +83,22 @@ public class NavHighlightTests
         Assert.Equal("/itinerary?tab=carpool#guide", sections.Single(c => c.Label == "Carpool").LinkHref);
     }
 
+    /// <summary>
+    /// The mystery used to sit at /mystery, off on its own, so opening it from the Games menu
+    /// landed on a page whose own menu entry had gone dark — /games matched nothing there.
+    /// Living under /games keeps the parent lit and puts it where the rest of the games are.
+    /// </summary>
+    [Fact]
+    public void The_murder_mystery_lives_under_games()
+    {
+        var games = NavTree.All.Single(e => e.Label == "Games");
+        var mystery = games.Children!.Single(c => c.Label == "Murder Mystery");
+
+        Assert.Equal("/games/mystery", mystery.Href);
+        Assert.True(NavTree.IsCurrent(games.Href, "games/mystery"));
+        Assert.True(NavTree.IsCurrent(mystery.Href, "games/mystery"));
+    }
+
     [Fact]
     public void An_entry_with_nowhere_to_land_links_to_its_own_address()
     {

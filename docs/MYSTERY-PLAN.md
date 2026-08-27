@@ -10,6 +10,30 @@ you could stop.
 
 ---
 
+## 0. Where this is
+
+**Phases 0 through 12 are built.** A game can be dealt, played through three trials on twenty-one
+phones, and revealed. 523 tests pass, including a full evening end-to-end across six seeds.
+
+| Route | What it is |
+|---|---|
+| `/games/mystery` | host console — deal, rounds, trials, the whole guilty list, a force for everything |
+| `/games/mystery/screen` | the screen in the room, and the reveal |
+| `/games/mystery/print` | nine clue cards, twenty-one name tags, personal links (admin only) |
+| `/m` | one player's game: character, what they saw, the board, the vote, their abilities |
+| `/m/clue/{token}` | a printed clue card, opened by the phone's own camera |
+| `/m/meet/{token}` | a name tag |
+| `/login/{code}` | the one front door, for every code on the trip |
+
+Not built, in the order the plan puts them: **the prompt engine** (the facilitators are its manual
+version), badge-driven detective sync, ghost whispers as a live channel, the map panel, the
+facilitator console, and everything in the instrumentation list. A killer's plant currently inserts
+their own belongings rather than a chosen target's — the phone has no target picker yet.
+
+Two content decisions are still open and both are flagged in §4.
+
+---
+
 ## 1. The content
 
 Thirteen files in `data/braun-manor/`, in git, committed as one unit. They are **content**: read at
@@ -370,13 +394,23 @@ matter.
 
 ## 4. Open decisions
 
-One left. The rest are settled: the organizers are already cast (Jou, Ali, Kyle and Em to Braun,
+Four small ones. The rest are settled: the organizers are already cast (Jou, Ali, Kyle and Em to Braun,
 Leo, Chloe and Bertram), the roster is trimmed to 21 playable roles with Jacob Kruse cut, gender is
 not an input to casting, and the win condition is decided — see below.
 
 - **Finder visibility on the clue feed.** `main_screen.json` sets `finder_shown: true` and flags it
   as a deliberate knob: it credits hunters and makes re-scanning a tampered clue a public act. Flip
-  to anonymous if playtest shows scan-shyness.
+  to anonymous if playtest shows scan-shyness. Implemented as `FinderShown` in `MysteryScreen.razor`.
+- **Two lines of prose nobody has written**, both surfaced on the host console rather than guessed
+  at. `story_beats.json`'s `detective_reveal` wants a `{result_line}`, so that paragraph is omitted
+  from the reveal until it exists. And there is no authored text for the neutral clue cards that
+  fill rooms without a trace — those show the zone's own `clue_spot` line, which is descriptive
+  rather than atmospheric. Three or four authored lines would fix the second.
+- **The "Gatsby dress code" note** on the Saturday itinerary row is untouched. No dress code is
+  specified anywhere in the content, so it is a decision rather than a rename.
+- **Harry's killer rate**, if you care: 28.2% against an 18.75% ideal, because all three rooms he
+  can be placed in grant access to the study. One non-access room on his whitelist would fix it,
+  exactly as the kitchen fixed Carla. See the data set's own README.
 
 ### The win condition: Ruleset B, settled
 

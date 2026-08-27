@@ -4,7 +4,7 @@
       "id": "killer",
       "name": "The Syndicate Hand",
       "count": 3,
-      "assignment": "Drawn at generation, one per guilt slot (access / means / signature), constrained by placement. Never Harry or Isla. No two co-located.",
+      "assignment": "Drawn at generation, one per guilt slot (access / means / signature), constrained by placement. Only slot-tagged characters are eligible. No two co-located.",
       "knowledge": "Killers know each other and know their minions. Each killer's briefing includes their role in the murder, their cover story, and which red herring their cover story points at.",
       "win": "At least 2 of the 3 killers survive all three trials \u2014 one hand alone cannot burn the evidence, but two can. Evaluated on ground truth: blame-take fools the reveal card, not the tally.",
       "win_note": "Minions win with them. A minion's blame-take can protect a killer's identity on conviction.",
@@ -27,7 +27,7 @@
       "id": "minion",
       "name": "Syndicate Associates",
       "count": 2,
-      "assignment": "Drawn from non-killer, non-inheritance characters. Weighted toward signature-tagged and Syndicate-adjacent draws.",
+      "assignment": "Drawn from the non-killer pool. Weighted toward signature-tagged and Syndicate-adjacent draws.",
       "knowledge": "Minions know the killers. Killers know them.",
       "win": "Win if the killers win. Their convictions do not count toward any faction's tally.",
       "abilities": [
@@ -49,7 +49,7 @@
       "id": "detective",
       "name": "The Investigators",
       "count": 3,
-      "assignment": "Drawn from any non-inheritance character. Remington, Martha, and Molly are flavor-weighted but not guaranteed \u2014 a killer Remington is a legal and excellent draw.",
+      "assignment": "Drawn from the non-killer pool. Remington, Martha, and Molly are flavor-weighted but not guaranteed \u2014 a killer Remington is a legal and excellent draw.",
       "knowledge": "Detectives know each other.",
       "win": "At least 2 of the 3 killers convicted within the three trials. Evaluated on ground truth \u2014 shield and decoy cannot change it, and blame-take fools only the reveal card.",
       "abilities": [
@@ -83,7 +83,7 @@
       "id": "jester",
       "name": "The Desperate",
       "count": 2,
-      "assignment": "Drawn from any non-inheritance, non-killer character. Weighted toward characters whose fear is ruin (Hugo, Emilia, Santiago, Da'Quan class).",
+      "assignment": "Drawn from the non-killer pool. Weighted toward characters whose fear is ruin (Hugo, Emilia, Santiago, Da'Quan class).",
       "knowledge": "Jesters do not know each other. They are in competition for the same conviction slots.",
       "win": "Be convicted at any trial. Silent, personal, non-terminal \u2014 the game continues and the reveal simply reads 'guest' until endgame.",
       "abilities": [
@@ -105,7 +105,7 @@
       "id": "inheritance",
       "name": "The Braun Claim",
       "count": 2,
-      "assignment": "Fixed: Harry Braun and Isla Perry, every game. They are never killers.",
+      "assignment": "Drawn at generation from the non-killer pool, like every other faction. The two drawn are each other's rival.",
       "knowledge": "They know about each other, and know only one claim can survive probate.",
       "win": "Your rival is convicted at any trial AND you survive to the end. No fallback. If neither or both conditions fail, neither Braun wins. Silent, personal, non-terminal.",
       "abilities": [

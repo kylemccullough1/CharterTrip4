@@ -236,7 +236,7 @@
         "grand_hall"
       ],
       "slots": [],
-      "fixed_faction": "inheritance",
+      "fixed_faction": null,
       "tamper_insert": "a pearl button from an evening gown"
     },
     {
@@ -647,7 +647,7 @@
       "slots": [
         "access"
       ],
-      "fixed_faction": "inheritance",
+      "fixed_faction": null,
       "route_preference": "window",
       "tamper_insert": "a cigarette end \u2014 the same brand as under the window"
     },

@@ -39,8 +39,9 @@ template fill from these files** — nothing is authored at runtime. That is wha
 tractable: the compiler is string substitution over ~200 authored blocks, not generation.
 
 Slot supply, which is what the generator has to work with: 8 access-tagged characters, 5 means,
-6 signature. Six characters can never be killers — Molly, Emilia, Sharkeisha and Remington carry no
-`slots` at all, and Harry and Isla are `fixed_faction: inheritance` — leaving 15 eligible. Four
+6 signature. **No character is pinned to a faction** — every faction, the inheritance claim
+included, is drawn from the pool. Five characters can never be killers, and only because they carry
+no `slots` at all: Molly, Isla, Emilia, Sharkeisha and Remington. That leaves 16 eligible. Four
 traces are zone-anchored (`carla` to the driveway, `harry`/`florence`/`daquan` to the lawn); the rest
 are portable and spill to an adjacent zone when their zone already holds a clue.
 
@@ -219,10 +220,8 @@ Three things worth knowing before phase 5:
   validator is not passing vacuously.
 - **`MysteryJson` is separate from `TripJson`** because the content files are snake_cased and
   `trip.json` is camelCased. The content was authored by hand and is read on its own terms.
-- **Access-slot supply is 7, not the 8 the data set's README implies.** Eight characters carry the
-  access tag but Harry is one of them and he is pinned to `inheritance`, so the killer draw only
-  ever sees seven. `ForSlot` filters by eligibility; anything reasoning from the tag count will
-  over-count its candidates.
+- **`ForSlot` filters by killer eligibility, not just by tag.** The two agree today because
+  nothing is faction-pinned, but they are separate questions and the Dealer wants eligibility.
 
 Registered as a singleton of the concrete record rather than behind an `IMysteryScript` interface —
 it is immutable data, and a test that wants a different script constructs one with `with`.

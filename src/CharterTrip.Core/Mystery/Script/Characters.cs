@@ -48,8 +48,13 @@ public sealed record ScriptCharacter
     /// they can never be a killer — four characters are deliberately in that position.</summary>
     public IReadOnlyList<string> Slots { get; init; } = [];
 
-    /// <summary>Set to a faction id to pin this character there before any draw runs.
-    /// Harry and Isla are <c>inheritance</c>; everyone else is null.</summary>
+    /// <summary>
+    /// Set to a faction id to pin this character there before any draw runs.
+    ///
+    /// Null for all 21 today — the mechanism is kept, but nothing uses it. Harry Braun and Isla
+    /// Perry used to be pinned to <c>inheritance</c> in every game; the claim is now drawn from
+    /// the non-killer pool like every other faction, and both are ordinary killer candidates.
+    /// </summary>
     public string? FixedFaction { get; init; }
 
     /// <summary>The fragment of themselves a killer can plant on someone else's clue to frame them.</summary>
@@ -59,8 +64,13 @@ public sealed record ScriptCharacter
     /// whatever route their zone would otherwise imply.</summary>
     public string? RoutePreference { get; init; }
 
-    /// <summary>True if this character can never be drawn as a killer, for either reason:
-    /// no guilt slots at all, or pinned to a faction.</summary>
+    /// <summary>
+    /// True if this character can never be drawn as a killer.
+    ///
+    /// Two reasons, and only the first is live: carrying no guilt slots (four characters), or
+    /// being pinned to a faction (nobody, now). The pinned check stays so that pinning one again
+    /// keeps them out of the draw automatically rather than silently making them eligible.
+    /// </summary>
     public bool IneligibleAsKiller => Slots.Count == 0 || FixedFaction is not null;
 }
 

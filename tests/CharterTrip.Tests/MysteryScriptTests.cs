@@ -102,12 +102,11 @@ public class MysteryScriptTests
         var slots = Script.Characters.SelectMany(c => c.Slots).ToHashSet();
         Assert.Equal(["access", "means", "signature"], slots.OrderBy(s => s));
 
-        // Eight characters carry the access tag, but Harry is one of them and he is pinned to the
-        // inheritance faction — so the killer draw only ever sees seven. The tag count and the
-        // eligible count are different numbers and the Dealer needs the second one; anything that
-        // reasons from "8 access-tagged" will over-count its candidates.
+        // Slot supply, which is what the killer draw has to work with. Nobody is faction-pinned
+        // any more, so the tag count and the eligible count agree — but they are still separate
+        // questions, and ForSlot answers the one the Dealer needs.
         Assert.Equal(8, Script.Characters.Count(c => c.Slots.Contains("access")));
-        Assert.Equal(7, Script.ForSlot("access").Count());
+        Assert.Equal(8, Script.ForSlot("access").Count());
         Assert.Contains("access", Script.CharacterById("harry")!.Slots);
 
         Assert.Equal(5, Script.ForSlot("means").Count());
@@ -115,21 +114,52 @@ public class MysteryScriptTests
     }
 
     [Fact]
-    public void Fifteen_characters_are_killer_eligible_and_six_never_are()
+    public void Sixteen_characters_are_killer_eligible_and_five_never_are()
     {
-        Assert.Equal(15, Script.KillerEligible.Count());
+        Assert.Equal(16, Script.KillerEligible.Count());
 
         var ineligible = Script.Characters.Where(c => c.IneligibleAsKiller).Select(c => c.Id).ToList();
-        Assert.Equal(6, ineligible.Count);
 
-        // Harry and Isla are pinned to the inheritance faction; the other four simply carry no
-        // guilt slots. Both routes have to keep working — a killer draw that could pick either
-        // Braun claimant breaks the endgame, and one that picks a slotless character has no beat
-        // to compose a briefing from.
-        Assert.Contains("harry", ineligible);
+        // Carrying no guilt slots is now the only thing that keeps a character out of the draw —
+        // a killer picked with no slot would have no beat to compose a briefing from.
+        Assert.Equal(5, ineligible.Count);
+        Assert.All(ineligible, id => Assert.Empty(Script.CharacterById(id)!.Slots));
+
+        // Isla is one of the five. The data set's README listed her under "fixed inheritance",
+        // which made it look like unpinning her would make her a killer candidate; she carries no
+        // slots, so it did not.
         Assert.Contains("isla", ineligible);
-        Assert.Equal("inheritance", Script.CharacterById("harry")?.FixedFaction);
-        Assert.Equal("inheritance", Script.CharacterById("isla")?.FixedFaction);
+    }
+
+    [Fact]
+    public void Nobody_is_pinned_to_a_faction()
+    {
+        // The inheritance claim used to be Harry and Isla in every game. It is drawn from the
+        // non-killer pool now, like every other faction, so both are ordinary candidates for
+        // anything — including being killers.
+        Assert.All(Script.Characters, c => Assert.Null(c.FixedFaction));
+
+        Assert.Contains(Script.KillerEligible, c => c.Id == "harry");
+        Assert.DoesNotContain("isla", Script.KillerEligible.Select(c => c.Id));
+
+        // Isla is out because she carries no slots, not because of who she is — the distinction
+        // matters if slots are ever added to her.
+        Assert.Empty(Script.CharacterById("isla")!.Slots);
+    }
+
+    [Fact]
+    public void The_faction_draw_has_exactly_enough_people_left_after_the_killers()
+    {
+        // 21 characters, 3 drawn as killers, and the remaining five factions have to account for
+        // the other 18 exactly. With inheritance now in this pool rather than pre-assigned, an
+        // off-by-one here would leave somebody with no role on the night.
+        var killers = Script.Factions.ById("killer")!.Count;
+        var drawnAfterKillers = Script.Factions.Factions
+            .Where(f => f.Id != "killer")
+            .Sum(f => f.Count);
+
+        Assert.Equal(Script.Characters.Count - killers, drawnAfterKillers);
+        Assert.Equal(18, drawnAfterKillers);
     }
 
     [Fact]

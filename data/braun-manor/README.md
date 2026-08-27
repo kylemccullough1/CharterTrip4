@@ -27,16 +27,17 @@ Six data files, treated as tables. Nothing in them is written at runtime; the ge
               (entry, family_room, lawn, driveway); every zone ≥ min capacity
               → else reshuffle
 3. DRAW KILLERS
-              ACCESS  = random(access-tagged ∩ access-granting zone ∩ not inheritance)
-              MEANS   = random(means-tagged ∩ not chosen ∩ not inheritance)
-              SIGNATURE = random(signature-tagged ∩ not chosen ∩ not inheritance)
+              ACCESS  = random(access-tagged ∩ access-granting zone)
+              MEANS   = random(means-tagged ∩ not chosen)
+              SIGNATURE = random(signature-tagged ∩ not chosen)
               constraint: no two killers share a zone → else redraw
 4. DRAW HERRINGS
               3 innocents get their GUILTY variant; weight toward
               slot-tagged characters so herrings resemble killers
-5. DRAW FACTIONS (from the 16 remaining non-killer, non-inheritance):
+5. DRAW FACTIONS (from the 18 remaining non-killers):
               2 minions (weight: signature-tagged), 3 detectives,
-              2 jesters (weight: ruin-fear class), 9 villagers
+              2 jesters (weight: ruin-fear class),
+              2 inheritance rivals, 9 villagers
 6. SET VARIANTS
               killers + herrings → guilty acts/seen; all others → innocent
 7. BUILD TEXTS (pure template fill from story_beats.json):
@@ -95,6 +96,10 @@ equalizer.
 4. **Clue spillover:** if a zone already holds a clue, portable traces (no anchor_zone) shift to an adjacent clueless zone. Anchored traces never move.
 5. **Cross-zone sighting (recommended):** any killer with exactly 1 co-located witness gets one additional observation assigned to a player in an adjacent zone ("seen from the doorway"). Keeps every killer at >=2 threads.
 
-Post-fix killer distribution: 12-24% band across 15 eligible characters (uniform ideal ~16%).
+Post-fix killer distribution: measured at a 12-24% band across 15 eligible characters (uniform ideal ~16%) — **stale, needs re-simulation.** Unpinning the inheritance claim added Harry to the eligible pool, so it is 16 characters now and the uniform ideal is ~15%. Harry is access-only, so the change concentrates in the access slot rather than spreading evenly: that slot went from 7 candidates to 8.
 Data changes applied: Carla is access-only with kitchen added to her whitelist (was 46% killer rate); her snail glove button stays — a snail-carrier who can never be the signature killer is a free red herring on the signature thread.
-Never-killers by design: Molly, Emilia, Sharkeisha, Remington (no slots) + Harry, Isla (fixed inheritance). Irrelevant for a one-shot; a meta risk only on replays with the same group.
+Never-killers by design: Molly, **Isla**, Emilia, Sharkeisha, Remington — five characters with no slots, so no guilt slot to fill. Irrelevant for a one-shot; a meta risk only on replays with the same group.
+
+No character is pinned to a faction any more. Harry Braun and Isla Perry used to be the inheritance pair in every game; the claim is now drawn from the non-killer pool like every other faction. Harry carries the access tag and so becomes an ordinary killer candidate — eligible access supply is 8, up from 7. Isla does not, because she carries no slots: the old wording grouped her under "fixed inheritance" as though the pin were what excluded her, and it was not.
+
+Killer-eligible supply is therefore 16 of 21.

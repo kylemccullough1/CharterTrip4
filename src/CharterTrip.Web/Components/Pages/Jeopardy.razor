@@ -814,6 +814,7 @@ else
             {
                 await _audio.InvokeVoidAsync("reveal");
                 _diamondDeadline = DateTimeOffset.UtcNow + JeopardyService.ClueReadDelay;
+                StateHasChanged();
             }
 
             if (phase != _lastPhase)

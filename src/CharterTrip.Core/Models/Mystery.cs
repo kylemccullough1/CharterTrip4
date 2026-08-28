@@ -483,6 +483,19 @@ public sealed class MysteryBeats
     /// <summary>The rules and guidelines every player carries on the Role tab.</summary>
     public string HouseRules { get; set; } = "";
 
+    /// <summary>
+    /// How a tampered card reads. <c>{insert}</c> is the framed character's belongings.
+    ///
+    /// Sentence frames rather than whole clues, because a tamper has to sound like it was always
+    /// part of the scene — which is exactly what makes the room argue about whether it was.
+    /// </summary>
+    public string TamperSubtle { get; set; } = "";
+
+    public string TamperBlatant { get; set; } = "";
+
+    /// <summary>A scrub removes rather than adds, so this replaces the card instead of joining it.</summary>
+    public string TamperScrubbed { get; set; } = "";
+
     /// <summary>Read out at the end, in order, before the winners.</summary>
     public List<string> RevealParagraphs { get; set; } = [];
 

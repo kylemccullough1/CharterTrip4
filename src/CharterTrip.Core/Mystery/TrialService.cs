@@ -78,18 +78,21 @@ public static class TrialService
         // Staff do not vote.
         if (trip.Mystery.Story.Character(voterCharacterId) is not { IsStaff: false }) return false;
 
-        var ballots = trial.Stage switch
-        {
-            MysteryTrialStage.Nominating => trial.Nominations,
-            MysteryTrialStage.FinalVote => trial.FinalVotes,
-            _ => null
-        };
-
+        var ballots = BallotsFor(trial);
         if (ballots is null) return false;
 
-        // In the final round you may only vote for somebody standing.
-        if (trial.Stage == MysteryTrialStage.FinalVote && !trial.NomineeCharacterIds.Contains(targetCharacterId))
-            return false;
+        // Read from the same place the screen reads, so nobody can be shown as still deciding while
+        // the ballot refuses them — or the other way round, which is worse.
+        if (Electorate(trip).All(c => c.Id != voterCharacterId)) return false;
+
+        if (trial.Stage == MysteryTrialStage.FinalVote)
+        {
+            // In the final round you may only vote for somebody standing.
+            if (!trial.NomineeCharacterIds.Contains(targetCharacterId)) return false;
+
+            // And when the whole room is standing, you may not simply vote for yourself.
+            if (voterCharacterId == targetCharacterId) return false;
+        }
 
         if (trial.Stage == MysteryTrialStage.Nominating && IsGhost(trip, targetCharacterId))
             return false;
@@ -113,29 +116,38 @@ public static class TrialService
         return true;
     }
 
+    /// <summary>
+    /// Who gets a ballot in the stage the trial is currently in.
+    ///
+    /// Ordinarily the people standing do not vote on their own fate. But ties widen the cut rather
+    /// than breaking it, so a room that splits evenly can put <em>everybody</em> up — and then there
+    /// is nobody left outside to judge them. When that happens the nominees vote on each other
+    /// instead, because a trial with an empty electorate is a trial that never ends, and the room is
+    /// standing there watching.
+    /// </summary>
+    public static IReadOnlyList<MysteryCharacter> Electorate(TripData trip)
+    {
+        var trial = Current(trip);
+        if (trial is null) return [];
+
+        var living = Living(trip);
+        if (trial.Stage != MysteryTrialStage.FinalVote) return living;
+
+        var outside = living.Where(c => !trial.NomineeCharacterIds.Contains(c.Id)).ToList();
+        return outside.Count > 0 ? outside : living;
+    }
+
     /// <summary>Who has not locked in yet. The screen puts typing dots beside these.</summary>
     public static IReadOnlyList<MysteryCharacter> AwaitingVote(TripData trip)
     {
         var trial = Current(trip);
         if (trial is null) return [];
 
-        var ballots = trial.Stage switch
-        {
-            MysteryTrialStage.Nominating => trial.Nominations,
-            MysteryTrialStage.FinalVote => trial.FinalVotes,
-            _ => null
-        };
-
+        var ballots = BallotsFor(trial);
         if (ballots is null) return [];
 
         var voted = ballots.Select(v => v.VoterCharacterId).ToHashSet(StringComparer.Ordinal);
-
-        // In the final vote the people standing do not vote on themselves.
-        var electorate = trial.Stage == MysteryTrialStage.FinalVote
-            ? Living(trip).Where(c => !trial.NomineeCharacterIds.Contains(c.Id))
-            : Living(trip);
-
-        return electorate.Where(c => !voted.Contains(c.Id)).ToList();
+        return Electorate(trip).Where(c => !voted.Contains(c.Id)).ToList();
     }
 
     /// <summary>Everybody who can vote has. What makes the tally fire on its own.</summary>
@@ -147,17 +159,25 @@ public static class TrialService
         var trial = Current(trip);
         if (trial is null) return [];
 
-        var ballots = trial.Stage == MysteryTrialStage.Nominating || trial.Stage == MysteryTrialStage.Tallying
+        return Tally(trial.Stage is MysteryTrialStage.Nominating or MysteryTrialStage.Tallying
             ? trial.Nominations
-            : trial.FinalVotes;
+            : trial.FinalVotes);
+    }
 
-        return ballots
+    private static IReadOnlyList<(string CharacterId, int Votes)> Tally(List<MysteryVote> ballots) =>
+        ballots
             .GroupBy(v => v.TargetCharacterId, StringComparer.Ordinal)
             .Select(g => (CharacterId: g.Key, Votes: g.Count()))
             .OrderByDescending(x => x.Votes)
             .ThenBy(x => x.CharacterId, StringComparer.Ordinal)
             .ToList();
-    }
+
+    private static List<MysteryVote>? BallotsFor(MysteryTrial trial) => trial.Stage switch
+    {
+        MysteryTrialStage.Nominating => trial.Nominations,
+        MysteryTrialStage.FinalVote => trial.FinalVotes,
+        _ => null
+    };
 
     /// <summary>
     /// Close the nominations and work out who stands.
@@ -229,7 +249,13 @@ public static class TrialService
         var trial = Current(trip);
         if (trial is null || trial.Stage != MysteryTrialStage.FinalVote) return [];
 
-        trial.ConvictedCharacterIds = TakeWithTies(Tally(trip), ConvictionCount);
+        // A final round that produced nothing at all falls back to who the room named in the first
+        // place. It should not happen — but "nobody goes to jail and the evening moves on" is the
+        // one outcome a trial must never have, and the fallback is three lines.
+        var tally = Tally(trip);
+        if (tally.Count == 0) tally = Tally(trial.Nominations);
+
+        trial.ConvictedCharacterIds = TakeWithTies(tally, ConvictionCount);
         trial.Stage = MysteryTrialStage.Verdict;
         trial.ClosedAt = now;
         return trial.ConvictedCharacterIds;

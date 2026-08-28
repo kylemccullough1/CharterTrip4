@@ -1,0 +1,158 @@
+@page "/m/welcome"
+@layout BareLayout
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+@using Microsoft.AspNetCore.Components.Forms
+@inherits TripAwareComponent
+@inject NavigationManager Nav
+@inject CharterTrip.Web.Services.MediaAttachments Attachments
+
+<PageTitle>@(Me?.Name ?? "Your invitation")</PageTitle>
+
+@* What happens between scanning the code and holding a character.
+
+   A separate page from /join/{code} and it has to be: that one is static SSR, because writing an
+   auth cookie needs an HTTP response, and a file upload needs an interactive circuit. So the door
+   signs you in and sends you here, where there is a connection to upload over. *@
+
+@if (Me is null)
+{
+    <div class="mp-empty">
+        <h1 class="mp-title">You're not in this one yet</h1>
+        <a class="btn btn-gold btn-sm" href="/join">Join in</a>
+    </div>
+}
+else if (_step == Step.Photo)
+{
+    <div class="mw">
+        <h1 class="mw-title">You are @Me.Name</h1>
+        <p class="mw-sub">@Me.Job</p>
+
+        <div class="mw-photo">
+            @if (Seat?.PhotoUrl is { Length: > 0 } photo)
+            {
+                <img class="mw-shot" src="@photo" alt="Your photograph" />
+            }
+            else
+            {
+                <span class="mw-shot mw-shot-empty" aria-hidden="true">?</span>
+            }
+        </div>
+
+        <label class="btn btn-gold @(_busy ? "is-busy" : null)">
+            @(Seat?.PhotoUrl is { Length: > 0 } ? "Take another" : "Take a photograph")
+            <InputFile OnChange="OnPickedAsync" accept="image/*" capture="user"
+                       disabled="@_busy" class="mediafield-input" />
+        </label>
+
+        @if (_error is not null)
+        {
+            <p class="mw-error" role="alert">@_error</p>
+        }
+
+        @* Never required. Twenty-five people uploading at once over venue wifi is the slowest
+           minute of the night, and it is the minute the host is waiting to start — so the board
+           draws a monogram and nobody is held up by a camera. *@
+        <button class="btn btn-ghost btn-sm" @onclick="OpenLetter">
+            @(Seat?.PhotoUrl is { Length: > 0 } ? "That's me" : "Skip for now")
+        </button>
+    </div>
+}
+else
+{
+    <div class="mw mw-letter @(_opened ? "is-open" : "")">
+        <div class="mw-envelope" @onclick="Unfold">
+            @if (!_opened)
+            {
+                <span class="mw-seal" aria-hidden="true">B</span>
+                <p class="mw-tap">An invitation. Tap to open.</p>
+            }
+            else
+            {
+                <article class="mw-paper">
+                    @if (Written(Beats.InvitationLetter) is { } letter)
+                    {
+                        @foreach (var paragraph in letter.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            <p>@paragraph</p>
+                        }
+                    }
+                    else
+                    {
+                        <p>You are expected at Braun Manor.</p>
+                    }
+
+                    <p class="mw-signed">— James Braun</p>
+                </article>
+
+                <button class="btn btn-gold" @onclick="EnterAsync">This is you</button>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    protected override TripArea Watching => TripArea.Mystery;
+
+    private enum Step { Photo, Letter }
+
+    private Step _step = Step.Photo;
+    private bool _opened;
+    private bool _busy;
+    private string? _error;
+
+    private MysteryStory Story => Trip.Mystery.Story;
+    private MysteryBeats Beats => Story.Beats;
+
+    private MysteryCharacter? Me => CastingService.CharacterFor(Trip, Permissions.PersonId);
+    private MysteryCastMember? Seat => Me is null ? null : Trip.Mystery.Play.ForCharacter(Me.Id);
+
+    private static string? Written(string? value) => MysteryText.Written(value);
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // Somebody coming back on a second phone, or reloading, should not be made to do the
+        // introduction again.
+        if (Seat?.LetterOpened == true) Nav.NavigateTo("/m");
+    }
+
+    /// <summary>
+    /// Resized in the browser to 1600px before it is sent, which is why there is no server-side
+    /// image library to keep patched.
+    /// </summary>
+    private async Task OnPickedAsync(InputFileChangeEventArgs e)
+    {
+        _busy = true;
+        _error = null;
+
+        try
+        {
+            var url = await Attachments.SaveAsync(e.File);
+            await MutateAsync(t => CastingService.SetPhoto(t, Permissions.PersonId!, url));
+
+            // Worth forcing to disk. Re-taking twenty-one photographs after a restart is a real
+            // cost, and it happens at the worst moment.
+            await Store.FlushAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void OpenLetter() => _step = Step.Letter;
+
+    private void Unfold() => _opened = true;
+
+    private async Task EnterAsync()
+    {
+        await MutateAsync(t => CastingService.MarkLetterOpened(t, Permissions.PersonId!));
+        Nav.NavigateTo("/m");
+    }
+}

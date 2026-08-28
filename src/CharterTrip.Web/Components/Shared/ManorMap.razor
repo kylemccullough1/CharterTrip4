@@ -1,0 +1,117 @@
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+
+@* The house, drawn rather than photographed.
+
+   Positioned HTML rather than SVG: the rooms are rectangles, which divs do perfectly well, and it
+   keeps the labels as real text that inherits the site's type and theming. (Razor also reserves
+   <text> as its own escape tag, so SVG labels fight the compiler.)
+
+   The layout is faithful to the adjacency in zones.json — the study touches only the Entry and the
+   Family Room, which is exactly why the access killer had to be standing near one of them, and the
+   Driveway and Lawn are outside the front door. Somebody reading this to work out who could have
+   reached the body needs it to be true, not just tidy.
+
+   Three modes, one component: labels only before the murder, evidence pins during the
+   investigation, and the scan trail once the detectives need it. One component rather than three,
+   so the gate that hides where people walked lives in exactly one place and cannot half-open. *@
+
+<div class="mm-wrap">
+    <div class="mm">
+
+        @* Roped off for the night, and drawn so people stop asking. *@
+        <div class="mm-room is-shut" style="@Box(300, 14, 146, 86)">
+            <span class="mm-name">West wing</span>
+            <span class="mm-sub">wet paint</span>
+        </div>
+
+        @foreach (var room in Rooms)
+        {
+            var zone = Story.Zone(room.Id);
+            if (zone is null) { continue; }
+
+            var clueId = ClueIn(room.Id);
+            var found = ShowPins && ScanShareService.IsFound(Trip, clueId);
+            var seen = ShowTrail ? TrailCount(room.Id) : 0;
+
+            <div class="mm-room @(room.Id == Highlight ? "is-you" : "") @(zone.PlayersAllowed ? "" : "is-scene")"
+                 style="@Box(room.X, room.Y, room.W, room.H)"
+                 @key="room.Id">
+
+                <span class="mm-name">@zone.Name</span>
+
+                @if (room.Id == Highlight)
+                {
+                    <span class="mm-sub">you were here</span>
+                }
+
+                @if (ShowPins)
+                {
+                    @* Evidence, never people. A pin says a card is in that room; it says nothing
+                       about who walked in to read it. *@
+                    <span class="mm-pin @(found ? "is-found" : "")" aria-hidden="true"></span>
+                }
+
+                @if (seen > 0)
+                {
+                    <span class="mm-trail" title="people who read this card">@seen</span>
+                }
+            </div>
+        }
+    </div>
+
+    @if (ShowTrail)
+    {
+        <p class="mm-key">The number is how many people read that room's card.</p>
+    }
+    else if (ShowPins)
+    {
+        <p class="mm-key">A lit pin is a card somebody has already found.</p>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
+
+    /// <summary>The room to mark as yours, if any.</summary>
+    [Parameter] public string? Highlight { get; set; }
+
+    /// <summary>Evidence pins. Off before the murder — there is nothing to find yet.</summary>
+    [Parameter] public bool ShowPins { get; set; }
+
+    /// <summary>Who read what. Gated on the phase; see <c>PhaseService.TrailVisible</c>.</summary>
+    [Parameter] public bool ShowTrail { get; set; }
+
+    private MysteryStory Story => Trip.Mystery.Story;
+
+    private string ClueIn(string zoneId) =>
+        Story.Clues.FirstOrDefault(c => c.ZoneId == zoneId)?.Id ?? "";
+
+    /// <summary>
+    /// Reads through <c>ScanShareService.Trail</c> rather than the scan list directly, so the phase
+    /// gate applies even if a caller passes ShowTrail when it should not.
+    /// </summary>
+    private int TrailCount(string zoneId) => ScanShareService.Trail(Trip, ClueIn(zoneId)).Count;
+
+    /// <summary>Percentages of a 460x360 plan, so the whole map scales to whatever it is put in.</summary>
+    private static string Box(int x, int y, int w, int h) =>
+        $"left:{Pc(x, 460)}%;top:{Pc(y, 360)}%;width:{Pc(w, 460)}%;height:{Pc(h, 360)}%";
+
+    private static string Pc(int value, int of) =>
+        (value * 100.0 / of).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+
+    private sealed record Room(string Id, int X, int Y, int W, int H);
+
+    private static readonly Room[] Rooms =
+    [
+        new("study",          150,  14, 140,  86),
+        new("entry",          150, 108, 140,  70),
+        new("family_room",     14, 108, 128,  70),
+        new("kitchen",         14, 186, 128,  70),
+        new("sitting_room",   150, 186, 140,  70),
+        new("grand_hall",     300, 108, 146, 100),
+        new("extension_room", 300, 216, 146,  60),
+        new("driveway",        14, 264, 128,  82),
+        new("lawn",           150, 264, 140,  82)
+    ];
+}

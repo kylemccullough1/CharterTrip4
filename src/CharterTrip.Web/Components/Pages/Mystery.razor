@@ -1,0 +1,320 @@
+@page "/games/mystery"
+@layout BareLayout
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+@using CharterTrip.Infrastructure.Mystery
+@inherits TripAwareComponent
+@inject IClock Clock
+@inject NavigationManager Nav
+
+<PageTitle>@Story.Title · Charter Trip 2026</PageTitle>
+
+@* The screen in the room, and before that the door.
+
+   One page rather than two, because they are the same surface at different times of night: the
+   thing everybody is looking at. It is deliberately public — a television has no session — so
+   nothing that would spoil the evening renders here. The guilty list, the tamper log and every
+   control that is not a QR code live on the four staff phones. *@
+
+<div class="page page-murder ms-screen" data-phase="@Phase">
+
+@switch (Phase)
+{
+    // ---------------------------------------------------------------------------- the door
+    case MysteryPhase.Lobby:
+    case MysteryPhase.Assembling:
+
+        <section class="ms-head">
+            <p class="ms-round">@(Phase == MysteryPhase.Lobby ? "Before the evening" : "Come in")</p>
+            <h1 class="ms-title-big">@Story.Title</h1>
+        </section>
+
+        @if (!HasGame)
+        {
+            <div class="ms-idle">
+                <p class="ms-line">Nothing is running yet.</p>
+
+                @if (CanEdit)
+                {
+                    <div class="row gap wrap center">
+                        <button class="btn btn-gold btn-lg" @onclick="CreateAsync">Create the game</button>
+                        <a class="btn btn-ghost btn-sm" href="/games/mystery/story">Edit the story</a>
+                    </div>
+                }
+                else
+                {
+                    <p class="muted">Somebody with the committee's login starts this one.</p>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="mys-doors">
+                <div class="mys-door">
+                    <QrImage Content="@JoinUrl(Play.PartyCode)" Size="190" Alt="Join the party" />
+                    <p class="mys-code">@Play.PartyCode</p>
+                    <p class="mys-door-who">Guests</p>
+                    <p class="muted tiny">Point a camera at it, or go to <b>@JoinHost/join</b> and type it.</p>
+                </div>
+
+                <div class="mys-door mys-door-host">
+                    <QrImage Content="@JoinUrl(Play.HostCode)" Size="190" Alt="Take a house part" />
+                    <p class="mys-code">@Play.HostCode</p>
+                    <p class="mys-door-who">The four of you</p>
+                    <p class="muted tiny">Braun, Leo, Chloe or Bertram. Only an organizer can get past it.</p>
+                </div>
+            </div>
+
+            <p class="ms-count">
+                <b>@Seated</b> of @Play.Cast.Count here
+                @if (StaffLeft > 0) { <span class="muted"> · @StaffLeft house @(StaffLeft == 1 ? "part" : "parts") still going</span> }
+            </p>
+
+            <div class="ms-grid">
+                @foreach (var seat in Arrived)
+                {
+                    <div class="ms-guest" @key="seat.CharacterId">
+                        <Portrait Seat="seat" Character="@Story.Character(seat.CharacterId)" />
+                        <span class="ms-guest-name">@Story.Character(seat.CharacterId)?.Name</span>
+                        <span class="ms-guest-title">@Story.Character(seat.CharacterId)?.Job</span>
+                    </div>
+                }
+            </div>
+
+            @if (CanEdit)
+            {
+                <div class="row gap wrap center ms-lobby-actions">
+                    <a class="btn btn-ghost btn-sm" href="/games/mystery/story">Edit the story</a>
+                    <a class="btn btn-ghost btn-sm" href="/m">Your phone ↗</a>
+                    <button class="btn btn-danger-ghost btn-sm" @onclick="DiscardAsync">Discard</button>
+                </div>
+                <p class="muted tiny center">Discarding clears the evening. Nothing you have written is touched.</p>
+            }
+        }
+        break;
+
+    // ------------------------------------------------------------------------- the welcome
+    case MysteryPhase.Welcome:
+        <section class="ms-welcome">
+            <p class="ms-welcome-kicker">You are expected at</p>
+            <h1 class="ms-welcome-title">Braun Manor</h1>
+            <p class="ms-welcome-sub">@(Written(Beats.Premise) ?? "")</p>
+        </section>
+        break;
+
+    // -------------------------------------------------------------------------- the briefing
+    case MysteryPhase.Presentation:
+        @if (Slide is { } slide)
+        {
+            <section class="ms-slide">
+                <p class="ms-round">@(Play.SlideIndex + 1) of @Story.Slides.Count</p>
+                <h1 class="ms-slide-title">@slide.Title</h1>
+
+                <ul class="ms-slide-bullets">
+                    @foreach (var line in MysteryText.WrittenOnly(slide.Bullets))
+                    {
+                        <li>@line</li>
+                    }
+                </ul>
+            </section>
+        }
+        else
+        {
+            <p class="ms-idle">Nothing to show on this slide yet.</p>
+        }
+        break;
+
+    // --------------------------------------------------------------------------- the party
+    case MysteryPhase.Mingling:
+        <section class="ms-head">
+            <p class="ms-round">The party</p>
+            <h1 class="ms-title-big">Find your room. Meet three people.</h1>
+        </section>
+
+        <div class="ms-grid ms-grid-rooms">
+            @foreach (var seat in Playing)
+            {
+                var character = Story.Character(seat.CharacterId)!;
+                <div class="ms-guest" @key="seat.CharacterId">
+                    <Portrait Seat="seat" Character="character" />
+                    <span class="ms-guest-name">@character.Name</span>
+                    <span class="ms-guest-title">@(Story.Zone(character.ZoneId)?.Name ?? character.Job)</span>
+                </div>
+            }
+        </div>
+        break;
+
+    // --------------------------------------------------------------------------- the murder
+    case MysteryPhase.Murder:
+        <div class="ms-flash" aria-hidden="true"></div>
+        <section class="ms-murder">
+            <h1 class="ms-murder-line">@(Written(Beats.MurderAnnouncement) ?? "…")</h1>
+        </section>
+        break;
+
+    case MysteryPhase.StudyScene:
+        <section class="ms-study">
+            <p class="ms-round">The study</p>
+            <p class="ms-study-text">@(Written(Beats.StudyScene) ?? "…")</p>
+        </section>
+        break;
+
+    // -------------------------------------------------------------------- the investigation
+    case MysteryPhase.Investigation:
+    case MysteryPhase.Discussion1:
+    case MysteryPhase.Discussion2:
+        <section class="ms-head">
+            <p class="ms-round">@PhaseLabel</p>
+            <h1 class="ms-title-big">@(Phase == MysteryPhase.Investigation ? "Investigation" : "Talk it through")</h1>
+        </section>
+
+        @if (ScanShareService.AnyTampering(Trip) && MysteryPhases.AtOrAfter(Phase, MysteryPhase.Discussion1))
+        {
+            @* Never which card, never how many, never when. The room re-reads the whole feed and
+               argues, which is the entire point of announcing it at all. *@
+            <p class="ms-alert">A clue has been tampered with.</p>
+        }
+
+        <div class="ms-feed">
+            @foreach (var clue in FoundClues)
+            {
+                <article class="ms-clue" @key="clue.Id">
+                    <p class="ms-clue-zone">@Story.Zone(clue.ZoneId)?.Name</p>
+                    <p>@ScanShareService.PublicReading(Trip, clue.Id)</p>
+
+                    @if (TrailVisible && ScanShareService.Trail(Trip, clue.Id) is { Count: > 0 } trail)
+                    {
+                        @* Opens at the first discussion round and not before. This is the detectives'
+                           tool for working out which card was touched — a public movement log during
+                           the investigation would make every alibi checkable. *@
+                        <p class="ms-trail">
+                            @string.Join(" · ", trail.Select(s => Story.Character(s.CharacterId)?.Name))
+                        </p>
+                    }
+                    else if (ScanShareService.FirstFinder(Trip, clue.Id) is { } finder)
+                    {
+                        <p class="ms-clue-finder">found by @(Story.Character(finder)?.Name)</p>
+                    }
+                </article>
+            }
+
+            @if (FoundClues.Count == 0)
+            {
+                <p class="ms-empty">Nine cards are hidden in this house. Nobody has found one yet.</p>
+            }
+        </div>
+        break;
+
+    // ---------------------------------------------------------------------------- the trials
+    case MysteryPhase.Trial1:
+    case MysteryPhase.Trial2:
+    case MysteryPhase.Trial3:
+        <TrialScreen Trip="Trip" />
+        break;
+
+    // ---------------------------------------------------------------------------- the reveal
+    case MysteryPhase.Reveal:
+        <section class="ms-head">
+            <p class="ms-round">The whole truth</p>
+            <h1 class="ms-title-big">@RevealHeadline</h1>
+        </section>
+
+        <div class="ms-reveal">
+            @foreach (var paragraph in MysteryText.WrittenOnly(Beats.RevealParagraphs))
+            {
+                <p class="ms-reveal-para">@paragraph</p>
+            }
+
+            @if (Outcome is not null)
+            {
+                <div class="ms-winners">
+                    <h2>Winners</h2>
+                    <p class="ms-winner-list">
+                        @string.Join(", ", OutcomeService.Winners(Trip).Select(id => Story.Character(id)?.Name))
+                    </p>
+                </div>
+            }
+        </div>
+        break;
+}
+
+</div>
+
+@code {
+    protected override TripArea Watching => TripArea.Mystery;
+
+    private MysteryState Game => Trip.Mystery;
+    private MysteryStory Story => Game.Story;
+    private MysteryPlay Play => Game.Play;
+    private MysteryBeats Beats => Story.Beats;
+    private MysteryPhase Phase => Game.Phase;
+    private MysteryOutcome? Outcome => Play.Outcome;
+
+    /// <summary>Doors are open once both codes exist.</summary>
+    private bool HasGame => Play.PartyCode is { Length: > 0 };
+
+    private int Seated => Play.Cast.Count(c => c.PersonId is not null);
+    private int StaffLeft => CastingService.UnclaimedStaffParts(Trip).Count;
+
+    private IEnumerable<MysteryCastMember> Arrived =>
+        Play.Cast.Where(c => c.PersonId is not null).OrderBy(c => c.JoinedAt);
+
+    /// <summary>Everybody in the game, which is everybody but the four running it.</summary>
+    private IEnumerable<MysteryCastMember> Playing =>
+        Play.Cast.Where(c => Story.Character(c.CharacterId) is { IsStaff: false });
+
+    private MysterySlide? Slide => PhaseService.CurrentSlide(Trip);
+    private bool TrailVisible => PhaseService.TrailVisible(Trip);
+
+    private IReadOnlyList<MysteryClueCard> FoundClues =>
+        Story.Clues
+            .Where(c => ScanShareService.IsFound(Trip, c.Id))
+            .OrderBy(c => ScanShareService.FirstFinder(Trip, c.Id))
+            .ToList();
+
+    private string PhaseLabel => Phase switch
+    {
+        MysteryPhase.Investigation => "Investigation",
+        MysteryPhase.Discussion1 => "After the first trial",
+        MysteryPhase.Discussion2 => "After the second trial",
+        _ => ""
+    };
+
+    private string RevealHeadline => Outcome switch
+    {
+        null => "…",
+        { TownWon: true } => Written(Beats.TownWin) ?? "They caught them.",
+        _ => Written(Beats.KillerWin) ?? "They got away with it."
+    };
+
+    private static string? Written(string? value) => MysteryText.Written(value);
+
+    private string JoinHost => new Uri(Nav.BaseUri).Authority;
+
+    private string JoinUrl(string code) => Nav.ToAbsoluteUri($"/join/{code}").ToString();
+
+    /// <summary>
+    /// Seed the story if this trip has never had one, then open both doors.
+    ///
+    /// Safe to press twice: seeding is guarded on the story flag and the doors only fill gaps, so a
+    /// second press never reissues a code somebody has already scanned.
+    /// </summary>
+    private async Task CreateAsync()
+    {
+        await MutateAsync(t =>
+        {
+            StoryLoader.SeedInto(t);
+            CastingService.OpenDoors(t, Random.Shared);
+            PhaseService.GoToPhase(t, MysteryPhase.Assembling, Clock.UtcNow);
+        });
+
+        // Worth forcing to disk. These codes are about to be read off a wall by twenty-five people.
+        await Store.FlushAsync();
+    }
+
+    private async Task DiscardAsync()
+    {
+        await MutateAsync(CastingService.Discard);
+        await Store.FlushAsync();
+    }
+}

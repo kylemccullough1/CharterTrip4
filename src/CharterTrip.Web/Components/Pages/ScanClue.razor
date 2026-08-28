@@ -1,0 +1,132 @@
+@page "/m/clue/{Token}"
+@layout BareLayout
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+@inherits TripAwareComponent
+@inject IClock Clock
+@inject IWebHostEnvironment Env
+
+<PageTitle>@(Clue is null ? "A card" : Zone?.Name)</PageTitle>
+
+@* One of the nine cards, read where it lies.
+
+   The token in the URL is unguessable on purpose: nine sequential ids would let somebody read every
+   clue from the sofa, and walking to the room is the entire mechanic. *@
+
+@if (Me is null)
+{
+    <div class="mp-empty">
+        <h1 class="mp-title">Sign in first</h1>
+        <a class="btn btn-gold btn-sm" href="/join">Join in</a>
+    </div>
+}
+else if (Clue is null)
+{
+    <div class="mp-empty">
+        <h1 class="mp-title">That card isn't from this game</h1>
+        <a class="btn btn-ghost btn-sm" href="/m">Back to your phone</a>
+    </div>
+}
+else if (!RolesRevealed)
+{
+    @* Somebody found a card early. Nothing has happened yet, so there is nothing on it. *@
+    <div class="mp-empty">
+        <h1 class="mp-title">Nothing here yet</h1>
+        <p class="muted">It's a party. Put the phone down.</p>
+        <a class="btn btn-ghost btn-sm" href="/m">Back to your phone</a>
+    </div>
+}
+else
+{
+    <div class="mp-clue-page">
+        <p class="mp-clue-zone">@Zone?.Name</p>
+        <h1 class="mp-title">@(MysteryText.Written(Clue.Name) ?? "Something is here")</h1>
+
+        @* As this person holds it: a tamper only shows to somebody who scanned after it happened.
+           Getting here first means holding the original, which is the whole reason to walk fast. *@
+        <p class="mp-clue-text">@ScanShareService.ReadingFor(Trip, Clue.Id, Me.Id)</p>
+
+        @if (Tampering.Count > 0 && !AlreadyTampered)
+        {
+            <section class="mp-card">
+                <h3 class="mp-card-title">You could work on this</h3>
+                @foreach (var option in Tampering)
+                {
+                    <button class="btn btn-sm btn-danger-ghost"
+                            @key="option.Key"
+                            @onclick="() => TamperAsync(option.Ability.Id, option.Mode.Id)">
+                        @option.Mode.Name
+                    </button>
+                }
+                <p class="muted tiny">Once. Somebody else may have got here first.</p>
+            </section>
+        }
+
+        <a class="btn btn-gold btn-sm" href="/m">Back to your phone</a>
+    </div>
+}
+
+@code {
+    protected override TripArea Watching => TripArea.Mystery;
+
+    [Parameter] public string? Token { get; set; }
+
+    [SupplyParameterFromQuery(Name = "as")] private string? ActAs { get; set; }
+
+    private bool DevActing => Env.IsDevelopment() && ActAs is { Length: > 0 };
+
+    private MysteryCharacter? Me =>
+        DevActing
+            ? Trip.Mystery.Story.Character(ActAs!)
+            : CastingService.CharacterFor(Trip, Permissions.PersonId);
+
+    private MysteryClueCard? Clue => Token is null ? null : ScanShareService.ClueForToken(Trip, Token);
+
+    private MysteryZone? Zone => Clue is null ? null : Trip.Mystery.Story.Zone(Clue.ZoneId);
+
+    private bool RolesRevealed => PhaseService.RolesRevealed(Trip);
+
+    private bool AlreadyTampered => Clue is not null && Trip.Mystery.Play.StateFor(Clue.Id)?.Tamper is not null;
+
+    /// <summary>Every mode of every ability this person holds that works on a card.</summary>
+    private sealed record TamperOption(MysteryAbility Ability, MysteryAbilityMode Mode)
+    {
+        public string Key => Ability.Id + "-" + Mode.Id;
+    }
+
+    private IReadOnlyList<TamperOption> Tampering
+    {
+        get
+        {
+            if (Me is null) return [];
+
+            return AbilityService.AbilitiesFor(Trip, Me.Id)
+                .Where(a => a.HasModes && AbilityService.CanFire(Trip, Me.Id, a))
+                .SelectMany(a => a.Modes.Select(m => new TamperOption(a, m)))
+                .Where(x => x.Mode.Id is "subtle" or "blatant" or "plant" or "scrub")
+                .ToList();
+        }
+    }
+
+    /// <summary>Recorded on arrival. Standing in the room with a phone out is the confirmation.</summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Me is null || Clue is null || !RolesRevealed) return;
+
+        await MutateAsync(t => ScanShareService.RecordClueScan(t, Me.Id, Clue.Id, Clock.UtcNow));
+    }
+
+    /// <summary>
+    /// Spend the charge and mark the card in one mutation, so a refused tamper never costs a charge
+    /// and a spent charge never fails to land.
+    /// </summary>
+    private Task TamperAsync(string abilityId, string mode) => MutateAsync(t =>
+    {
+        if (t.Mystery.Play.StateFor(Clue!.Id)?.Tamper is not null) return;
+
+        if (AbilityService.TryFire(t, Me!.Id, abilityId, Clock.UtcNow, mode, targetClueId: Clue.Id) is null)
+            return;
+
+        ScanShareService.Tamper(t, Clue.Id, mode, Me.Id, Me.Id, Clock.UtcNow);
+    });
+}

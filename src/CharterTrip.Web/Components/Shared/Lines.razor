@@ -1,0 +1,26 @@
+@using CharterTrip.Core.Models
+
+@* A handful of things this character might say.
+
+   Unwritten lines are dropped rather than shown, so a half-authored dialogue set reads as short
+   rather than as broken — and a heading with nothing under it does not appear at all. *@
+
+@if (Written.Count > 0)
+{
+    <section class="mp-card">
+        <h3 class="mp-card-title">@Label</h3>
+        <ul class="mp-lines">
+            @foreach (var line in Written)
+            {
+                <li>@line</li>
+            }
+        </ul>
+    </section>
+}
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public IEnumerable<string>? Values { get; set; }
+
+    private IReadOnlyList<string> Written => MysteryText.WrittenOnly(Values).ToList();
+}

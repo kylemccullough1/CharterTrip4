@@ -1,0 +1,337 @@
+@using CharterTrip.Core.Abstractions
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+@inject ITripStore Store
+@inject IClock Clock
+
+@* The tab the four of them have and nobody else does.
+
+   All four can move the evening on, jump it anywhere, and send an objective to the room or to one
+   person — the facilitators are hands, and hands that have to ask permission are not much use in a
+   house with twenty-one people in it. Braun gets the rest: the deck, the murder, the trial stages,
+   and the guilty list.
+
+   Every control here has a force beside it. Anything the app cannot do, a person does by hand from
+   this tab, which is the whole reason the evening survives a bug in front of a room. *@
+
+<section class="mp-card sc-now">
+    <h3 class="mp-card-title">@PhaseName</h3>
+
+    <div class="row gap wrap">
+        @if (NextPhase is { } next)
+        {
+            <button class="btn btn-gold btn-sm" @onclick="() => GoAsync(next)">@NextLabel</button>
+        }
+        else
+        {
+            <span class="muted tiny">That's the end of the night.</span>
+        }
+    </div>
+</section>
+
+@if (IsHost)
+{
+    @* --- the things only Braun does ------------------------------------------------------- *@
+
+    @switch (Phase)
+    {
+        case MysteryPhase.Assembling:
+            var (ready, reason) = CastingService.CanStart(Trip);
+            <section class="mp-card">
+                <h3 class="mp-card-title">Starting</h3>
+                <p class="@(ready ? "" : "muted")">@reason</p>
+                <button class="btn btn-gold btn-sm" disabled="@(!ready)"
+                        @onclick="() => GoAsync(MysteryPhase.Welcome)">
+                    Start the evening
+                </button>
+                @if (!ready)
+                {
+                    @* A photo must never hold this up, and neither must one person in a bathroom. *@
+                    <details class="sc-force">
+                        <summary class="tiny muted">Start anyway</summary>
+                        <button class="btn btn-danger-ghost btn-xs"
+                                @onclick="() => GoAsync(MysteryPhase.Welcome)">
+                            Start without them
+                        </button>
+                    </details>
+                }
+            </section>
+            break;
+
+        case MysteryPhase.Presentation:
+            <section class="mp-card">
+                <h3 class="mp-card-title">Slide @(Play.SlideIndex + 1) of @Story.Slides.Count</h3>
+                @if (PhaseService.CurrentSlide(Trip) is { } slide && Written(slide.BraunSays) is { } line)
+                {
+                    <p class="sc-say">@line</p>
+                }
+                <div class="row gap wrap">
+                    <button class="btn btn-ghost btn-xs" @onclick="PreviousSlideAsync">Back</button>
+                    <button class="btn btn-gold btn-sm" @onclick="NextSlideAsync"
+                            disabled="@PhaseService.OnLastSlide(Trip)">Next slide</button>
+                </div>
+            </section>
+            break;
+
+        case MysteryPhase.Mingling:
+            <section class="mp-card sc-murder">
+                <h3 class="mp-card-title">When you're ready</h3>
+                <p class="muted tiny">
+                    Get yourself out of sight first. The empty chair is doing story work.
+                </p>
+                <button class="btn btn-danger btn-sm" @onclick="() => GoAsync(MysteryPhase.Murder)">
+                    Start the murder
+                </button>
+            </section>
+            break;
+    }
+
+    @if (Trial is { } trial)
+    {
+        <section class="mp-card">
+            <h3 class="mp-card-title">@trial.Stage</h3>
+
+            @switch (trial.Stage)
+            {
+                case MysteryTrialStage.Nominating:
+                    <p class="@(Waiting == 0 ? "" : "muted")">
+                        @(Waiting == 0 ? "Everybody has voted." : $"Waiting on {Waiting}.")
+                    </p>
+                    <button class="btn btn-gold btn-sm" @onclick="CloseNominationsAsync">
+                        Close the vote
+                    </button>
+                    break;
+
+                case MysteryTrialStage.Tallying:
+                    <button class="btn btn-gold btn-sm" @onclick="BeginDefenceAsync">
+                        Let them speak
+                    </button>
+                    break;
+
+                case MysteryTrialStage.Defence:
+                    @if (TrialService.CurrentSpeaker(Trip) is { } speaker)
+                    {
+                        <p><b>@(Story.Character(speaker)?.Name)</b> has the floor.</p>
+                    }
+                    <div class="row gap wrap">
+                        <button class="btn btn-ghost btn-sm" @onclick="NextSpeakerAsync">Next up</button>
+                        <button class="btn btn-gold btn-sm" @onclick="OpenFinalVoteAsync">Vote now</button>
+                    </div>
+                    break;
+
+                case MysteryTrialStage.FinalVote:
+                    <p class="@(Waiting == 0 ? "" : "muted")">
+                        @(Waiting == 0 ? "Everybody has voted." : $"Waiting on {Waiting}.")
+                    </p>
+                    <button class="btn btn-gold btn-sm" @onclick="CloseFinalVoteAsync">Read the verdict</button>
+                    break;
+
+                case MysteryTrialStage.Verdict:
+                    <p>
+                        @string.Join(", ", trial.ConvictedCharacterIds.Select(id => Story.Character(id)?.Name))
+                        — taken away.
+                    </p>
+                    break;
+            }
+        </section>
+    }
+
+    <section class="mp-card sc-guilty">
+        <h3 class="mp-card-title">Who did it</h3>
+        <ul class="mp-people">
+            @foreach (var killer in Story.Killers)
+            {
+                <li @key="killer.Id">
+                    <b>@killer.Name</b>
+                    <span class="muted tiny">@killer.GuiltSlot · @(Story.Zone(killer.ZoneId)?.Name)</span>
+                    @if (TrialService.IsGhost(Trip, killer.Id)) { <span class="mys-tag">caught</span> }
+                </li>
+            }
+        </ul>
+        <p class="muted tiny">@TrialService.KillersConvicted(Trip) of @Story.Killers.Count() caught.</p>
+    </section>
+}
+
+@* --- everybody on staff ------------------------------------------------------------------ *@
+
+<section class="mp-card">
+    <h3 class="mp-card-title">Send an objective</h3>
+
+    <label class="sc-field">
+        <span class="tiny">Say</span>
+        <textarea class="sc-text" rows="2" @bind="_text" placeholder="Go and ask Martha where she was."></textarea>
+    </label>
+
+    @if (Templates.Count > 0)
+    {
+        <div class="chip-row">
+            @foreach (var template in Templates)
+            {
+                <button class="chip" @key="template.Id" @onclick="() => _text = template.Text">
+                    @template.Label
+                </button>
+            }
+        </div>
+    }
+
+    <div class="chip-row sc-targets">
+        <button class="chip @(_targets.Count == 0 ? "on" : "")" @onclick="() => _targets.Clear()">
+            Everybody
+        </button>
+        @foreach (var character in Story.Guests)
+        {
+            <button class="chip @(_targets.Contains(character.Id) ? "on" : "")"
+                    @key="character.Id" @onclick="() => Toggle(character.Id)">
+                @character.Name
+            </button>
+        }
+    </div>
+
+    <button class="btn btn-gold btn-sm" disabled="@string.IsNullOrWhiteSpace(_text)" @onclick="SendAsync">
+        Send to @(_targets.Count == 0 ? "everybody" : $"{_targets.Count}")
+    </button>
+</section>
+
+@if (Tampered.Count > 0)
+{
+    @* The truth, which the room only ever gets told exists. Facilitators need it to steer people
+       toward a card worth re-reading without ever saying which. *@
+    <section class="mp-card">
+        <h3 class="mp-card-title">Tampered with</h3>
+        <ul class="mp-people">
+            @foreach (var state in Tampered)
+            {
+                <li @key="state.ClueId">
+                    <b>@(Story.Zone(Story.Clue(state.ClueId)?.ZoneId ?? "")?.Name)</b>
+                    <span class="muted tiny">
+                        @state.Tamper!.Mode by @(Story.Character(state.Tamper.ByCharacterId)?.Name)
+                    </span>
+                </li>
+            }
+        </ul>
+    </section>
+}
+
+<section class="mp-card">
+    <h3 class="mp-card-title">Nobody is talking to</h3>
+    <ul class="mp-people">
+        @foreach (var (character, meetings) in Quietest)
+        {
+            <li @key="character.Id">
+                <b>@character.Name</b>
+                <span class="muted tiny">@meetings @(meetings == 1 ? "conversation" : "conversations")</span>
+            </li>
+        }
+    </ul>
+</section>
+
+<section class="mp-card sc-jump">
+    <h3 class="mp-card-title">Jump</h3>
+    <div class="mys-rounds">
+        @foreach (var phase in MysteryPhases.Order)
+        {
+            <button class="mys-chip @(phase == Phase ? "on" : "")" @key="phase" @onclick="() => GoAsync(phase)">
+                @phase
+            </button>
+        }
+    </div>
+    <p class="muted tiny">
+        Jumping and stepping are the same thing to the game, so this is safe when something goes wrong.
+    </p>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
+    [Parameter, EditorRequired] public MysteryCharacter Me { get; set; } = default!;
+    [Parameter] public string? PersonId { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private string _text = "";
+    private readonly HashSet<string> _targets = new(StringComparer.Ordinal);
+
+    private MysteryStory Story => Trip.Mystery.Story;
+    private MysteryPlay Play => Trip.Mystery.Play;
+    private MysteryPhase Phase => Trip.Mystery.Phase;
+
+    private bool IsHost => Me.Staff == MysteryStaffRole.Host;
+
+    private MysteryTrial? Trial => TrialService.Current(Trip);
+    private int Waiting => TrialService.AwaitingVote(Trip).Count;
+
+    private MysteryPhase? NextPhase => MysteryPhases.Next(Phase);
+
+    private string PhaseName => Phase.ToString();
+
+    private string NextLabel => NextPhase switch
+    {
+        MysteryPhase.Welcome => "Start the evening",
+        MysteryPhase.Murder => "Start the murder",
+        MysteryPhase.Reveal => "Tell them everything",
+        { } p => $"On to {p}",
+        _ => "On"
+    };
+
+    private IReadOnlyList<MysteryObjectiveTemplate> Templates =>
+        Story.Objectives.Where(o => o.Phase is null || o.Phase == Phase).ToList();
+
+    private IReadOnlyList<MysteryClueState> Tampered =>
+        Play.ClueStates.Where(s => s.Tamper is not null).ToList();
+
+    private IReadOnlyList<(MysteryCharacter Character, int Meetings)> Quietest =>
+        ScanShareService.Underserved(Trip).Take(5).ToList();
+
+    private static string? Written(string? value) => MysteryText.Written(value);
+
+    private void Toggle(string characterId)
+    {
+        if (!_targets.Add(characterId)) _targets.Remove(characterId);
+    }
+
+    private async Task SendAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_text) || PersonId is null) return;
+
+        var text = _text.Trim();
+        var everybody = _targets.Count == 0;
+        var targets = _targets.ToList();
+
+        await Store.MutateAsync(t => ObjectiveBus.SendFreeText(
+            t, text, t.Mystery.Phase, Clock.UtcNow, PersonId,
+            everybody ? MysteryAudience.Everyone : MysteryAudience.Characters,
+            characterIds: everybody ? null : targets), TripArea.Mystery);
+
+        _text = "";
+        _targets.Clear();
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task GoAsync(MysteryPhase phase)
+    {
+        await Store.MutateAsync(t => PhaseService.GoToPhase(t, phase, Clock.UtcNow), TripArea.Mystery);
+
+        // The handful of moments that would be miserable to reconstruct after a crash. Votes and
+        // scans can ride the debounce; "which phase were we in" cannot.
+        await Store.FlushAsync();
+        await OnChanged.InvokeAsync();
+    }
+
+    private Task NextSlideAsync() => Mutate(t => PhaseService.NextSlide(t));
+    private Task PreviousSlideAsync() => Mutate(t => PhaseService.PreviousSlide(t));
+    private Task BeginDefenceAsync() => Mutate(t => TrialService.BeginDefence(t));
+    private Task NextSpeakerAsync() => Mutate(t => TrialService.NextSpeaker(t));
+    private Task OpenFinalVoteAsync() => Mutate(t => TrialService.OpenFinalVote(t));
+    private Task CloseNominationsAsync() => Mutate(t => TrialService.CloseNominations(t));
+
+    private async Task CloseFinalVoteAsync()
+    {
+        await Store.MutateAsync(t => TrialService.CloseFinalVote(t, Clock.UtcNow), TripArea.Mystery);
+        await Store.FlushAsync();
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task Mutate(Func<TripData, object?> act)
+    {
+        await Store.MutateAsync(t => act(t), TripArea.Mystery);
+        await OnChanged.InvokeAsync();
+    }
+}

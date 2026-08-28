@@ -3432,3 +3432,404 @@ pre.code {
 .mys-sim-picks { margin-top: 12px; }
 .mys-simcard { width: 300px; }
 .mys-simframe { height: 600px; }
+
+/* =============================================================================
+   Murder at Braun Manor — the rebuilt surfaces.
+
+   Three screens with genuinely different jobs. The board is read from across a
+   room, so everything on it is large and there is never more than one idea on
+   it at a time. The phone is read in one hand in bad light, so it is one column
+   and thumb-sized. The map has to be true before it is pretty — people reason
+   about who could have reached the study by looking at it.
+   ============================================================================= */
+
+/* --- the board ------------------------------------------------------------- */
+
+/* Two things, and the first is easy to miss. BareLayout's main is a flex ROW, so
+   a page inside it is a flex item and sizes to its own content rather than to the
+   screen — which is why the roster silently laid out two columns wide on a
+   television. .buzz-root solves the same problem the same way. Then: stretch
+   rather than centre, because centring a flex column shrinks every child to its
+   content and collapses the grid all over again. Blocks that want to be centred
+   say so themselves. */
+.ms-screen {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 22px;
+}
+
+/* Descendants, not children: the trial and the map are components, so their grids
+   sit a level down and a child selector silently misses them. */
+.ms-screen .mys-doors,
+.ms-screen .ms-grid,
+.ms-screen .ms-feed,
+.ms-screen .ms-nominees,
+.ms-screen .ms-reveal { width: 100%; }
+
+.ms-screen .ms-reveal,
+.ms-screen .ms-slide,
+.ms-screen .ms-study { margin-inline: auto; }
+
+/* Fewer, larger cards than the roster: a trial is the one moment the whole room
+   is looking at the same handful of faces. */
+.ms-screen .ms-nominees {
+  display: grid; gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(150px, 15vw, 240px), 1fr));
+}
+
+.ms-screen .ms-count,
+.ms-screen .ms-idle { text-align: center; }
+
+/* The shared .ms-head is a two-column row built for a different header. Here it
+   is a stacked title block, and .ms-round is the small kicker above it rather
+   than the display line it is elsewhere. */
+.ms-screen .ms-head {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-bottom: none;
+}
+
+.ms-screen .ms-round {
+  font-family: var(--sans);
+  font-size: clamp(.7rem, 1.3vw, .86rem);
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.ms-screen .ms-guest { justify-items: center; text-align: center; gap: 6px; }
+
+.ms-title-big {
+  font-family: var(--display);
+  font-size: clamp(1.9rem, 4.4vw, 3.4rem);
+  line-height: 1.08;
+  text-align: center;
+  margin: 0;
+}
+
+.ms-lobby-actions { margin-top: 8px; }
+
+.ms-portrait {
+  width: 84px; height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--line);
+  background: var(--panel-2);
+}
+
+/* A photo is never required — twenty-five uploads at once is the slowest minute
+   of the night — so the monogram is a first-class state, not a broken image. */
+.ms-portrait-monogram {
+  display: grid; place-items: center;
+  font-family: var(--display);
+  font-size: 1.6rem;
+  color: var(--gold-dim);
+  letter-spacing: .04em;
+}
+
+.ms-grid-rooms .ms-guest-title { color: var(--gold-light); }
+
+/* --- welcome --------------------------------------------------------------- */
+
+.ms-welcome { text-align: center; padding: 8vh 4vw; animation: ms-rise 2.4s ease-out both; }
+.ms-welcome-kicker { color: var(--text-faint); letter-spacing: .34em; text-transform: uppercase; font-size: .8rem; }
+.ms-welcome-title {
+  font-family: var(--display);
+  font-size: clamp(3rem, 12vw, 9rem);
+  margin: .1em 0;
+  color: var(--gold);
+  text-shadow: 0 0 42px rgba(212,175,55,.28);
+}
+.ms-welcome-sub { max-width: 40ch; margin: 0 auto; color: var(--text-dim); }
+
+@keyframes ms-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; } }
+
+/* --- the deck -------------------------------------------------------------- */
+
+.ms-slide { max-width: 60ch; padding: 4vh 4vw; }
+.ms-slide-title { font-family: var(--display); font-size: clamp(1.8rem, 4vw, 3rem); margin: .2em 0 .6em; }
+.ms-slide-bullets { font-size: clamp(1rem, 1.9vw, 1.5rem); line-height: 1.7; }
+.ms-slide-bullets li { margin-bottom: .5em; }
+
+/* --- the murder ------------------------------------------------------------ */
+
+/* Strobing white at party brightness is a real accessibility problem, not a
+   checkbox — the reduced-motion branch below replaces it with one soft fade. */
+.ms-flash {
+  position: fixed; inset: 0; z-index: 90;
+  background: #fff; opacity: 0;
+  pointer-events: none;
+  animation: ms-strike 2.6s steps(1, end) 1 both;
+}
+
+@keyframes ms-strike {
+  0%, 6%   { opacity: .92; }
+  7%, 17%  { opacity: 0; }
+  18%, 22% { opacity: .7; }
+  23%, 46% { opacity: 0; }
+  47%, 50% { opacity: .42; }
+  51%, 100%{ opacity: 0; }
+}
+
+.ms-murder { text-align: center; padding: 12vh 5vw; }
+.ms-murder-line {
+  font-family: var(--display);
+  font-size: clamp(1.6rem, 4vw, 3rem);
+  color: var(--ruby);
+  max-width: 26ch; margin: 0 auto;
+}
+
+.ms-study { max-width: 52ch; padding: 6vh 4vw; }
+.ms-study-text { font-size: clamp(1.05rem, 2vw, 1.5rem); line-height: 1.75; }
+
+/* --- the clue feed --------------------------------------------------------- */
+
+.ms-clue-finder, .ms-trail { color: var(--text-faint); font-size: .82rem; margin-top: 6px; }
+
+/* Opens at the first discussion round: who read which card, which is how the
+   detectives work out which one was touched. */
+.ms-trail { color: var(--sapphire); }
+
+/* --- trials ---------------------------------------------------------------- */
+
+.ms-grid-voting .ms-guest { transition: opacity .3s ease; }
+.ms-grid-voting .is-thinking { opacity: .55; }
+
+/* The dots do the work a countdown used to, and better: they point at the
+   person everybody is waiting for rather than at an arbitrary deadline. */
+.ms-typing { display: inline-flex; gap: 4px; margin-top: 6px; }
+.ms-typing i {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-faint);
+  animation: ms-blink 1.3s ease-in-out infinite;
+}
+.ms-typing i:nth-child(2) { animation-delay: .18s; }
+.ms-typing i:nth-child(3) { animation-delay: .36s; }
+
+@keyframes ms-blink { 0%, 60%, 100% { opacity: .25; } 30% { opacity: 1; } }
+
+.ms-locked { color: var(--emerald); font-size: 1.1rem; margin-top: 6px; }
+
+.ms-nominee.is-speaking { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: var(--radius-sm); }
+
+.ms-verdict .is-jailed { position: relative; }
+.ms-verdict .is-jailed .ms-portrait { filter: grayscale(1) brightness(.6); }
+
+.ms-bars {
+  position: absolute; inset: 0 auto auto 0;
+  width: 84px; height: 84px; border-radius: 50%;
+  background: repeating-linear-gradient(90deg,
+    transparent 0 9px, rgba(10,12,16,.86) 9px 13px);
+  animation: ms-drop .5s ease-out both;
+}
+
+@keyframes ms-drop { from { transform: translateY(-40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Killer or not, and never which faction — naming "detective" hands the
+   Syndicate a confirmed kill list, and naming "jester" ends a silent win. */
+.ms-card-verdict {
+  display: block; margin-top: 8px;
+  font-family: var(--display); letter-spacing: .12em; font-size: .8rem;
+}
+.ms-card-verdict.is-killer { color: var(--ruby); }
+.ms-card-verdict.is-clean  { color: var(--text-dim); }
+
+.ms-reveal { max-width: 56ch; }
+
+/* --- the phone ------------------------------------------------------------- */
+
+/* Same trap as the board: BareLayout's main is a flex row, so this sizes to its
+   own content unless it says otherwise. And .mp is a grid whose implicit rows
+   stretch by default, which turned five tabs into five full-height columns on a
+   phone. */
+.mp {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  align-content: start;
+
+  /* Capped against the container, not just against 34rem. */
+  max-width: min(34rem, 100%);
+
+  /* And the column has to be minmax(0, 1fr) rather than the implicit auto. An
+     auto track sizes to its content's max-content width and overflows the
+     container when that is larger — which the floor plan's aspect-ratio makes it,
+     since an aspect-ratio box with no resolved width reports its intrinsic 460px.
+     The result was a map that hung off the right edge of every phone. */
+  grid-template-columns: 100%;
+}
+.mp-body { min-width: 0; }
+
+/* The tab strip scrolls, but a scroll container still reports its content's full
+   width as its max-content size — so six pills were quietly making the whole page
+   460px wide on a 430px phone, and the floor plan inherited it. */
+.mp-tabs { min-width: 0; max-width: 100%; }
+
+.mp-who { display: flex; align-items: center; gap: 14px; }
+.mp-who .ms-portrait { width: 56px; height: 56px; }
+
+.mp-badge {
+  display: inline-grid; place-items: center;
+  min-width: 18px; height: 18px; margin-left: 5px; padding: 0 5px;
+  border-radius: 9px; background: var(--gold); color: var(--ink);
+  font-size: .7rem; font-weight: 700;
+}
+
+.mp-field { margin-bottom: 18px; }
+.mp-field-label { color: var(--gold-dim); font-size: .74rem; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 4px; }
+.mp-field-value { margin: 0; line-height: 1.6; }
+
+.mp-lines { margin: 0; padding-left: 1.1em; }
+.mp-lines li { margin-bottom: .55em; line-height: 1.55; }
+
+.mp-people { list-style: none; margin: 0; padding: 0; }
+.mp-people li { padding: 7px 0; border-bottom: 1px solid var(--line-soft); }
+.mp-people-dim { opacity: .5; }
+
+.mp-subhead { color: var(--text-faint); font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; margin: 16px 0 4px; }
+
+/* History between two people. Nothing to do with the murder — it is here so
+   that two guests who have never spoken have something to open with. */
+.mp-beef { color: var(--gold-light); font-style: italic; margin: 4px 0 0; font-size: .9rem; }
+
+.mp-objective.is-done { opacity: .5; }
+.mp-empty-note { color: var(--text-faint); text-align: center; padding: 28px 0; }
+
+.mp-ability .mp-charges { float: right; color: var(--text-faint); font-size: .74rem; font-weight: 400; }
+.mp-card-faction { border-color: var(--gold-dim); }
+
+.mp-vote-ask { font-family: var(--display); font-size: 1.3rem; text-align: center; margin: 4px 0 14px; }
+
+.mp-met { text-align: center; padding: 8vh 6vw; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.mp-clue-page { padding: 6vh 6vw; }
+
+/* --- the map --------------------------------------------------------------- */
+
+.mm-wrap { width: 100%; min-width: 0; }
+
+.mm {
+  position: relative;
+  /* Clamped against the viewport, not just the parent. On a narrow phone the
+     ancestor chain reports a content box wider than the screen — the tab strip's
+     six pills are its widest child — and a floor plan inheriting that hangs off
+     the right edge. The map is the one thing here that has to stay whole. */
+  width: 100%;
+  max-width: min(100%, calc(100vw - 2.5rem));
+  aspect-ratio: 460 / 360;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+
+  /* The rooms are absolutely positioned by percentage, so nothing should reach
+     past the edge — but a long room name in a narrow box would, and a floor plan
+     that bleeds off a phone stops being a floor plan. */
+  overflow: hidden;
+}
+
+.mm-room {
+  position: absolute;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  text-align: center;
+}
+
+.mm-room.is-you { border-color: var(--gold); background: var(--panel-2); }
+
+/* The study takes no players. It is where the body isn't. */
+.mm-room.is-scene { border-color: var(--ruby); background: rgba(201,79,90,.09); }
+
+.mm-room.is-shut { border-style: dashed; opacity: .4; background: none; }
+
+.mm-name {
+  font-size: clamp(.52rem, 1.5vw, .82rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.mm-sub { font-size: clamp(.44rem, 1.2vw, .68rem); color: var(--text-faint); }
+
+.mm-pin {
+  position: absolute; top: 5px; right: 5px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--line); border: 1px solid var(--line);
+}
+.mm-pin.is-found { background: var(--gold); box-shadow: 0 0 8px rgba(212,175,55,.6); }
+
+.mm-trail { position: absolute; top: 4px; left: 6px; font-size: .66rem; color: var(--sapphire); }
+
+.mm-key { color: var(--text-faint); font-size: .76rem; margin-top: 8px; text-align: center; }
+
+/* --- the invitation -------------------------------------------------------- */
+
+.mw { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 8vh 6vw; text-align: center; }
+.mw-title { font-family: var(--display); font-size: clamp(1.6rem, 6vw, 2.4rem); margin: 0; }
+.mw-sub { color: var(--text-dim); margin: 0; }
+
+.mw-shot { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 2px solid var(--line); }
+.mw-shot-empty { display: grid; place-items: center; background: var(--panel-2); color: var(--text-faint); font-size: 2.4rem; }
+.mw-error { color: var(--ruby); font-size: .86rem; }
+
+.mw-envelope { cursor: pointer; max-width: 46ch; }
+
+.mw-seal {
+  display: grid; place-items: center;
+  width: 74px; height: 74px; margin: 0 auto 18px;
+  border-radius: 50%; background: var(--ruby);
+  font-family: var(--display); font-size: 2rem; color: #fff;
+  box-shadow: var(--shadow-sm);
+  animation: ms-rise 1s ease-out both;
+}
+.mw-tap { color: var(--text-dim); }
+
+.mw-paper {
+  background: #efe6d2; color: #2a2620;
+  padding: 26px 22px; border-radius: 3px;
+  font-family: var(--serif); line-height: 1.75; text-align: left;
+  box-shadow: var(--shadow);
+  animation: mw-unfold .9s ease-out both;
+}
+.mw-paper p { margin: 0 0 1em; }
+.mw-signed { font-style: italic; text-align: right; }
+
+@keyframes mw-unfold {
+  from { opacity: 0; transform: perspective(700px) rotateX(-78deg); transform-origin: top center; }
+  to   { opacity: 1; transform: none; }
+}
+
+/* --- the staff control tab ------------------------------------------------- */
+
+.sc-now { border-color: var(--gold-dim); }
+.sc-say { font-family: var(--serif); font-style: italic; font-size: 1.05rem; line-height: 1.6; }
+.sc-murder { border-color: var(--ruby); }
+.sc-guilty .mys-tag { margin-left: 6px; }
+
+.sc-field { display: block; margin-bottom: 10px; }
+.sc-text {
+  width: 100%; padding: 9px 11px;
+  background: var(--ink-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  font: inherit; resize: vertical;
+}
+
+.sc-targets { max-height: 168px; overflow-y: auto; margin: 10px 0; }
+.sc-force { margin-top: 10px; }
+.sc-jump .mys-rounds { max-height: 200px; overflow-y: auto; }
+
+/* --- motion ---------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  /* The strobe is the one thing here that could genuinely hurt somebody. It
+     becomes a single slow fade rather than being removed, because the murder
+     still has to land. */
+  .ms-flash { animation: ms-fade 1.4s ease-out both; }
+  @keyframes ms-fade { 0% { opacity: .5; } 100% { opacity: 0; } }
+
+  .ms-typing i, .ms-welcome, .mw-seal, .mw-paper, .ms-bars { animation: none; }
+}

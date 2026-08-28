@@ -1,0 +1,23 @@
+@using CharterTrip.Core.Models
+
+@* One line of somebody's sheet, or nothing at all.
+
+   A field nobody has written yet renders as nothing rather than as a row of dots. The dots are for
+   the editor, where they mean "fill me in"; on a phone in front of a guest they would just look
+   broken. MysteryText.Written is the one rule both surfaces read. *@
+
+@if (MysteryText.Written(Value) is { } text)
+{
+    <section class="mp-field">
+        @if (!string.IsNullOrWhiteSpace(Label))
+        {
+            <h3 class="mp-field-label">@Label</h3>
+        }
+        <p class="mp-field-value">@text</p>
+    </section>
+}
+
+@code {
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? Value { get; set; }
+}

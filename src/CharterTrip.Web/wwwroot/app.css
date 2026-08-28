@@ -4039,25 +4039,50 @@ pre.code {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  justify-content: safe center;
   gap: clamp(10px, 1.8vh, 26px);
   padding: clamp(14px, 2.4vh, 34px) clamp(14px, 3vw, 40px);
   box-sizing: border-box;
 
-  /* Windowed, so the nav and the page's own chrome are still above it. A height
-     rather than a min-height: the whole point is that it does not grow, and the
-     lobby's wall of twenty-five faces was pushing the page a screen and a half
-     tall. What does not fit scrolls inside the grid. */
+  /* Exactly one screen, and it has to stay a fixed height: that is what makes the
+     walls of faces and the clue feed shrink into themselves rather than push the
+     page taller. A min-height would let any of them grow instead.
+
+     The two things beside it are what this got wrong. It was overflow: hidden,
+     so content that could not shrink was simply cut off; and it was a plain
+     centred flex column, and a centred flex container that overflows spills in
+     BOTH directions — so on a 560px-tall window the lobby's doors rode up over
+     the title and down across the buttons. Clipping at the stage's own edge does
+     nothing about that, because the title is inside the stage.
+
+     `safe center` centres while there is room and falls back to the top when
+     there is not, so nothing ever spills backwards over what is above it; auto
+     means whatever still does not fit can be scrolled to instead of vanishing. */
   height: calc(100dvh - var(--ms-chrome, 170px));
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 @media (max-width: 700px) { .ms-stage { --ms-chrome: 130px; } }
+
+/* A laptop window two-thirds of the way up the screen is a real thing somebody
+   drives this from, and at that height the header alone was a fifth of the
+   stage. Everything gives a little so the doors still land whole. */
+@media (max-height: 760px) {
+  .ms-stage {
+    --ms-chrome: 118px;
+    gap: 8px;
+    padding-block: 10px;
+  }
+  .ms-screen .ms-title-big { font-size: clamp(1.35rem, 3.2vw, 2.1rem); }
+  .ms-screen .ms-round { font-size: .68rem; letter-spacing: .22em; }
+  .ms-lede { font-size: .84rem; }
+}
 
 /* Live, it is a television: the whole screen, and never a pixel more. Anything
    that does not fit scrolls inside itself rather than pushing the page taller —
    the alternative is a room being asked to scroll a television. */
 .ms-screen.is-live { padding: 0; }
-.ms-screen.is-live .ms-stage { height: 100dvh; min-height: 0; overflow: hidden; }
+.ms-screen.is-live .ms-stage { height: 100dvh; overflow-y: auto; }
 
 /* Headings, counts and instructions keep their size; the one block of content
    in the middle takes whatever is left. */
@@ -4098,13 +4123,44 @@ pre.code {
   min-height: 0;
 }
 .ms-lobby > * { min-height: 0; }
-.ms-lobby-doors { display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+.ms-lobby-doors {
+  display: flex; flex-direction: column; gap: 12px;
+  justify-content: center;
+  justify-content: safe center;
+}
 .ms-lobby .mys-doors { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+
+/* The QR carries a fixed size in the markup, because it is scanned from across a
+   hall. On a short window that fixed size is the whole difference between the
+   lobby fitting on one screen and not, so here it gives way to the viewport —
+   and the instruction underneath it, which is the only thing a guest actually
+   needs to read, is never what gets dropped. */
+.mys-door .qr {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(190px, 22vh);
+}
+
+@media (max-height: 760px) {
+  .ms-lobby .mys-door { padding: 9px; gap: 1px; }
+  .ms-lobby .mys-code { font-size: 1.4rem; letter-spacing: .16em; }
+}
 .ms-lobby .ms-count { text-align: center; }
 
 @media (max-width: 900px) {
   .ms-lobby { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Before the first guest walks in there is no wall to put beside the doors, and
+   the second column is half a screen of nothing next to two squeezed QR codes.
+   Which is the state the lobby is in for the whole time anybody is looking at
+   it, so it is worth its own rule. */
+.ms-lobby.is-waiting {
+  grid-template-columns: minmax(0, 32rem);
+  justify-content: center;
+}
+.ms-lobby.is-waiting > .ms-grid { display: none; }
 
 .ms-lede {
   font-size: clamp(.85rem, 1.2vw, 1.05rem);
@@ -4331,6 +4387,7 @@ pre.code {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  justify-content: safe center;
   gap: 10px;
   text-align: center;
   max-width: 46ch;
@@ -4395,6 +4452,7 @@ pre.code {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  justify-content: safe center;
   gap: 16px;
   text-align: center;
   min-height: 0;
@@ -4603,6 +4661,7 @@ pre.code {
 .mp-verdict {
   flex: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
+  justify-content: safe center;
   gap: 12px; padding: 10vh 8vw; text-align: center;
 }
 .mp-face { font-size: clamp(5rem, 26vw, 9rem); line-height: 1; }
@@ -4673,6 +4732,7 @@ pre.code {
   width: 100%;
   min-width: 0;
   justify-content: center;
+  justify-content: safe center;
   min-height: 100dvh;
   box-sizing: border-box;
 }

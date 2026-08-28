@@ -39,6 +39,14 @@ else
     {
         <p class="muted tiny">Nothing is locked in until you tap a name.</p>
     }
+    else
+    {
+        @* Said as well as shown. The card carries the state, but a sentence is what
+           somebody checks when they are holding a drink and half watching a room. *@
+        <p class="muted tiny">
+            You named <b>@(Trip.Mystery.Story.Character(Chosen)?.Name)</b>. Tap another to change it.
+        </p>
+    }
 }
 
 @code {

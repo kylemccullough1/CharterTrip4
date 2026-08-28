@@ -4694,3 +4694,23 @@ h1:focus { outline: none; }
    top of one by an empty div below it. */
 .ms-screen .ms-reveal,
 .ms-screen .ms-idle { min-height: 0; }
+
+/* --- the ballot ---------------------------------------------------------------
+   The chosen name only changed colour slightly, because the strong treatment was
+   written for a class the markup does not use (.on) while the ballot writes
+   .mp-voted. In a dark room with twenty-one names, "which one did I tap" has to
+   be answerable at a glance.
+   ------------------------------------------------------------------------------ */
+.mp-vote.mp-voted {
+  border-color: var(--ruby);
+  background: linear-gradient(180deg, rgba(201,79,90,.22), var(--panel));
+  color: #fff;
+}
+.mp-vote.mp-voted .mp-vote-name { color: #f2c3c8; }
+.mp-vote.mp-voted::after {
+  content: "locked in";
+  font-size: .66rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #e8919a;
+}

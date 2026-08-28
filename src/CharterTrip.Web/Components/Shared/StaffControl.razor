@@ -266,7 +266,10 @@
             <p class="muted tiny">
                 @if (_targets.Count == 0)
                 {
-                    <span>@RoomSize people: everybody who has arrived, except you.</span>
+                    @* Named, not "except you": three of the four people who can press this are
+                       facilitators, and they are in the room like everybody else. Braun is the
+                       one who is not. *@
+                    <span>@RoomSize people — everybody who has arrived, except Braun.</span>
                 }
                 else
                 {

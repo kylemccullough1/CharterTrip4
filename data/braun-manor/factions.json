@@ -3,151 +3,157 @@
     {
       "id": "killer",
       "name": "The Syndicate Hand",
-      "count": 3,
-      "assignment": "Drawn at generation, one per guilt slot (access / means / signature), constrained by placement. Only slot-tagged characters are eligible. No two co-located.",
-      "knowledge": "Killers know each other and know their minions. Each killer's briefing includes their role in the murder, their cover story, and which red herring their cover story points at.",
-      "win": "At least 2 of the 3 killers survive all three trials \u2014 one hand alone cannot burn the evidence, but two can. Evaluated on ground truth: blame-take fools the reveal card, not the tally.",
-      "win_note": "Minions win with them. A minion's blame-take can protect a killer's identity on conviction.",
+      "blurb": "........",
+      "knowledge": "........",
+      "win_condition": "........",
+      "knows_each_other": true,
       "abilities": [
         {
           "id": "evidence_hand",
           "name": "The Syndicate's Hand (choose one)",
+          "text": "........",
           "charges": 1,
           "shared": true,
-          "unlock": "round_4",
-          "modes": {
-            "plant": "Physically scan any clue QR, choose any non-killer target: the clue gains that character's tamper_insert, rendered as '{insert_line}'. Frames them with their own belongings.",
-            "scrub": "Physically scan any clue QR: its trace text degrades to 'This scene has been disturbed \u2014 someone got here first.' Use it on your own trace. Erasing yourself is often stronger than framing someone else."
-          },
-          "notes": "One charge, one mode, collectively. Main screen announces tampering (never which clue) at the next round. Detective forensics reveals the ORIGINAL text alongside the current one."
+          "unlock": "discussion2",
+          "modes": [
+            {
+              "id": "plant",
+              "name": "Plant",
+              "text": "........"
+            },
+            {
+              "id": "scrub",
+              "name": "Scrub",
+              "text": "........"
+            }
+          ]
         }
       ]
     },
     {
       "id": "minion",
       "name": "Syndicate Associates",
-      "count": 2,
-      "assignment": "Drawn from the non-killer pool. Weighted toward signature-tagged and Syndicate-adjacent draws.",
-      "knowledge": "Minions know the killers. Killers know them.",
-      "win": "Win if the killers win. Their convictions do not count toward any faction's tally.",
+      "blurb": "........",
+      "knowledge": "........",
+      "win_condition": "........",
+      "knows_each_other": true,
       "abilities": [
         {
           "id": "loyalty",
           "name": "Loyalty (choose one)",
+          "text": "........",
           "charges": 1,
           "shared": true,
-          "unlock": "after_trial_2",
-          "modes": {
-            "shield": "When a killer is convicted: the reveal card shows SYNDICATE ASSOCIATE instead of KILLER, and the public counter does not tick. INFORMATION ONLY \u2014 the true count (win evaluation, early-end) is untouched. Town wastes trials hunting a killer already caught.",
-            "decoy": "When a MINION is convicted: their card shows KILLER falsely and the public counter ticks a lie. INFORMATION ONLY \u2014 true count untouched. Timing tell: if the public counter reads 3 and the game continues, the room can deduce a decoy happened."
-          },
-          "notes": "One charge across both minions, one mode, once. Both modes manipulate what the room believes, never what is true. Detective killer_check and all win evaluation use ground truth."
+          "unlock": "discussion2",
+          "modes": [
+            {
+              "id": "shield",
+              "name": "Shield",
+              "text": "........"
+            },
+            {
+              "id": "decoy",
+              "name": "Decoy",
+              "text": "........"
+            }
+          ]
         }
       ]
     },
     {
       "id": "detective",
       "name": "The Investigators",
-      "count": 3,
-      "assignment": "Drawn from the non-killer pool. Remington, Martha, and Molly are flavor-weighted but not guaranteed \u2014 a killer Remington is a legal and excellent draw.",
-      "knowledge": "Detectives know each other.",
-      "win": "At least 2 of the 3 killers convicted within the three trials. Evaluated on ground truth \u2014 shield and decoy cannot change it, and blame-take fools only the reveal card.",
+      "blurb": "........",
+      "knowledge": "........",
+      "win_condition": "........",
+      "knows_each_other": true,
       "abilities": [
         {
           "id": "sync",
           "name": "Phone Sync",
+          "text": "........",
           "charges": 2,
           "shared": false,
-          "unlock": "roles_drop",
-          "text": "Pull a target player's knowledge to your phone: their alibi, their witness statements, their claimed observations. Returns testimony, never faction \u2014 killers' phones carry their cover story. The target is notified someone accessed their phone, but not who. Constraint: you can only sync a player whose badge you have scanned \u2014 you must have met them."
+          "unlock": "studyScene",
+          "modes": []
         },
         {
           "id": "tamper_check",
           "name": "Forensics",
+          "text": "........",
           "charges": 1,
           "shared": false,
-          "unlock": "after_trial_1",
-          "text": "Scan a physical clue QR to learn whether it has been tampered with (jester or killer plant)."
+          "unlock": "discussion1",
+          "modes": []
         },
         {
           "id": "killer_check",
           "name": "The Hard Question",
+          "text": "........",
           "charges": 1,
           "shared": false,
-          "unlock": "after_trial_2",
-          "text": "Privately learn whether one target player is a killer. Truthful. Blame-take does not fool it."
+          "unlock": "discussion2",
+          "modes": []
         }
       ]
     },
     {
       "id": "jester",
       "name": "The Desperate",
-      "count": 2,
-      "assignment": "Drawn from the non-killer pool. Weighted toward characters whose fear is ruin (Hugo, Emilia, Santiago, Da'Quan class).",
-      "knowledge": "Jesters do not know each other. They are in competition for the same conviction slots.",
-      "win": "Be convicted at any trial. Silent, personal, non-terminal \u2014 the game continues and the reveal simply reads 'guest' until endgame.",
+      "blurb": "........",
+      "knowledge": "........",
+      "win_condition": "........",
+      "knows_each_other": false,
       "abilities": [
         {
           "id": "self_frame",
           "name": "Incriminate Yourself",
+          "text": "........",
           "charges": 2,
           "shared": false,
-          "unlock": "round_2",
-          "text": "Physically scan any clue QR to work your own belongings into it. Two charges, choose subtle or blatant per use. Tampering announce and forensics rules apply as with all tampering.",
-          "modes": {
-            "subtle": "The clue gains: 'Half-hidden beneath it, {your tamper_insert}.' Reads like the scene always held it.",
-            "blatant": "The clue gains: 'And unmissable beside it: {your tamper_insert}.' Nobody misses it \u2014 and nobody quite believes it."
-          }
+          "unlock": "investigation",
+          "modes": [
+            {
+              "id": "subtle",
+              "name": "Subtle",
+              "text": "........"
+            },
+            {
+              "id": "blatant",
+              "name": "Blatant",
+              "text": "........"
+            }
+          ]
         }
       ]
     },
     {
       "id": "inheritance",
       "name": "The Braun Claim",
-      "count": 2,
-      "assignment": "Drawn at generation from the non-killer pool, like every other faction. The two drawn are each other's rival.",
-      "knowledge": "They know about each other, and know only one claim can survive probate.",
-      "win": "Your rival is convicted at any trial AND you survive to the end. No fallback. If neither or both conditions fail, neither Braun wins. Silent, personal, non-terminal.",
+      "blurb": "........",
+      "knowledge": "........",
+      "win_condition": "........",
+      "knows_each_other": true,
       "abilities": [
         {
           "id": "dig_dirt",
           "name": "Family Secrets",
+          "text": "........",
           "charges": 1,
           "shared": false,
-          "unlock": "after_trial_1",
-          "text": "Receive one true, damaging fact about your rival's evening (their variant's guilty-reading text, regardless of their actual variant). Usable in conversation as ammunition. It is real information \u2014 spending it reveals you know things only family would know."
+          "unlock": "discussion1",
+          "modes": []
         }
       ]
     },
     {
       "id": "villager",
       "name": "Guests of the House",
-      "count": 9,
-      "assignment": "Everyone remaining.",
-      "knowledge": "Only what they saw and what they hold.",
-      "win": "Win with the detectives: at least 2 of the 3 killers convicted.",
+      "blurb": "........",
+      "knowledge": "........",
+      "win_condition": "........",
+      "knows_each_other": false,
       "abilities": []
     }
-  ],
-  "ghost_rules": {
-    "on_conviction": "Convicted players keep their phones and become Ghosts. They may not vote, may not speak about their own faction or anyone else's, and may not reveal what they knew in life.",
-    "abilities": [
-      {
-        "id": "ghost_messages",
-        "name": "Whispers",
-        "text": "Ghosts may send canned messages and emoji only \u2014 no free text \u2014 to any living player. See ghosts.json for the full set. Canned-only is a design constraint: it keeps dead killers from coaching and dead detectives from solving."
-      },
-      {
-        "id": "haunt",
-        "name": "Haunt",
-        "charges": 1,
-        "text": "Once per ghost: trigger a thunderclap and screen-flicker on one living player's phone. Purely theatrical. Entirely worth it."
-      },
-      {
-        "id": "trial_reactions",
-        "name": "Peanut Gallery",
-        "text": "During trials, ghost emoji reactions float up the main screen anonymously."
-      }
-    ]
-  }
+  ]
 }

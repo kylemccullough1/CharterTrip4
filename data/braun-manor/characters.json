@@ -3,723 +3,1377 @@
     {
       "id": "wilhelm",
       "name": "Wilhelm Shepard",
-      "gender": "M",
-      "title": "Politician",
-      "voice": "pompous, hides behind procedure, calls everyone by full name",
-      "motive": "Took Syndicate bribes in exchange for policy. Braun's evidence names him directly.",
-      "fear": "The paper trail. It exists, and Braun had it.",
-      "signature_item": "embroidered handkerchief",
-      "acts": {
-        "guilty": "Wipes his hands over and over with a fine handkerchief \u2014 snails embroidered at the corner \u2014 and pockets it fast whenever anyone looks. His hands keep shaking after.",
-        "innocent": "Sweats through a plain handkerchief while pacing and rehearsing, under his breath, the funding pitch Braun has kept him waiting all night to deliver."
+      "age": 0,
+      "sex": "M",
+      "job": "Politician",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "entry",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": true,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "kept wiping his hands with an embroidered handkerchief \u2014 snails on it \u2014 and shoved it out of sight the moment anyone looked over",
-        "innocent": "was pacing and sweating through a handkerchief, muttering some rehearsed speech, visibly humiliated about being made to wait"
-      },
-      "herring_truth": "The handkerchief was a gift from a Syndicate lobbyist he took money from years ago. He was sweating over a bribery vote coming to the floor \u2014 not over a body.",
-      "trace": {
-        "name": "the handkerchief",
-        "text": "A fine handkerchief, dropped and recently used. Snails embroidered at the corner.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "entry",
-        "family_room",
-        "kitchen",
-        "grand_hall"
-      ],
-      "slots": [
-        "access",
-        "signature"
-      ],
-      "fixed_faction": null,
-      "tamper_insert": "a torn corner of fine handkerchief, snail embroidery just visible"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "imogen",
       "name": "Imogen Durham",
-      "gender": "F",
-      "title": "Maid",
-      "voice": "clipped, deferential until cornered, notices everything",
-      "motive": "The Syndicate offered her real money for information on the household.",
-      "fear": "She already took the first payment.",
-      "signature_item": "silver tea service",
-      "acts": {
-        "guilty": "Carried a tea service toward Mr. Braun and came back without it \u2014 without the tray, the cups, any of it \u2014 and her account of where she went instead doesn't hold.",
-        "innocent": "Was carrying Mr. Braun his evening tea when she was intercepted and ordered off to clean up a mess instead. She set the tray down somewhere and is still annoyed about it."
+      "age": 0,
+      "sex": "F",
+      "job": "Maid",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "family_room",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "took a full tea service toward Mr. Braun and came back empty-handed, and the place she claims she went \u2014 nobody there saw her",
-        "innocent": "was carrying Mr. Braun's tea when someone waved her off to deal with a spill, and she set the whole service down looking furious about it"
-      },
-      "herring_truth": "She dropped the tray when she heard the scream and hid the pieces, terrified that a broken heirloom service would cost her the job \u2014 and that her Syndicate contact would surface if anyone looked at her too hard.",
-      "trace": {
-        "name": "the tea service",
-        "text": "An abandoned silver tea service. Two cups set out, not one. The tea has gone cold.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "entry",
-        "kitchen",
-        "sitting_room",
-        "family_room"
-      ],
-      "slots": [
-        "access"
-      ],
-      "fixed_faction": null,
-      "tamper_insert": "a service key from the house ring, bent"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "yousef",
       "name": "Yousef Mostafa",
-      "gender": "M",
-      "title": "Family Attorney",
-      "voice": "precise, over-lawyered answers, terrible at small talk",
-      "motive": "In love with Isla. He drafted the prenup he'd give anything for her never to sign.",
-      "fear": "The joined accounts predate the prenup. That's his malpractice, in writing.",
-      "signature_item": "leather document folder",
-      "acts": {
-        "guilty": "Carried a leather document folder all evening, and then didn't have it \u2014 and gave three different answers about where he'd last been standing.",
-        "innocent": "Hovered with a document folder under his arm, plainly waiting to catch Isla alone, and looked mortified every time someone acknowledged him."
+      "age": 0,
+      "sex": "M",
+      "job": "Family Attorney",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "sitting_room",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "had that leather folder under his arm all night and then suddenly didn't, and couldn't keep his story straight about where he'd been",
-        "innocent": "was lurking with a folder under his arm waiting for Isla, and went red to the ears whenever anyone caught him at it"
-      },
-      "herring_truth": "The folder held a letter to Isla he's rewritten forty times and will never send. When the scream came, he shoved it behind a cabinet in a panic, ashamed of what it would look like.",
-      "trace": {
-        "name": "the folder",
-        "text": "A leather document folder, wedged out of sight. Legal papers inside \u2014 and pages torn out.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "entry",
-        "family_room",
-        "sitting_room",
-        "grand_hall"
-      ],
-      "slots": [
-        "access"
-      ],
-      "fixed_faction": null,
-      "tamper_insert": "a torn corner of legal paper, dense with clauses"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "santiago",
       "name": "Santiago Costa",
-      "gender": "M",
-      "title": "College Professor",
-      "voice": "lectures instead of answers, cites provenance, no sense of time",
-      "motive": "Braun refused him access to a manuscript he has chased for nine years.",
-      "fear": "The university already suspects him over the last piece he 'borrowed.'",
-      "signature_item": "white cotton gloves",
-      "acts": {
-        "guilty": "Was found at a display cabinet with the glass open, wearing white cotton gloves \u2014 at a party.",
-        "innocent": "Spent the better part of an hour nose-to-glass at the collections, talking to no one in particular about provenance, and never touched a drink."
+      "age": 0,
+      "sex": "M",
+      "job": "College Professor",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "extension_room",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "had a display cabinet open and was wearing white gloves, indoors, at a party",
-        "innocent": "stood at the collection cabinet for an hour straight lecturing the air about provenance, stone sober"
-      },
-      "herring_truth": "He was authenticating. He can't help himself. The gloves are archival habit, and the cabinet was already unlocked when he found it \u2014 which he didn't report, because of the university matter.",
-      "trace": {
-        "name": "the gloves",
-        "text": "A single white cotton glove, archival grade, left beside a display case. A clean rectangle in the dust where something used to sit.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "family_room",
-        "extension_room",
-        "sitting_room"
-      ],
-      "slots": [
-        "access"
-      ],
-      "fixed_faction": null,
-      "tamper_insert": "a white cotton glove, inside out"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "molly",
       "name": "Molly Henderson",
-      "gender": "F",
-      "title": "Newspaper Reporter",
-      "voice": "rapid-fire questions, answers questions with questions",
-      "motive": "Braun promised her the Syndicate story, then went silent on her for a month.",
-      "fear": "She already ran one piece she can't fully source. A retraction ends her.",
-      "signature_item": "reporter's notebook",
-      "acts": {
-        "guilty": "Was pressing the staff with very specific questions \u2014 who goes in to see Braun, when, whether the door locks, who has keys.",
-        "innocent": "Worked the staff for Syndicate gossip all evening, scribbling constantly, delighted with herself \u2014 she'd found the same snail insignia across three separate documents."
+      "age": 0,
+      "sex": "F",
+      "job": "Newspaper Reporter",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "kitchen",
+      "faction_id": "detective",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "was grilling the staff about Braun's door \u2014 who gets in, when, whether it locks \u2014 writing all of it down",
-        "innocent": "was interviewing the staff about the Syndicate and getting genuinely excited, going on about a snail insignia she kept finding in documents"
-      },
-      "herring_truth": "The door questions were research for the expos\u00e9 \u2014 she was mapping how Braun's evidence was kept, because her unsourced piece dies without it. Wrong week to be thorough.",
-      "trace": {
-        "name": "the notebook page",
-        "text": "A page torn from a reporter's notebook: a rough sketch of the study corridor, with times jotted beside it.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "kitchen",
-        "entry",
-        "lawn",
-        "driveway"
-      ],
-      "slots": [],
-      "fixed_faction": null,
-      "tamper_insert": "a shorthand-covered notebook page, ripped out"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "nishimoto",
       "name": "Dr. Aiko Nishimoto",
-      "gender": "F",
-      "title": "Family Doctor",
-      "voice": "clinical, corrects terminology, calm in the wrong ways",
-      "motive": "Braun discovered her U.S. credentials were never completed. She's one phone call from ruin.",
-      "fear": "Exactly that phone call.",
-      "signature_item": "medical case",
-      "acts": {
-        "guilty": "Carried her medical case out to her car mid-party. She'd drawn Braun's blood earlier \u2014 but when the case sat open, the vials inside had no labels.",
-        "innocent": "Moved her case out to the car so she wouldn't forget it \u2014 she'd drawn Braun's blood earlier for the lab in the morning, and complained about the errand to anyone who'd listen."
+      "age": 0,
+      "sex": "F",
+      "job": "Family Doctor",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "kitchen",
+      "faction_id": "killer",
+      "guilt_slot": "means",
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "was carrying her medical case out to the car in the middle of the party, and the vials in it weren't labeled",
-        "innocent": "was hauling her medical case to the car, grumbling about having to run Braun's bloodwork to the lab in the morning"
-      },
-      "herring_truth": "The labels were in her coat pocket \u2014 she labels at the lab, not in the field, a habit from a residency she never finished. The blood draw was real and so was the appointment.",
-      "trace": {
-        "name": "the vial",
-        "text": "A glass vial, unlabeled, capped, tucked where it wouldn't be seen. Something in it.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "kitchen",
-        "driveway",
-        "entry"
-      ],
-      "slots": [
-        "means"
-      ],
-      "fixed_faction": null,
-      "tamper_insert": "a syringe cap, medical grade"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "isla",
       "name": "Isla Perry",
-      "gender": "F",
-      "title": "Braun's Fianc\u00e9e",
-      "voice": "gracious hostess veneer, goes brittle under pressure",
-      "motive": "The prenup. She learned about it this week, after the accounts were already joined.",
-      "fear": "That anyone learns she asked Yousef whether it could be voided.",
-      "signature_item": "the champagne dress",
-      "acts": {
-        "guilty": "Changed dresses mid-party. She says champagne \u2014 but she'd already changed before the champagne tower ever came down.",
-        "innocent": "Got soaked when the champagne tower collapsed and went up to change, furious, and told everyone within earshot exactly how furious."
+      "age": 0,
+      "sex": "F",
+      "job": "Braun's Fiancée",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "sitting_room",
+      "faction_id": "inheritance",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": "harry",
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "came back down in a different dress before the champagne tower ever fell \u2014 the story doesn't line up",
-        "innocent": "got drenched when the tower went over and stormed off to change, absolutely livid about the dress"
-      },
-      "herring_truth": "The first dress was stained earlier \u2014 wine, thrown, in a private argument with Braun about the prenup. She invented the champagne story so no one would ask about the fight.",
-      "trace": {
-        "name": "the dress",
-        "text": "A gown, hastily bagged and pushed to the back of a closet. The stain is on the back of it.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "sitting_room",
-        "family_room",
-        "grand_hall"
-      ],
-      "slots": [],
-      "fixed_faction": null,
-      "tamper_insert": "a pearl button from an evening gown"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "emilia",
       "name": "Emilia Cruz",
-      "gender": "F",
-      "title": "Famous Actress",
-      "voice": "performs every sentence, deflects with charm, hates silence",
-      "motive": "Braun pulled the funding on the film that was her break. There hasn't been another.",
-      "fear": "That people learn she hasn't booked work in two years.",
-      "signature_item": "monogrammed compact mirror",
-      "acts": {
-        "guilty": "Disappeared for close to twenty minutes after losing the stage, and won't say where. Her compact mirror turned up later \u2014 nowhere near where she claims she went.",
-        "innocent": "Did vocal warm-ups alone, heard Sutton open with her set, and stormed off \u2014 she was found crying in the stairwell, checking her makeup in a monogrammed compact."
+      "age": 0,
+      "sex": "F",
+      "job": "Famous Actress",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "sitting_room",
+      "faction_id": "jester",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "vanished for a good twenty minutes after Sutton took the stage, and gets vague when asked where she went",
-        "innocent": "was warming up to perform, and when Sutton stole her set she fell apart \u2014 someone found her crying in the stairwell"
-      },
-      "herring_truth": "She was in a parked car in the driveway, on the phone with her agent, begging. Twenty minutes of it. She would rather be a murder suspect than admit that call happened.",
-      "trace": {
-        "name": "the compact",
-        "text": "A monogrammed compact mirror, cracked, found far from where its owner spent the evening.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "sitting_room",
-        "grand_hall",
-        "lawn",
-        "family_room"
-      ],
-      "slots": [],
-      "fixed_faction": null,
-      "tamper_insert": "a smear of stage makeup, wiped hastily"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "giuliana",
       "name": "Giuliana Andolpho",
-      "gender": "F",
-      "title": "Socialite",
-      "voice": "warm, effortless, remembers everyone's name, gives nothing",
-      "motive": "Braun's evidence goes all the way to the top of the Syndicate. She is the top.",
-      "fear": "A good look at the flask.",
-      "signature_item": "silver snail flask",
-      "acts": {
-        "guilty": "Was in three parts of the house inside ten minutes, flustered, with something silver half-hidden in her hand \u2014 and later kept straightening her sleeve down over her wrist.",
-        "innocent": "Walked in on something scandalous in a side room and came out scarlet, fanning herself with a silver case, and spent the next ten minutes telling absolutely everyone."
+      "age": 0,
+      "sex": "F",
+      "job": "Socialite",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "grand_hall",
+      "faction_id": "minion",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "moved through half the house in ten minutes with something silver palmed in her hand, and kept tugging her sleeve down over her wrist",
-        "innocent": "burst out of a side room scandalized, fanning herself with something silver, and made it everyone's business within the quarter hour"
-      },
-      "herring_truth": "The silver is a snail-shaped flask \u2014 a Syndicate token from a dead husband she never talks about. She carries it out of grief, not membership, and she'd sooner hang than explain it.",
-      "trace": {
-        "name": "the flask",
-        "text": "A silver flask, shaped like a snail, half full. The contents smell wrong.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "sitting_room",
-        "grand_hall",
-        "extension_room"
-      ],
-      "slots": [
-        "access",
-        "signature"
-      ],
-      "fixed_faction": null,
-      "tamper_insert": "a lipstick-marked cocktail napkin, an expensive shade"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "sutton",
       "name": "Sutton Brady",
-      "gender": "F",
-      "title": "Jazz Singer",
-      "voice": "smoky, unbothered, answers a beat too late",
-      "motive": "Braun's former lover. She believes he never stopped, and that Isla knows it.",
-      "fear": "The affair going public tonight, in this room, in front of Isla.",
-      "signature_item": "gold snail lapel pins",
-      "acts": {
-        "guilty": "Wore gold snail lapel pins \u2014 custom work, hallmarked, not costume \u2014 and covered them with her hand both times someone asked.",
-        "innocent": "Wore gaudy gold snail pins borrowed off the event decorator an hour before, complained they were tacky, and kept asking whether she should take them off."
+      "age": 0,
+      "sex": "F",
+      "job": "Jazz Singer",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "grand_hall",
+      "faction_id": "minion",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "had on gold snail pins \u2014 real ones, custom \u2014 and covered them with her hand when anyone asked",
-        "innocent": "was wearing ridiculous gold snail pins she said the decorator lent her, and wouldn't stop complaining about them"
-      },
-      "herring_truth": "The pins were Braun's gift, from when it was good. Custom, hallmarked, and utterly damning to be caught wearing at his engagement party \u2014 which is why she kept covering them.",
-      "trace": {
-        "name": "the pin",
-        "text": "A gold lapel pin, dropped. A snail. There's a custom hallmark on the reverse.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "grand_hall",
-        "sitting_room",
-        "extension_room"
-      ],
-      "slots": [
-        "signature"
-      ],
-      "fixed_faction": null,
-      "tamper_insert": "a snapped tie of gold thread, stage-costume grade"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "martha",
       "name": "Martha Kim",
-      "gender": "F",
-      "title": "Detective in Training",
-      "voice": "eager, over-explains her reasoning, quotes the manual",
-      "motive": "Braun stonewalled the department's inquiry, and her career is the inquiry.",
-      "fear": "Remington finding out she's been building the file behind his back.",
-      "signature_item": "pocket ledger of names",
-      "acts": {
-        "guilty": "Was asking oddly precise Syndicate questions of people with no reason to know anything \u2014 less like gathering, more like checking who had been told what.",
-        "innocent": "Networked the room relentlessly, ledger out, collecting Syndicate tidbits to bring to Remington like a cat with a bird. Transparent and a little embarrassing."
+      "age": 0,
+      "sex": "F",
+      "job": "Detective in Training",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "grand_hall",
+      "faction_id": "detective",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "was quizzing people about the Syndicate \u2014 specific things, to people who couldn't possibly know \u2014 like she was auditing the room",
-        "innocent": "worked the whole room with that little ledger, obviously trying to impress the real detective with Syndicate gossip"
-      },
-      "herring_truth": "The audit was real \u2014 she's been cross-checking a leak inside the department, off the books, and tonight was her chance to test who knew things they shouldn't. She couldn't say so without burning it.",
-      "trace": {
-        "name": "the ledger",
-        "text": "A pocket ledger of names. Three have been crossed out. One page is torn away \u2014 the stub that remains shows the corner of a letterhead: a faint snail watermark.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "grand_hall",
-        "sitting_room",
-        "family_room",
-        "driveway"
-      ],
-      "slots": [
-        "signature"
-      ],
-      "fixed_faction": null,
-      "tamper_insert": "a page of names in careful print, three crossed out"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "hugo",
       "name": "Hugo Hahn",
-      "gender": "M",
-      "title": "Movie Director",
-      "voice": "grandiose past tense, everything is a scene from a better film",
-      "motive": "Braun's funding pull bankrupted his production company overnight.",
-      "fear": "Who he borrowed from instead. And what they do about late payments.",
-      "signature_item": "his phone",
-      "acts": {
-        "guilty": "Took a call, went very quiet, and afterward asked two separate people whether Braun was still in his study. He had no reason to need to know that.",
-        "innocent": "Took a call from his team, came back grey, and told at least one near-stranger, unprompted, that he was finished and none of it mattered anymore."
+      "age": 0,
+      "sex": "M",
+      "job": "Movie Director",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "entry",
+      "faction_id": "jester",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "took a phone call, went dead quiet, and then started asking around about whether Braun was still in the study",
-        "innocent": "got a call, came back looking like a ghost, and told me \u2014 a stranger \u2014 that he was finished and it didn't matter anymore"
-      },
-      "herring_truth": "The call was his lender's final notice. The study questions were him working up the nerve to beg Braun, one last time, for the money that would keep his legs unbroken.",
-      "trace": {
-        "name": "the napkin",
-        "text": "A cocktail napkin with a phone number scrawled on it, pressed hard enough to tear. The area code is nowhere near here.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "grand_hall",
-        "extension_room",
-        "driveway",
-        "entry"
-      ],
-      "slots": [
-        "means"
-      ],
-      "fixed_faction": null,
-      "tamper_insert": "a torn cheque, the signature half missing"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "sharkeisha",
       "name": "Sharkeisha Noh",
-      "gender": "F",
-      "title": "Famous Painter",
-      "voice": "dry, exact, describes people like compositions",
-      "motive": "Braun hired her to work the party she believed she'd been invited to as a guest.",
-      "fear": "Very little. Which unnerves people.",
-      "signature_item": "canvas and paints",
-      "acts": {
-        "guilty": "Her evening canvas has a figure in a doorway that she has since painted over \u2014 and she paints from imagination as often as from life, and won't say which this was.",
-        "innocent": "Stationed at her easel all evening, sulking about being made to work, cataloguing the room \u2014 she can tell you who wore what and where they stood, to the inch."
+      "age": 0,
+      "sex": "F",
+      "job": "Famous Painter",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "family_room",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "painted over a figure on her canvas \u2014 you can still see the shape of it in the right light \u2014 and won't say who it was, or if it was anyone",
-        "innocent": "sat at that easel all night sulking, and noticed everything \u2014 she described people's outfits back to them like a police report"
-      },
-      "herring_truth": "The overpainted figure was Braun himself \u2014 a spiteful, unflattering caricature she thought better of once he was dead. Vanity, not murder.",
-      "trace": {
-        "name": "the canvas",
-        "text": "The evening's canvas. In raking light, there is the ghost of a figure under the paint, standing in a doorway.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "grand_hall",
-        "family_room",
-        "sitting_room"
-      ],
-      "slots": [],
-      "fixed_faction": null,
-      "tamper_insert": "a fleck of fresh oil paint, still tacky"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "cairo",
       "name": "Cairo Iwobi",
-      "gender": "M",
-      "title": "Neighboring Millionaire",
-      "voice": "big laugh, deal-maker, changes subject with money",
-      "motive": "A property survey caught him using Braun's land for years. He had to give it back \u2014 publicly.",
-      "fear": "His wife learning about Priya.",
-      "signature_item": "a brass key",
-      "acts": {
-        "guilty": "Had a brass key to storage he should never have had a key to, and used it twice during the evening.",
-        "innocent": "Was caught in a side room with Priya, and has spent the entire evening since trying to manage the story with escalating bribes of wine."
+      "age": 0,
+      "sex": "M",
+      "job": "Neighboring Millionaire",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "grand_hall",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "had a brass key that opens storage in this house \u2014 his neighbor's house \u2014 and slipped off to use it twice",
-        "innocent": "got walked in on with Priya and has been doing damage control all night, offering people wine like a man on fire"
-      },
-      "herring_truth": "The key opens the cellar storage where Braun let him stash wine during his renovation \u2014 an arrangement both men kept quiet because of the property dispute. He was retrieving bottles to buy silence about Priya.",
-      "trace": {
-        "name": "the key",
-        "text": "A brass key, unmarked, that fits a storage door in this house. It was not found with the house keys.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "extension_room",
-        "grand_hall",
-        "driveway"
-      ],
-      "slots": [
-        "means"
-      ],
-      "fixed_faction": null,
-      "tamper_insert": "a cellar cork branded with a rare vintage"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "priya",
       "name": "Priya Patel",
-      "gender": "F",
-      "title": "Golf Pro",
-      "voice": "easy, athletic confidence that drops fast when the Syndicate comes up",
-      "motive": "Her father is a former Syndicate member. Braun's evidence would name him.",
-      "fear": "Her father's name in anyone's mouth.",
-      "signature_item": "her father's snail signet ring",
-      "acts": {
-        "guilty": "Wears a heavy signet ring on a chain \u2014 a snail \u2014 and when the Syndicate came up in conversation she went white and left the room. Twice.",
-        "innocent": "Was caught in a side room with Cairo and has been failing to act natural ever since \u2014 and she thought she saw something odd in the hand of the woman who walked in on them."
+      "age": 0,
+      "sex": "F",
+      "job": "Golf Pro",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "extension_room",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": true,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "wears a snail signet ring on a chain under her collar, and left the room \u2014 twice \u2014 when the Syndicate came up",
-        "innocent": "got walked in on with Cairo and has been a terrible actress about it all night \u2014 though she swears the woman who caught them was hiding something silver"
-      },
-      "herring_truth": "The ring is her father's \u2014 his old Syndicate signet, which she wears to remember what he escaped, not what he was. Every mention of the Syndicate is a mention of him.",
-      "trace": {
-        "name": "the ring",
-        "text": "A heavy signet ring on a broken chain, found snagged on upholstery. The seal is a snail.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "extension_room",
-        "sitting_room",
-        "grand_hall",
-        "lawn"
-      ],
-      "slots": [
-        "signature"
-      ],
-      "fixed_faction": null,
-      "tamper_insert": "a right-hand golf glove, monogrammed"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "solomon",
       "name": "Solomon Roka",
-      "gender": "M",
-      "title": "Bootleg King",
-      "voice": "loud generosity, a salesman's memory for what you drank",
-      "motive": "Braun planned to expose his entire distribution network.",
-      "fear": "The manifest in his coat pocket.",
-      "signature_item": "liquor crates and a manifest",
-      "acts": {
-        "guilty": "Came in through a side entrance with two cases of liquor. One of those cases never made it to the bar.",
-        "innocent": "Hauled his crates in through a side door because the front was jammed with valet traffic, and has been pushing free pours on the entire party ever since, loudly."
+      "age": 0,
+      "sex": "M",
+      "job": "Bootleg King",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "extension_room",
+      "faction_id": "killer",
+      "guilt_slot": "signature",
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "brought two cases in through the side entrance, and only one of them ever showed up at the bar",
-        "innocent": "muscled his crates in the side door past the valet chaos and hasn't stopped handing out free drinks since"
-      },
-      "herring_truth": "The missing case was the real contraband \u2014 un-taxed, un-labeled, and promised to Braun himself as a private gift. It's hidden because it's a felony, not because it's a weapon.",
-      "trace": {
-        "name": "the manifest",
-        "text": "A delivery manifest, one bottle short of its count. The letterhead carries a faint snail watermark.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "extension_room",
-        "entry",
-        "driveway",
-        "grand_hall"
-      ],
-      "slots": [
-        "means",
-        "signature"
-      ],
-      "fixed_faction": null,
-      "tamper_insert": "an un-taxed bottle seal, no label"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "remington",
       "name": "Remington Whitley",
-      "gender": "M",
-      "title": "Police Detective",
-      "voice": "flat cop cadence, answers in facts, trusts no one politely",
-      "motive": "He wanted to be the one to break the Syndicate. Braun was taking it to the press instead.",
-      "fear": "The department's leak traces through him \u2014 through cases he signed.",
-      "signature_item": "flashlight and a list of plates",
-      "acts": {
-        "guilty": "Was going car to car in the dark with a flashlight, looking through windows, well before anyone died.",
-        "innocent": "Walked the parked cars out of habit, checking plates against a list he keeps on him, and will tell you so flatly, as though it's a normal thing to do at a party."
+      "age": 0,
+      "sex": "M",
+      "job": "Police Detective",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "lawn",
+      "faction_id": "detective",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "was out among the cars with a flashlight before any of it happened, looking in windows",
-        "innocent": "was checking license plates against some list he carries \u2014 he says it's habit, and honestly he seems like the type"
-      },
-      "herring_truth": "One plate on his list belongs to a Syndicate courier. He'd tracked it here, tonight, and was trying to confirm the car before deciding whether to call it in \u2014 or handle it himself.",
-      "trace": {
-        "name": "the plate list",
-        "text": "A folded list of license plates in a careful hand. One plate is circled twice.",
-        "anchor_zone": null
-      },
-      "zones": [
-        "driveway",
-        "lawn",
-        "entry"
-      ],
-      "slots": [],
-      "fixed_faction": null,
-      "tamper_insert": "a torn strip of paper listing license plates"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "carla",
       "name": "Carla Lucciano",
-      "gender": "F",
-      "title": "Chauffeur",
-      "voice": "short, watchful, says less than she knows on principle",
-      "motive": "Loyal to the Syndicate. She does what she's told and doesn't ask.",
-      "fear": "Nothing anyone can see. That's what's unnerving about her.",
-      "signature_item": "driving gloves",
-      "acts": {
-        "guilty": "Escorted an unnamed guest around the side of the mansion, away from every door with a witness, and was gone long enough that arrivals backed up. She came back alone.",
-        "innocent": "Walked a badly drunk guest around the side of the house to be sick out of view, was short and impatient about the whole business, and complained about it after."
+      "age": 0,
+      "sex": "F",
+      "job": "Chauffeur",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "driveway",
+      "faction_id": "killer",
+      "guilt_slot": "access",
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "took some guest nobody can name around the side of the house, was gone a long while, and came back alone without a word",
-        "innocent": "hauled some hopeless drunk around the side so they wouldn't ruin the entrance, and grumbled about it to anyone nearby"
-      },
-      "herring_truth": "The unnamed guest was a Syndicate bagman she recognized on sight and turned away \u2014 off the books, around the side, before he reached the door. Protecting the party looked exactly like abetting it.",
-      "trace": {
-        "name": "the side path",
-        "text": "Tire marks where a car pulled around the side of the house and back out. A single driving glove near them \u2014 its cuff button stamped with a tiny snail, livery-style.",
-        "anchor_zone": "driveway"
-      },
-      "zones": [
-        "driveway",
-        "entry",
-        "lawn",
-        "kitchen"
-      ],
-      "slots": [
-        "access"
-      ],
-      "fixed_faction": null,
-      "route_preference": "side_path",
-      "tamper_insert": "a livery button stamped with a tiny snail"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "harry",
       "name": "Harry Braun",
-      "gender": "M",
-      "title": "Braun's Estranged Brother",
-      "voice": "bitter charm, jokes with an edge, drinks like it's a job",
-      "motive": "Cut from the family estate. He came tonight to argue his way back onto it.",
-      "fear": "That people learn he was removed for cause \u2014 not a falling-out.",
-      "signature_item": "monogrammed cigarette case",
-      "acts": {
-        "guilty": "Was smoking outside, but on the study side of the house, under the windows \u2014 and there's a scatter of ends there to prove how long he stood.",
-        "innocent": "Smoked by the front, watching the door, working up the nerve to go in and face his brother \u2014 and saw everyone who came and went the whole time."
+      "age": 0,
+      "sex": "M",
+      "job": "Braun's Estranged Brother",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "entry",
+      "faction_id": "inheritance",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": "isla",
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "was smoking under the study windows, on the wrong side of the house, for a long time",
-        "innocent": "stood out front chain-smoking and staring at the door like a man rehearsing an apology, and clocked everybody who passed"
-      },
-      "herring_truth": "He stood under the study window because he couldn't make himself knock. He listened to his brother's radio through the glass for an hour, left, and now that window is the last place he heard him alive.",
-      "trace": {
-        "name": "the cigarette ends",
-        "text": "A scatter of cigarette ends beneath a window, all the same brand. Beside them, a monogrammed cigarette case: H.B.",
-        "anchor_zone": "lawn"
-      },
-      "zones": [
-        "lawn",
-        "driveway",
-        "entry"
-      ],
-      "slots": [
-        "access"
-      ],
-      "fixed_faction": null,
-      "route_preference": "window",
-      "tamper_insert": "a cigarette end \u2014 the same brand as under the window"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "florence",
       "name": "Florence Li",
-      "gender": "F",
-      "title": "Investment Banker",
-      "voice": "measured, private, warmer about plants than people",
-      "motive": "Braun's estate audit would surface accounts she manages that cannot be surfaced.",
-      "fear": "Anyone asking what's in the clutch.",
-      "signature_item": "garden clutch",
-      "acts": {
-        "guilty": "Was cutting something from the far garden bed \u2014 not roses \u2014 and put the cuttings into her clutch rather than leaving them with the flowers.",
-        "innocent": "Was out cutting roses in the dark because she'd rather garden than mingle, and apologized for being antisocial to three separate people."
+      "age": 0,
+      "sex": "F",
+      "job": "Investment Banker",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "lawn",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "was clipping something from the far bed \u2014 whatever it was, it wasn't roses \u2014 and it went straight into her clutch",
-        "innocent": "was out in the dark cutting roses to avoid the party, apologizing to everyone she met for being terrible company"
-      },
-      "herring_truth": "The cuttings were valerian and skullcap \u2014 sedative herbs, for the insomnia she treats herself because a psychiatrist's records can be subpoenaed and hers cannot be.",
-      "trace": {
-        "name": "the cut stem",
-        "text": "A fresh-cut stem in the far garden bed. It is not a rose. Whatever was cut is gone.",
-        "anchor_zone": "lawn"
-      },
-      "zones": [
-        "lawn",
-        "kitchen",
-        "extension_room"
-      ],
-      "slots": [
-        "means"
-      ],
-      "fixed_faction": null,
-      "tamper_insert": "a green-stained garden tie, knotted"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
     },
     {
       "id": "daquan",
       "name": "Da'Quan Wilson",
-      "gender": "M",
-      "title": "Personal Trainer",
-      "voice": "high-energy, motivational-poster sincerity, zero guile \u2014 apparently",
-      "motive": "Braun ghosted the training program, cost him his big before-the-wedding marketing win.",
-      "fear": "The certification he brags about lapsed in March.",
-      "signature_item": "protein shaker",
-      "acts": {
-        "guilty": "Stood out on the lawn looking in through the windows on the study side, and stayed there a long time. He says he was 'getting air.'",
-        "innocent": "Was outside psyching himself up to ask Florence to dance, shaker in hand \u2014 and from where he stood he could see the corridor windows, and someone pacing in front of the study for a long stretch."
+      "age": 0,
+      "sex": "M",
+      "job": "Personal Trainer",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "driveway",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": true,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "seen": {
-        "guilty": "stood on the lawn staring in through the study-side windows for way too long to be 'getting air'",
-        "innocent": "was outside hyping himself up to ask Florence to dance, and swears he watched someone pace the study corridor through the windows for ages"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "braun",
+      "name": "James Braun",
+      "age": 0,
+      "sex": "M",
+      "job": "Master of Braun Manor",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "study",
+      "faction_id": "",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "herring_truth": "He was watching his own reflection, rehearsing the ask. An hour of it. The study windows just happen to be the only glass on that side of the house.",
-      "trace": {
-        "name": "the footprints",
-        "text": "Footprints pressed into the lawn bed, facing the windows. Whoever stood here stood a while.",
-        "anchor_zone": "lawn"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": "host"
+    },
+    {
+      "id": "leo",
+      "name": "Leo Raphael",
+      "age": 0,
+      "sex": "........",
+      "job": "French Chef",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "kitchen",
+      "faction_id": "",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
       },
-      "zones": [
-        "lawn",
-        "grand_hall",
-        "kitchen",
-        "driveway"
-      ],
-      "slots": [
-        "access"
-      ],
-      "fixed_faction": null,
-      "route_preference": "window",
-      "tamper_insert": "a shaker-bottle cap, protein dust on the thread"
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": "facilitator"
+    },
+    {
+      "id": "chloe",
+      "name": "Chloe Zimmerman",
+      "age": 0,
+      "sex": "........",
+      "job": "Fashion Designer",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "grand_hall",
+      "faction_id": "",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": "facilitator"
+    },
+    {
+      "id": "bertram",
+      "name": "Bertram Ault",
+      "age": 0,
+      "sex": "........",
+      "job": "Estate Butler",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "grand_hall",
+      "faction_id": "",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": "facilitator"
     }
   ]
 }

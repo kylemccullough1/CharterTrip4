@@ -1,0 +1,67 @@
+{
+  "clues": [
+    {
+      "id": "clue-study",
+      "zone_id": "study",
+      "name": "........",
+      "text": "........",
+      "about_character_id": null
+    },
+    {
+      "id": "clue-entry",
+      "zone_id": "entry",
+      "name": "........",
+      "text": "........",
+      "about_character_id": "wilhelm"
+    },
+    {
+      "id": "clue-family_room",
+      "zone_id": "family_room",
+      "name": "........",
+      "text": "........",
+      "about_character_id": "imogen"
+    },
+    {
+      "id": "clue-kitchen",
+      "zone_id": "kitchen",
+      "name": "........",
+      "text": "........",
+      "about_character_id": "molly"
+    },
+    {
+      "id": "clue-sitting_room",
+      "zone_id": "sitting_room",
+      "name": "........",
+      "text": "........",
+      "about_character_id": "yousef"
+    },
+    {
+      "id": "clue-grand_hall",
+      "zone_id": "grand_hall",
+      "name": "........",
+      "text": "........",
+      "about_character_id": "giuliana"
+    },
+    {
+      "id": "clue-extension_room",
+      "zone_id": "extension_room",
+      "name": "........",
+      "text": "........",
+      "about_character_id": "santiago"
+    },
+    {
+      "id": "clue-driveway",
+      "zone_id": "driveway",
+      "name": "........",
+      "text": "........",
+      "about_character_id": "carla"
+    },
+    {
+      "id": "clue-lawn",
+      "zone_id": "lawn",
+      "name": "........",
+      "text": "........",
+      "about_character_id": "remington"
+    }
+  ]
+}

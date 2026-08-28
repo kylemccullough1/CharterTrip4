@@ -21,10 +21,11 @@
                       LogicalName="CharterTrip.Infrastructure.Seed.trip.seed.json" />
   </ItemGroup>
 
-  <!-- The Braun Manor content, embedded for the same reason as the seed: if the app is running,
-       the content is there. Listed one by one rather than by wildcard so that a file added to
-       data/braun-manor/ does not silently become a runtime dependency — and so the two UI spec
-       files (main_screen.json, player_phone.json) stay out, since nothing loads them. -->
+  <!-- The Braun Manor story, embedded for the same reason as the seed: if the app is running, the
+       content is there. This is the starting point rather than the live copy — StoryLoader copies it
+       into trip.json once, and from then on it is edited on the site. Listed one by one rather than by
+       wildcard so a file dropped into data/braun-manor/ does not silently become a runtime dependency;
+       the design documents beside these are for whoever is writing the story, not for the app. -->
   <ItemGroup>
     <EmbeddedResource Include="..\..\data\braun-manor\characters.json"
                       Link="Mystery\BraunManor\characters.json"
@@ -35,18 +36,21 @@
     <EmbeddedResource Include="..\..\data\braun-manor\factions.json"
                       Link="Mystery\BraunManor\factions.json"
                       LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.factions.json" />
-    <EmbeddedResource Include="..\..\data\braun-manor\rounds.json"
-                      Link="Mystery\BraunManor\rounds.json"
-                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.rounds.json" />
-    <EmbeddedResource Include="..\..\data\braun-manor\story_beats.json"
-                      Link="Mystery\BraunManor\story_beats.json"
-                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.story_beats.json" />
-    <EmbeddedResource Include="..\..\data\braun-manor\prompts.json"
-                      Link="Mystery\BraunManor\prompts.json"
-                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.prompts.json" />
-    <EmbeddedResource Include="..\..\data\braun-manor\ghosts_npcs.json"
-                      Link="Mystery\BraunManor\ghosts_npcs.json"
-                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.ghosts_npcs.json" />
+    <EmbeddedResource Include="..\..\data\braun-manor\clues.json"
+                      Link="Mystery\BraunManor\clues.json"
+                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.clues.json" />
+    <EmbeddedResource Include="..\..\data\braun-manor\slides.json"
+                      Link="Mystery\BraunManor\slides.json"
+                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.slides.json" />
+    <EmbeddedResource Include="..\..\data\braun-manor\objectives.json"
+                      Link="Mystery\BraunManor\objectives.json"
+                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.objectives.json" />
+    <EmbeddedResource Include="..\..\data\braun-manor\beefs.json"
+                      Link="Mystery\BraunManor\beefs.json"
+                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.beefs.json" />
+    <EmbeddedResource Include="..\..\data\braun-manor\beats.json"
+                      Link="Mystery\BraunManor\beats.json"
+                      LogicalName="CharterTrip.Infrastructure.Mystery.BraunManor.beats.json" />
   </ItemGroup>
 
 </Project>

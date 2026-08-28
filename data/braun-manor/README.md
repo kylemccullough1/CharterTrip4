@@ -1,130 +1,87 @@
-# Braun Manor — Game Data & Generator Spec
+# Braun Manor — the story
 
-Six data files, treated as tables. Nothing in them is written at runtime; the generator composes, never authors.
+Eight JSON files. They are the **starting point** for one specific evening, not a live data source:
+`StoryLoader` copies them into `trip.json` the first time a game is created, and from then on the
+story is edited on the site at `/games/mystery/story` like everything else on this trip.
 
-| File | Contents |
+So an edit here only reaches a trip that has never seeded one. To pick up a change on a trip that
+already has a story, edit it on the site — or discard and reseed, which is safe, because discarding
+clears the evening and never the story.
+
+| File | Holds |
 |---|---|
-| `characters.json` | 21 characters: identity, motive, fear, signature item, guilty/innocent acts, seen-texts, herring exoneration, trace clue, zone whitelist, slot tags |
-| `zones.json` | 9 zones, adjacency, access routes (corridor / window / side path), capacities, clue spots |
-| `factions.json` | 7 factions incl. ghosts: counts, knowledge webs, win conditions, abilities with charges + unlocks |
-| `rounds.json` | Full schedule (~110 min), trial procedure (top-4 nominate → defend → top-2 convicted), reveal-card policy |
-| `story_beats.json` | Spine, 5 method beats, 3 access-route beats, signature beat, conviction cards, endgame templates, assembly rules |
-| `prompts.json` + `ghosts_npcs.json` | Prompt engine templates + badge telemetry; ghost canned set; Braun & facilitator standing orders |
+| `characters.json` | 21 guests plus the 4 house parts: sheet, room, faction, guilt, dialogue |
+| `zones.json` | 9 rooms — 8 playable plus the study, which takes nobody |
+| `factions.json` | 6 factions, their abilities, and which phase each ability unlocks in |
+| `clues.json` | 9 cards, one pinned to each room |
+| `slides.json` | the deck Braun walks the room through before the party |
+| `objectives.json` | what the phase machine fires, and what staff can send by hand |
+| `beefs.json` | pairs of guests with history. Nothing to do with the murder |
+| `beats.json` | the letter, the murder, the study, the rules, the ending |
 
-## Cast changes for the guest list (12F / 9M)
+`GAME-RUNDOWN.md`, `TESTING.md` and `braun-manor-characters.md` are design documents. Nothing reads
+them.
 
-- **Cut:** Jacob Kruse (pilot) — thinnest observable, nothing else references him
-- **Now female:** Sutton Brady (jazz singer, still Braun's ex), Carla Lucciano (chauffeur), Dr. Aiko Nishimoto (family doctor)
-- **Result:** 12 female roles (Isla, Molly, Emilia, Imogen, Priya, Florence, Martha, Sharkeisha, Giuliana, Sutton, Carla, Nishimoto), 9 male (Harry, Hugo, Yousef, Cairo, Remington, Santiago, Da'Quan, Solomon, Wilhelm)
-- Jou/Ali/Kyle/Em → Braun + Leo + Chloe + Bertram
+---
 
-## Generator algorithm
+## The prose is not written yet
 
-```
-1. PLACE      each character → one zone from their whitelist,
-              respecting zone min/max capacities
-2. VALIDATE   ≥2 access-tagged characters landed in access-granting zones
-              (entry, family_room, lawn, driveway); every zone ≥ min capacity
-              → else reshuffle
-3. DRAW KILLERS
-              ACCESS  = random(access-tagged ∩ access-granting zone)
-              MEANS   = random(means-tagged ∩ not chosen)
-              SIGNATURE = random(signature-tagged ∩ not chosen)
-              constraint: no two killers share a zone → else redraw
-4. DRAW HERRINGS
-              3 innocents get their GUILTY variant; weight toward
-              slot-tagged characters so herrings resemble killers
-5. DRAW FACTIONS (from the 18 remaining non-killers):
-              2 minions (weight: signature-tagged), 3 detectives,
-              2 jesters (weight: ruin-fear class),
-              2 inheritance rivals, 9 villagers
-6. SET VARIANTS
-              killers + herrings → guilty acts/seen; all others → innocent
-7. BUILD TEXTS (pure template fill from story_beats.json):
-              study scene   = base + method_beat[MEANS].scene_flavor
-              killer briefs = slot beat + cover_story(assigned herring)
-              witness stmts = per player: seen[variant] of 2-3 co-located
-              braun dig-dirt = rival's seen.guilty (always guilty reading)
-              endgame texts = every conditional branch pre-filled
-8. PRINT      9 clue QR sheets: each GUILTY character's trace in their zone;
-              remaining zones take neutral spine clues (tea service, dress,
-              scene) so every zone has exactly one
-9. EXPORT     per-player packets + main-screen script + facilitator sheet
-              (facilitator consoles show the guilty list and killer draw)
+**Every unwritten string is a row of dots.** That is the convention, and one predicate —
+`MysteryText.IsPlaceholder` — reads it everywhere: the editor draws the field as a blank to fill in,
+the Content gaps panel counts what is left, a player-facing screen leaves the line out rather than
+showing dots to the room, and
+
+```bash
+grep -c '"\.\+"' data/braun-manor/*.json
 ```
 
-## Why modular blocks, not pre-written full stories
+says how much is outstanding.
 
-Placement × killer draw × herrings is millions of distinct games. Full-story pre-generation is impossible and unnecessary: every sentence a player ever sees is one of these blocks with names filled in. ~200 authored blocks → total coverage, deterministic compile, reviewable in one sitting. Optional AI restyle pass may adjust voice per character's `voice` field — facts are locked.
+What is **already real**, because the game cannot run coherently without it:
 
-## Balance snapshot (6 conviction slots)
+- every character's id, name and job
+- which room each of the 21 stands in
+- the faction layout, and which three are the killers
+- which clue card sits in which room
+- who has history with whom
+- what the phase machine can ask of people, and when
 
-| Faction | Win | Est. |
-|---|---|---|
-| Town (9 villagers + 3 detectives) | 2+ killers convicted | re-sim |
-| Killers + minions (5) | 2+ killers survive | re-sim |
-| Jester (each) | be convicted | ~50% |
-| Braun (each) | rival convicted + survive | ~30% |
+All of it is changeable in the editor. It is real here so that the evening plays from day one and
+the writing can happen against something that works.
 
-**Ruleset B is settled**: killers win on 2+ of 3 surviving, town wins on 2+ of 3 convicted. Those are
-exhaustive and mutually exclusive across the 6 conviction slots — 0 or 1 convicted is a killer win,
-2 or 3 is a town win, and there is no outcome where nobody wins.
+---
 
-The two `~45%` / `~55%` figures that used to sit in this table are gone rather than adjusted. They
-were computed against a mixed reading — town needing a clean 3-for-6 while killers needed only 2
-surviving — which left a dead zone at exactly 2 convicted and is not the ruleset any more. Town now
-needs 2 of 6 rather than 3, so its odds went up by an amount nobody has measured. Re-run the
-simulation before trusting a number here.
+## The structure, and what it is protecting
 
-What has not changed: town is working against herrings, blame-take and false plants, and the
-detective toolkit (6 syncs, 3 forensics, 3 hard questions) is what pulls it back toward even. Braun
-is the hard seat by choice — no fallback, pure knife-fight, and the dig-dirt ability is their
-equalizer.
+Nine of the tests in `MysteryStoryTests` assert facts about this content rather than about code.
+They are worth reading before changing anything structural, but three are load-bearing:
 
-## Flags for build time
+**Three killers, one per guilt slot — access, means, signature — in three different rooms.** Two
+killers in one room is a single conversation that alibis both of them, and the evening turns on
+nobody being able to clear a hand that easily.
 
-1. **Blame-take + killer_check interaction is specified** (check tells the truth, blame only fools the reveal card) — keep it that way or detectives lose their only ground truth.
-2. **Ghost silence is a hard rule.** Canned messages only. The first time a dead player free-texts "it's Wilhelm," the game is over.
-3. **Facilitator consoles see everything.** They are the manual override for the 5% the prompt engine misses — and the reason a shy-player game still works.
-4. **Playtest seeds on paper.** Generate 3 seeds, read the witness-statement webs, confirm each killer has ≥2 threads pointing near them. A seed where the SIGNATURE killer drew Martha (ledger) plays very differently from one where it drew Sutton (pins).
+**The access killer stands somewhere that reaches the study.** Only the Entry, the Family Room, the
+Driveway and the Lawn do. A story where nobody could have got to the body does not hold together.
 
-## Generator rules added after batch simulation (2000-seed runs)
+**Everybody has history with at least two people.** Somebody with no history has nothing to open a
+conversation with but the weather, and the mingling round is the part that fails quietly.
 
-1. **Dual-tag half-weighting:** in each slot draw, weight candidates by 1/len(slots). Without it, Solomon/Wilhelm sit at ~30% killer rate.
-2. **Lone-guilty-witness rejection:** reject any seed where a killer's only co-located witness also drew a guilty variant (herring/minion). Costs ~0.3 reshuffles per seed.
-3. **Route preference:** if the ACCESS killer has `route_preference`, it overrides the zone's route.
-4. **Clue spillover:** if a zone already holds a clue, portable traces (no anchor_zone) shift to an adjacent clueless zone. Anchored traces never move.
-5. **Cross-zone sighting (recommended):** any killer with exactly 1 co-located witness gets one additional observation assigned to a player in an adjacent zone ("seen from the doorway"). Keeps every killer at >=2 threads.
+Room capacities in `zones.json` are advisory now — the generator that enforced them is gone — but
+they are still the sensible shape of the house, and the 21 guests currently sit inside all of them.
 
-## Killer distribution, re-simulated
+---
 
-2000 seeds through the implemented generator, 16 eligible characters, zero failed deals. Uniform ideal is 3/16 = **18.75%**.
+## What used to be here
 
-| | rate | | rate |
-|---|---|---|---|
-| harry | **28.2%** | solomon | 20.6% |
-| sutton | 24.2% | wilhelm | 17.4% |
-| cairo | 24.1% | carla | 17.1% |
-| priya | 23.2% | yousef | 14.4% |
-| florence | 22.3% | giuliana | 12.2% |
-| nishimoto | 21.6% | daquan | 12.0% |
-| martha | 20.8% | imogen | 11.2% |
-| hugo | 20.6% | santiago | 10.0% |
+This was a generator. A seeded dealer placed everybody, drew three killers by guilt slot, picked red
+herrings and laid out clues; a compiler then wrote every sentence from ~200 template blocks and a
+guilty-or-innocent reading per character. Roughly 2,150 lines of C# existed to make that reproducible
+and balanced across thousands of possible games.
 
-Never a killer: molly, isla, emilia, sharkeisha, remington — no slots.
+This one is played once. All of it is gone, and with it the reason the prose had to be embedded and
+read-only: there is no compiler to fill templates, so the story can live in the trip and be edited
+from a phone in a kitchen on the afternoon of the party.
 
-The band is **10.0–28.2%**, wider than the 12–24% the pre-implementation simulation reported, and the top of it is a consequence of unpinning the inheritance claim.
-
-**Harry at 28.2% is the outlier, and the cause is his zone whitelist rather than his slots.** He is access-only, and all three rooms he can be placed in — lawn, driveway, entry — grant access to the study. So he is eligible for the ACCESS draw in every single game, while the other seven access-tagged characters are only eligible in the games where they happen to land somewhere that reaches the study.
-
-This is the same shape as the Carla fix already recorded above: she was access-only at a 46% killer rate until the kitchen was added to her whitelist. Adding one non-access-granting room to Harry's whitelist would pull him back toward the band the same way. That is a content decision and has not been made.
-
-Dual-tag half-weighting is working as intended and is not the problem here: Solomon and Wilhelm, the two dual-tagged characters, sit at 20.6% and 17.4% — right on the ideal, which is what the rule was added to achieve.
-
-The inheritance claim is now spread across all 21 characters at 5.4–13.4% (ideal 2/18 = 11.1%), against 100% for Harry and Isla before.
-Data changes applied: Carla is access-only with kitchen added to her whitelist (was 46% killer rate); her snail glove button stays — a snail-carrier who can never be the signature killer is a free red herring on the signature thread.
-Never-killers by design: Molly, **Isla**, Emilia, Sharkeisha, Remington — five characters with no slots, so no guilt slot to fill. Irrelevant for a one-shot; a meta risk only on replays with the same group.
-
-No character is pinned to a faction any more. Harry Braun and Isla Perry used to be the inheritance pair in every game; the claim is now drawn from the non-killer pool like every other faction. Harry carries the access tag and so becomes an ordinary killer candidate — eligible access supply is 8, up from 7. Isla does not, because she carries no slots: the old wording grouped her under "fixed inheritance" as though the pin were what excluded her, and it was not.
-
-Killer-eligible supply is therefore 16 of 21.
+The old content — two readings per character, the round book, the prompt engine, the ghost lines and
+the two UI specification files — is in git history at `90ba14d` if any of it is worth mining for the
+rewrite.

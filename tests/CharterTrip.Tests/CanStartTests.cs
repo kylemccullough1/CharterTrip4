@@ -96,6 +96,49 @@ public class CanStartTests
         Assert.Contains(braun.Name, reason);
     }
 
+    // ---- signing a strip of phones in ---------------------------------------------------------
+
+    /// <summary>
+    /// What the testing panel's one button does, twenty-five times. Same call the real door makes,
+    /// so a phone signed in this way is indistinguishable from one somebody typed into.
+    /// </summary>
+    [Fact]
+    public void Seating_phones_fills_the_room_and_then_stops()
+    {
+        var trip = SeedLoader.Load();
+        StoryLoader.SeedInto(trip);
+        CastingService.OpenDoors(trip, new Random(1));
+
+        var code = trip.Mystery.Play.PartyCode;
+        var seated = new List<string>();
+
+        for (var i = 0; i < 30; i++)
+        {
+            if (CastingService.SeatNextGuest(trip, code, new Random(i)) is not { } personId) break;
+            seated.Add(personId);
+        }
+
+        Assert.Equal(21, seated.Count);
+        Assert.Equal(seated.Count, seated.Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal(0, CastingService.SeatsLeft(trip));
+
+        // The house parts are not guest seats, so they are still going.
+        Assert.Equal(4, CastingService.UnclaimedStaffParts(trip).Count);
+    }
+
+    /// <summary>A code that is not the live one is not a door, and must not seat anybody.</summary>
+    [Fact]
+    public void A_dead_code_seats_nobody()
+    {
+        var trip = SeedLoader.Load();
+        StoryLoader.SeedInto(trip);
+        CastingService.OpenDoors(trip, new Random(1));
+
+        Assert.Null(CastingService.SeatNextGuest(trip, "NOPE1", new Random(1)));
+        Assert.Null(CastingService.SeatNextGuest(trip, "", new Random(1)));
+        Assert.Equal(21, CastingService.SeatsLeft(trip));
+    }
+
     [Fact]
     public void With_all_twenty_five_in_it_starts()
     {

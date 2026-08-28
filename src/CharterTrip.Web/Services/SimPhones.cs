@@ -24,6 +24,15 @@ public sealed class SimPhones
 {
     private readonly ConcurrentDictionary<int, string> _people = new();
 
+    /// <summary>
+    /// Bumped to make one frame reload, and only that one.
+    ///
+    /// It rides in the iframe's src, so changing it is what moves that frame — and leaving every
+    /// other slot's alone is what stops a phone somebody is halfway through reading a letter on
+    /// from being yanked back to the start.
+    /// </summary>
+    private readonly ConcurrentDictionary<int, int> _nonce = new();
+
     /// <summary>How many frames the strip is showing. Not the number that have joined.</summary>
     public int Count { get; private set; }
 
@@ -47,17 +56,24 @@ public sealed class SimPhones
         if (Count == 0) return;
 
         _people.TryRemove(Count, out _);
+        _nonce.TryRemove(Count, out _);
         Count--;
     }
 
     public void Reset()
     {
         _people.Clear();
+        _nonce.Clear();
         Count = 0;
     }
 
     /// <summary>Who is holding this frame, or null while it is still on the code screen.</summary>
     public string? PersonFor(int slot) => _people.GetValueOrDefault(slot);
+
+    public int NonceFor(int slot) => _nonce.GetValueOrDefault(slot);
+
+    /// <summary>Send this frame round again, wherever its state now says it belongs.</summary>
+    public void Reload(int slot) => _nonce.AddOrUpdate(slot, 1, (_, n) => n + 1);
 
     /// <summary>
     /// This frame has been through the front door as somebody.

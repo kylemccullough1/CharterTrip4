@@ -267,6 +267,12 @@
                 <div class="chip-row">
                     <button class="chip" @onclick="() => AddPhones(1)">＋ a phone</button>
                     <button class="chip" @onclick="() => AddPhones(5)">＋ 5</button>
+                    @if (PhonesWaiting > 0)
+                    {
+                        <button class="chip chip-do" @onclick="SignEveryPhoneInAsync">
+                            🔑 Sign in @PhonesWaiting @(PhonesWaiting == 1 ? "phone" : "phones")
+                        </button>
+                    }
                     <button class="chip" @onclick="FillTheRoomAsync">⚡ Fill the room</button>
                     <button class="chip" @onclick="EverybodyVotesAsync">⚡ Everybody votes</button>
                     <button class="chip" @onclick="FindEveryClueAsync">⚡ Find every clue</button>
@@ -293,8 +299,11 @@
                         {
                             <div class="sim-card" @key="slot">
                                 <span class="sim-label">Phone @slot @SimWho(slot)</span>
-                                <iframe class="sim-frame" src="@($"/join?sim={slot}")"
-                                        title="@($"Phone {slot}")"></iframe>
+                                @* The nonce is what moves a frame: bumping it changes the src, which
+                                   is a reload, and leaving every other slot's alone is what stops a
+                                   phone somebody is mid-letter on from being yanked back. *@
+                                <iframe class="sim-frame" title="@($"Phone {slot}")"
+                                        src="@($"/join?sim={slot}&r={Sims.NonceFor(slot)}")"></iframe>
                             </div>
                         }
                     </div>
@@ -468,6 +477,34 @@
     private void AddPhones(int count)
     {
         for (var i = 0; i < count; i++) Sims.Add();
+    }
+
+    private int PhonesWaiting => Sims.Slots.Count(s => Sims.PersonFor(s) is null);
+
+    /// <summary>
+    /// Type the live party code into every phone still sitting at the door, and tap a name.
+    ///
+    /// The whole point of the strip is not having to do that twenty-five times by hand. Each seat
+    /// goes through the same CastingService the real door calls and binds the slot at the same
+    /// point JoinWithCode would, so a phone signed in from here is indistinguishable from one
+    /// somebody typed into — and it stops when the guest seats run out rather than pretending it
+    /// seated anybody else.
+    /// </summary>
+    private async Task SignEveryPhoneInAsync()
+    {
+        foreach (var slot in Sims.Slots.Where(s => Sims.PersonFor(s) is null).ToList())
+        {
+            var personId = await Store.MutateAsync(
+                t => CastingService.SeatNextGuest(t, t.Mystery.Play.PartyCode, Random.Shared), Watching);
+
+            if (personId is null) break;
+
+            Sims.Bind(slot, personId);
+            Sims.Reload(slot);
+        }
+
+        // Twenty-five seats is worth forcing to disk, for the same reason the real door does it.
+        await Store.FlushAsync();
     }
 
     /// <summary>Whoever has signed into that frame, once they have.</summary>

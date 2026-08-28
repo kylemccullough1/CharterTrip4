@@ -145,6 +145,27 @@ public static class CastingService
         return seat;
     }
 
+    /// <summary>
+    /// Seat the next person still waiting at the door, and say who it was.
+    ///
+    /// What one phone does when somebody types the party code and taps a name, with the choosing
+    /// taken out — so a caller can do it twenty-five times without twenty-five browsers. Refuses if
+    /// the code is not live, because then there is no door to walk through and nothing here should
+    /// invent one. Null when the room is full.
+    /// </summary>
+    public static string? SeatNextGuest(TripData trip, string code, Random random)
+    {
+        if (!string.Equals(trip.Mystery.Play.PartyCode, code, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        if (string.IsNullOrWhiteSpace(code)) return null;
+
+        var next = Unclaimed(trip).FirstOrDefault();
+        if (next is null) return null;
+
+        return ClaimCharacter(trip, next.Id, random) is null ? null : next.Id;
+    }
+
     // ------------------------------------------------------------------------------------------
     //  The house parts
     // ------------------------------------------------------------------------------------------

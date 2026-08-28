@@ -3,6 +3,7 @@
 @layout BareLayout
 @inject NavigationManager Nav
 @inject IWebHostEnvironment Env
+@inject CharterTrip.Web.Services.SimPhones Sims
 
 @* Where a guest types the code off the screen.
 
@@ -70,7 +71,16 @@
 
     private string? _error;
 
-    protected override void OnInitialized() => Input ??= new CodeEntry();
+    protected override void OnInitialized()
+    {
+        Input ??= new CodeEntry();
+
+        // A simulated phone that has already been signed in — by the testing panel, or by somebody
+        // typing the code into it — has no business being asked for one again. This is what makes
+        // "sign every phone in" land each frame on its own character rather than back at the door.
+        if (Env.IsDevelopment() && Sim is > 0 && Sims.PersonFor(Sim.Value) is not null)
+            Nav.NavigateTo($"/m?sim={Sim}");
+    }
 
     /// <summary>
     /// Hand the code straight to /join/{code}, which is the one place that works out what any code

@@ -4016,3 +4016,6 @@ pre.code {
 }
 
 .sim-nav { margin-top: 8px; }
+
+/* The one chip on the testing panel that does something to the whole strip. */
+.chip.chip-do { border-color: var(--gold); color: var(--gold-light); }

@@ -71,9 +71,12 @@
                 </div>
             </div>
 
+            @* The same sentence the host's console shows, because two screens counting the same
+               room in different words is how you end up believing the wrong one. "4 house parts
+               still going" was this line, and it named nobody. *@
             <p class="ms-count">
                 <b>@Seated</b> of @Play.Cast.Count here
-                @if (StaffLeft > 0) { <span class="muted"> · @StaffLeft house @(StaffLeft == 1 ? "part" : "parts") still going</span> }
+                <span class="muted"> · @StartReason</span>
             </p>
 
             <div class="ms-grid">
@@ -339,6 +342,9 @@
 
     private int Seated => Play.Cast.Count(c => c.PersonId is not null);
     private int StaffLeft => CastingService.UnclaimedStaffParts(Trip).Count;
+
+    /// <summary>Who the evening is still waiting on, in the words the host's console uses.</summary>
+    private string StartReason => CastingService.CanStart(Trip).Reason;
 
     private IEnumerable<MysteryCastMember> Arrived =>
         Play.Cast.Where(c => c.PersonId is not null).OrderBy(c => c.JoinedAt);

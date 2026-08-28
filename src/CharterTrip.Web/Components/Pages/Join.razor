@@ -27,7 +27,7 @@
         <EditForm Model="Input" FormName="join" OnValidSubmit="Go" method="post">
             <label class="login-field">
                 <span>Code</span>
-                <InputText @bind-Value="Input.Code" class="login-input buzz-code-input"
+                <InputText @bind-Value="Input!.Code" class="login-input buzz-code-input"
                            autocomplete="off" autocapitalize="characters" spellcheck="false"
                            inputmode="latin" placeholder="CODE" autofocus />
             </label>
@@ -45,12 +45,22 @@
 </div>
 
 @code {
-    [SupplyParameterFromForm(FormName = "join")] private CodeEntry Input { get; set; } = new();
+    /// <summary>
+    /// Nullable, and filled in <see cref="OnInitialized"/> rather than by an initializer.
+    ///
+    /// The form binder overwrites this property on every POST, initializer and all — which is what
+    /// BL0008 warns about, and what took the character picker down: a model with nothing to bind
+    /// came back null and EditForm threw. This one has a field to bind so it survives in practice,
+    /// but relying on that is relying on the shape of the form never changing.
+    /// </summary>
+    [SupplyParameterFromForm(FormName = "join")] private CodeEntry? Input { get; set; }
 
     /// <summary>Where to land afterwards, when something bounced you here. See <see cref="SafeRedirect"/>.</summary>
     [SupplyParameterFromQuery(Name = "returnUrl")] private string? ReturnUrl { get; set; }
 
     private string? _error;
+
+    protected override void OnInitialized() => Input ??= new CodeEntry();
 
     /// <summary>
     /// Hand the code straight to /join/{code}, which is the one place that works out what any code
@@ -59,7 +69,7 @@
     /// </summary>
     private void Go()
     {
-        var typed = new string((Input.Code ?? "").Where(char.IsLetterOrDigit).ToArray());
+        var typed = new string((Input?.Code ?? "").Where(char.IsLetterOrDigit).ToArray());
 
         if (typed.Length == 0)
         {

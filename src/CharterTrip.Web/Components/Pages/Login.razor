@@ -26,23 +26,23 @@
             </svg>
         </span>
 
+        @* The heading is the whole explanation. The line that used to sit under it told guests they
+           were in the wrong place, on a page guests have no route to — the nav does not link it, and
+           anybody who scans a code never sees it. *@
         <h1 class="login-title">Committee sign in</h1>
-        <p class="login-sub">
-            Guests don't need this — they <a href="/join">join with the code</a> from the screen.
-        </p>
 
         <EditForm Model="Input" FormName="login" OnValidSubmit="SubmitAsync" method="post">
             <DataAnnotationsValidator />
 
             <label class="login-field">
                 <span>Username</span>
-                <InputText @bind-Value="Input.Username" class="login-input"
+                <InputText @bind-Value="Input!.Username" class="login-input"
                            autocomplete="username" autocapitalize="none" autofocus />
             </label>
 
             <label class="login-field">
                 <span>Password</span>
-                <InputText @bind-Value="Input.Password" type="password" class="login-input"
+                <InputText @bind-Value="Input!.Password" type="password" class="login-input"
                            autocomplete="current-password" />
             </label>
 
@@ -61,7 +61,10 @@
 @code {
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
-    [SupplyParameterFromForm(FormName = "login")] private Credentials Input { get; set; } = new();
+    /// <summary>Nullable and filled on init — see the note in Join.razor. Same trap.</summary>
+    [SupplyParameterFromForm(FormName = "login")] private Credentials? Input { get; set; }
+
+    protected override void OnInitialized() => Input ??= new Credentials();
 
     /// <summary>Where to land afterwards. Only ever a path on this site — see <see cref="SafeRedirect"/>.</summary>
     [SupplyParameterFromQuery(Name = "returnUrl")] private string? ReturnUrl { get; set; }
@@ -70,12 +73,12 @@
 
     private async Task SubmitAsync()
     {
-        if (!SignIn.Verify(Input.Username, Input.Password))
+        if (!SignIn.Verify(Input?.Username, Input?.Password))
         {
             // One message for both halves. "No such user" tells an outsider which of the two
             // they got right, and there is nothing to gain by being more helpful than this.
             _error = "That username and password do not match.";
-            Input = new Credentials { Username = Input.Username };
+            Input = new Credentials { Username = Input?.Username ?? "" };
             Log.LogWarning("Failed admin sign-in from {Ip}.", HttpContext.Connection.RemoteIpAddress);
             return;
         }
@@ -96,8 +99,4 @@
         public string Password { get; set; } = "";
     }
 
-    public sealed class CodeEntry
-    {
-        public string Code { get; set; } = "";
-    }
 }

@@ -27,6 +27,13 @@
 <div class="login-page">
     <div class="login-card">
 
+@if (Stale)
+{
+    @* Bounced back here by the antiforgery guard in Program.cs rather than shown a 400. Says what
+       to do, because "your token expired" is not something anybody at a party can act on. *@
+    <p class="login-error" role="alert">That took a moment too long. Tap again.</p>
+}
+
 @if (_state == State.PickHostName)
 {
     <h1 class="login-title">Which of you is this?</h1>
@@ -35,9 +42,10 @@
     <div class="join-names">
         @foreach (var person in Organizers)
         {
-            <EditForm Model="Picked" FormName="@($"host-{person.Id}")" OnValidSubmit="() => PickOrganiser(person.Id)" method="post">
+            <form method="post" @formname="@($"host-{person.Id}")" @onsubmit="() => PickOrganiser(person.Id)">
+                <AntiforgeryToken />
                 <button type="submit" class="join-name">@person.Name</button>
-            </EditForm>
+            </form>
         }
     </div>
 }
@@ -58,12 +66,13 @@ else if (_state == State.PickPart)
         <div class="join-roles">
             @foreach (var part in StaffParts)
             {
-                <EditForm Model="Picked" FormName="@($"npc-{part.Id}")" OnValidSubmit="() => ClaimStaffAsync(part.Id)" method="post">
+                <form method="post" @formname="@($"npc-{part.Id}")" @onsubmit="() => ClaimStaffAsync(part.Id)">
+                    <AntiforgeryToken />
                     <button type="submit" class="join-role">
                         <span class="join-role-name">@part.Name</span>
                         <span class="join-role-title">@part.Job</span>
                     </button>
-                </EditForm>
+                </form>
             }
         </div>
     }
@@ -82,13 +91,19 @@ else if (_state == State.PickName)
     else
     {
         @* A form per name rather than one form with a select: on a phone, in a dark room, one tap
-           beats a dropdown plus a submit. Static SSR, so each is a real post. *@
+           beats a dropdown plus a submit. Static SSR, so each is a real post.
+
+           Plain forms rather than EditForm, and that is the whole bug fix. EditForm demands a Model,
+           the model here carried no data, and on a POST the form binder set it to null — so every
+           tap threw "EditForm requires either a Model parameter" and the front door 500'd for
+           everybody. A form that submits nothing but its own name does not need a model at all. *@
         <div class="join-names">
             @foreach (var person in People)
             {
-                <EditForm Model="Picked" FormName="@($"claim-{person.Id}")" OnValidSubmit="() => ClaimAsync(person.Id)" method="post">
+                <form method="post" @formname="@($"claim-{person.Id}")" @onsubmit="() => ClaimAsync(person.Id)">
+                    <AntiforgeryToken />
                     <button type="submit" class="join-name">@person.Name</button>
-                </EditForm>
+                </form>
             }
         </div>
         <p class="login-sub tiny">
@@ -119,11 +134,13 @@ else
 
     [Parameter] public string? Code { get; set; }
 
-    /// <summary>Unused as data — the name buttons are forms, and this satisfies EditForm.</summary>
-    [SupplyParameterFromForm] private Empty Picked { get; set; } = new();
-
     /// <summary>Where to land afterwards. Only ever a path on this site — see <see cref="SafeRedirect"/>.</summary>
     [SupplyParameterFromQuery(Name = "returnUrl")] private string? ReturnUrl { get; set; }
+
+    /// <summary>Set by the antiforgery guard when it sends a stale form back for another go.</summary>
+    [SupplyParameterFromQuery(Name = "stale")] private string? StaleFlag { get; set; }
+
+    private bool Stale => StaleFlag is { Length: > 0 };
 
     private State _state = State.Unknown;
 
@@ -271,6 +288,4 @@ else
 
         Nav.NavigateTo(ReturnUrl is { Length: > 0 } ? SafeRedirect.Local(ReturnUrl) : landing);
     }
-
-    public sealed class Empty { }
 }

@@ -3428,10 +3428,49 @@ pre.code {
 
 .pr-poster-host { border-style: dashed; }
 
-/* The mystery's sim strip: phone-shaped frames, taller and narrower than a buzzer's. */
-.mys-sim-picks { margin-top: 12px; }
-.mys-simcard { width: 300px; }
-.mys-simframe { height: 600px; }
+/* The mystery's sim strip.
+ *
+ * Twenty-five phones do not wrap into a readable wall the way five buzzers do, so this is a
+ * horizontal rail that snaps rather than a flex row that wraps — the shape of the cast stays legible
+ * and the page stays one screen tall. The three rules that used to live here were never applied to
+ * anything: the markup was using the Jeopardy classes, so the phones rendered buzzer-shaped. */
+
+/* Wraps to as many rows as it needs. Capping it clipped the last row through the middle of the
+   names, which reads as broken rather than as scrollable. */
+.sim-jump { margin: 12px 0 4px; }
+.sim-jump .chip { text-decoration: none; }
+
+.sim-rail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 4px 4px 12px;
+  overscroll-behavior-x: contain;
+}
+
+.sim-card {
+  flex: 0 0 300px;
+  scroll-snap-align: center;
+
+  /* The anchors above scroll this container, and without the margin a jumped-to card lands flush
+     against the edge with its neighbour cropped in a way that reads as broken. */
+  scroll-margin-inline: 12px;
+
+  display: flex; flex-direction: column; gap: 6px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm); padding: 10px;
+}
+
+.sim-label { display: flex; align-items: center; gap: 6px; font-size: 0.813rem; font-weight: 600; }
+
+/* Phone-shaped, and lazy — the browser mounts a circuit only when the card is scrolled near, which
+   is what makes having all twenty-five of them affordable. */
+.sim-frame {
+  width: 100%; height: 620px;
+  border: 0; border-radius: var(--radius-sm);
+  background: var(--ink-2);
+}
 
 /* =============================================================================
    Murder at Braun Manor — the rebuilt surfaces.

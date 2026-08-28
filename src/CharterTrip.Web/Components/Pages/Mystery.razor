@@ -248,11 +248,13 @@
 
        Real /m pages in iframes rather than a hand-rolled stand-in, so what you are testing is
        exactly what a phone would show, tab gating and all. They go through ?as= rather than the
-       codes on the wall: a code now signs you in, and twenty-five iframes sharing this page's
-       cookie would fight over one session and sign you out of your own board.
+       codes on the wall: a code signs you in, and twenty-five iframes sharing this page's cookie
+       would fight over one session and sign you out of your own board.
 
-       Which characters to open is a choice rather than a default, because every frame is a whole
-       Blazor circuit and twenty-five of them is not a landing page. *@
+       Everybody has a card, the way the Jeopardy strip gives every team a buzzer. Twenty-five live
+       circuits at once would be a lot, so the frames are lazy: the browser only mounts one when you
+       scroll it into view, which makes the whole cast affordable without any of it being a choice
+       you have to make first. *@
     <section class="jeo-testing no-print">
         <button class="btn btn-ghost btn-sm" @onclick="() => _simOpen = !_simOpen">
             🧪 Testing @(_simOpen ? "▲" : "▼")
@@ -268,28 +270,35 @@
                     <button class="chip" @onclick="MeetEverybodyAsync">⚡ Everybody mingles</button>
                 </div>
 
-                <div class="chip-row mys-sim-picks">
-                    <button class="chip" @onclick="() => _sim.Clear()">None</button>
-                    <button class="chip" @onclick="ShowStaff">The four of you</button>
-                    <button class="chip" @onclick="ShowGuilty">The guilty</button>
+                @* Anchors rather than buttons, so jumping to somebody is the browser scrolling its
+                   own container. No JS, and it survives the page re-rendering under it. *@
+                <div class="chip-row sim-jump">
                     @foreach (var character in Story.Characters)
                     {
-                        <button class="chip @(_sim.Contains(character.Id) ? "on" : "")"
-                                @key="character.Id" @onclick="() => ToggleSim(character.Id)">
-                            @character.Name@(character.IsKiller ? " 🔪" : "")
-                        </button>
+                        <a class="chip" href="@($"#sim-{character.Id}")" @key="character.Id">
+                            @character.Name@(character.IsKiller ? " 🔪" : "")@(character.IsStaff ? " ★" : "")
+                        </a>
                     }
                 </div>
 
-                <div class="jeo-simstrip-row">
-                    @foreach (var id in _sim)
+                <div class="sim-rail">
+                    @foreach (var character in Story.Characters)
                     {
-                        <div class="jeo-simcard" @key="id">
-                            <span class="jeo-simcard-label">@(Story.Character(id)?.Name)</span>
-                            <iframe class="jeo-simframe" src="@($"/m?as={id}")" title="@($"Phone — {id}")"></iframe>
+                        <div class="sim-card" id="@($"sim-{character.Id}")" @key="character.Id">
+                            <span class="sim-label">
+                                @character.Name
+                                @if (character.IsKiller) { <span class="mys-tag mys-killer">@character.GuiltSlot</span> }
+                                else if (character.IsStaff) { <span class="mys-tag">staff</span> }
+                            </span>
+                            <iframe class="sim-frame" loading="lazy"
+                                    src="@($"/m?as={character.Id}")" title="@($"Phone — {character.Name}")"></iframe>
                         </div>
                     }
                 </div>
+
+                <p class="muted tiny">
+                    @Story.Characters.Count phones. Scroll the rail, or tap a name to jump to one.
+                </p>
             </div>
         }
     </section>
@@ -446,24 +455,6 @@
 
     private bool IsDev => Env.IsDevelopment();
     private bool _simOpen;
-    private readonly List<string> _sim = [];
-
-    private void ToggleSim(string id)
-    {
-        if (!_sim.Remove(id)) _sim.Add(id);
-    }
-
-    private void ShowStaff()
-    {
-        _sim.Clear();
-        _sim.AddRange(Story.StaffParts.Select(c => c.Id));
-    }
-
-    private void ShowGuilty()
-    {
-        _sim.Clear();
-        _sim.AddRange(Story.Killers.Select(c => c.Id));
-    }
 
     /// <summary>
     /// Everything here goes through the real service calls rather than writing state directly, so

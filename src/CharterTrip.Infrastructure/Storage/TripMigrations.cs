@@ -13,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 20;
+    public const int CurrentVersion = 21;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -35,6 +35,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 14) changed |= ToV14_GroupedEssentials(trip);
         if (trip.SchemaVersion < 19) changed |= ToV19_EverybodyHasAJoinToken(trip);
         if (trip.SchemaVersion < 20) changed |= ToV20_BraunManorReplacesWestEgg(trip);
+        if (trip.SchemaVersion < 21) changed |= ToV21_StoryMode(trip);
 
         // v18 gave a carpool's ETA a day to go with the time. No step, same as the two
         // before it: the field defaults to empty and an older file simply has not said.
@@ -521,15 +522,42 @@ public static class TripMigrations
     ///
     /// Guarded on finding the old text, so a title someone has since chosen deliberately survives.
     /// </summary>
+    /// <summary>
+    /// v21 rebuilds the murder mystery as one written story rather than a generator.
+    ///
+    /// v20's game dealt a different evening every time: a seeded dealer placed everybody, drew three
+    /// killers by guilt slot, picked red herrings and laid out clues, and a compiler wrote every
+    /// sentence from templates plus a guilty-or-innocent reading per character. This one is played
+    /// once, so all of that has gone and the story is written by hand instead — which also means it
+    /// can live here, in the trip, and be edited on the site like everything else.
+    ///
+    /// Nothing carries over. <c>CurrentRoundIndex</c> has no phase, the deal has no story, and the
+    /// prose the old model referenced by id was never in the document to begin with. So the section
+    /// is reset and reseeded from the embedded content on first use.
+    ///
+    /// The load-order half of this lives in <c>LegacyJsonShapes.DropPreV21Mystery</c>, which has to
+    /// run first: a v20 enum name that no longer exists would quarantine the whole trip file before
+    /// this method ever sees a <see cref="TripData"/>.
+    /// </summary>
+    private static bool ToV21_StoryMode(TripData trip)
+    {
+        var changed = trip.Mystery.Phase != MysteryPhase.Lobby
+                      || trip.Mystery.Play.Cast.Count > 0
+                      || trip.Mystery.Story.Characters.Count > 0;
+
+        trip.Mystery = new MysteryState();
+        return changed;
+    }
+
     private static bool ToV20_BraunManorReplacesWestEgg(TripData trip)
     {
         const string old = "Murder at West Egg Manor";
         const string now = "Murder at Braun Manor";
 
-        // Nothing in the old shape is worth carrying: the cast was 26 West Egg roles with empty
-        // secrets, and Braun Manor deals its own from the script.
-        var changed = trip.Mystery.Deal is not null || trip.Mystery.Active;
-        trip.Mystery = new MysteryState();
+        // The mystery reset this step used to do now belongs to v21, which replaced the model
+        // again. Resetting here as well would be a second implementation of the same decision, and
+        // it can no longer be expressed in terms of the current shape anyway.
+        var changed = false;
 
         // The name appears in three places, all of them read by guests before the night.
         foreach (var slide in trip.Slides.Where(s => s.Caption == old))

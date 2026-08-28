@@ -179,9 +179,4 @@ app.MapGet(TripMedia.UrlPrefix + "{id}", async (string id, IPhotoStore media, Ht
 // the first page request.
 _ = app.Services.GetRequiredService<ITripStore>().Current;
 
-// Same for the murder mystery's content. ScriptLoader validates as it loads — 21 characters, every
-// zone reference real, placement actually satisfiable — and throws with the list of what is wrong.
-// Better here than while dealing a game in front of everyone.
-_ = app.Services.GetRequiredService<CharterTrip.Core.Mystery.Script.MysteryScript>();
-
 app.Run();

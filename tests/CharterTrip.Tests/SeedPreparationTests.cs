@@ -27,28 +27,22 @@ public class SeedPreparationTests
         game.BuzzerCodes[trip.Teams[0].Id] = "XY4H";
         game.HostCode = "AAKH";
 
-        trip.Mystery.Active = true;
-        trip.Mystery.CurrentRoundIndex = 2;
-        trip.Mystery.Deal = new MysteryDeal
+        trip.Mystery.Phase = MysteryPhase.Investigation;
+        trip.Mystery.Story.Characters.Add(new MysteryCharacter
         {
-            Seed = 1234,
-            Cast =
-            [
-                new MysteryCastMember
-                {
-                    CharacterId = "wilhelm",
-                    PersonId = trip.Roster[0].Id,
-                    ZoneId = "entry",
-                    FactionId = "killer",
-                    GuiltSlot = "access"
-                }
-            ]
-        };
-        trip.Mystery.Clues.Add(new MysteryClue
-        {
-            Id = "mc-1", Token = "ACDEFGHJKM", ZoneId = "entry", TraceCharacterId = "wilhelm", Found = true
+            Id = "wilhelm", Name = "Wilhelm Shepard", ZoneId = "entry", FactionId = "killer", GuiltSlot = "access"
         });
-        trip.Mystery.Trials.Add(new MysteryTrial { RoundId = "trial_1", ConvictedCharacterIds = ["hugo"] });
+        trip.Mystery.Play.PartyCode = "ACDEF";
+        trip.Mystery.Play.HostCode = "GHJKM";
+        trip.Mystery.Play.Cast.Add(new MysteryCastMember
+        {
+            CharacterId = "wilhelm", PersonId = trip.Roster[0].Id, BadgeToken = "ACDEFGHJKMNP"
+        });
+        trip.Mystery.Play.ClueScans.Add(new MysteryClueScan { CharacterId = "wilhelm", ClueId = "mc-1" });
+        trip.Mystery.Play.Trials.Add(new MysteryTrial
+        {
+            Phase = MysteryPhase.Trial1, ConvictedCharacterIds = ["hugo"]
+        });
 
         return trip;
     }
@@ -66,14 +60,19 @@ public class SeedPreparationTests
         Assert.Empty(trip.Jeopardy.Game.UsedClueIds);
         Assert.Empty(trip.Jeopardy.Game.BuzzerCodes);
         Assert.Equal("", trip.Jeopardy.Game.HostCode);
-        Assert.False(trip.Mystery.Active);
-        Assert.Equal(-1, trip.Mystery.CurrentRoundIndex);
+        Assert.Equal(MysteryPhase.Lobby, trip.Mystery.Phase);
 
-        // The whole mystery goes, deal included. Nothing in it is authored any more — it is all
-        // generated from the script and a seed, so there is no host work to preserve.
-        Assert.Null(trip.Mystery.Deal);
-        Assert.Empty(trip.Mystery.Clues);
-        Assert.Empty(trip.Mystery.Trials);
+        // The evening goes: the cast, the codes, the scans, the verdicts. All of it belongs to one
+        // night and means nothing in a committed seed.
+        Assert.Empty(trip.Mystery.Play.Cast);
+        Assert.Empty(trip.Mystery.Play.ClueScans);
+        Assert.Empty(trip.Mystery.Play.Trials);
+        Assert.Equal("", trip.Mystery.Play.PartyCode);
+        Assert.Equal("", trip.Mystery.Play.HostCode);
+
+        // The written half stays. It is content — hours of it — and losing it to a seed refresh
+        // would be throwing away the game rather than resetting it.
+        Assert.Single(trip.Mystery.Story.Characters);
 
         // Issued identity, and this file goes into git.
         Assert.All(trip.Roster, p => Assert.True(string.IsNullOrEmpty(p.JoinToken)));
@@ -112,6 +111,6 @@ public class SeedPreparationTests
         Assert.Equal(seed.UpdatedUtc, prepared.UpdatedUtc);
         Assert.Equal(seed.Scores.Count, prepared.Scores.Count);
         Assert.Equal(seed.Jeopardy.Game.Phase, prepared.Jeopardy.Game.Phase);
-        Assert.Equal(seed.Mystery.CurrentRoundIndex, prepared.Mystery.CurrentRoundIndex);
+        Assert.Equal(seed.Mystery.Phase, prepared.Mystery.Phase);
     }
 }

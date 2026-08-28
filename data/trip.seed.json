@@ -1054,7 +1054,6 @@
     }
   },
   "mystery": {
-    "active": false,
-    "currentRoundIndex": -1
+    "phase": "lobby"
   }
 }

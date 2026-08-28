@@ -101,16 +101,16 @@ public class SeedDataTests
     }
 
     [Fact]
-    public void The_seed_carries_no_dealt_mystery()
+    public void The_seed_carries_no_mystery_in_progress()
     {
-        // The 21 Braun Manor characters live in the embedded script, not here, and the cast is
-        // generated at deal time from a seed. A trip.seed.json carrying a deal would ship a
-        // guilty list in git.
-        Assert.Null(Seed.Mystery.Deal);
-        Assert.False(Seed.Mystery.Active);
-        Assert.Empty(Seed.Mystery.Clues);
-        Assert.Empty(Seed.Mystery.Trials);
-        Assert.Equal(-1, Seed.Mystery.CurrentRoundIndex);
+        // The story is seeded into a trip from data/braun-manor/ on first use, and the evening
+        // played on top of it belongs to one night. A committed seed carrying either would ship a
+        // guilty list and a set of live join codes in git.
+        Assert.Equal(MysteryPhase.Lobby, Seed.Mystery.Phase);
+        Assert.Empty(Seed.Mystery.Play.Cast);
+        Assert.Empty(Seed.Mystery.Play.Trials);
+        Assert.Equal("", Seed.Mystery.Play.PartyCode);
+        Assert.Equal("", Seed.Mystery.Play.HostCode);
     }
 
     [Fact]

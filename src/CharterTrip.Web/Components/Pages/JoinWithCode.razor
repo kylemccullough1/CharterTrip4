@@ -4,7 +4,6 @@
 @using CharterTrip.Core.Abstractions
 @using CharterTrip.Core.Models
 @using CharterTrip.Core.Mystery
-@using CharterTrip.Core.Mystery.Script
 @using CharterTrip.Web.Auth
 @using CharterTrip.Core.Services
 @using Microsoft.AspNetCore.Authentication
@@ -12,7 +11,6 @@
 @inject ITripStore Store
 @inject NavigationManager Nav
 @inject ILogger<JoinWithCode> Log
-@inject CharterTrip.Core.Mystery.Script.MysteryScript Script
 
 @* The one door for every code on this trip.
 
@@ -43,7 +41,7 @@
         }
     </div>
 }
-else if (_state == State.PickNpc)
+else if (_state == State.PickPart)
 {
     <h1 class="login-title">Which part?</h1>
     <p class="login-sub">
@@ -51,19 +49,19 @@ else if (_state == State.PickNpc)
         the other three are guests who are secretly staff.
     </p>
 
-    @if (Npcs.Count == 0)
+    @if (StaffParts.Count == 0)
     {
         <p class="login-sub">All four are taken. If that's wrong, somebody needs to hand one back.</p>
     }
     else
     {
         <div class="join-roles">
-            @foreach (var role in Npcs)
+            @foreach (var part in StaffParts)
             {
-                <EditForm Model="Picked" FormName="@($"npc-{role.Id}")" OnValidSubmit="() => ClaimNpcAsync(role.Id)" method="post">
+                <EditForm Model="Picked" FormName="@($"npc-{part.Id}")" OnValidSubmit="() => ClaimStaffAsync(part.Id)" method="post">
                     <button type="submit" class="join-role">
-                        <span class="join-role-name">@role.Name</span>
-                        <span class="join-role-title">@role.Title@(role.IsHost ? "" : $" · {role.Zone}")</span>
+                        <span class="join-role-name">@part.Name</span>
+                        <span class="join-role-title">@part.Job</span>
                     </button>
                 </EditForm>
             }
@@ -115,7 +113,7 @@ else
 </div>
 
 @code {
-    private enum State { Unknown, PickName, PickHostName, PickNpc }
+    private enum State { Unknown, PickName, PickHostName, PickPart }
 
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
@@ -134,17 +132,17 @@ else
 
     private string? _organiserId;
 
-    private IReadOnlyList<RosterPerson> People => MysteryService.Unclaimed(Store.Current);
+    private IReadOnlyList<RosterPerson> People => CastingService.Unclaimed(Store.Current);
 
-    private IReadOnlyList<RosterPerson> Organizers => MysteryService.Organizers(Store.Current);
+    private IReadOnlyList<RosterPerson> Organizers => CastingService.Organizers(Store.Current);
 
-    private IReadOnlyList<ScriptNpcRole> Npcs => MysteryService.UnclaimedNpcs(Store.Current, Script);
+    private IReadOnlyList<MysteryCharacter> StaffParts => CastingService.UnclaimedStaffParts(Store.Current);
 
     /// <summary>Whoever is already signed in, if anybody.</summary>
     private string? CurrentPersonId =>
         HttpContext.User.FindFirst(TripClaims.PersonId)?.Value is { Length: > 0 } id ? id : null;
-    private int SeatsLeft => MysteryService.SeatsLeft(Store.Current);
-    private int TotalSeats => Store.Current.Mystery.Deal?.Cast.Count ?? 0;
+    private int SeatsLeft => CastingService.SeatsLeft(Store.Current);
+    private int TotalSeats => CastingService.TotalSeats(Store.Current);
 
     protected override async Task OnInitializedAsync()
     {
@@ -172,7 +170,7 @@ else
             _organiserId = Store.Current.Roster
                 .FirstOrDefault(p => (p.Id == WhoQuery || p.Id == CurrentPersonId) && p.Role == TripRole.Admin)?.Id;
 
-            _state = _organiserId is null ? State.PickHostName : State.PickNpc;
+            _state = _organiserId is null ? State.PickHostName : State.PickPart;
             return;
         }
 
@@ -206,7 +204,7 @@ else
     private async Task ClaimAsync(string personId)
     {
         var claimed = await Store.MutateAsync(
-            t => MysteryService.ClaimCharacter(t, personId, Random.Shared), TripArea.Mystery);
+            t => CastingService.ClaimCharacter(t, personId, Random.Shared), TripArea.Mystery);
 
         if (claimed is null)
         {
@@ -219,7 +217,7 @@ else
         await Store.FlushAsync();
 
         var person = Store.Current.Roster.First(p => p.Id == personId);
-        await SignInAndGo(TripSignIn.ForPerson(person), "/m");
+        await SignInAndGo(TripSignIn.ForPerson(person), "/m/welcome");
     }
 
     /// <summary>
@@ -240,25 +238,25 @@ else
     /// Forced to disk: this is who is running the evening, and reconstructing it after a restart
     /// means asking four people which of them was meant to be Bertram.
     /// </summary>
-    private async Task ClaimNpcAsync(string npcId)
+    private async Task ClaimStaffAsync(string characterId)
     {
         var personId = _organiserId ?? WhoQuery;
         if (personId is null) { _state = State.Unknown; return; }
 
         var ok = await Store.MutateAsync(
-            t => MysteryService.ClaimNpc(t, Script, personId, npcId), TripArea.Mystery);
+            t => CastingService.ClaimStaffPart(t, personId, characterId), TripArea.Mystery);
 
         if (!ok)
         {
             // Somebody else got there between the page rendering and the tap. Show what is left.
-            _state = State.PickNpc;
+            _state = State.PickPart;
             return;
         }
 
         await Store.FlushAsync();
 
         var person = Store.Current.Roster.First(p => p.Id == personId);
-        await SignInAndGo(TripSignIn.ForPerson(person), "/m");
+        await SignInAndGo(TripSignIn.ForPerson(person), "/m/welcome");
     }
 
     private async Task SignInAndGo(System.Security.Claims.ClaimsPrincipal principal, string landing)

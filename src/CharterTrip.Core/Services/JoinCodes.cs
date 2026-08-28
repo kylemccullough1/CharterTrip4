@@ -127,13 +127,13 @@ public static class JoinCodes
 
         // The two mystery codes, which are doors rather than identities. The host one is checked
         // first so a collision could never hand an organizer's door to a guest.
-        if (trip.Mystery.HostCode is { Length: > 0 } host &&
+        if (trip.Mystery.Play.HostCode is { Length: > 0 } host &&
             string.Equals(Clean(host), cleaned, StringComparison.OrdinalIgnoreCase))
         {
             return new CodeMatch(CodeKind.MysteryHost);
         }
 
-        if (trip.Mystery.PartyCode is { Length: > 0 } party &&
+        if (trip.Mystery.Play.PartyCode is { Length: > 0 } party &&
             string.Equals(Clean(party), cleaned, StringComparison.OrdinalIgnoreCase))
         {
             return new CodeMatch(CodeKind.MysteryParty);

@@ -19,7 +19,31 @@ internal static class LegacyJsonShapes
 {
     /// <summary>Returns true if the document was rewritten and should be re-serialized.</summary>
     public static bool Normalize(JsonNode? root) =>
-        root is JsonObject document && DropPreV9JeopardyBoard(document);
+        root is JsonObject document && DropPreV9JeopardyBoard(document) | DropPreV21Mystery(document);
+
+    /// <summary>
+    /// v21 rebuilt the murder mystery from the model up: a written story plus a phase machine,
+    /// where before there was a generated deal and an index into a list of rounds. Nothing in the
+    /// old node maps onto the new one.
+    ///
+    /// Emptying it here rather than in the migration is not tidiness. <c>TripJson.Options</c>
+    /// registers a <c>JsonStringEnumConverter</c>, which throws on an enum name it does not know —
+    /// and migrations run on a <c>TripData</c>, which means deserialization has already had to
+    /// succeed. So one leftover value like <c>"phase": "openVote"</c> in a deployed file does not
+    /// break the mystery, it quarantines the entire trip: itinerary, roster, travel and all. Same
+    /// reasoning as <see cref="DropPreV9JeopardyBoard"/>, higher stakes.
+    /// </summary>
+    private static bool DropPreV21Mystery(JsonObject document)
+    {
+        if (document["mystery"] is not JsonObject mystery) return false;
+
+        // A v21 document has a phase. Only the old shape does not.
+        if (mystery["phase"] is not null) return false;
+        if (mystery.Count == 0) return false;
+
+        document["mystery"] = new JsonObject();
+        return true;
+    }
 
     /// <summary>
     /// Before v9 the board listed its categories as bare names and kept every clue in a flat

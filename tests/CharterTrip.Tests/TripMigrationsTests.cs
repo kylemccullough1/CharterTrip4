@@ -642,19 +642,20 @@ public class TripMigrationsTests
     }
 
     [Fact]
-    public void V20_throws_away_the_old_game_rather_than_converting_it()
+    public void V21_throws_away_the_old_game_rather_than_converting_it()
     {
         var trip = LoadV18WestEgg();
 
         TripMigrations.Apply(trip);
 
-        // West Egg was 26 characters, a mastermind and host-typed clue cards. Braun Manor deals
-        // its own cast from the script, so there is nothing to carry across and a half-converted
-        // document would be worst exactly where being wrong matters most.
-        Assert.Null(trip.Mystery.Deal);
-        Assert.False(trip.Mystery.Active);
-        Assert.Empty(trip.Mystery.Clues);
-        Assert.Equal(-1, trip.Mystery.CurrentRoundIndex);
+        // West Egg was 26 characters and a mastermind; v20's Braun Manor was a generator; this one
+        // is a written story and a phase machine. Nothing survives two rewrites, and a document
+        // half-way between any two of them would be worst exactly where being wrong matters most.
+        Assert.Equal(MysteryPhase.Lobby, trip.Mystery.Phase);
+        Assert.Empty(trip.Mystery.Play.Cast);
+        Assert.Empty(trip.Mystery.Play.Trials);
+        Assert.Empty(trip.Mystery.Story.Characters);
+        Assert.Equal(TripMigrations.CurrentVersion, trip.SchemaVersion);
     }
 
     [Fact]

@@ -41,11 +41,12 @@ public static class SeedPreparation
         // The board is content; the game on top of it is not.
         trip.Jeopardy.Game = new JeopardyGame();
 
-        // The murder mystery keeps nothing. Everything in it — the cast, the guilty list, the clue
-        // layout, the votes — is generated from the script and a seed at deal time, so there is no
-        // authored half to preserve. This used to be a field-by-field reset because the old game's
-        // characters and clue cards were typed in by hand.
-        trip.Mystery = new MysteryState();
+        // The murder mystery's written half is content and survives; the evening played on top of
+        // it does not. Story is the characters, the rooms, the clues and the prose, all of it edited
+        // on the site — losing that to a seed refresh would throw away the work. Play is the cast,
+        // the scans, the votes and the verdicts, which mean nothing outside the night they happened.
+        trip.Mystery.Phase = MysteryPhase.Lobby;
+        trip.Mystery.Play = new MysteryPlay();
 
         // Issued identity, not authored content, and this file is committed. See the class note.
         foreach (var person in trip.Roster)

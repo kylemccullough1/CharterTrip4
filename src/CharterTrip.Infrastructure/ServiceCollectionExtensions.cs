@@ -1,5 +1,4 @@
 using CharterTrip.Core.Abstractions;
-using CharterTrip.Infrastructure.Mystery;
 using CharterTrip.Infrastructure.Photos;
 using CharterTrip.Infrastructure.Storage;
 using Microsoft.Extensions.Configuration;
@@ -22,11 +21,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<JsonTripStore>();
         services.AddSingleton<ITripStore>(sp => sp.GetRequiredService<JsonTripStore>());
         services.AddSingleton<IPhotoStore, FileSystemPhotoStore>();
-
-        // The murder mystery's authored content: read once, never written, so a singleton of the
-        // immutable record rather than a service. ScriptLoader.Load() validates and throws, which
-        // is why this is resolved during startup in Program.cs rather than on first page hit.
-        services.AddSingleton(_ => ScriptLoader.Load());
 
         services.AddHostedService<TripFlushHostedService>();
         services.AddHostedService<BackupHostedService>();

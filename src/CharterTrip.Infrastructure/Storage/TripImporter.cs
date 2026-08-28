@@ -121,17 +121,17 @@ public static class TripImporter
                 warnings.Add($"Jeopardy categories with no clues: {string.Join(", ", thin)}.");
         }
 
-        // The old warning counted hand-typed mystery roles against the roster. There is nothing to
-        // count now — the 21 characters come from the embedded script, and the cast is generated.
-        // What is worth saying is that a dealt game carries its own solution: importing this file
-        // replaces whoever is currently guilty, including in front of a room mid-evening.
-        if (trip.Mystery.Deal is { } deal)
+        // A mystery file carries its own solution — who is guilty is written into the story, not
+        // drawn on the night — so importing one mid-evening swaps the murder out from under the room.
+        // Worth saying plainly rather than letting it be discovered on the wall.
+        if (trip.Mystery.Story.Characters.Count > 0)
         {
-            var uncast = deal.Cast.Count(c => c.PersonId is null);
+            var killers = trip.Mystery.Story.Killers.Count();
+            var seated = trip.Mystery.Play.Cast.Count(c => c.PersonId is not null);
             warnings.Add(
-                $"This file has a murder mystery dealt (seed {deal.Seed}) — importing it replaces " +
-                "the current cast and guilty list." +
-                (uncast > 0 ? $" {uncast} of {deal.Cast.Count} roles are uncast." : ""));
+                $"This file carries a murder mystery: {trip.Mystery.Story.Characters.Count} characters " +
+                $"and {killers} killers, replacing the current story." +
+                (seated > 0 ? $" {seated} people are already cast in it." : ""));
         }
 
         // Play state travels with the file. Nobody expects an upload to change the scoreboard,
@@ -144,8 +144,8 @@ public static class TripImporter
             warnings.Add($"This file has a Jeopardy game in progress ({trip.Jeopardy.Game.Phase}), " +
                          "including its buzzer codes.");
 
-        if (trip.Mystery.Active)
-            warnings.Add("This file has the murder mystery running.");
+        if (trip.Mystery.Phase != MysteryPhase.Lobby)
+            warnings.Add($"This file has the murder mystery running ({trip.Mystery.Phase}).");
 
         return warnings;
     }
@@ -202,6 +202,6 @@ public readonly record struct TripCounts(
         trip.Itinerary.Count,
         trip.Itinerary.Sum(d => d.Items.Count),
         trip.Jeopardy.Categories.Sum(c => c.Clues.Count),
-        trip.Mystery.Deal?.Cast.Count ?? 0,
+        trip.Mystery.Story.Characters.Count,
         trip.Scores.Count);
 }

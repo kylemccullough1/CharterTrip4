@@ -112,14 +112,30 @@ public static class ObjectiveBus
     /// </summary>
     public static IReadOnlyList<MysteryObjectiveIssue> Inbox(TripData trip, string characterId)
     {
-        var factionId = trip.Mystery.Story.Character(characterId)?.FactionId;
+        var character = trip.Mystery.Story.Character(characterId);
+        if (character is null) return [];
+
+        var seat = trip.Mystery.Play.ForCharacter(characterId);
         var rolesOut = PhaseService.RolesRevealed(trip);
 
         return trip.Mystery.Play.Objectives
-            .Where(o => Addresses(o, characterId, factionId, rolesOut))
+            .Where(o => Addresses(o, character, seat, rolesOut))
             .OrderByDescending(o => o.IssuedAt)
             .ToList();
     }
+
+    /// <summary>
+    /// Who "everybody" is: the twenty-one guests and the three facilitators, and not Braun.
+    ///
+    /// Named rather than counted, because it is what the console's Send button has to say out loud.
+    /// The host is the person pressing that button — an instruction addressed to the room and
+    /// delivered back to its sender is noise at the exact moment they are reading the room.
+    /// </summary>
+    public static IReadOnlyList<MysteryCharacter> Room(TripData trip) =>
+        trip.Mystery.Story.Characters
+            .Where(c => c.Staff != MysteryStaffRole.Host)
+            .Where(c => trip.Mystery.Play.ForCharacter(c.Id)?.JoinedAt is not null)
+            .ToList();
 
     /// <summary>The ones they have not ticked off. What the tab badges.</summary>
     public static IReadOnlyList<MysteryObjectiveIssue> Outstanding(TripData trip, string characterId) =>
@@ -150,14 +166,31 @@ public static class ObjectiveBus
     /// simple fact of arriving.
     /// </summary>
     private static bool Addresses(
-        MysteryObjectiveIssue objective, string characterId, string? factionId, bool rolesRevealed) =>
+        MysteryObjectiveIssue objective, MysteryCharacter character, MysteryCastMember? seat, bool rolesRevealed) =>
         objective.Audience switch
         {
-            MysteryAudience.Everyone => true,
-            MysteryAudience.Characters => objective.CharacterIds.Contains(characterId),
-            MysteryAudience.Faction => rolesRevealed && objective.FactionId == factionId,
+            MysteryAudience.Everyone => WasInTheRoom(objective, character, seat),
+            MysteryAudience.Characters => objective.CharacterIds.Contains(character.Id),
+            MysteryAudience.Faction => rolesRevealed && objective.FactionId == character.FactionId,
             _ => false
         };
+
+    /// <summary>
+    /// Whether this person was standing in the room when "everybody" was said.
+    ///
+    /// Two exclusions, and both were real. Braun is whoever sent it, so the room does not include
+    /// him. And an empty seat is not a person: an objective published at nine o'clock used to be
+    /// waiting on the phone of somebody who walked through the door at half past, who then read an
+    /// instruction about a conversation that had already happened. Delivery is decided against the
+    /// moment it was sent rather than against the moment somebody opens the tab.
+    /// </summary>
+    private static bool WasInTheRoom(
+        MysteryObjectiveIssue objective, MysteryCharacter character, MysteryCastMember? seat)
+    {
+        if (character.Staff == MysteryStaffRole.Host) return false;
+
+        return seat?.JoinedAt is { } joined && joined <= objective.IssuedAt;
+    }
 
     private static MysteryObjectiveIssue FromTemplate(
         MysteryObjectiveTemplate template,

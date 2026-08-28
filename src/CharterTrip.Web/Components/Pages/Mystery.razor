@@ -24,6 +24,12 @@
    Once the evening starts it takes the whole screen, because at that point it is a television. *@
 <div class="page page-murder ms-screen @(Live ? "is-live" : "")" data-phase="@Phase">
 
+@* One screen tall, always, and never more than one screen tall. Every phase used to size to its
+   own content, so the lobby had a wall of white space under it and the investigation ran off the
+   bottom — the two failures look nothing alike and have the same cause. The testing strip is
+   deliberately outside it: that one is meant to be scrolled to. *@
+<div class="ms-stage">
+
 @switch (Phase)
 {
     // ---------------------------------------------------------------------------- the door
@@ -55,39 +61,41 @@
         }
         else
         {
-            <div class="mys-doors">
-                <div class="mys-door">
-                    <QrImage Content="@JoinUrl(Play.PartyCode)" Size="190" Alt="Join the party" />
-                    <p class="mys-code">@Play.PartyCode</p>
-                    <p class="mys-door-who">Guests</p>
-                    <p class="muted tiny">Point a camera at it, or go to <b>@JoinHost/join</b> and type it.</p>
-                </div>
-
-                <div class="mys-door mys-door-host">
-                    <QrImage Content="@JoinUrl(Play.HostCode)" Size="190" Alt="Take a house part" />
-                    <p class="mys-code">@Play.HostCode</p>
-                    <p class="mys-door-who">The four of you</p>
-                    <p class="muted tiny">Braun, Leo, Chloe or Bertram. Only an organizer can get past it.</p>
-                </div>
-            </div>
-
-            @* The same sentence the host's console shows, because two screens counting the same
-               room in different words is how you end up believing the wrong one. "4 house parts
-               still going" was this line, and it named nobody. *@
-            <p class="ms-count">
-                <b>@Seated</b> of @Play.Cast.Count here
-                <span class="muted"> · @StartReason</span>
-            </p>
-
-            <div class="ms-grid">
-                @foreach (var seat in Arrived)
-                {
-                    <div class="ms-guest" @key="seat.CharacterId">
-                        <Portrait Seat="seat" Character="@Story.Character(seat.CharacterId)" />
-                        <span class="ms-guest-name">@Story.Character(seat.CharacterId)?.Name</span>
-                        <span class="ms-guest-title">@Story.Character(seat.CharacterId)?.Job</span>
+            <div class="ms-lobby">
+                <div class="mys-doors">
+                    <div class="mys-door">
+                        <QrImage Content="@JoinUrl(Play.PartyCode)" Size="190" Alt="Join the party" />
+                        <p class="mys-code">@Play.PartyCode</p>
+                        <p class="mys-door-who">Guests</p>
+                        <p class="muted tiny">Point a camera at it, or go to <b>@JoinHost/join</b> and type it.</p>
                     </div>
-                }
+
+                    <div class="mys-door mys-door-host">
+                        <QrImage Content="@JoinUrl(Play.HostCode)" Size="190" Alt="Take a house part" />
+                        <p class="mys-code">@Play.HostCode</p>
+                        <p class="mys-door-who">The four of you</p>
+                        <p class="muted tiny">Braun, Leo, Chloe or Bertram. Only an organizer can get past it.</p>
+                    </div>
+                </div>
+
+                @* The same sentence the host's console shows, because two screens counting the same
+                   room in different words is how you end up believing the wrong one. "4 house parts
+                   still going" was this line, and it named nobody. *@
+                <p class="ms-count">
+                    <b>@Seated</b> of @Play.Cast.Count here
+                    <span class="muted"> · @StartReason</span>
+                </p>
+
+                <div class="ms-grid ms-grid-scroll">
+                    @foreach (var seat in Arrived)
+                    {
+                        <div class="ms-guest" @key="seat.CharacterId">
+                            <Portrait Seat="seat" Character="@Story.Character(seat.CharacterId)" />
+                            <span class="ms-guest-name">@Story.Character(seat.CharacterId)?.Name</span>
+                            <span class="ms-guest-title">@Story.Character(seat.CharacterId)?.Job</span>
+                        </div>
+                    }
+                </div>
             </div>
 
             @if (CanEdit)
@@ -98,7 +106,6 @@
                     <a class="btn btn-ghost btn-sm" href="/m">Your phone ↗</a>
                     <button class="btn btn-danger-ghost btn-sm" @onclick="DiscardAsync">Discard</button>
                 </div>
-                <p class="muted tiny center">Discarding clears the evening. Nothing you have written is touched.</p>
             }
         }
         break;
@@ -141,7 +148,7 @@
             <h1 class="ms-title-big">Find your room. Meet three people.</h1>
         </section>
 
-        <div class="ms-grid ms-grid-rooms">
+        <div class="ms-grid ms-grid-rooms ms-grid-scroll">
             @foreach (var seat in Playing)
             {
                 var character = Story.Character(seat.CharacterId)!;
@@ -171,48 +178,71 @@
 
     // -------------------------------------------------------------------- the investigation
     case MysteryPhase.Investigation:
+        <section class="ms-head">
+            <p class="ms-round">@MysteryPhases.Label(Phase)</p>
+            <h1 class="ms-title-big">Nine cards. Nine rooms. Go.</h1>
+        </section>
+
+        @* Three things at once, because during the investigation the room genuinely wants all
+           three: where the cards are, what has turned up so far, and who is still out there
+           looking. The feed on its own left twenty-one people with nowhere to look for their
+           own name. *@
+        <div class="ms-split">
+            <div class="ms-split-map">
+                <ManorMap Trip="Trip" ShowPins="true" ShowTrail="@TrailVisible" Big="true" />
+            </div>
+
+            <div class="ms-split-feed">
+                <h2 class="ms-subhead">What has turned up</h2>
+                @ClueFeed
+            </div>
+        </div>
+
+        <div class="ms-grid ms-grid-thumbs">
+            @foreach (var seat in Playing)
+            {
+                var character = Story.Character(seat.CharacterId)!;
+                <div class="ms-guest @(TrialService.IsGhost(Trip, character.Id) ? "out" : "")" @key="seat.CharacterId">
+                    <Portrait Seat="seat" Character="character" />
+                    <span class="ms-guest-name">@character.Name</span>
+                </div>
+            }
+        </div>
+        break;
+
+    // ------------------------------------------------------------------- talking it through
     case MysteryPhase.Discussion1:
     case MysteryPhase.Discussion2:
         <section class="ms-head">
-            <p class="ms-round">@PhaseLabel</p>
-            <h1 class="ms-title-big">@(Phase == MysteryPhase.Investigation ? "Investigation" : "Talk it through")</h1>
+            <p class="ms-round">@MysteryPhases.Label(Phase)</p>
+            <h1 class="ms-title-big">Talk it through</h1>
+            <p class="ms-lede">
+                Every card that has been found, lying in the room it was found in.
+                @if (TrailVisible)
+                {
+                    <span>The count on a room is how many people have read that card.</span>
+                }
+            </p>
         </section>
 
-        @if (ScanShareService.AnyTampering(Trip) && MysteryPhases.AtOrAfter(Phase, MysteryPhase.Discussion1))
+        @if (ScanShareService.AnyTampering(Trip))
         {
             @* Never which card, never how many, never when. The room re-reads the whole feed and
                argues, which is the entire point of announcing it at all. *@
             <p class="ms-alert">A clue has been tampered with.</p>
         }
 
-        <div class="ms-feed">
-            @foreach (var clue in FoundClues)
-            {
-                <article class="ms-clue" @key="clue.Id">
-                    <p class="ms-clue-zone">@Story.Zone(clue.ZoneId)?.Name</p>
-                    <p>@ScanShareService.PublicReading(Trip, clue.Id)</p>
-
-                    @if (TrailVisible && ScanShareService.Trail(Trip, clue.Id) is { Count: > 0 } trail)
-                    {
-                        @* Opens at the first discussion round and not before. This is the detectives'
-                           tool for working out which card was touched — a public movement log during
-                           the investigation would make every alibi checkable. *@
-                        <p class="ms-trail">
-                            @string.Join(" · ", trail.Select(s => Story.Character(s.CharacterId)?.Name))
-                        </p>
-                    }
-                    else if (ScanShareService.FirstFinder(Trip, clue.Id) is { } finder)
-                    {
-                        <p class="ms-clue-finder">found by @(Story.Character(finder)?.Name)</p>
-                    }
-                </article>
-            }
-
-            @if (FoundClues.Count == 0)
-            {
-                <p class="ms-empty">Nine cards are hidden in this house. Nobody has found one yet.</p>
-            }
+        @* The cards used to be a column of identical rectangles, which threw away the one thing
+           that makes a room argue about them: where they were in relation to each other, and to
+           the study. *@
+        <div class="ms-split-map is-wide">
+            <ManorMap Trip="Trip" ShowPins="true" ShowTrail="@TrailVisible" ShowCards="true" Big="true" />
         </div>
+
+        @if (FoundClues.Count == 0)
+        {
+            <p class="ms-empty">Nine cards are hidden in this house. Nobody has found one yet.</p>
+        }
         break;
 
     // ---------------------------------------------------------------------------- the trials
@@ -224,29 +254,122 @@
 
     // ---------------------------------------------------------------------------- the reveal
     case MysteryPhase.Reveal:
-        <section class="ms-head">
-            <p class="ms-round">The whole truth</p>
-            <h1 class="ms-title-big">@RevealHeadline</h1>
-        </section>
+        @if (Play.RevealIndex == 0)
+        {
+            <section class="ms-head">
+                <p class="ms-round">The whole truth</p>
+                <h1 class="ms-title-big">@RevealHeadline</h1>
+            </section>
 
-        <div class="ms-reveal">
-            @foreach (var paragraph in MysteryText.WrittenOnly(Beats.RevealParagraphs))
-            {
-                <p class="ms-reveal-para">@paragraph</p>
-            }
+            <div class="ms-reveal">
+                @foreach (var paragraph in MysteryText.WrittenOnly(Beats.RevealParagraphs))
+                {
+                    <p class="ms-reveal-para">@paragraph</p>
+                }
+            </div>
+        }
+        else if (PhaseService.RevealSubject(Trip) is { } row)
+        {
+            @* One person at a time, keyed on their id so every step gets its own entrance rather
+               than the browser quietly reusing the previous card's DOM and animating nothing. *@
+            <section class="ms-truth" @key="row.Character.Id">
+                <p class="ms-round">@Play.RevealIndex of @(PhaseService.RevealSteps(Trip) - 2)</p>
 
-            @if (Outcome is not null)
-            {
-                <div class="ms-winners">
-                    <h2>Winners</h2>
-                    <p class="ms-winner-list">
-                        @string.Join(", ", OutcomeService.Winners(Trip).Select(id => Story.Character(id)?.Name))
-                    </p>
+                <Portrait Seat="@Play.ForCharacter(row.Character.Id)" Character="row.Character" />
+
+                <h1 class="ms-truth-name">@row.Character.Name</h1>
+                <p class="ms-truth-job">@row.Character.Job</p>
+
+                <p class="ms-truth-faction @(row.Character.IsKiller ? "is-killer" : "")">
+                    @(row.Faction?.Name ?? "No faction")
+                    @if (row.Character.GuiltSlot is { } slot)
+                    {
+                        <span class="ms-truth-slot">@slot</span>
+                    }
+                </p>
+
+                @if (Written(row.Faction?.Blurb) is { } blurb)
+                {
+                    <p class="ms-truth-blurb">@blurb</p>
+                }
+
+                @if (row.Character.IsHerring)
+                {
+                    <p class="ms-truth-note">Written to look guilty all night, and wasn't.</p>
+                }
+
+                @if (row.Deeds.Count > 0)
+                {
+                    <ul class="ms-truth-deeds">
+                        @foreach (var deed in row.Deeds)
+                        {
+                            <li>@deed</li>
+                        }
+                    </ul>
+                }
+
+                <p class="ms-truth-verdict">
+                    @if (row.Convicted && row.Won)
+                    {
+                        <span class="is-win">Taken away — and won anyway.</span>
+                    }
+                    else if (row.Convicted)
+                    {
+                        <span class="is-lose">Taken away.</span>
+                    }
+                    else if (row.Won)
+                    {
+                        <span class="is-win">Walked out a winner.</span>
+                    }
+                    else
+                    {
+                        <span class="is-lose">Walked out with nothing.</span>
+                    }
+                </p>
+            </section>
+        }
+        else
+        {
+            @* The last screen of the night, and the only one that gets confetti. *@
+            <section class="ms-victors">
+                <div class="jeo-win-burst" aria-hidden="true">
+                    @for (var i = 0; i < 12; i++)
+                    {
+                        <span style="--i:@i"></span>
+                    }
                 </div>
-            }
-        </div>
+
+                <p class="ms-round">@(Outcome?.TownWon == true ? "The house wins" : "The Syndicate wins")</p>
+                <h1 class="jeo-win-name">@RevealHeadline</h1>
+
+                <div class="ms-sides">
+                    @foreach (var side in WinningSides)
+                    {
+                        <section class="ms-side" @key="side.Key">
+                            <h2 class="ms-side-name">@side.Key</h2>
+                            <div class="ms-grid ms-grid-thumbs">
+                                @foreach (var character in side)
+                                {
+                                    <div class="ms-guest" @key="character.Id">
+                                        <Portrait Seat="@Play.ForCharacter(character.Id)" Character="character" />
+                                        <span class="ms-guest-name">@character.Name</span>
+                                    </div>
+                                }
+                            </div>
+                        </section>
+                    }
+                </div>
+
+                @if (CanEdit)
+                {
+                    <a class="btn btn-gold btn-lg" href="/">That's the night</a>
+                }
+            </section>
+        }
         break;
 }
+
+</div>
 
 @if (IsDev && HasGame)
 {
@@ -268,24 +391,42 @@
         {
             <div class="jeo-testing-panel">
                 <div class="chip-row">
-                    <button class="chip" @onclick="() => AddPhones(1)">＋ a phone</button>
-                    <button class="chip" @onclick="() => AddPhones(5)">＋ 5</button>
+                    <button class="chip" disabled="@Sims.IsFull" @onclick="() => AddPhones(1)">＋ a phone</button>
+                    <button class="chip" disabled="@Sims.IsFull" @onclick="() => AddPhones(5)">＋ 5</button>
+                    <button class="chip" disabled="@Sims.IsFull" @onclick="() => AddPhones(CharterTrip.Web.Services.SimPhones.MaxPhones)">
+                        ＋ the rest
+                    </button>
+
                     @if (PhonesWaiting > 0)
                     {
                         <button class="chip chip-do" @onclick="SignEveryPhoneInAsync">
                             🔑 Sign in @PhonesWaiting @(PhonesWaiting == 1 ? "phone" : "phones")
                         </button>
                     }
-                    <button class="chip" @onclick="FillTheRoomAsync">⚡ Fill the room</button>
-                    <button class="chip" @onclick="EverybodyVotesAsync">⚡ Everybody votes</button>
-                    <button class="chip" @onclick="FindEveryClueAsync">⚡ Find every clue</button>
-                    <button class="chip" @onclick="MeetEverybodyAsync">⚡ Everybody mingles</button>
+
                     @if (Sims.Count > 0)
                     {
                         <button class="chip" @onclick="() => Sims.RemoveLast()">− last</button>
                         <button class="chip" @onclick="() => Sims.Reset()">clear</button>
                     }
                 </div>
+
+                @* The things a laptop genuinely cannot do by walking around the house. Each one goes
+                   through the same service call the real page does, so nothing here can produce a
+                   state the evening could not have reached on its own. *@
+                <div class="chip-row">
+                    <button class="chip" @onclick="EverybodyVotesAsync">⚡ Everybody votes</button>
+                    <button class="chip" @onclick="SplitTheVoteAsync">⚡ Split the vote four ways</button>
+                    <button class="chip" @onclick="MeetEverybodyAsync">⚡ Everybody mingles</button>
+                    <button class="chip" @onclick="FindEveryClueAsync">⚡ Find every clue</button>
+                    <button class="chip" @onclick="TamperOneAsync">⚡ Somebody tampers</button>
+                </div>
+
+                <p class="muted tiny">
+                    @Sims.Count of @CharterTrip.Web.Services.SimPhones.MaxPhones phones.
+                    The twenty-fifth is the one in your hand — it holds Braun, so the strip stops
+                    one short on purpose.
+                </p>
 
                 @if (Sims.Count == 0)
                 {
@@ -302,11 +443,39 @@
                         {
                             <div class="sim-card" @key="slot">
                                 <span class="sim-label">Phone @slot @SimWho(slot)</span>
+
                                 @* The nonce is what moves a frame: bumping it changes the src, which
                                    is a reload, and leaving every other slot's alone is what stops a
                                    phone somebody is mid-letter on from being yanked back. *@
                                 <iframe class="sim-frame" title="@($"Phone {slot}")"
-                                        src="@($"/join?sim={slot}&r={Sims.NonceFor(slot)}")"></iframe>
+                                        allow="camera; microphone"
+                                        src="@FrameSrc(slot)"></iframe>
+
+                                @if (Sims.PersonFor(slot) is not null)
+                                {
+                                    @* Standing in a room with a camera is the one part of this game a
+                                       laptop cannot do. Driving the frame to the URL the QR code
+                                       holds is the same page arriving by the same route. *@
+                                    <div class="sim-drive">
+                                        <button class="chip chip-xs" @onclick="() => Sims.Go(slot, SheetRoute)">sheet</button>
+
+                                        <select class="sim-select" @onchange="e => ScanClueAsync(slot, e)">
+                                            <option value="">scan a clue…</option>
+                                            @foreach (var clue in Story.Clues)
+                                            {
+                                                <option value="@clue.Id">@(Story.Zone(clue.ZoneId)?.Name ?? clue.Id)</option>
+                                            }
+                                        </select>
+
+                                        <select class="sim-select" @onchange="e => ScanBadgeAsync(slot, e)">
+                                            <option value="">scan a badge…</option>
+                                            @foreach (var other in Story.Characters.Where(c => c.Id != SimCharacter(slot)))
+                                            {
+                                                <option value="@other.Id">@other.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -341,7 +510,6 @@
     private bool Live => MysteryPhases.AtOrAfter(Phase, MysteryPhase.Welcome);
 
     private int Seated => Play.Cast.Count(c => c.PersonId is not null);
-    private int StaffLeft => CastingService.UnclaimedStaffParts(Trip).Count;
 
     /// <summary>Who the evening is still waiting on, in the words the host's console uses.</summary>
     private string StartReason => CastingService.CanStart(Trip).Reason;
@@ -362,13 +530,19 @@
             .OrderBy(c => ScanShareService.FirstFinder(Trip, c.Id))
             .ToList();
 
-    private string PhaseLabel => Phase switch
-    {
-        MysteryPhase.Investigation => "Investigation",
-        MysteryPhase.Discussion1 => "After the first trial",
-        MysteryPhase.Discussion2 => "After the second trial",
-        _ => ""
-    };
+    /// <summary>
+    /// The winners, grouped by the side they were on.
+    ///
+    /// Factions rather than trip teams, because the murder mystery cuts the room a completely
+    /// different way — and a last screen that put four people's real teams up would be reading out
+    /// the wrong game's scoreboard.
+    /// </summary>
+    private IEnumerable<IGrouping<string, MysteryCharacter>> WinningSides =>
+        OutcomeService.Winners(Trip)
+            .Select(id => Story.Character(id))
+            .Where(c => c is not null)
+            .GroupBy(c => Story.Faction(c!.FactionId)?.Name ?? "On their own", c => c!)
+            .OrderByDescending(g => g.Count());
 
     private string RevealHeadline => Outcome switch
     {
@@ -482,10 +656,16 @@
 
     private void AddPhones(int count)
     {
-        for (var i = 0; i < count; i++) Sims.Add();
+        for (var i = 0; i < count && !Sims.IsFull; i++) Sims.Add();
     }
 
     private int PhonesWaiting => Sims.Slots.Count(s => Sims.PersonFor(s) is null);
+
+    /// <summary>Where a phone goes back to. A field because Razor cannot nest a string literal here.</summary>
+    private const string SheetRoute = "/m";
+
+    private string FrameSrc(int slot) =>
+        $"{Sims.RouteFor(slot)}{(Sims.RouteFor(slot).Contains('?') ? "&" : "?")}sim={slot}&r={Sims.NonceFor(slot)}";
 
     /// <summary>
     /// Type the live party code into every phone still sitting at the door, and tap a name.
@@ -506,7 +686,7 @@
             if (personId is null) break;
 
             Sims.Bind(slot, personId);
-            Sims.Reload(slot);
+            Sims.Go(slot, "/m/welcome");
         }
 
         // Twenty-five seats is worth forcing to disk, for the same reason the real door does it.
@@ -514,13 +694,42 @@
     }
 
     /// <summary>Whoever has signed into that frame, once they have.</summary>
-    private string SimWho(int slot)
+    private string SimWho(int slot) =>
+        SimCharacter(slot) is { } id ? $"· {Story.Character(id)?.Name}" : "";
+
+    private string? SimCharacter(int slot)
     {
         var personId = Sims.PersonFor(slot);
-        if (personId is null) return "";
+        return personId is null ? null : Play.ForPerson(personId)?.CharacterId;
+    }
 
-        var seat = Play.ForPerson(personId);
-        return seat is null ? "· signed in" : $"· {Story.Character(seat.CharacterId)?.Name}";
+    /// <summary>
+    /// Walk that phone into the room the card is in.
+    ///
+    /// The clue's token rather than its id, because the page behind the QR is the only page that
+    /// records a scan — pointing the frame anywhere else would produce a screenshot rather than a
+    /// test.
+    /// </summary>
+    private Task ScanClueAsync(int slot, ChangeEventArgs e)
+    {
+        var clueId = e.Value?.ToString();
+        if (string.IsNullOrEmpty(clueId)) return Task.CompletedTask;
+
+        if (Play.StateFor(clueId) is { Token.Length: > 0 } state)
+            Sims.Go(slot, $"/m/clue/{state.Token}");
+
+        return Task.CompletedTask;
+    }
+
+    private Task ScanBadgeAsync(int slot, ChangeEventArgs e)
+    {
+        var characterId = e.Value?.ToString();
+        if (string.IsNullOrEmpty(characterId)) return Task.CompletedTask;
+
+        if (Play.ForCharacter(characterId) is { BadgeToken.Length: > 0 } seat)
+            Sims.Go(slot, $"/m/meet/{seat.BadgeToken}");
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -537,33 +746,22 @@
     }
 
     /// <summary>
-    /// Everybody except Braun, who is left for whoever is doing the testing.
+    /// A decisive vote: a clear front-runner, a clear second, and everybody else scattered.
     ///
-    /// Braun is the one part that has anything to drive — the deck, the murder, the trial stages —
-    /// so seating him automatically is seating the tester out of the thing they came to try. The
-    /// rest go through the real service calls, so this cannot produce a room that could not have
-    /// filled itself.
+    /// The old version spread the room evenly across the top four, which is a four-way tie — and a
+    /// tie widens the cut, so every rehearsal convicted all four and looked like a bug in the
+    /// tally. Splitting the vote is still worth testing, so it kept its own button.
     /// </summary>
-    private Task FillTheRoomAsync() => MutateAsync(t =>
+    private Task EverybodyVotesAsync() => MutateAsync(t => Vote(t, spread: false));
+
+    private Task SplitTheVoteAsync() => MutateAsync(t => Vote(t, spread: true));
+
+    private void Vote(TripData t, bool spread)
     {
-        var facilitators = CastingService.UnclaimedStaffParts(t)
-            .Where(c => c.Staff != MysteryStaffRole.Host)
-            .Select(c => c.Id)
-            .ToList();
-
-        foreach (var (person, part) in CastingService.Organizers(t).Select(p => p.Id).Zip(facilitators))
-            CastingService.ClaimStaffPart(t, person, part);
-
-        foreach (var person in CastingService.Unclaimed(t).ToList())
-            CastingService.ClaimCharacter(t, person.Id, Random.Shared);
-    });
-
-    private Task EverybodyVotesAsync() => MutateAsync(t =>
-    {
-        if (TrialService.Current(t) is null) return;
+        var trial = TrialService.Current(t);
+        if (trial is null) return;
 
         var voters = TrialService.Electorate(t).Select(c => c.Id).ToList();
-        var trial = TrialService.Current(t)!;
 
         var candidates = trial.Stage == MysteryTrialStage.FinalVote
             ? trial.NomineeCharacterIds
@@ -571,15 +769,25 @@
 
         if (candidates.Count == 0) return;
 
-        var front = Math.Max(1, Math.Min(candidates.Count, 4));
-
         for (var i = 0; i < voters.Count; i++)
         {
-            var target = candidates[i % front];
-            if (target == voters[i]) target = candidates[(i + 1) % front];
+            // Half the room on the front-runner, a quarter on the second, the rest scattered — which
+            // is roughly what a real room does and, more to the point, resolves.
+            var pick = spread
+                ? i % Math.Min(candidates.Count, 4)
+                : i switch
+                {
+                    _ when i < voters.Count / 2 => 0,
+                    _ when i < voters.Count * 3 / 4 => 1 % candidates.Count,
+                    _ => (i % Math.Max(1, candidates.Count - 2)) + Math.Min(2, candidates.Count - 1)
+                };
+
+            var target = candidates[Math.Min(pick, candidates.Count - 1)];
+            if (target == voters[i]) target = candidates[(pick + 1) % candidates.Count];
+
             TrialService.CastVote(t, voters[i], target, Clock.UtcNow);
         }
-    });
+    }
 
     private Task FindEveryClueAsync() => MutateAsync(t =>
     {
@@ -598,4 +806,53 @@
             foreach (var step in new[] { 1, 3, 6 })
                 ScanShareService.RecordMeeting(t, guests[i], guests[(i + step) % guests.Count], Clock.UtcNow);
     });
+
+    /// <summary>
+    /// One clue quietly worked on, so the board's "a clue has been tampered with" line and the
+    /// facilitators' tamper log have something in them to look at.
+    /// </summary>
+    private Task TamperOneAsync() => MutateAsync(t =>
+    {
+        var clue = t.Mystery.Play.ClueStates.FirstOrDefault(s => s.Tamper is null);
+        if (clue is null) return;
+
+        var killer = t.Mystery.Story.Killers.FirstOrDefault();
+        var framed = t.Mystery.Story.Guests.FirstOrDefault(c => !c.IsKiller);
+        if (killer is null || framed is null) return;
+
+        ScanShareService.Tamper(t, clue.ClueId, "subtle", killer.Id, framed.Id, Clock.UtcNow);
+    });
+
+    /// <summary>
+    /// The clue feed, as a fragment, so the investigation layout can put it in a column beside the
+    /// floor plan without the switch statement growing a second copy of it.
+    /// </summary>
+    private RenderFragment ClueFeed => @<div class="ms-feed">
+        @foreach (var clue in FoundClues)
+        {
+            <article class="ms-clue" @key="clue.Id">
+                <p class="ms-clue-zone">@Story.Zone(clue.ZoneId)?.Name</p>
+                <p>@ScanShareService.PublicReading(Trip, clue.Id)</p>
+
+                @if (TrailVisible && ScanShareService.Trail(Trip, clue.Id) is { Count: > 0 } trail)
+                {
+                    @* Opens at the first discussion round and not before. This is the detectives'
+                       tool for working out which card was touched — a public movement log during
+                       the investigation would make every alibi checkable. *@
+                    <p class="ms-trail">
+                        @string.Join(" · ", trail.Select(s => Story.Character(s.CharacterId)?.Name))
+                    </p>
+                }
+                else if (ScanShareService.FirstFinder(Trip, clue.Id) is { } finder)
+                {
+                    <p class="ms-clue-finder">found by @(Story.Character(finder)?.Name)</p>
+                }
+            </article>
+        }
+
+        @if (FoundClues.Count == 0)
+        {
+            <p class="ms-empty">Nine cards are hidden in this house. Nobody has found one yet.</p>
+        }
+    </div>;
 }

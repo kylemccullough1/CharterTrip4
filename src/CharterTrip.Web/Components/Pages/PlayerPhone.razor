@@ -14,7 +14,8 @@
 
    Identity comes from the cookie, so a phone left on a table still belongs to whoever signed in.
    The four running the evening hold this same page — a facilitator's phone is meant to look like a
-   guest's — with one extra tab on the end. *@
+   guest's — except that theirs opens on Control and never shows the two tabs that only mean
+   something to somebody who is actually playing. *@
 
 @if (Me is null)
 {
@@ -24,31 +25,44 @@
         <a class="btn btn-gold btn-sm" href="/join">Join in</a>
     </div>
 }
+else if (Phase == MysteryPhase.Reveal && Me is { IsStaff: false })
+{
+    @* The end of the night, and the only thing anybody wants off their own phone at that point.
+       The whole truth is on the television; this is the one bit that is only about you. *@
+    <div class="mp-verdict @(IWon ? "is-win" : "is-lose")">
+        <span class="mp-face" aria-hidden="true">@(IWon ? "☺" : "☹")</span>
+        <h1 class="mp-verdict-line">@(IWon ? "You win" : "You lose")</h1>
+        <p class="muted">@Me.Name · watch the screen</p>
+    </div>
+}
 else
 {
     <div class="mp">
         <header class="mp-head">
             <div class="mp-who">
                 <Portrait Seat="Seat" Character="Me" />
-                <div>
+                <div class="mp-who-text">
                     <h1 class="mp-name">@Me.Name</h1>
                     <p class="mp-zone">@Me.Job@(RoomName is { } room ? $" · {room}" : "")</p>
                 </div>
             </div>
-
-            @if (IsGhost)
-            {
-                @* A ghost keeps their phone and stays at the party. They simply have no vote, and
-                   they must not say what they knew in life — the first time a dead detective spills
-                   it, the game is over. *@
-                <p class="mp-ghost-badge">In custody. Watch, enjoy, say nothing.</p>
-            }
         </header>
+
+        @if (IsGhost)
+        {
+            @* A ghost keeps their phone and stays at the party. They simply have no vote, and
+               they must not say what they knew in life — the first time a dead detective spills
+               it, the game is over.
+
+               Its own row rather than tucked beside the name: at nine words it never fitted the
+               corner of a phone, and it was hanging off the edge of the ones it mattered on. *@
+            <p class="mp-ghost-badge">In custody. Watch, enjoy, say nothing.</p>
+        }
 
         <nav class="mp-tabs">
             @foreach (var tab in Tabs)
             {
-                <button class="mp-tab @(_tab == tab ? "on" : "")" @onclick="() => _tab = tab">
+                <button class="mp-tab @(_tab == tab ? "on" : "")" @key="tab" @onclick="() => _tab = tab">
                     @tab
                     @if (tab == "Do" && Outstanding.Count > 0)
                     {
@@ -187,6 +201,7 @@ else
                     {
                         var charges = AbilityService.ChargesRemaining(Trip, Me.Id, ability);
                         var unlocked = AbilityService.IsUnlocked(Trip, ability);
+                        var onCards = OnCards(ability);
 
                         <section class="mp-card mp-ability" @key="ability.Id">
                             <h3 class="mp-card-title">
@@ -198,6 +213,68 @@ else
                             @foreach (var mode in ability.Modes)
                             {
                                 <p class="mp-mode"><b>@mode.Name</b> @Written(mode.Text)</p>
+                            }
+
+                            @* The button that was never here. Two of the four factions' powers used
+                               to be a paragraph of text with nothing to press, so the only way to
+                               use one was to tell a facilitator and hope. Cards are still spent by
+                               standing in front of one; everything else is spent from this tab. *@
+                            @if (!unlocked)
+                            {
+                                <p class="muted tiny">Comes online at @MysteryPhases.Label(ability.Unlock).</p>
+                            }
+                            else if (charges == 0)
+                            {
+                                <p class="muted tiny">All used up.</p>
+                            }
+                            else if (IsGhost)
+                            {
+                                <p class="muted tiny">Not from in here.</p>
+                            }
+                            else if (onCards)
+                            {
+                                <p class="muted tiny">
+                                    Spent on a card. Walk to the room and scan it — the option is on
+                                    the card itself.
+                                </p>
+                            }
+                            else
+                            {
+                                <label class="sc-field">
+                                    <span class="tiny">On whom</span>
+                                    <select class="se-select" @bind="_target">
+                                        <option value="">nobody in particular</option>
+                                        @foreach (var other in Others)
+                                        {
+                                            <option value="@other.Id">@other.Name</option>
+                                        }
+                                    </select>
+                                </label>
+
+                                <div class="row gap wrap">
+                                    @if (ability.HasModes)
+                                    {
+                                        @foreach (var mode in ability.Modes)
+                                        {
+                                            <button class="btn btn-gold btn-xs" @key="mode.Id"
+                                                    @onclick="() => FireAsync(ability.Id, mode.Id)">
+                                                @mode.Name
+                                            </button>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-gold btn-xs"
+                                                @onclick="() => FireAsync(ability.Id, null)">
+                                            Use it
+                                        </button>
+                                    }
+                                </div>
+
+                                @if (_fired is { } note)
+                                {
+                                    <p class="mp-fired">@note</p>
+                                }
                             }
                         </section>
                     }
@@ -232,6 +309,26 @@ else
         }
         </main>
     </div>
+
+    @if (_popped is { } popped)
+    {
+        @* A badge on a tab is not enough when somebody is holding a drink and looking at a room.
+           The modal is what makes an instruction land; the tab is what makes it findable
+           afterwards, which is why both exist. *@
+        <div class="mp-modal-back" @onclick="DismissObjective">
+            <div class="mp-modal" @onclick:stopPropagation="true">
+                <p class="mp-modal-kicker">Something for you</p>
+                <p class="mp-modal-text">@popped.Text</p>
+
+                <div class="row gap wrap">
+                    <button class="btn btn-gold btn-sm" @onclick="() => CompleteFromModalAsync(popped.Id)">
+                        On it
+                    </button>
+                    <button class="btn btn-ghost btn-sm" @onclick="DismissObjective">Later</button>
+                </div>
+            </div>
+        </div>
+    }
 }
 
 @code {
@@ -248,6 +345,8 @@ else
     private bool DevActing => Env.IsDevelopment() && ActAs is { Length: > 0 };
 
     private string _tab = "You";
+    private string _target = "";
+    private string? _fired;
 
     /// <summary>Which simulated phone this is, for the testing strip. Development only.</summary>
     [SupplyParameterFromQuery(Name = "sim")] private int? Sim { get; set; }
@@ -263,6 +362,7 @@ else
 
     private MysteryStory Story => Trip.Mystery.Story;
     private MysteryBeats Beats => Story.Beats;
+    private MysteryPhase Phase => Trip.Mystery.Phase;
 
     private MysteryCharacter? Me =>
         DevActing ? Story.Character(ActAs!) : CastingService.CharacterFor(Trip, PersonId);
@@ -275,6 +375,9 @@ else
     private bool TrailVisible => PhaseService.TrailVisible(Trip);
     private bool IsGhost => Me is not null && TrialService.IsGhost(Trip, Me.Id);
 
+    /// <summary>Whether this person is on the winning side. Only asked once the ending is settled.</summary>
+    private bool IWon => Me is not null && OutcomeService.Winners(Trip).Contains(Me.Id);
+
     private MysteryFaction? Faction =>
         Me is null || !RolesRevealed ? null : Story.Faction(Me.FactionId);
 
@@ -286,6 +389,10 @@ else
 
     private IReadOnlyList<MysteryCharacter> Met => Me is null ? [] : ScanShareService.Met(Trip, Me.Id);
     private IReadOnlyList<MysteryCharacter> Unmet => Me is null ? [] : ScanShareService.Unmet(Trip, Me.Id);
+
+    /// <summary>Everybody an ability could be aimed at.</summary>
+    private IReadOnlyList<MysteryCharacter> Others =>
+        Me is null ? [] : Story.Guests.Where(c => c.Id != Me.Id).ToList();
 
     private string? BeefWith(string otherId) =>
         Me is null ? null : ScanShareService.BeefLineFor(Trip, Me.Id, otherId);
@@ -304,6 +411,13 @@ else
     /// <summary>
     /// The tabs, in the order somebody reaches for them.
     ///
+    /// Two orders, because the four running the evening and the twenty-one playing it are using
+    /// this page for opposite reasons. Braun and the facilitators open on Control — it is the
+    /// entire point of their phone, and it used to be behind five tabs of a character sheet — and
+    /// they never see Do or Role, because they have no objectives to be given and no faction to be
+    /// told about. They keep You, Say and Map: they are in the room all night, people talk to them,
+    /// and they need to see where the cards are.
+    ///
     /// Clues and Vote only exist once there is something in them — an empty tab that appears halfway
     /// through the night is a better signal than one that has been sitting there greyed out.
     /// </summary>
@@ -311,11 +425,12 @@ else
     {
         get
         {
+            if (Me is { IsStaff: true }) return ["Control", "You", "Say", "Map"];
+
             List<string> tabs = ["You", "Map", "Say", "Do", "Role"];
 
             if (RolesRevealed) tabs.Add("Clues");
-            if (MysteryPhases.IsTrial(Trip.Mystery.Phase) && !IsGhost && Me is { IsStaff: false }) tabs.Add("Vote");
-            if (Me is { IsStaff: true }) tabs.Add("Control");
+            if (MysteryPhases.IsTrial(Phase) && !IsGhost) tabs.Add("Vote");
 
             return tabs;
         }
@@ -325,6 +440,16 @@ else
 
     private static string? Written(string? value) => MysteryText.Written(value);
 
+    /// <summary>
+    /// Whether this power is spent by standing in front of a card rather than from this tab.
+    ///
+    /// The four card modes are handled on <c>ScanClue</c>, where the thing being tampered with is
+    /// in front of you — offering the same button here would let somebody plant evidence in the
+    /// kitchen from the sofa, which is the one mechanic the whole clue design rests on.
+    /// </summary>
+    private static bool OnCards(MysteryAbility ability) =>
+        ability.Modes.Any(m => m.Id is "subtle" or "blatant" or "plant" or "scrub");
+
     /// <summary>Every field on the character tab is still a row of dots.</summary>
     private bool SheetIsBlank =>
         Me is not null
@@ -332,11 +457,98 @@ else
         && new[] { Me.Backstory, Me.WhyInvited, Me.DislikesBraun, Me.Voice }
             .All(MysteryText.IsPlaceholder);
 
-    protected override void OnParametersSet()
+    // ------------------------------------------------------------------------------------------
+    //  Following the evening
+    // ------------------------------------------------------------------------------------------
+
+    /// <summary>The newest objective this phone has already put in front of somebody.</summary>
+    private string? _seenObjective;
+    private bool _settled;
+
+    /// <summary>Which ballot this phone has already jumped to, so it only jumps once per stage.</summary>
+    private string? _seenBallot;
+
+    private MysteryObjectiveIssue? _popped;
+
+    /// <summary>
+    /// The store's Changed event re-renders this page without going back through OnParametersSet,
+    /// so anything that has to react to the evening moving on has to look here. Two things do: a
+    /// ballot opening, and an objective arriving.
+    /// </summary>
+    protected override void OnAfterRender(bool firstRender)
     {
+        if (Me is null) return;
+
+        var moved = false;
+
         // A tab that has gone away — the vote closing, say — must not leave the page rendering
         // nothing at all.
-        if (!Tabs.Contains(_tab)) _tab = "You";
+        if (!Tabs.Contains(_tab))
+        {
+            _tab = Tabs[0];
+            moved = true;
+        }
+
+        moved |= FollowTheBallot();
+        moved |= PopTheNewestObjective(firstRender);
+
+        if (moved) StateHasChanged();
+    }
+
+    /// <summary>
+    /// When a ballot opens, put the ballot on the screen.
+    ///
+    /// Twenty-one people being told to vote and then having to find the tab is thirty seconds of a
+    /// dark room asking each other where it is. Once per stage, so somebody who deliberately
+    /// wandered off to re-read a clue is not dragged back every time the page re-renders.
+    /// </summary>
+    private bool FollowTheBallot()
+    {
+        if (TrialService.Current(Trip) is not { } trial) return false;
+        if (trial.Stage is not (MysteryTrialStage.Nominating or MysteryTrialStage.FinalVote)) return false;
+        if (!Tabs.Contains("Vote")) return false;
+
+        var ballot = $"{trial.Phase}/{trial.Stage}";
+        if (_seenBallot == ballot) return false;
+
+        _seenBallot = ballot;
+
+        if (_tab == "Vote") return false;
+
+        _tab = "Vote";
+        return true;
+    }
+
+    /// <summary>
+    /// Put a newly arrived objective in front of somebody rather than under a badge.
+    ///
+    /// The first pass only records where the queue was, so a phone opened at ten o'clock does not
+    /// open on an instruction from half past eight.
+    /// </summary>
+    private bool PopTheNewestObjective(bool firstRender)
+    {
+        var newest = Outstanding.FirstOrDefault();
+
+        if (!_settled)
+        {
+            _settled = true;
+            _seenObjective = newest?.Id;
+            return false;
+        }
+
+        if (newest is null || newest.Id == _seenObjective || _popped is not null) return false;
+
+        _seenObjective = newest.Id;
+        _popped = newest;
+        return true;
+    }
+
+    private void DismissObjective() => _popped = null;
+
+    private async Task CompleteFromModalAsync(string objectiveId)
+    {
+        _popped = null;
+        await ToggleObjectiveAsync(objectiveId, done: false);
     }
 
     private Task ToggleObjectiveAsync(string objectiveId, bool done) => MutateAsync(t =>
@@ -347,4 +559,26 @@ else
 
     private Task CastVoteAsync(string targetCharacterId) =>
         MutateAsync(t => TrialService.CastVote(t, Me!.Id, targetCharacterId, Clock.UtcNow));
+
+    /// <summary>
+    /// Spend a charge from the sheet.
+    ///
+    /// The check and the spend are the same call inside one mutation, so two people sharing a
+    /// faction charge cannot both get it — and a refusal says so rather than leaving somebody
+    /// tapping a button that quietly does nothing.
+    /// </summary>
+    private async Task FireAsync(string abilityId, string? mode)
+    {
+        var target = string.IsNullOrEmpty(_target) ? null : _target;
+
+        var use = await Store.MutateAsync(
+            t => AbilityService.TryFire(t, Me!.Id, abilityId, Clock.UtcNow, mode, target),
+            Watching);
+
+        _fired = use is null
+            ? "That didn't go through. Somebody may have spent it first."
+            : target is null ? "Done." : $"Done — on {Story.Character(target)?.Name}.";
+
+        _target = "";
+    }
 }

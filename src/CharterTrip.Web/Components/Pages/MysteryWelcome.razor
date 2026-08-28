@@ -86,6 +86,19 @@ else if (_step == Step.Photo)
         </button>
     </div>
 }
+else if (Me.Staff == MysteryStaffRole.Host)
+{
+    @* Braun does not receive an invitation from Braun. He wrote it. What he wants at this point is
+       the console, so this is a door rather than a set piece. *@
+    <div class="mw">
+        <h1 class="mw-title">Your house, Mr Braun</h1>
+        <p class="mw-sub">
+            Twenty-one of them are on their way in, and none of them like you. Your phone runs the
+            evening — the Control tab is the first one on it.
+        </p>
+        <button class="btn btn-gold btn-lg" @onclick="EnterAsync">Take the room</button>
+    </div>
+}
 else
 {
     <div class="mw mw-letter @(_opened ? "is-open" : "")">
@@ -131,6 +144,9 @@ else
 
     /// <summary>Off, live in the preview, or unavailable because the browser said no.</summary>
     private enum Camera { Off, Live, Refused }
+
+    /// <summary>What camera.js reports back: a case we handle, plus the browser's own words.</summary>
+    private sealed record CameraResult(string Status, string? Detail);
 
     private Step _step = Step.Photo;
     private Camera _camera = Camera.Off;
@@ -209,17 +225,28 @@ else
         try
         {
             _cam ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/camera.js");
-            var result = await _cam.InvokeAsync<string>("start", "mw-cam");
+            var result = await _cam.InvokeAsync<CameraResult>("start", "mw-cam");
 
-            _camera = result == "ready" ? Camera.Live : Camera.Refused;
+            _camera = result.Status == "ready" ? Camera.Live : Camera.Refused;
 
-            _error = result switch
+            // The reason, in the browser's own words, alongside ours. "No camera answered" was the
+            // catch-all for six different failures — an insecure origin, a lens another app already
+            // held, an iframe without permission — and it named none of them, so there was nothing
+            // to act on. Whoever is holding the phone can now read what actually happened.
+            _error = result.Status switch
             {
                 "ready" => null,
                 "denied" => "Your phone said no to the camera. Choose a picture instead, or allow it in the address bar.",
+                "insecure" => "Browsers only open a camera over https or on localhost. Choose a picture instead.",
                 "unsupported" => "This browser will not open a camera here. Choose a picture instead.",
-                _ => "No camera answered. Choose a picture instead."
+                "blocked" => "The page this is embedded in is not allowed a camera. Choose a picture instead.",
+                "busy" => "Something else on this device is already using the camera. Close it, or choose a picture instead.",
+                "none" => "This device has no camera the browser can see. Choose a picture instead.",
+                _ => "The camera did not answer. Choose a picture instead."
             };
+
+            if (_error is not null && result.Detail is { Length: > 0 } detail)
+                _error += $" ({detail})";
         }
         catch (JSDisconnectedException) { }
         catch (Exception ex)

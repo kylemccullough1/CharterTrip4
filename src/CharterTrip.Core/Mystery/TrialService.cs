@@ -164,6 +164,29 @@ public static class TrialService
             : trial.FinalVotes);
     }
 
+    /// <summary>
+    /// The final round's count, whatever stage the trial is now in.
+    ///
+    /// The verdict screen needs it after <see cref="CloseFinalVote"/> has already moved the stage on,
+    /// and "four people were taken away and the screen never said by how many votes" is exactly the
+    /// moment a room stops believing the app.
+    /// </summary>
+    public static IReadOnlyList<(string CharacterId, int Votes)> FinalTally(TripData trip) =>
+        Current(trip) is { } trial ? Tally(trial.FinalVotes) : [];
+
+    /// <summary>How many named this person in the final round. Zero when nobody did.</summary>
+    public static int FinalVotesFor(TripData trip, string characterId) =>
+        FinalTally(trip).FirstOrDefault(t => t.CharacterId == characterId).Votes;
+
+    /// <summary>
+    /// Whether the cut was a tie that widened, rather than a clean two.
+    ///
+    /// Worth saying out loud on the verdict screen. A four-way tie convicting all four is a legal
+    /// outcome and a confusing one, and the room deserves the sentence that explains it.
+    /// </summary>
+    public static bool ConvictedOnATie(TripData trip) =>
+        Current(trip) is { } trial && trial.ConvictedCharacterIds.Count > ConvictionCount;
+
     private static IReadOnlyList<(string CharacterId, int Votes)> Tally(List<MysteryVote> ballots) =>
         ballots
             .GroupBy(v => v.TargetCharacterId, StringComparer.Ordinal)
@@ -259,6 +282,42 @@ public static class TrialService
         trial.Stage = MysteryTrialStage.Verdict;
         trial.ClosedAt = now;
         return trial.ConvictedCharacterIds;
+    }
+
+    // ------------------------------------------------------------------------------------------
+    //  Turning the cards over
+    // ------------------------------------------------------------------------------------------
+
+    /// <summary>Whether this conviction's card has been turned over yet.</summary>
+    public static bool VerdictShown(TripData trip, string characterId)
+    {
+        var trial = Current(trip);
+        if (trial is null) return false;
+
+        var i = trial.ConvictedCharacterIds.IndexOf(characterId);
+        return i >= 0 && i < trial.VerdictIndex;
+    }
+
+    /// <summary>Turn the next one over. False once they are all face up.</summary>
+    public static bool RevealNextVerdict(TripData trip)
+    {
+        var trial = Current(trip);
+        if (trial is null || trial.Stage != MysteryTrialStage.Verdict) return false;
+        if (trial.VerdictIndex >= trial.ConvictedCharacterIds.Count) return false;
+
+        trial.VerdictIndex++;
+        return true;
+    }
+
+    /// <summary>Who is next under the host's thumb, for the button's label.</summary>
+    public static string? NextVerdictCharacterId(TripData trip)
+    {
+        var trial = Current(trip);
+        if (trial is null || trial.Stage != MysteryTrialStage.Verdict) return null;
+
+        return trial.VerdictIndex < trial.ConvictedCharacterIds.Count
+            ? trial.ConvictedCharacterIds[trial.VerdictIndex]
+            : null;
     }
 
     /// <summary>

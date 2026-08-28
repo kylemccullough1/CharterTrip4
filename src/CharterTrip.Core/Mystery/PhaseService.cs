@@ -45,6 +45,15 @@ public static class PhaseService
             case MysteryPhase.Trial3:
                 TrialService.OpenTrial(trip, phase, now);
                 break;
+
+            case MysteryPhase.Reveal:
+                // Settled here rather than on the reveal screen, which was reading an Outcome that
+                // nothing ever wrote and headlining the end of the night with an ellipsis. Written
+                // down once so every open screen reads the same ending, and recomputed on a
+                // re-entry because the host can jump back to a trial and change it.
+                OutcomeService.End(trip, now);
+                mystery.Play.RevealIndex = 0;
+                break;
         }
 
         ObjectiveBus.PublishForPhase(trip, phase, now);
@@ -83,6 +92,49 @@ public static class PhaseService
 
     public static bool OnLastSlide(TripData trip) =>
         trip.Mystery.Play.SlideIndex >= trip.Mystery.Story.Slides.Count - 1;
+
+    // ------------------------------------------------------------------------------------------
+    //  Walking the ending
+    // ------------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// The reveal is a deck too: the prose, then one person at a time, then the sides.
+    ///
+    /// Stepped by the host rather than timed. Twenty-one faces on a timer is either too fast for the
+    /// person being read out or too slow for the room, and it is the last thing that happens all
+    /// night — it should end when the laughing stops.
+    /// </summary>
+    public static int RevealSteps(TripData trip) => OutcomeService.Reveal(trip).Count + 2;
+
+    /// <summary>Which person the ending is on, or null on the opening and closing cards.</summary>
+    public static OutcomeService.RevealRow? RevealSubject(TripData trip)
+    {
+        var rows = OutcomeService.Reveal(trip);
+        var i = trip.Mystery.Play.RevealIndex - 1;
+        return i >= 0 && i < rows.Count ? rows[i] : null;
+    }
+
+    /// <summary>The sides, and the end of the night.</summary>
+    public static bool OnRevealFinale(TripData trip) =>
+        trip.Mystery.Play.RevealIndex >= RevealSteps(trip) - 1;
+
+    public static bool NextReveal(TripData trip)
+    {
+        var play = trip.Mystery.Play;
+        if (play.RevealIndex + 1 >= RevealSteps(trip)) return false;
+
+        play.RevealIndex++;
+        return true;
+    }
+
+    public static bool PreviousReveal(TripData trip)
+    {
+        var play = trip.Mystery.Play;
+        if (play.RevealIndex <= 0) return false;
+
+        play.RevealIndex--;
+        return true;
+    }
 
     // ------------------------------------------------------------------------------------------
     //  The gates

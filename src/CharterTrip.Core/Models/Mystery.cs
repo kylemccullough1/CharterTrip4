@@ -122,6 +122,75 @@ public static class MysteryPhases
         phase is MysteryPhase.Trial1 or MysteryPhase.Trial2 or MysteryPhase.Trial3;
 
     /// <summary>
+    /// The phase in words, for anywhere a person reads it.
+    ///
+    /// <c>phase.ToString()</c> was going straight onto the console and the board, which is where
+    /// "FinalVote" and "Trial3" came from. Enum names are identifiers; this is the English.
+    /// </summary>
+    public static string Label(MysteryPhase phase) => phase switch
+    {
+        MysteryPhase.Lobby => "Before the evening",
+        MysteryPhase.Assembling => "Arriving",
+        MysteryPhase.Welcome => "Welcome",
+        MysteryPhase.Presentation => "The briefing",
+        MysteryPhase.Mingling => "The party",
+        MysteryPhase.Murder => "The murder",
+        MysteryPhase.StudyScene => "The study",
+        MysteryPhase.Investigation => "Investigation",
+        MysteryPhase.Trial1 => "First trial",
+        MysteryPhase.Discussion1 => "After the first trial",
+        MysteryPhase.Trial2 => "Second trial",
+        MysteryPhase.Discussion2 => "After the second trial",
+        MysteryPhase.Trial3 => "Final trial",
+        MysteryPhase.Reveal => "The whole truth",
+        _ => Spaced(phase.ToString())
+    };
+
+    /// <summary>Two or three words, for the jump strip where fourteen of these sit side by side.</summary>
+    public static string ShortLabel(MysteryPhase phase) => phase switch
+    {
+        MysteryPhase.Lobby => "Lobby",
+        MysteryPhase.Assembling => "Arriving",
+        MysteryPhase.Presentation => "Briefing",
+        MysteryPhase.Mingling => "Party",
+        MysteryPhase.StudyScene => "Study",
+        MysteryPhase.Trial1 => "Trial 1",
+        MysteryPhase.Discussion1 => "Talk 1",
+        MysteryPhase.Trial2 => "Trial 2",
+        MysteryPhase.Discussion2 => "Talk 2",
+        MysteryPhase.Trial3 => "Trial 3",
+        MysteryPhase.Reveal => "Reveal",
+        _ => Label(phase)
+    };
+
+    /// <summary>
+    /// A last resort for a phase nobody wrote a label for: "FinalVote" becomes "Final vote".
+    ///
+    /// Here rather than at each call site so a phase added later reads as English on every surface
+    /// from the moment it exists, instead of shipping as a run-together identifier.
+    /// </summary>
+    public static string Spaced(string pascalCase)
+    {
+        if (string.IsNullOrEmpty(pascalCase)) return "";
+
+        var text = new System.Text.StringBuilder(pascalCase.Length + 4);
+        text.Append(pascalCase[0]);
+
+        for (var i = 1; i < pascalCase.Length; i++)
+        {
+            var c = pascalCase[i];
+
+            // "Trial3" wants a break before the digit too, or the strip reads "Trial3".
+            var boundary = char.IsUpper(c) || (char.IsDigit(c) && !char.IsDigit(pascalCase[i - 1]));
+            if (boundary) text.Append(' ');
+
+            text.Append(boundary && char.IsUpper(c) ? char.ToLowerInvariant(c) : c);
+        }
+
+        return text.ToString();
+    }
+
+    /// <summary>
     /// Roles, factions and abilities land when the room reaches the study — not a moment sooner.
     /// </summary>
     public static bool RolesRevealed(MysteryPhase phase) =>
@@ -541,6 +610,15 @@ public sealed class MysteryPlay
     /// <summary>Stamped on entering Murder, so a screen opened later does not replay the cinematic.</summary>
     public DateTimeOffset? MurderAt { get; set; }
 
+    /// <summary>
+    /// How far the ending has been walked. Only meaningful during Reveal.
+    ///
+    /// In the document rather than in a component, for the same reason <see cref="SlideIndex"/> is:
+    /// the host steps it from a phone in their hand and the board has to follow, and a reveal that
+    /// lived in the board's own state would restart from the top if the television blinked.
+    /// </summary>
+    public int RevealIndex { get; set; }
+
     public MysteryOutcome? Outcome { get; set; }
 
     public MysteryCastMember? ForCharacter(string characterId) =>
@@ -712,6 +790,15 @@ public sealed class MysteryTrial
     /// <summary>Everyone at the cut, ties included. Not necessarily two.</summary>
     public List<string> ConvictedCharacterIds { get; set; } = [];
 
+    /// <summary>
+    /// How many of the convicted have had their card turned over.
+    ///
+    /// The verdict used to arrive as a wall of KILLER / NOT A KILLER, which is the single biggest
+    /// moment in a trial delivered all at once and read by nobody. The host turns them one at a
+    /// time, and this is where the room's screen and the four phones agree on how far they have got.
+    /// </summary>
+    public int VerdictIndex { get; set; }
+
     public DateTimeOffset? OpenedAt { get; set; }
     public DateTimeOffset? ClosedAt { get; set; }
 }
@@ -732,6 +819,20 @@ public enum MysteryTrialStage
 
     /// <summary>Jailed, and each card reads KILLER or NON-KILLER.</summary>
     Verdict
+}
+
+/// <summary>The five stages in words. Same reason as <see cref="MysteryPhases.Label"/>.</summary>
+public static class MysteryTrialStages
+{
+    public static string Label(MysteryTrialStage stage) => stage switch
+    {
+        MysteryTrialStage.Nominating => "Nominating",
+        MysteryTrialStage.Tallying => "The tally",
+        MysteryTrialStage.Defence => "On the stand",
+        MysteryTrialStage.FinalVote => "Final vote",
+        MysteryTrialStage.Verdict => "The verdict",
+        _ => MysteryPhases.Spaced(stage.ToString())
+    };
 }
 
 /// <summary>One ballot. Stored per voter, so voting again replaces rather than stacks.</summary>

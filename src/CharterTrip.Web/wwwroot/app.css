@@ -4019,3 +4019,566 @@ pre.code {
 
 /* The one chip on the testing panel that does something to the whole strip. */
 .chip.chip-do { border-color: var(--gold); color: var(--gold-light); }
+
+/* =============================================================================
+   Murder at Braun Manor — third pass.
+
+   Everything here is answering one of two complaints. The first is height: every
+   phase sized to its own content, so half of them left a screen of empty space
+   under a headline and the other half ran off the bottom. The second is
+   cramping: the phone was a stack of cards with nothing between them, and the
+   board's character tiles ran their names into the portraits above them.
+   ============================================================================= */
+
+/* --- the board is exactly one screen ---------------------------------------- */
+
+/* The stage is the evening; the testing strip below it is not. Splitting them
+   is what lets the stage claim the whole viewport without swallowing the strip,
+   which a fixed overlay had been doing. */
+.ms-stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(10px, 1.8vh, 26px);
+  padding: clamp(14px, 2.4vh, 34px) clamp(14px, 3vw, 40px);
+  box-sizing: border-box;
+
+  /* Windowed, so the nav and the page's own chrome are still above it. */
+  min-height: calc(100dvh - 150px);
+}
+
+/* Live, it is a television: the whole screen, and never a pixel more. Anything
+   that does not fit scrolls inside itself rather than pushing the page taller —
+   the alternative is a room being asked to scroll a television. */
+.ms-screen.is-live { padding: 0; }
+.ms-screen.is-live .ms-stage { height: 100dvh; min-height: 0; overflow: hidden; }
+
+/* Headings, counts and instructions keep their size; the one block of content
+   in the middle takes whatever is left. */
+.ms-stage > * { flex: 0 0 auto; min-width: 0; }
+
+.ms-stage > .ms-lobby,
+.ms-stage > .ms-split,
+.ms-stage > .ms-split-map,
+.ms-stage > .ms-grid-scroll,
+.ms-stage > .ms-nominees,
+.ms-stage > .ms-reveal,
+.ms-stage > .ms-truth,
+.ms-stage > .ms-victors,
+.ms-stage > .ms-feed { flex: 1 1 auto; min-height: 0; }
+
+.ms-grid-scroll { overflow-y: auto; align-content: start; padding-right: 2px; }
+
+/* The lobby is three stacked things, and only the guest wall grows. */
+.ms-lobby { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.ms-lobby > .ms-grid { flex: 1 1 auto; min-height: 0; }
+
+.ms-lede {
+  font-size: clamp(.9rem, 1.4vw, 1.2rem);
+  color: var(--text-dim);
+  max-width: 62ch;
+  margin: 6px auto 0;
+  line-height: 1.5;
+}
+
+.ms-subhead {
+  font-family: var(--display);
+  font-size: clamp(.7rem, 1vw, .86rem);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 8px;
+}
+
+/* --- the investigation: plan, feed and faces -------------------------------- */
+
+/* Three things at once, because during the investigation the room wants all
+   three. The feed on its own left twenty-one people with nowhere to look for
+   their own name. */
+.ms-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: clamp(12px, 2vw, 28px);
+  align-items: stretch;
+  min-height: 0;
+}
+
+.ms-split-map { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.ms-split-map.is-wide { width: 100%; }
+
+.ms-split-feed { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.ms-split-feed .ms-feed { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 4px; }
+
+@media (max-width: 900px) {
+  .ms-split { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* --- character tiles --------------------------------------------------------- */
+
+/* The old tile was a 1px gap between a round photograph and a display-face name,
+   so on every card the name sat against the bottom of the oval. It is a card
+   now: a ring, air, then the name. */
+.ms-grid {
+  grid-template-columns: repeat(auto-fill, minmax(clamp(116px, 11vw, 190px), 1fr));
+  gap: clamp(6px, .9vw, 12px);
+  min-width: 0;
+}
+
+.ms-guest {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: clamp(9px, 1vw, 15px) clamp(7px, .8vw, 12px) clamp(11px, 1.1vw, 17px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  text-align: center;
+  min-width: 0;
+  transition: border-color .18s ease, transform .18s ease;
+}
+
+.ms-guest:hover { border-color: var(--gold-dim); }
+
+/* Every one of these is a name somebody wrote, so none of them may be trusted to
+   be short. Two long words wrap; one long word breaks rather than widening the
+   grid column and dragging the whole row off the screen. */
+.ms-guest-name,
+.ms-guest-title,
+.ms-nominee-name {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+.ms-guest-name { font-family: var(--display); font-size: clamp(.8rem, 1.05vw, 1.06rem); line-height: 1.2; }
+.ms-guest-title {
+  font-size: clamp(.6rem, .78vw, .74rem);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  line-height: 1.3;
+}
+
+/* Sized against the viewport rather than fixed at 84px, which was a third of a
+   phone and a postage stamp on a television. */
+.ms-guest .ms-portrait,
+.ms-nominee .ms-portrait {
+  width: clamp(46px, 5vw, 92px);
+  height: clamp(46px, 5vw, 92px);
+  border-color: var(--gold-dim);
+  flex: 0 0 auto;
+}
+
+/* Just the faces: the investigation wants to show twenty-one people in the strip
+   under the floor plan, and a full tile each does not fit. */
+.ms-grid-thumbs {
+  grid-template-columns: repeat(auto-fill, minmax(clamp(78px, 7vw, 118px), 1fr));
+}
+.ms-grid-thumbs .ms-guest { gap: 6px; padding: 8px 5px 10px; }
+.ms-grid-thumbs .ms-portrait { width: clamp(36px, 3.4vw, 60px); height: clamp(36px, 3.4vw, 60px); }
+.ms-grid-thumbs .ms-guest-name { font-size: clamp(.62rem, .78vw, .82rem); }
+
+/* --- trials ------------------------------------------------------------------ */
+
+.ms-nominee {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: clamp(11px, 1.3vw, 20px) clamp(9px, 1vw, 16px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  text-align: center;
+  min-width: 0;
+}
+
+.ms-nominee-name { font-family: var(--display); font-size: clamp(.95rem, 1.5vw, 1.5rem); line-height: 1.15; }
+.ms-nominee-votes { font-size: clamp(.72rem, 1vw, .95rem); color: var(--gold-light); letter-spacing: .06em; }
+
+.ms-nominee-flag {
+  font-size: clamp(.58rem, .78vw, .72rem);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.ms-nominee.is-standing { border-color: var(--gold-dim); }
+.ms-nominee.is-standing .ms-nominee-flag { color: var(--gold-light); }
+.ms-nominee.is-spoken { opacity: .5; }
+
+.ms-nominee.is-speaking {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, rgba(212,175,55,.16), var(--panel));
+  outline: none;
+  transform: scale(1.03);
+}
+.ms-nominee.is-speaking .ms-nominee-flag { color: var(--gold); }
+
+/* The bars used to be pinned to the top-left of the card rather than over the
+   face, because the portrait is no longer the first thing in it. */
+.ms-bars {
+  position: absolute;
+  top: clamp(11px, 1.3vw, 20px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(46px, 5vw, 92px);
+  height: clamp(46px, 5vw, 92px);
+  border-radius: 50%;
+  background: repeating-linear-gradient(90deg, transparent 0 9px, rgba(10,12,16,.86) 9px 13px);
+  animation: ms-drop .5s ease-out both;
+}
+
+/* Face down until the host turns it over. The whole trial lands in this moment
+   and it used to arrive as a wall of cards nobody read. */
+.ms-verdict .is-facedown .ms-portrait { filter: grayscale(1) brightness(.35); }
+.ms-verdict .is-turned { animation: ms-turn .5s cubic-bezier(.2, 1.4, .4, 1) both; }
+
+@keyframes ms-turn {
+  from { transform: rotateY(-90deg); opacity: .2; }
+  to   { transform: none; opacity: 1; }
+}
+
+.ms-card-verdict.is-hidden { color: var(--text-faint); letter-spacing: .3em; }
+
+/* --- the ending -------------------------------------------------------------- */
+
+/* One person at a time. Keyed on the character in the markup, so each step gets
+   its own entrance rather than the browser reusing the last card's DOM. */
+.ms-truth {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  max-width: 46ch;
+  margin-inline: auto;
+  animation: ms-truth-in .55s cubic-bezier(.2, 1.2, .4, 1) both;
+}
+
+@keyframes ms-truth-in {
+  from { opacity: 0; transform: translateY(18px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+.ms-truth .ms-portrait { width: clamp(92px, 12vw, 168px); height: clamp(92px, 12vw, 168px); }
+
+.ms-truth-name { font-family: var(--display); font-size: clamp(1.8rem, 4.4vw, 3.4rem); line-height: 1.05; margin: 0; }
+.ms-truth-job { color: var(--text-faint); letter-spacing: .16em; text-transform: uppercase; font-size: clamp(.66rem, .9vw, .82rem); }
+
+.ms-truth-faction {
+  font-family: var(--display);
+  font-size: clamp(1rem, 1.8vw, 1.6rem);
+  color: var(--gold-light);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
+}
+.ms-truth-faction.is-killer { color: #e8919a; }
+
+.ms-truth-slot {
+  padding: 2px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: .68rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.ms-truth-blurb { color: var(--text-dim); line-height: 1.55; font-size: clamp(.9rem, 1.3vw, 1.1rem); }
+.ms-truth-note { color: var(--gold-light); font-style: italic; }
+
+/* The payoff for two hours of "a clue has been tampered with" and never which. */
+.ms-truth-deeds {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 12px 16px;
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
+  background: rgba(212,175,55,.08);
+  font-size: clamp(.85rem, 1.2vw, 1.05rem);
+}
+
+.ms-truth-verdict { font-family: var(--display); font-size: clamp(1.05rem, 2vw, 1.7rem); margin-top: 6px; }
+.ms-truth-verdict .is-win  { color: var(--emerald); }
+.ms-truth-verdict .is-lose { color: var(--text-faint); }
+
+/* The last screen of the night, and the only one that gets confetti. Factions
+   rather than trip teams: the mystery cuts the room a completely different way,
+   and putting four people's real teams up would be the wrong game's scoreboard. */
+.ms-victors {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ms-victors .jeo-win-name { font-size: clamp(1.8rem, 5.5vw, 4.2rem); max-width: 24ch; }
+
+.ms-sides {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.ms-side {
+  padding: 14px;
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  background: rgba(212,175,55,.06);
+  animation: ms-truth-in .6s ease-out both;
+}
+.ms-side:nth-child(2) { animation-delay: .12s; }
+.ms-side:nth-child(3) { animation-delay: .24s; }
+
+.ms-side-name {
+  font-family: var(--display);
+  font-size: clamp(.95rem, 1.5vw, 1.4rem);
+  color: var(--gold-light);
+  letter-spacing: .08em;
+  margin-bottom: 10px;
+}
+
+/* --- the floor plan ---------------------------------------------------------- */
+
+/* A card in every room, so the dot is always there and only its colour is news.
+   A dot that appeared on being found made unsearched rooms look empty, which is
+   the opposite of what it should say. */
+.mm-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: transparent;
+  border: 2px solid var(--sapphire);
+  opacity: .8;
+}
+.mm-dot.is-found {
+  background: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 10px rgba(212,175,55,.75);
+  opacity: 1;
+}
+
+/* Was a bare "1" in the corner of a room, which reads as a room number. */
+.mm-trail {
+  position: absolute; bottom: 5px; left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(74,127,214,.2);
+  border: 1px solid var(--sapphire);
+  color: #9dbaf0;
+  font-size: clamp(.5rem, .95vw, .68rem);
+  white-space: nowrap;
+}
+
+.mm-room.has-card { border-color: var(--gold-dim); background: rgba(212,175,55,.07); }
+
+/* The card itself, lying in the room it was found in. */
+.mm-card {
+  margin: 2px 0 0;
+  font-size: clamp(.42rem, .82vw, .8rem);
+  line-height: 1.35;
+  color: var(--text-dim);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  max-width: 100%;
+}
+
+.mm-key {
+  display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: center;
+  color: var(--text-faint); font-size: .76rem; margin-top: 10px;
+}
+.mm-key-item { display: inline-flex; align-items: center; gap: 7px; }
+.mm-key-item .mm-dot { position: static; }
+.mm-key-trail {
+  display: inline-block; width: 16px; height: 9px; border-radius: 999px;
+  background: rgba(74,127,214,.2); border: 1px solid var(--sapphire);
+}
+
+/* Sized by the space it is given rather than by its own width, so the plan can
+   sit in a column beside the clue feed without running off the bottom. */
+.mm-wrap.is-big { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+.mm-wrap.is-big .mm {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: auto;
+  max-width: 100%;
+  margin-inline: auto;
+}
+.mm-wrap.is-big .mm-name { font-size: clamp(.6rem, 1.05vw, .95rem); }
+
+/* --- the phone, with air in it ----------------------------------------------- */
+
+/* It was a stack of cards touching each other with 12px between them and 14px
+   inside them, which reads as one grey mass in a dark room. */
+.mp { padding: 20px 18px 52px; gap: 16px; }
+
+.mp-body { display: flex; flex-direction: column; gap: 14px; }
+
+/* The gap does this now; keeping both doubled it under every field. */
+.mp-field { margin-bottom: 0; }
+
+.mp-card { padding: 16px 18px; gap: 9px; }
+.mp-card + .mp-card { margin-top: 0; }
+.mp-card-title { font-family: var(--display); font-size: .95rem; letter-spacing: .05em; color: var(--gold-light); }
+
+.mp-head { gap: 14px; padding-bottom: 12px; align-items: center; }
+
+/* A long name beside a round photograph needs somewhere to wrap to, and a flex
+   item will not wrap at all until it is told its minimum is zero. */
+.mp-who-text { min-width: 0; }
+.mp-name { overflow-wrap: anywhere; }
+.mp-zone { font-size: .92rem; color: var(--text-dim); overflow-wrap: anywhere; }
+
+/* Nine words never fitted the corner of a phone. Its own row, full width. */
+.mp-ghost-badge {
+  display: block;
+  width: 100%;
+  padding: 9px 14px;
+  border: 1px solid var(--sapphire);
+  border-radius: var(--radius-sm);
+  background: rgba(74,127,214,.12);
+  color: #9dbaf0;
+  font-size: .8rem;
+  letter-spacing: .04em;
+  text-transform: none;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.mp-tabs { gap: 6px; padding-bottom: 6px; }
+.mp-tab { padding: 10px 15px; }
+
+.mp-clue { padding: 14px 16px; border-radius: 0 var(--radius) var(--radius) 0; background: var(--panel); }
+.mp-clue + .mp-clue { margin-top: 0; }
+
+.mp-fired { color: var(--gold-light); font-size: .85rem; margin-top: 4px; }
+
+/* --- the objective, as it arrives -------------------------------------------- */
+
+/* A badge on a tab is not enough when somebody is holding a drink and looking at
+   a room. The modal is what makes an instruction land; the tab is what makes it
+   findable afterwards. */
+.mp-modal-back {
+  position: fixed; inset: 0; z-index: 80;
+  display: grid; place-items: center;
+  padding: 24px;
+  background: rgba(6, 8, 12, .76);
+  animation: ms-truth-in .2s ease-out both;
+}
+
+.mp-modal {
+  width: min(28rem, 100%);
+  display: grid; gap: 14px;
+  padding: 22px;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(212,175,55,.12), var(--panel));
+  box-shadow: var(--shadow);
+  animation: ms-truth-in .35s cubic-bezier(.2, 1.3, .4, 1) both;
+}
+
+.mp-modal-kicker {
+  font-size: .7rem; letter-spacing: .24em; text-transform: uppercase;
+  color: var(--gold-dim);
+}
+.mp-modal-text { font-size: 1.1rem; line-height: 1.5; }
+
+/* --- win or lose, and nothing else -------------------------------------------- */
+
+/* The whole truth is on the television. This is the one bit that is only about
+   the person holding the phone. */
+.mp-verdict {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding: 10vh 8vw; text-align: center;
+}
+.mp-face { font-size: clamp(5rem, 26vw, 9rem); line-height: 1; }
+.mp-verdict-line { font-family: var(--display); font-size: clamp(2rem, 12vw, 3.4rem); margin: 0; }
+.mp-verdict.is-win  .mp-face, .mp-verdict.is-win  .mp-verdict-line { color: var(--gold); }
+.mp-verdict.is-lose .mp-face, .mp-verdict.is-lose .mp-verdict-line { color: var(--text-faint); }
+
+/* --- the control tab, sectioned ----------------------------------------------- */
+
+/* Six cards in a column meant the button that mattered right now was somewhere
+   in the middle of the tamper log, and the only way to find it was to scroll
+   past everything that did not matter. */
+.sc { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.sc-tabs { margin-bottom: 4px; gap: 4px; }
+.sc-tabs .guide-tab { padding: 8px 13px; font-size: .72rem; }
+
+.sc-kicker {
+  font-size: .66rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.sc-now { border-color: var(--gold-dim); background: linear-gradient(180deg, rgba(212,175,55,.09), var(--panel)); }
+.sc-act { border-left: 3px solid var(--gold-dim); }
+.sc-murder { border-left-color: var(--ruby); }
+
+.sc-targets { max-height: 190px; overflow-y: auto; padding: 4px; }
+
+/* A seat nobody has walked into. Naming them is fine — the objective simply will
+   not be delivered to an empty chair, and the console should say which are. */
+.chip.is-empty { opacity: .45; }
+
+.sc-jump .mys-rounds { max-height: 240px; overflow-y: auto; flex-wrap: wrap; }
+.sc-jump .mys-chip { white-space: nowrap; }
+
+/* --- the testing strip -------------------------------------------------------- */
+
+/* Standing in a room with a camera is the one part of this game a laptop cannot
+   do, so each frame gets driven to the URL the QR code holds instead. */
+.sim-drive { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.sim-select {
+  flex: 1 1 auto; min-width: 0;
+  padding: 4px 6px;
+  background: var(--ink-2); color: var(--text-dim);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  font: inherit; font-size: .7rem;
+}
+
+.chip-xs { padding: 3px 9px; font-size: .7rem; }
+
+.chip:disabled { opacity: .4; cursor: default; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ms-truth, .ms-side, .ms-verdict .is-turned, .mp-modal, .mp-modal-back { animation: none; }
+  .ms-nominee.is-speaking { transform: none; }
+}
+
+/* --- the invitation, centred ---------------------------------------------------
+   Same trap that caught the board and the phone: BareLayout's main is a flex ROW,
+   so a page inside it is a flex item and sizes to its own content. The photograph
+   step happened to be wide enough to look centred; the letter is a 46ch column,
+   so it sat hard against the left edge with the rest of the screen black beside
+   it. Neither was centred — one was just wide.
+   ------------------------------------------------------------------------------ */
+.mw {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+  min-height: 100dvh;
+  box-sizing: border-box;
+}
+
+.mw-envelope { width: 100%; max-width: 46ch; margin-inline: auto; }
+.mw-photo { display: grid; place-items: center; }

@@ -6,14 +6,25 @@
 // for the lens instead: one permission prompt, a live preview, and a shutter.
 //
 // It can fail for reasons that are nobody's fault — permission refused, no camera, an insecure
-// origin — so every call reports rather than throws, and the page keeps a file picker behind it.
+// origin, an iframe that was never granted the camera, another app already holding the lens — so
+// every call reports rather than throws. It reports the *specific* reason too: the page used to say
+// "no camera answered" to all six, which is a sentence nobody can act on.
 
 let stream = null;
 
 export async function start(videoId) {
     stop();
 
-    if (!navigator.mediaDevices?.getUserMedia) return 'unsupported';
+    // Browsers hide mediaDevices entirely outside a secure context, so the missing API and the
+    // insecure origin look identical from here unless this is checked first. They are completely
+    // different problems: one needs a different browser, the other needs https or localhost.
+    if (!window.isSecureContext) {
+        return { status: 'insecure', detail: location.origin };
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+        return { status: 'unsupported', detail: null };
+    }
 
     try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -23,19 +34,47 @@ export async function start(videoId) {
             audio: false
         });
     } catch (error) {
-        // NotAllowedError is a decision, not a fault — the page says so rather than apologising.
-        return error?.name === 'NotAllowedError' ? 'denied' : 'unavailable';
+        return { status: reason(error), detail: error?.message ?? String(error) };
     }
 
     const video = document.getElementById(videoId);
-    if (!video) { stop(); return 'unavailable'; }
+    if (!video) { stop(); return { status: 'unavailable', detail: 'no preview element' }; }
 
     video.srcObject = stream;
     video.setAttribute('playsinline', '');   // iOS goes fullscreen without it
     video.muted = true;
     await video.play().catch(() => {});
 
-    return 'ready';
+    return { status: 'ready', detail: null };
+}
+
+// Which of the failures this was. NotAllowedError covers both "the person said no" and "the frame
+// this page is in was never granted a camera", and those need different sentences — a permission
+// policy rejection is not something the person holding the phone can fix from the address bar.
+function reason(error) {
+    const name = error?.name;
+
+    if (name === 'NotAllowedError') {
+        return blockedByPolicy() ? 'blocked' : 'denied';
+    }
+
+    if (name === 'NotFoundError' || name === 'OverconstrainedError') return 'none';
+    if (name === 'NotReadableError' || name === 'AbortError') return 'busy';
+    if (name === 'SecurityError') return 'insecure';
+
+    return 'unavailable';
+}
+
+// Permissions Policy does not grant an iframe the camera unless the embedding page says allow=
+// "camera". Chrome and Firefox expose that here; where they do not, the answer is "assume the
+// person decided", which is the more common case anyway.
+function blockedByPolicy() {
+    try {
+        if (window.self === window.top) return false;
+        return document.featurePolicy?.allowsFeature?.('camera') === false;
+    } catch {
+        return false;
+    }
 }
 
 /// Grabs the current frame as a data URL. Square, centre-cropped, because the portrait is round.

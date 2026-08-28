@@ -33,6 +33,16 @@ public sealed class SimPhones
     /// </summary>
     private readonly ConcurrentDictionary<int, int> _nonce = new();
 
+    /// <summary>
+    /// Where each frame is currently pointed.
+    ///
+    /// A real phone reaches a clue card by walking into a room and holding its camera at a QR code,
+    /// which is exactly the part a laptop cannot do. Driving the frame to the same URL the camera
+    /// would have opened is the nearest honest substitute: the page that runs is the real page, and
+    /// everything downstream of it — the scan record, the trail, the tamper offer — is real too.
+    /// </summary>
+    private readonly ConcurrentDictionary<int, string> _routes = new();
+
     /// <summary>How many frames the strip is showing. Not the number that have joined.</summary>
     public int Count { get; private set; }
 
@@ -41,6 +51,8 @@ public sealed class SimPhones
 
     public int Add()
     {
+        if (Count >= MaxPhones) return Count;
+
         Count++;
         return Count;
     }
@@ -57,6 +69,7 @@ public sealed class SimPhones
 
         _people.TryRemove(Count, out _);
         _nonce.TryRemove(Count, out _);
+        _routes.TryRemove(Count, out _);
         Count--;
     }
 
@@ -64,6 +77,7 @@ public sealed class SimPhones
     {
         _people.Clear();
         _nonce.Clear();
+        _routes.Clear();
         Count = 0;
     }
 
@@ -71,6 +85,16 @@ public sealed class SimPhones
     public string? PersonFor(int slot) => _people.GetValueOrDefault(slot);
 
     public int NonceFor(int slot) => _nonce.GetValueOrDefault(slot);
+
+    /// <summary>The page this frame is on. The front door until somebody sends it somewhere.</summary>
+    public string RouteFor(int slot) => _routes.GetValueOrDefault(slot) ?? "/join";
+
+    /// <summary>Send one frame to a page, the way a camera would have.</summary>
+    public void Go(int slot, string route)
+    {
+        _routes[slot] = route;
+        Reload(slot);
+    }
 
     /// <summary>Send this frame round again, wherever its state now says it belongs.</summary>
     public void Reload(int slot) => _nonce.AddOrUpdate(slot, 1, (_, n) => n + 1);
@@ -82,6 +106,17 @@ public sealed class SimPhones
     /// <c>JoinWithCode</c> — so a simulated phone and a real one take the same path to get here.
     /// </summary>
     public void Bind(int slot, string personId) => _people[slot] = personId;
+
+    /// <summary>
+    /// The ceiling on the strip.
+    ///
+    /// Twenty-four, not twenty-five: the twenty-fifth phone is the one in the hand of whoever is
+    /// testing, holding Braun. A strip that seats the whole cast seats the tester out of the only
+    /// part with anything to drive.
+    /// </summary>
+    public const int MaxPhones = 24;
+
+    public bool IsFull => Count >= MaxPhones;
 
     public int Joined => _people.Count;
 }

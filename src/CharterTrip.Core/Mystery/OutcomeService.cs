@@ -91,6 +91,83 @@ public static class OutcomeService
             .ToList();
     }
 
+    /// <summary>
+    /// One line of the ending, per person, in the order the reveal walks them.
+    ///
+    /// Everything the room was never allowed to know, gathered once so the last screen of the night
+    /// is reading a list rather than recomputing a verdict twenty-one times while everybody watches.
+    /// Killers first, then whoever else did something, then the rest — a reveal that opens on a
+    /// villager who quietly had a nice evening is a reveal nobody watches to the end.
+    /// </summary>
+    public sealed record RevealRow(
+        MysteryCharacter Character,
+        MysteryFaction? Faction,
+        bool Convicted,
+        bool Won,
+        IReadOnlyList<string> Deeds);
+
+    public static IReadOnlyList<RevealRow> Reveal(TripData trip)
+    {
+        var story = trip.Mystery.Story;
+        var convicted = trip.Mystery.Play.ConvictedCharacterIds.ToHashSet(StringComparer.Ordinal);
+        var winners = Winners(trip).ToHashSet(StringComparer.Ordinal);
+
+        return story.Guests
+            .Select(c => new RevealRow(
+                c,
+                story.Faction(c.FactionId),
+                convicted.Contains(c.Id),
+                winners.Contains(c.Id),
+                Deeds(trip, c.Id)))
+            .OrderByDescending(r => r.Character.IsKiller)
+            .ThenByDescending(r => r.Deeds.Count)
+            .ThenByDescending(r => r.Character.IsHerring)
+            .ThenBy(r => r.Character.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+    }
+
+    /// <summary>
+    /// What this person did that nobody saw, in sentences.
+    ///
+    /// The tamper log is the good half of this: "a clue has been tampered with" is all the room ever
+    /// got told, and the whole evening is spent arguing about which one. Naming it at the end is the
+    /// payoff for two hours of suspicion.
+    /// </summary>
+    private static IReadOnlyList<string> Deeds(TripData trip, string characterId)
+    {
+        var story = trip.Mystery.Story;
+        var deeds = new List<string>();
+
+        foreach (var state in trip.Mystery.Play.ClueStates.Where(s => s.Tamper?.ByCharacterId == characterId))
+        {
+            var room = story.Zone(story.Clue(state.ClueId)?.ZoneId ?? "")?.Name ?? "a room";
+            var framed = story.Character(state.Tamper!.TargetCharacterId ?? "")?.Name;
+
+            deeds.Add(state.Tamper.Mode switch
+            {
+                "scrub" => $"Wiped the card in the {room}.",
+                _ when framed is null => $"Worked on the card in the {room}.",
+                _ when framed == story.Character(characterId)?.Name => $"Planted their own belongings on the card in the {room}.",
+                _ => $"Framed {framed} on the card in the {room}."
+            });
+        }
+
+        foreach (var use in trip.Mystery.Play.AbilityUses.Where(u => u.ByCharacterId == characterId))
+        {
+            // Tampering already has its own sentence above, and saying it twice reads as two acts.
+            if (use.TargetClueId is { Length: > 0 }) continue;
+
+            var ability = story.Faction(use.FactionId)?.Abilities.FirstOrDefault(a => a.Id == use.AbilityId);
+            var target = story.Character(use.TargetCharacterId ?? "")?.Name;
+
+            deeds.Add(target is null
+                ? $"Used {ability?.Name ?? use.AbilityId}."
+                : $"Used {ability?.Name ?? use.AbilityId} on {target}.");
+        }
+
+        return deeds;
+    }
+
     /// <summary>The closing stats. Cheap, and the part people talk about afterwards.</summary>
     public static (string? MostMet, string? LeastMet, (string, string)? NeverSpoke) PartyStats(TripData trip)
     {

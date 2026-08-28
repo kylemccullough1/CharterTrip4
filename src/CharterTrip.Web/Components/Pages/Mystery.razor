@@ -6,6 +6,7 @@
 @inherits TripAwareComponent
 @inject IClock Clock
 @inject NavigationManager Nav
+@inject IWebHostEnvironment Env
 
 <PageTitle>@Story.Title · Charter Trip 2026</PageTitle>
 
@@ -239,6 +240,59 @@
         break;
 }
 
+@if (IsDev && HasGame)
+{
+    @* Local only — IsDev is IWebHostEnvironment.IsDevelopment(), so none of this reaches Azure.
+
+       Real /m pages in iframes rather than a hand-rolled stand-in, so what you are testing is
+       exactly what a phone would show, tab gating and all. They go through ?as= rather than the
+       codes on the wall: a code now signs you in, and twenty-five iframes sharing this page's
+       cookie would fight over one session and sign you out of your own board.
+
+       Which characters to open is a choice rather than a default, because every frame is a whole
+       Blazor circuit and twenty-five of them is not a landing page. *@
+    <section class="jeo-testing no-print">
+        <button class="btn btn-ghost btn-sm" @onclick="() => _simOpen = !_simOpen">
+            🧪 Testing @(_simOpen ? "▲" : "▼")
+        </button>
+
+        @if (_simOpen)
+        {
+            <div class="jeo-testing-panel">
+                <div class="chip-row">
+                    <button class="chip" @onclick="FillTheRoomAsync">⚡ Fill the room</button>
+                    <button class="chip" @onclick="EverybodyVotesAsync">⚡ Everybody votes</button>
+                    <button class="chip" @onclick="FindEveryClueAsync">⚡ Find every clue</button>
+                    <button class="chip" @onclick="MeetEverybodyAsync">⚡ Everybody mingles</button>
+                </div>
+
+                <div class="chip-row mys-sim-picks">
+                    <button class="chip" @onclick="() => _sim.Clear()">None</button>
+                    <button class="chip" @onclick="ShowStaff">The four of you</button>
+                    <button class="chip" @onclick="ShowGuilty">The guilty</button>
+                    @foreach (var character in Story.Characters)
+                    {
+                        <button class="chip @(_sim.Contains(character.Id) ? "on" : "")"
+                                @key="character.Id" @onclick="() => ToggleSim(character.Id)">
+                            @character.Name@(character.IsKiller ? " 🔪" : "")
+                        </button>
+                    }
+                </div>
+
+                <div class="jeo-simstrip-row">
+                    @foreach (var id in _sim)
+                    {
+                        <div class="jeo-simcard" @key="id">
+                            <span class="jeo-simcard-label">@(Story.Character(id)?.Name)</span>
+                            <iframe class="jeo-simframe" src="@($"/m?as={id}")" title="@($"Phone — {id}")"></iframe>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </section>
+}
+
 </div>
 
 @code {
@@ -318,4 +372,87 @@
         await MutateAsync(CastingService.Discard);
         await Store.FlushAsync();
     }
+
+    // ------------------------------------------------------------------------------------------
+    //  Testing, in development only
+    // ------------------------------------------------------------------------------------------
+
+    private bool IsDev => Env.IsDevelopment();
+    private bool _simOpen;
+    private readonly List<string> _sim = [];
+
+    private void ToggleSim(string id)
+    {
+        if (!_sim.Remove(id)) _sim.Add(id);
+    }
+
+    private void ShowStaff()
+    {
+        _sim.Clear();
+        _sim.AddRange(Story.StaffParts.Select(c => c.Id));
+    }
+
+    private void ShowGuilty()
+    {
+        _sim.Clear();
+        _sim.AddRange(Story.Killers.Select(c => c.Id));
+    }
+
+    /// <summary>
+    /// Everything here goes through the real service calls rather than writing state directly, so
+    /// a shortcut cannot produce a game that could not have happened.
+    /// </summary>
+    private Task FillTheRoomAsync() => MutateAsync(t =>
+    {
+        foreach (var (person, part) in CastingService.Organizers(t)
+                     .Select(p => p.Id)
+                     .Zip(CastingService.UnclaimedStaffParts(t).Select(c => c.Id).ToList()))
+        {
+            CastingService.ClaimStaffPart(t, person, part);
+        }
+
+        foreach (var person in CastingService.Unclaimed(t).ToList())
+            CastingService.ClaimCharacter(t, person.Id, Random.Shared);
+    });
+
+    private Task EverybodyVotesAsync() => MutateAsync(t =>
+    {
+        if (TrialService.Current(t) is null) return;
+
+        var voters = TrialService.Electorate(t).Select(c => c.Id).ToList();
+        var trial = TrialService.Current(t)!;
+
+        var candidates = trial.Stage == MysteryTrialStage.FinalVote
+            ? trial.NomineeCharacterIds
+            : TrialService.Living(t).Select(c => c.Id).ToList();
+
+        if (candidates.Count == 0) return;
+
+        var front = Math.Max(1, Math.Min(candidates.Count, 4));
+
+        for (var i = 0; i < voters.Count; i++)
+        {
+            var target = candidates[i % front];
+            if (target == voters[i]) target = candidates[(i + 1) % front];
+            TrialService.CastVote(t, voters[i], target, Clock.UtcNow);
+        }
+    });
+
+    private Task FindEveryClueAsync() => MutateAsync(t =>
+    {
+        var finders = t.Mystery.Story.Guests.Select(c => c.Id).ToList();
+        if (finders.Count == 0) return;
+
+        for (var i = 0; i < t.Mystery.Story.Clues.Count; i++)
+            ScanShareService.RecordClueScan(t, finders[i % finders.Count], t.Mystery.Story.Clues[i].Id, Clock.UtcNow);
+    });
+
+    private Task MeetEverybodyAsync() => MutateAsync(t =>
+    {
+        var guests = t.Mystery.Story.Guests.Select(c => c.Id).ToList();
+
+        for (var i = 0; i < guests.Count; i++)
+            foreach (var step in new[] { 1, 3, 6 })
+                ScanShareService.RecordMeeting(t, guests[i], guests[(i + step) % guests.Count], Clock.UtcNow);
+    });
 }

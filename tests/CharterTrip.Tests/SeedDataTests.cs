@@ -1,5 +1,6 @@
 using CharterTrip.Core.Models;
 using CharterTrip.Core.Services;
+using CharterTrip.Core.Words;
 using CharterTrip.Infrastructure.Seed;
 
 namespace CharterTrip.Tests;
@@ -123,23 +124,23 @@ public class SeedDataTests
         Assert.Equal(5, Seed.Mystery.Characters.Count(c => c.IsConspirator));
         Assert.Equal(1, Seed.Mystery.Characters.Count(c => c.IsMastermind));
     }
-
     [Fact]
-    public void Spelling_bee_has_a_word_list_with_no_repeats()
+    public void The_bee_ships_with_a_difficulty_rather_than_a_word_list()
     {
-        var words = Seed.SpellingBee.Words;
+        var bee = Seed.SpellingBee;
 
-        Assert.NotEmpty(words);
-        Assert.All(words, w => Assert.False(w.IsEmpty, $"{w.Id} has no word"));
-        Assert.All(words, w => Assert.False(string.IsNullOrWhiteSpace(w.Hint), $"{w.Word} has no hint to read"));
+        // Words are drawn as turns come up, so shipping any would only mean shipping a stale
+        // hand somebody had to remember to clear.
+        Assert.Empty(bee.Words);
 
-        // A word coming round twice is the one mistake a room notices instantly.
-        Assert.Equal(words.Count, words.Select(w => w.Word.ToLowerInvariant()).Distinct().Count());
-        Assert.Equal(words.Count, words.Select(w => w.Id).Distinct().Count());
+        Assert.True(WordBank.IsTier(bee.DifficultyKey), $"'{bee.DifficultyKey}' is not a tier");
+        Assert.Equal(bee.DifficultyKey, bee.Game.DifficultyKey);
+        Assert.True(bee.PointsPerWord > 0);
+        Assert.Equal(-1, bee.Game.RuleSlide);
     }
 
     /// <summary>
-    /// The dress rehearsal: the real roster, the real teams, the real word list, played to a
+    /// The dress rehearsal: the real roster, the real teams, real drawn words, played to a
     /// finish. Everything else about the bee is tested on a four-person fixture, which proves the
     /// rules but not that they survive contact with twenty-five people across four teams — and
     /// the two ways this could go wrong on the night are that it never ends, or that it runs out
@@ -149,19 +150,24 @@ public class SeedDataTests
     public void A_full_bee_on_the_real_roster_finishes_without_running_out_of_words()
     {
         var trip = SeedLoader.Load();
-        SpellingBeeService.Start(trip);
+        var now = new DateTimeOffset(2026, 8, 29, 11, 30, 0, TimeSpan.Zero);
 
-        // Everybody misses until one is left, then the survivor spells their way to the win.
-        // The cap is a deadlock detector, not a limit: a bee this size should end well inside it.
+        foreach (var person in trip.Roster) SpellingBeeService.SetReady(trip, person.Id, true);
+        SpellingBeeService.Start(trip, new Random(7));
+
+        Assert.Equal(BeePhase.Spelling, trip.SpellingBee.Game.Phase);
+        Assert.Equal(trip.Roster.Count, trip.SpellingBee.Game.Order.Count);
+
+        // Everybody misses until one is left. The cap is a deadlock detector, not a limit.
         var turns = 0;
         while (trip.SpellingBee.Game.Phase != BeePhase.Finished && turns++ < 500)
         {
-            if (trip.SpellingBee.Game.Survivors.Count == 1)
-                SpellingBeeService.JudgeCorrect(trip);
+            if (SpellingBeeService.Survivors(trip).Count == 1)
+                SpellingBeeService.JudgeCorrect(trip, now);
             else
                 SpellingBeeService.JudgeWrong(trip);
 
-            SpellingBeeService.Continue(trip);
+            SpellingBeeService.Continue(trip, new Random(5));
         }
 
         Assert.Equal(BeePhase.Finished, trip.SpellingBee.Game.Phase);
@@ -170,36 +176,99 @@ public class SeedDataTests
         Assert.NotNull(winner);
         Assert.Contains(trip.Teams, t => t.Id == winner!.TeamId);
 
-        // 25 people means 24 eliminations and a winning word — the list has to outlast that.
-        Assert.True(SpellingBeeService.WordsRemaining(trip) > 0,
-            $"the bee used every word in the list with {turns} turns played");
+        // Every word the bee read was a different word, all the way to the end.
+        var words = trip.SpellingBee.Words;
+        Assert.Equal(words.Count, words.Select(w => w.Word.ToLowerInvariant()).Distinct().Count());
+        Assert.All(words, w => Assert.False(w.IsEmpty, $"{w.Id} has no word"));
+    }
 
-        var entry = Assert.Single(trip.Scores, s => s.GameId == SpellingBeeService.GameId);
-        Assert.Equal(winner!.TeamId, entry.TeamId);
+
+    /// <summary>
+    /// The same rehearsal, but the last one standing fumbles it once before winning — which is
+    /// the only path that reaches the revival rule, and the one the whole endgame turns on.
+    ///
+    /// Two ways this goes wrong on the night and neither shows up on a four-person fixture: the
+    /// refill never terminates because every miss brings four people back, or it eats the deck
+    /// getting there.
+    /// </summary>
+    [Fact]
+    public void A_revival_on_the_real_roster_refills_the_field_and_still_ends()
+    {
+        var trip = SeedLoader.Load();
+        var now = new DateTimeOffset(2026, 8, 29, 11, 30, 0, TimeSpan.Zero);
+
+        foreach (var person in trip.Roster) SpellingBeeService.SetReady(trip, person.Id, true);
+        SpellingBeeService.Start(trip, new Random(23));
+
+        var game = trip.SpellingBee.Game;
+        var fumbled = false;
+        var revivedCount = 0;
+
+        var turns = 0;
+        while (game.Phase != BeePhase.Finished && turns++ < 500)
+        {
+            if (SpellingBeeService.Survivors(trip).Count == 1 && fumbled)
+            {
+                SpellingBeeService.JudgeCorrect(trip, now);
+            }
+            else
+            {
+                var survivor = SpellingBeeService.Person(trip, game.CurrentPersonId)!;
+                var wasLast = SpellingBeeService.Survivors(trip).Count == 1;
+
+                SpellingBeeService.JudgeWrong(trip);
+
+                if (wasLast)
+                {
+                    // The refill happened, it did not put the speller out, and it drew from
+                    // every team except their own.
+                    fumbled = true;
+                    revivedCount = game.JustRevived.Count;
+
+                    Assert.NotEmpty(game.JustRevived);
+                    Assert.False(SpellingBeeService.IsOut(trip, survivor.Id));
+                    Assert.All(game.JustRevived, id =>
+                        Assert.NotEqual(survivor.TeamId, SpellingBeeService.Person(trip, id)!.TeamId));
+                }
+            }
+
+            SpellingBeeService.Continue(trip, new Random(5));
+        }
+
+        Assert.True(fumbled, "the last one standing never missed, so no revival was exercised");
+        Assert.Equal(trip.Teams.Count - 1, revivedCount);   // every team but the survivor's own
+
+        Assert.Equal(BeePhase.Finished, game.Phase);
+        Assert.NotNull(SpellingBeeService.Winner(trip));
+
+        var words = trip.SpellingBee.Words;
+        Assert.Equal(words.Count, words.Select(w => w.Word.ToLowerInvariant()).Distinct().Count());
     }
 
     /// <summary>
-    /// TeamCursor and CurrentPersonId are two records of the same fact — whose turn it is — so
-    /// they must never disagree. Checked after every operation of a long game rather than at the
-    /// end, because a cursor that drifts one turn shows up as the wrong person being called much
+    /// The row and whoever is at the microphone are two records of the same fact, so they must
+    /// never disagree. Checked after every operation of a long game rather than at the end,
+    /// because a rotation that drifts one turn shows up as the wrong person being called much
     /// later, when it is far too late to work out why.
     /// </summary>
     [Fact]
-    public void The_team_cursor_always_agrees_with_who_is_spelling()
+    public void The_speller_is_always_somebody_still_in_the_row()
     {
         var trip = SeedLoader.Load();
-        SpellingBeeService.Start(trip);
+        var now = new DateTimeOffset(2026, 8, 29, 11, 30, 0, TimeSpan.Zero);
+
+        foreach (var person in trip.Roster) SpellingBeeService.SetReady(trip, person.Id, true);
+        SpellingBeeService.Start(trip, new Random(11));
 
         void Check(string after)
         {
             var game = trip.SpellingBee.Game;
-            if (game.CurrentPersonId is null) return;
+            if (game.CurrentPersonId is not { } id) return;
+            if (game.Phase == BeePhase.Finished) return;
 
-            var speller = SpellingBeeService.Person(trip, game.CurrentPersonId);
-            var cursorTeam = trip.Teams[game.TeamCursor].Id;
-
-            Assert.True(speller!.TeamId == cursorTeam,
-                $"after {after}: {speller.Name} is on {speller.TeamId} but the cursor says {cursorTeam}");
+            Assert.True(game.Order.Contains(id), $"after {after}: {id} is not in the row");
+            Assert.False(game.Eliminated.Contains(id) && game.Phase == BeePhase.Spelling,
+                $"after {after}: {id} is spelling but is out");
         }
 
         Check("start");
@@ -209,16 +278,16 @@ public class SeedDataTests
         {
             if (turns % 7 == 0)
             {
-                SpellingBeeService.SkipWord(trip);
+                SpellingBeeService.SkipWord(trip, new Random(5));
                 Check("a skip");
                 continue;
             }
 
-            if (trip.SpellingBee.Game.Survivors.Count == 1) SpellingBeeService.JudgeCorrect(trip);
+            if (SpellingBeeService.Survivors(trip).Count == 1) SpellingBeeService.JudgeCorrect(trip, now);
             else SpellingBeeService.JudgeWrong(trip);
             Check("a judgement");
 
-            SpellingBeeService.Continue(trip);
+            SpellingBeeService.Continue(trip, new Random(5));
             Check("moving on");
         }
 

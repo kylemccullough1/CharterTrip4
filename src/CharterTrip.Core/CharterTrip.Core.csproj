@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Words\word-bank.json"
+                      LogicalName="CharterTrip.Core.Words.word-bank.json" />
+  </ItemGroup>
+
 </Project>

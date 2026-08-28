@@ -5,21 +5,39 @@ namespace CharterTrip.Core.Models;
 /// <summary>
 /// The spelling bee.
 ///
-/// Unlike Jeopardy, which is played by teams buzzing against each other, the bee is played
-/// by <em>people</em>: the roster is the field, elimination is per person, and a team only
-/// wins when one of its members is the last one standing. There are no phones either — one
-/// person spells aloud and the host says right or wrong — so none of Jeopardy's join-code
-/// machinery has an equivalent here.
+/// It is played by <em>people</em> rather than by teams: the field is a shuffled row of everyone
+/// who joined, elimination is per person, and a team's score is simply what its members spelled
+/// correctly along the way.
+///
+/// Three screens, and which one a device gets is the whole design. The wall is pointed at the
+/// room and never shows the word — in a bee the word <em>is</em> the answer, so anything the room
+/// can see, the speller can see. The word lives on the host's phone and nowhere else. Everyone
+/// else's phone is how they got into the game in the first place.
 /// </summary>
 public sealed class SpellingBee
 {
     public string Title { get; set; } = "Spelling Bee";
 
-    /// <summary>The word list, in the order the host reads it. Easiest first — the order is the difficulty curve.</summary>
+    /// <summary>
+    /// Every word this bee has drawn, oldest first, and the last one is the word in play.
+    ///
+    /// Not a deck. Words are drawn one at a time out of the embedded Scripps bank as turns come
+    /// up, because the difficulty they are drawn at is the host's to move while the bee is
+    /// running — a hand dealt up front would fix that decision before anybody had spelled
+    /// anything. Keeping the drawn ones here is what stops a word coming round twice, skipped
+    /// words included.
+    /// </summary>
     public List<BeeWord> Words { get; set; } = [];
 
-    /// <summary>What the winning speller's team takes. One award, at the end.</summary>
-    public int WinnerPoints { get; set; } = 10;
+    /// <summary>
+    /// Which tier the first word comes out of. Set before the bee starts and copied into the
+    /// game at Start, after which it is <see cref="BeeGame.DifficultyKey"/> that matters — the
+    /// host moves that one up and down as the room copes or does not.
+    /// </summary>
+    public string DifficultyKey { get; set; } = "moderate";
+
+    /// <summary>What a correct word is worth to the speller's team, every single time.</summary>
+    public int PointsPerWord { get; set; } = 5;
 
     /// <summary>Everything that changes while the bee is being played. Reset wipes this.</summary>
     public BeeGame Game { get; set; } = new();
@@ -29,14 +47,36 @@ public sealed class BeeWord
 {
     public string Id { get; set; } = "";
 
-    /// <summary>The word itself. For the host's eyes — it only goes on the wall once the turn is over.</summary>
+    /// <summary>The word itself. For the host's phone — the wall only sees it once the turn is over.</summary>
     public string Word { get; set; } = "";
 
-    /// <summary>Definition, origin, or a sentence — whatever the host reads when the speller asks.</summary>
-    public string Hint { get; set; } = "";
+    /// <summary>Which tier it was drawn from, so the host's phone can say how hard it is meant to be.</summary>
+    public string TierKey { get; set; } = "";
+
+    /// <summary>
+    /// What a speller is allowed to ask for, and therefore what the host has to be able to answer
+    /// without leaving the microphone. Filled from the word bank at deal time.
+    ///
+    /// Any of these may be blank — the bank is compiled from public dictionary data and coverage
+    /// is not total — so the host's phone shows only the lines it actually has rather than a row
+    /// of empty labels implying the host forgot something.
+    /// </summary>
+    public string Definition { get; set; } = "";
+
+    public string PartOfSpeech { get; set; } = "";
+
+    /// <summary>The word used in a sentence. The one a speller asks for most and the sparsest.</summary>
+    public string Sentence { get; set; } = "";
 
     [JsonIgnore]
     public bool IsEmpty => string.IsNullOrWhiteSpace(Word);
+
+    /// <summary>Whether there is anything to tell a speller who asks.</summary>
+    [JsonIgnore]
+    public bool HasHelp =>
+        !string.IsNullOrWhiteSpace(Definition) ||
+        !string.IsNullOrWhiteSpace(PartOfSpeech) ||
+        !string.IsNullOrWhiteSpace(Sentence);
 }
 
 /// <summary>
@@ -44,7 +84,7 @@ public sealed class BeeWord
 /// </summary>
 public enum BeePhase
 {
-    /// <summary>Title card. Nobody is at the microphone.</summary>
+    /// <summary>Title card, join codes, and the faces of everyone who has joined.</summary>
     NotStarted,
 
     /// <summary>Someone has a word and the host is waiting to hear it spelled.</summary>
@@ -67,33 +107,28 @@ public sealed class BeeGame
     public BeePhase Phase { get; set; } = BeePhase.NotStarted;
 
     /// <summary>
-    /// Everyone still in. This is a queue: a speller who survives their turn goes to the back,
-    /// so "the next person up for this team" is simply the first survivor belonging to it, and
-    /// no per-team bookmark has to be kept in step with this list.
+    /// The row across the top of the wall, and the turn order, and the same thing twice on
+    /// purpose. Shuffled once when the bee starts and then never touched again: a row that
+    /// re-sorted itself as people went out would move a face out from under the eye following it,
+    /// and the whole point of the row is that you can see your turn coming.
     /// </summary>
-    public List<string> Survivors { get; set; } = [];
+    public List<string> Order { get; set; } = [];
 
-    /// <summary>
-    /// Everyone out, oldest elimination first. The order is load-bearing: the revival rule
-    /// reaches for the <em>most recently</em> eliminated member of a team, which is the tail.
-    /// </summary>
+    /// <summary>Who is out, in the order they went out. Their place in <see cref="Order"/> keeps.</summary>
     public List<string> Eliminated { get; set; } = [];
-
-    /// <summary>
-    /// Index into <c>trip.Teams</c> of the team that spelled last, or -1 before the first turn.
-    ///
-    /// This is what makes turns rotate by team rather than by person, and it is not redundant
-    /// with the <see cref="Survivors"/> queue however much it looks it. Rotating that queue
-    /// alone gives, for teams A[Ann, Ben, Cal] and B[Dee]: Ann, Dee, Ben, Cal — where the rules
-    /// call for Dee, because every other turn is hers no matter how few of her team are left.
-    /// </summary>
-    public int TeamCursor { get; set; } = -1;
 
     /// <summary>Who is at the microphone. Also who the <see cref="BeePhase.Revealed"/> card is about.</summary>
     public string? CurrentPersonId { get; set; }
 
-    /// <summary>How far down <see cref="SpellingBee.Words"/> the host has read. Words are never reused.</summary>
-    public int WordCursor { get; set; }
+    /// <summary>
+    /// Which tier the next word comes out of, moved up and down by the host while the bee runs.
+    ///
+    /// Live rather than fixed because a bee is judged by feel: three eliminations in a row means
+    /// it is too hard, and a round where nobody so much as hesitates means it is too easy. It
+    /// takes effect on the next word drawn and never rewrites the one somebody is already
+    /// standing there spelling.
+    /// </summary>
+    public string DifficultyKey { get; set; } = "moderate";
 
     /// <summary>
     /// How <see cref="CurrentPersonId"/> did, for the card on screen. "Ben got it" and "Ben is
@@ -102,9 +137,47 @@ public sealed class BeeGame
     public bool LastCorrect { get; set; }
 
     /// <summary>
-    /// Who came back in the revival now on screen, if this turn triggered one. Cleared when the
-    /// host moves on. It cannot be derived after the fact — the revived are ordinary survivors
-    /// the moment they are back in the list.
+    /// Who the wall should be knocking over right now, or null. It cannot be derived from
+    /// <see cref="Eliminated"/> — that keeps everyone who ever went out, and the animation is
+    /// about exactly one of them. Cleared when the host moves on.
+    /// </summary>
+    public string? JustEliminatedPersonId { get; set; }
+
+    /// <summary>
+    /// Who came back in on the revival now on screen, if this turn triggered one. Cleared when
+    /// the host moves on. It cannot be derived after the fact — the revived are ordinary
+    /// survivors the moment they are back in the field.
+    ///
+    /// This and <see cref="JustEliminatedPersonId"/> are mutually exclusive: a miss either puts
+    /// somebody out or refills the field, never both. Which of the two is set is what the wall
+    /// keys its whole revealed screen off, because "missed and out" and "missed and everybody
+    /// comes back" are opposite things to look at.
     /// </summary>
     public List<string> JustRevived { get; set; } = [];
+
+    /// <summary>
+    /// Everyone who has scanned the guest code and tapped their name. Only these people are dealt
+    /// into the running order, so a phone left in a pocket does not become a turn the room waits
+    /// on.
+    /// </summary>
+    public List<string> Ready { get; set; } = [];
+
+    /// <summary>
+    /// Which rule the wall is showing while the host talks the room through them, or -1 for none.
+    ///
+    /// On the shared game rather than on the wall's own state because it is the host's phone that
+    /// drives it, and the wall is a screen with nobody standing at it. One rule at a time: a
+    /// six-item list on a wall is read by everybody at their own pace and listened to by nobody.
+    /// </summary>
+    public int RuleSlide { get; set; } = -1;
+
+    /// <summary>
+    /// The one code every guest uses. Unlike Jeopardy there is nothing per-person to protect —
+    /// a guest picks their own name off a list once they are in — so one code on the wall is one
+    /// thing to scan rather than twenty-five.
+    /// </summary>
+    public string GuestCode { get; set; } = "";
+
+    /// <summary>Code for the host's phone, which is the only place the word is ever shown.</summary>
+    public string HostCode { get; set; } = "";
 }

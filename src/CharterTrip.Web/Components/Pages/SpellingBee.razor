@@ -1,275 +1,691 @@
 @page "/games/spelling"
+@using System.Text.Json
+@using CharterTrip.Core.Services
+@using CharterTrip.Core.Words
 @inherits TripAwareComponent
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@inject IWebHostEnvironment Env
 
 <PageTitle>Spelling Bee · Charter Trip 2026</PageTitle>
 
-@* The host's screen, and only the host's.
+@* The wall. This is the screen pointed at the room, and the one thing it must never show is
+   the word.
 
    A spelling bee has a problem Jeopardy does not: the word is the answer. Jeopardy can put a
-   clue on the wall because reading it is the point, so that game splits across a television
-   and a phone. Here anything the room can see, the speller can see — so there is no wall mode
-   at all, and the word never leaves this page. That is the guarantee: not a rule about where
-   the laptop is pointed, but nowhere else for the word to go. *@
+   clue on the wall because reading it is the point. Here anything the room can see, the speller
+   can see — so the word lives on the host's phone at /bee/{hostCode} and appears here only once
+   the turn is settled and it cannot help anybody.
+
+   AdminOnly guards the page rather than the layout, because a guest who taps "Spelling Bee" in
+   the nav should be told this is the host's screen, not handed a 404. *@
 <AdminOnly>
-<div class="page">
+<div class="bee-wall @(Started ? "is-playing" : null)">
 
-@if (Game.Phase == BeePhase.NotStarted)
+@if (ShowingRules)
 {
-    <SectionCard Title="@Trip.SpellingBee.Title"
-                 Subtitle="@($"{FieldSize} spellers · {WordCount} words ready")">
-        <Actions>
-            @if (CanEdit)
-            {
-                <button class="btn btn-gold" disabled="@(!CanStart)" @onclick="StartAsync">Start the bee</button>
-            }
-        </Actions>
-        <ChildContent>
-            <p class="bee-warn">
-                Keep this screen to yourself — whoever is spelling must not see the word.
-            </p>
+    @* One rule at a time, driven from the host's phone while they read it out. Six bullet
+       points on a wall are read by everybody at their own pace and listened to by nobody. *@
+    <section class="bee-rules-show">
+        <p class="bee-eyebrow">How this works</p>
+        <p class="bee-rule-text" @key="Game.RuleSlide">@CurrentRule</p>
 
-            @if (Rules.Count > 0)
+        <div class="bee-rule-dots">
+            @for (var i = 0; i < Rules.Count; i++)
             {
-                <ul class="rules">
-                    @foreach (var rule in Rules)
-                    {
-                        <li>@rule</li>
-                    }
-                </ul>
+                <span class="@(i == Game.RuleSlide ? "is-on" : null)"></span>
             }
+        </div>
+    </section>
+}
+else if (Game.Phase == BeePhase.NotStarted)
+{
+    <section class="bee-title">
+        <h1 class="bee-logo">SPELLING&nbsp;BEE</h1>
 
-            @if (!CanStart)
-            {
-                <p class="warnfg tiny">
-                    The bee needs at least two people on teams and one word to read.
-                </p>
-            }
-        </ChildContent>
-    </SectionCard>
+        <div class="bee-join">
+            <div class="bee-join-card">
+                <span class="bee-join-role">Everybody</span>
+                <QrImage Content="@BeeUrl(Game.GuestCode)" Size="170" Alt="Join the spelling bee" />
+                <span class="bee-join-code">@Game.GuestCode</span>
+                <span class="bee-join-note">Scan and tap your name</span>
+            </div>
+            <div class="bee-join-card is-host">
+                <span class="bee-join-role">Host — words</span>
+                <QrImage Content="@BeeUrl(Game.HostCode)" Size="170" Alt="Host word list" />
+                <span class="bee-join-code">@Game.HostCode</span>
+                <span class="bee-join-note">Keep this one to yourself</span>
+            </div>
+        </div>
 
-    @* The list is only reachable here, before anyone has started, so the phase does the
-       gating and no editing flag is needed. Order is the difficulty curve — first read,
-       first spelled. *@
-    <SectionCard Title="Words"
-                 Subtitle="Read top to bottom, so easiest first. Click any line to change it; edits save as you leave the field.">
-        <Actions>
-            @if (CanEdit)
-            {
-                <IconButton Icon="IconButtonIcon.Plus" Title="Add a word to the top" OnClick="AddWordAsync" />
-            }
-        </Actions>
-        <ChildContent>
-            <ol class="bee-words">
-                @foreach (var word in Trip.SpellingBee.Words)
+        <p class="bee-hint">Scan a code, or go to <b>@JoinHost/bee</b> and type it in.</p>
+
+        @* Only the people who have actually joined, and nothing else: no count, no target, no
+           grid of grey placeholders. The bee plays with whoever is standing there. *@
+        <div class="bee-lobby">
+            <div class="bee-lobby-faces">
+                @foreach (var person in JoinedPeople)
                 {
-                    var id = word.Id;             // the loop variable is shared; the handlers are not
-
-                    <li class="bee-word-row @(word.IsEmpty ? "is-empty" : null)" @key="id">
-                        <div class="bee-word-fields">
-                            <EditableText Value="@word.Word" ReadOnly="@(!CanEdit)"
-                                          ValueChanged="@(v => EditWordAsync(id, w => w.Word = v))"
-                                          Placeholder="Word" CssClass="strong" />
-                            <EditableText Value="@word.Hint" ReadOnly="@(!CanEdit)"
-                                          ValueChanged="@(v => EditWordAsync(id, w => w.Hint = v))"
-                                          Placeholder="Definition, or a sentence to read"
-                                          CssClass="tiny muted" />
-                        </div>
-
-                        @if (CanEdit)
-                        {
-                            <IconButton Icon="IconButtonIcon.Close" Tone="danger"
-                                        Title="@($"Remove “{word.Word}”")"
-                                        OnClick="@(() => RemoveWordAsync(id))" />
-                        }
-                    </li>
+                    <div class="bee-lobby-person" @key="person.Id">
+                        <BeeFace Person="person" Color="@ColourOf(person)" />
+                        <span class="bee-seat-name">@person.Name</span>
+                    </div>
                 }
-            </ol>
+            </div>
+        </div>
 
-            @if (WordCount == 0)
+        @if (CanEdit)
+        {
+            <div class="bee-title-actions">
+                <button class="btn btn-ghost btn-sm" @onclick="ToggleSetupAsync">
+                    ⚙ Setup @(_setupOpen ? "▲" : "▼")
+                </button>
+                <button class="btn btn-ghost btn-sm" @onclick="NewCodesAsync">New codes</button>
+                <button class="mini-btn" title="@(_muted ? "Unmute" : "Mute")" @onclick="ToggleMuteAsync">
+                    @(_muted ? "🔇" : "🔊")
+                </button>
+            </div>
+
+            @if (_setupOpen)
             {
-                <p class="muted tiny">No words yet. Add some above.</p>
+                <div class="bee-deck">
+                    <p class="bee-deck-head">Where the words start</p>
+                    <p class="bee-deck-note">
+                        One dial, not a deck. Words are drawn as turns come up, so the host can
+                        move this up or down from their phone while the bee is running — this is
+                        only where it opens.
+                    </p>
+
+                    <div class="bee-tier-picker">
+                        @foreach (var tier in WordBank.Tiers)
+                        {
+                            var key = tier.Key;
+
+                            <button class="bee-tier @(key == StartingDifficulty ? "is-on" : null)"
+                                    @key="key" @onclick="() => SetDifficultyAsync(key)">
+                                <span class="bee-tier-name">@tier.Label</span>
+                                <span class="bee-tier-count">@WordBank.Pool(key).Count words</span>
+                            </button>
+                        }
+                    </div>
+
+                    <div class="bee-deck-numbers">
+                        <label>
+                            Points per word
+                            <input type="number" min="0" max="100" step="1" value="@Trip.SpellingBee.PointsPerWord"
+                                   @onchange="e => SetPointsAsync(e.Value?.ToString())" />
+                        </label>
+                    </div>
+
+                    @* The rules live on the game itself, which is what both the host's phone and
+                       the slideshow read — so they are edited here, beside the words, rather than
+                       being the one part of the bee that can only be changed in the seed file. *@
+                    <p class="bee-deck-head">The rules</p>
+                    <div class="bee-rules-edit">
+                        @for (var i = 0; i < Rules.Count; i++)
+                        {
+                            var index = i;
+
+                            <div class="bee-rule-row" @key="index">
+                                <textarea rows="2" value="@Rules[index]"
+                                          @onchange="e => SetRuleAsync(index, e.Value?.ToString())"></textarea>
+                                <div class="bee-rule-btns">
+                                    <button class="btn btn-xs" disabled="@(index == 0)"
+                                            title="Move up" @onclick="() => MoveRuleAsync(index, -1)">↑</button>
+                                    <button class="btn btn-xs" disabled="@(index == Rules.Count - 1)"
+                                            title="Move down" @onclick="() => MoveRuleAsync(index, 1)">↓</button>
+                                    <button class="btn btn-xs" title="Delete"
+                                            @onclick="() => RemoveRuleAsync(index)">✕</button>
+                                </div>
+                            </div>
+                        }
+                        <button class="btn btn-ghost btn-xs" @onclick="AddRuleAsync">+ Add a rule</button>
+                    </div>
+                </div>
             }
-        </ChildContent>
-    </SectionCard>
+        }
+    </section>
+}
+else if (Game.Phase == BeePhase.Finished)
+{
+    @* The win screen, built like Jeopardy's — the bee is one of eight games and the moment it
+       ends should look like the others ending. The team wins it, not the person: the last one
+       standing takes it for whoever they are playing for. *@
+    <section class="bee-win" style="--team:@ColourOf(Winner)">
+        <div class="bee-win-burst" aria-hidden="true">
+            @for (var i = 0; i < 12; i++)
+            {
+                <span style="--i:@i"></span>
+            }
+        </div>
+
+        <p class="bee-eyebrow">Champion speller</p>
+        <h1 class="bee-win-team">@(WinningTeam?.Name ?? "Nobody") wins the bee!</h1>
+
+        <div class="bee-win-who">
+            <BeeFace Person="Winner" Color="@ColourOf(Winner)" CssClass="bee-face-big" />
+            <p class="bee-win-name">@(Winner?.Name ?? "—")</p>
+            <p class="bee-sub">Last one standing — and they spelled it!</p>
+        </div>
+
+        <div class="bee-final-grid">
+            @foreach (var (team, score) in SpellingBeeService.Scoreboard(Trip).OrderByDescending(x => x.Score))
+            {
+                <div class="bee-final-card @(team.Id == WinningTeam?.Id ? "is-winner" : null)"
+                     style="--team:@team.Color" @key="team.Id">
+                    <span class="bee-score-name">@team.Name</span>
+                    <p class="bee-final-score">@score</p>
+                </div>
+            }
+        </div>
+
+        <div class="bee-title-actions">
+            <a class="btn btn-gold btn-lg" href="/">Home</a>
+            @if (CanEdit)
+            {
+                <button class="btn btn-ghost" @onclick="ConfirmReset">Reset the bee</button>
+            }
+        </div>
+    </section>
 }
 else
 {
-    <div class="bee-bar">
-        <span class="chip @(WordsLeft <= 10 ? "warn" : null)">@WordsLeft words left</span>
-        @if (CanEdit)
+    @* The row, and the turn order, and the same thing twice on purpose. It never re-sorts, so
+       a face you were watching stays where you were watching it — and it never wraps, so the
+       one face pulled out of it has clear air underneath and covers nobody. *@
+    <div class="bee-row" style="--seats:@Field.Count">
+        @for (var i = 0; i < Field.Count; i++)
         {
-            <button class="btn btn-ghost btn-xs" @onclick="ConfirmReset">Reset</button>
+            var person = Field[i];
+
+            // Dropped only while they are actually at the microphone. Leaving it on through
+            // Revealed parks a greyed-out face on top of whatever the stage is saying about them.
+            var isUp = person.Id == Game.CurrentPersonId && Game.Phase == BeePhase.Spelling;
+            var isOut = SpellingBeeService.IsOut(Trip, person.Id);
+            var isBack = Game.JustRevived.Contains(person.Id);
+
+            <div class="bee-seat @(isUp ? "is-up" : null) @(isOut ? "is-out" : null) @(isBack ? "is-revived" : null)"
+                 style="--team:@ColourOf(person); --i:@i" @key="person.Id">
+                <BeeFace Person="person" Color="@ColourOf(person)" />
+                <span class="bee-seat-name">@person.Name</span>
+            </div>
         }
     </div>
 
-    @if (Game.Phase == BeePhase.Finished)
-    {
-        <section class="bee">
-            <p class="bee-kicker">Last one standing</p>
-            <h1 class="bee-speller" style="--team:@ColourOf(Winner)">@(Winner?.Name ?? "—")</h1>
-            <p class="bee-took">
-                @TeamNameOf(Winner) takes @Trip.SpellingBee.WinnerPoints points.
-            </p>
-        </section>
-    }
-    else if (Game.Phase == BeePhase.Revealed)
-    {
-        <section class="bee">
-            <p class="bee-kicker">@(Game.LastCorrect ? "Correct" : "Missed")</p>
+    <section class="bee-stage">
+        @if (Game.Phase == BeePhase.Revealed && Game.LastCorrect)
+        {
+            @* The only moment the spelling is ever visible, which is why the game waits here
+               instead of snapping straight to the next speller. *@
+            <p class="bee-eyebrow is-good">@Name(Game.CurrentPersonId) got it</p>
             <p class="bee-word">@(CurrentWord?.Word ?? "—")</p>
+            <p class="bee-sub">+@Trip.SpellingBee.PointsPerWord for @TeamNameOf(Person(Game.CurrentPersonId))</p>
+        }
+        else if (Game.Phase == BeePhase.Revealed && Game.JustEliminatedPersonId is not null)
+        {
+            @* Two beats, in this order: what happened, then the drink. The shot o'clock used to
+               open the screen, which meant the word and the name landed underneath a glass
+               already sliding across them. Now it waits until the room has read both. *@
+            <div class="bee-out" @key="Game.JustEliminatedPersonId">
+                <p class="bee-eyebrow is-bad">@Name(Game.CurrentPersonId) is out</p>
+                <p class="bee-word is-missed">@(CurrentWord?.Word ?? "—")</p>
 
-            @* Three outcomes, not two: a miss by the last one standing does not put them out,
-               it brings the field back, and saying "is out" there would be a lie. *@
-            @if (Game.LastCorrect)
-            {
-                <p class="bee-result is-good">@Name(Game.CurrentPersonId) spelled it.</p>
-            }
-            else if (Game.JustRevived.Count > 0)
-            {
-                <p class="bee-result is-bad">@Name(Game.CurrentPersonId) missed it.</p>
-
-                <div class="bee-revival">
-                    <p class="bee-revival-head">Revival</p>
-                    <p class="bee-revival-why">
-                        The last one standing has to earn it, so every team gets somebody back.
-                    </p>
-                    <p class="bee-revival-names">@RevivedNames</p>
+                <div class="bee-shot">
+                    <div class="bee-shot-bar">
+                        <span class="bee-shot-pour"></span>
+                        <span class="bee-shot-glass">
+                            <span class="bee-shot-fill"></span>
+                        </span>
+                        <span class="bee-shot-splash"></span>
+                    </div>
+                    <p class="bee-shot-shout">IT'S SHOT O'CLOCK</p>
                 </div>
-            }
-            else
-            {
-                <p class="bee-result is-bad">@Name(Game.CurrentPersonId) is out.</p>
-            }
-
-            @if (CanEdit)
-            {
-                <button class="btn btn-gold btn-lg" @onclick="ContinueAsync">
-                    @(WillEndTheBee ? "See who won" : "Next speller")
-                </button>
-            }
-        </section>
-    }
-    else
-    {
-        <section class="bee" @key="Game.CurrentPersonId">
-            <p class="bee-kicker">@TeamNameOf(Speller) · up now</p>
-            <h1 class="bee-speller" style="--team:@ColourOf(Speller)">@(Speller?.Name ?? "—")</h1>
-
-            @if (CurrentWord is { } word)
-            {
-                <p class="bee-word">@word.Word</p>
-                <p class="bee-hint">@word.Hint</p>
-
-                @if (CanEdit)
-                {
-                    <div class="jeo-judge">
-                        <button class="btn btn-lg jeo-right" @onclick="CorrectAsync">Correct</button>
-                        <button class="btn btn-lg jeo-wrong" @onclick="WrongAsync">Wrong</button>
-                    </div>
-                    <button class="btn btn-ghost btn-sm" @onclick="SkipAsync">Skip this word</button>
-                }
-            }
-            else
-            {
-                <p class="warnfg">
-                    The word list is spent. Reset the bee, or add more words and start again.
+            </div>
+        }
+        else if (Game.Phase == BeePhase.Revealed)
+        {
+            @* A miss where nobody went out. Branching on the two fields rather than on
+               LastCorrect is what keeps the shot glass off this screen — running it here would
+               be a lie, because the person who missed is still standing. *@
+            <div class="bee-revival" @key="RevivedNames">
+                <p class="bee-revival-flash">THE FIELD IS BACK</p>
+                <p class="bee-revival-why">
+                    @Name(Game.CurrentPersonId) missed it — and the last one standing has to earn
+                    it, so every other team gets somebody back.
                 </p>
+
+                <div class="bee-revival-faces">
+                    @foreach (var person in RevivedPeople)
+                    {
+                        <div class="bee-revival-person" style="--team:@ColourOf(person); --i:@(RevivedPeople.ToList().IndexOf(person))" @key="person.Id">
+                            <BeeFace Person="person" Color="@ColourOf(person)" />
+                            <span class="bee-seat-name">@person.Name</span>
+                        </div>
+                    }
+                </div>
+
+                <p class="bee-word is-missed">@(CurrentWord?.Word ?? "—")</p>
+            </div>
+        }
+        else if (Speller is not null)
+        {
+            @* Deliberately empty. The face pulled into the middle is the whole message, and the
+               card in the corner says whose it is. *@
+            @if (CurrentWord is null)
+            {
+                <p class="warnfg">No word came back — check the host's phone.</p>
             }
-        </section>
+        }
+        else
+        {
+            <p class="bee-eyebrow">Waiting</p>
+        }
+    </section>
+
+    @* Whose turn it is, parked in the bottom corner — the top left is where the row's own faces
+       are, and a card there covers the first two seats. *@
+    @if (Speller is { } up)
+    {
+        <div class="bee-turn" style="--team:@ColourOf(up)">
+            <span class="bee-turn-team">@TeamNameOf(up)</span>
+            <span class="bee-turn-name">@up.Name</span>
+        </div>
     }
 
-    @* One panel, not two. Who a team has lost is as much of the story as who it has left, and
-       splitting them apart makes it harder to see a team running out of people. *@
-    <SectionCard Title="The field"
-                 Subtitle="@(CanEdit ? "Struck through means out. Use + to put somebody back in." : "Struck through means out.")">
-        <div class="team-board">
-            @foreach (var roster in TeamService.Rosters(Trip))
-            {
-                var team = roster.Team;
+    <footer class="bee-scores">
+        @foreach (var (team, score) in SpellingBeeService.Scoreboard(Trip))
+        {
+            <div class="bee-score" style="--team:@team.Color">
+                <span class="bee-score-name">@team.Name</span>
+                <b class="bee-score-value">@score</b>
+                <span class="bee-score-left">@LeftOn(team.Id) in</span>
+            </div>
+        }
 
-                <section class="team-col" @key="team.Id" style="--team:@team.Color">
-                    <header class="team-col-head">
-                        <div class="team-title">
-                            <span class="team-dot" aria-hidden="true"></span>
-                            <h3>@team.Name</h3>
-                        </div>
-                        <span class="muted tiny">@LeftOn(team.Id) in</span>
-                    </header>
+        @if (CanEdit)
+        {
+            <button class="btn btn-ghost btn-xs bee-reset" @onclick="ConfirmReset">Reset</button>
+        }
+    </footer>
+}
 
-                    <div class="team-people">
-                        @foreach (var person in Field(team.Id))
-                        {
-                            var personId = person.Id;
-                            var isOut = Game.Eliminated.Contains(personId);
-
-                            <div class="person @(isOut ? "is-out" : null) @(personId == Game.CurrentPersonId ? "is-up" : null)"
-                                 @key="personId">
-
-                                <span class="person-name">@person.Name</span>
-
-                                @if (isOut && CanEdit)
-                                {
-                                    <IconButton Icon="IconButtonIcon.Plus"
-                                                Title="@($"Put {person.Name} back in")"
-                                                OnClick="@(() => ReinstateAsync(personId))" />
-                                }
-                            </div>
-                        }
-
-                        @if (roster.Count == 0)
-                        {
-                            <p class="muted tiny empty-team">Nobody on this team.</p>
-                        }
-                    </div>
-                </section>
-            }
-        </div>
-    </SectionCard>
+@* Only ever on screen when the wall is playing and something took the display away — Escape,
+   usually. It is the way back, and it is a big target because whoever presses it is walking
+   past a laptop, not sitting at it. *@
+@if (Started && !_full && CanEdit)
+{
+    <button class="btn btn-gold bee-fs" @onclick="FullScreenAsync">⛶ Full screen</button>
 }
 
 </div>
+
+@if (IsDev)
+{
+    @* Local-only testing aid, same shape as Jeopardy's. Never reaches Azure — IsDev is
+       IWebHostEnvironment.IsDevelopment(). *@
+    <section class="bee-testing">
+        <button class="btn btn-ghost btn-sm" @onclick="() => SetTestingAsync(!_testingOpen)">
+            🧪 Testing tools @(_testingOpen ? "▲" : "▼")
+        </button>
+
+        @if (_testingOpen)
+        {
+            <div class="bee-testing-panel">
+                @* The host's phone first and always open. Everything below it collapses, because
+                   the reason to open this panel is usually to reach these controls. *@
+                <div class="bee-simcard is-host">
+                    <span class="bee-simcard-label">Host phone</span>
+                    <iframe class="bee-simframe is-tall" src="@BeeUrl("TEST")" title="Test host phone"></iframe>
+                </div>
+
+                <div class="bee-testing-actions">
+                    @* Twenty-five embedded phones would be twenty-five circuits for no benefit.
+                       Filling the lobby from the server is how you test a real-sized field; the
+                       frames below are for watching what a phone actually does. *@
+                    <button class="btn btn-ghost btn-xs" @onclick="ReadyEveryoneAsync">Everyone in</button>
+                    <button class="btn btn-ghost btn-xs" @onclick="ReadyNobodyAsync">Empty the lobby</button>
+
+                    <label class="bee-testing-count">
+                        Per team
+                        <input type="number" min="1" max="6" step="1" value="@_simPerTeam"
+                               @onchange="e => SetPerTeamAsync(e.Value?.ToString())" />
+                    </label>
+                    <button class="btn btn-ghost btn-xs" @onclick="ShuffleSimAsync">Different people</button>
+                    <button class="btn btn-ghost btn-xs" @onclick="() => SetAllFramesAsync(false)">Collapse all</button>
+                    <button class="btn btn-ghost btn-xs" @onclick="() => SetAllFramesAsync(true)">Open all</button>
+                </div>
+
+                @* Taking somebody out one at a time, which is what testing a field of a
+                   particular size actually needs. Doubles as the fix for the wrong name being
+                   tapped on the night. *@
+                @if (JoinedPeople.Count > 0)
+                {
+                    <div class="bee-testing-in">
+                        @foreach (var person in JoinedPeople)
+                        {
+                            var personId = person.Id;
+                            <button class="chip tiny" style="border-color:@ColourOf(person)" @key="personId"
+                                    title="@($"Take {person.Name} out")" @onclick="() => DropAsync(personId)">
+                                @person.Name ✕
+                            </button>
+                        }
+                    </div>
+                }
+
+                @* Real /bee pages, embedded — not a hand-rolled stand-in — so what is being
+                   tested is exactly what a phone would show. Each guest frame is pinned with
+                   ?as= because all the frames share one origin, and therefore one local storage:
+                   without it they would all come back as whoever picked last. Collapsed by
+                   default: five iframes is a lot of screen to scroll past. *@
+                <div class="bee-simstrip-row">
+                    @foreach (var person in SimPeople)
+                    {
+                        var personId = person.Id;
+                        var open = _openFrames.Contains(personId);
+
+                        <div class="bee-simcard" @key="personId">
+                            <button class="bee-simcard-label" style="color:@ColourOf(person)"
+                                    @onclick="() => ToggleFrameAsync(personId)">
+                                @(open ? "▾" : "▸") @person.Name
+                            </button>
+                            @if (open)
+                            {
+                                <iframe class="bee-simframe" src="@SimUrl(personId)"
+                                        title="@($"Test phone — {person.Name}")"></iframe>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </section>
+}
+
 </AdminOnly>
 
 <ConfirmDialog @ref="_confirm" />
 
 @code {
     /// <summary>
-    /// All, not SpellingBee. Winning the bee writes a ScoreEntry, which lives in TripArea.Scores
-    /// — so a page watching only its own area would render the whole game correctly and then
-    /// miss the one change that ends it. Jeopardy widens for the same reason.
+    /// All, not SpellingBee. Every correct word writes a ScoreEntry, which lives in
+    /// TripArea.Scores — so a page watching only its own area would render the game correctly
+    /// and miss every point it scored. Jeopardy widens for the same reason.
     /// </summary>
     protected override TripArea Watching => TripArea.All;
 
     private ConfirmDialog? _confirm;
+    private IJSObjectReference? _audio;
+    private IJSObjectReference? _screen;
+    private DotNetObjectReference<SpellingBee>? _self;
+    private bool _muted;
+    private bool _full;
+
+    // What the last render was looking at, so a change can be turned into a sound. The wall is
+    // never told anything — it derives its cues by noticing that the shared state moved.
+    private BeePhase _lastPhase = BeePhase.NotStarted;
+    private string? _lastSpellerId;
+    private int _lastJoinedCount;
 
     private BeeGame Game => Trip.SpellingBee.Game;
-
-    // ---------------------------------------------------------------- reading
+    private bool Started => Game.Phase != BeePhase.NotStarted;
 
     private BeeWord? CurrentWord => SpellingBeeService.CurrentWord(Trip);
-    private int WordsLeft => SpellingBeeService.WordsRemaining(Trip);
-    private int WordCount => Trip.SpellingBee.Words.Count(w => !w.IsEmpty);
-
     private RosterPerson? Speller => SpellingBeeService.Speller(Trip);
     private RosterPerson? Winner => SpellingBeeService.Winner(Trip);
-
-    /// <summary>Everyone eligible to play — a speller with no team has nowhere to send the points.</summary>
-    private int FieldSize => Trip.Roster.Count(p => Trip.Teams.Any(t => t.Id == p.TeamId));
-
-    private bool CanStart => FieldSize >= 2 && WordCount > 0;
-
-    private IReadOnlyList<string> Rules =>
-        Trip.Games.FirstOrDefault(g => g.Id == SpellingBeeService.GameId)?.Rules ?? [];
+    private Team? WinningTeam => SpellingBeeService.WinningTeam(Trip);
+    private IReadOnlyList<RosterPerson> Field => SpellingBeeService.Field(Trip);
 
     /// <summary>
-    /// Whether moving on from this answer finishes the bee, so the button can say so. Mirrors
-    /// the condition in <c>SpellingBeeService.Continue</c>.
+    /// Who has joined, in the order they did. Tapping your name is the whole of joining, so this
+    /// is the arrival list and the lobby renders nothing else.
     /// </summary>
-    private bool WillEndTheBee => Game.Survivors.Count == 1 && Game.LastCorrect;
+    private IReadOnlyList<RosterPerson> JoinedPeople => SpellingBeeService.ReadyPeople(Trip);
+
+    private IReadOnlyList<RosterPerson> RevivedPeople =>
+        Game.JustRevived.Select(Person).Where(p => p is not null).Select(p => p!).ToList();
+
+    private IReadOnlyList<string> Rules => SpellingBeeService.Rules(Trip);
+    /// <summary>
+    /// Phase-guarded as well as range-guarded: the slideshow belongs to the lobby, and a stale
+    /// slide index left on a running game would put the rules over the top of the bee.
+    /// </summary>
+    private bool ShowingRules =>
+        Game.Phase == BeePhase.NotStarted && Game.RuleSlide >= 0 && Game.RuleSlide < Rules.Count;
+    private string CurrentRule => ShowingRules ? Rules[Game.RuleSlide] : "";
+
+    private string JoinHost => new Uri(Nav.BaseUri).Authority;
+    private string BeeUrl(string code) => Nav.ToAbsoluteUri($"/bee/{code}").ToString();
+
+    // ----------------------------------------------------------------- setup
+
+    private bool _setupOpen;
+
+    private string StartingDifficulty => Trip.SpellingBee.DifficultyKey;
+
+    private Task SetDifficultyAsync(string tierKey) =>
+        MutateAsync(t => SpellingBeeService.SetStartingDifficulty(t, tierKey));
+
+    private Task SetPointsAsync(string? raw) =>
+        MutateAsync(t => t.SpellingBee.PointsPerWord = Clamp(raw, 0, 100, t.SpellingBee.PointsPerWord));
+
+    /// <summary>A number input still hands you whatever was typed, so nothing is trusted.</summary>
+    private static int Clamp(string? raw, int min, int max, int fallback) =>
+        int.TryParse(raw, out var value) ? Math.Clamp(value, min, max) : fallback;
+
+    // ----------------------------------------------------------------- rules
+
+    /// <summary>
+    /// The rules are on the game, beside its name and its blurb, which is where /games reads them
+    /// from too. Editing them here rather than in a second place keeps one copy of the text the
+    /// host is about to read out.
+    /// </summary>
+    private Task SetRuleAsync(int index, string? text) => EditRules(rules =>
+    {
+        var trimmed = (text ?? "").Trim();
+
+        // An emptied box is a deletion. Leaving a blank bullet on the wall for the host to walk
+        // the room through is worse than taking them at their word.
+        if (trimmed.Length == 0) rules.RemoveAt(index);
+        else rules[index] = trimmed;
+    });
+
+    private Task AddRuleAsync() => EditRules(rules => rules.Add("A new rule."));
+
+    private Task RemoveRuleAsync(int index) => EditRules(rules => rules.RemoveAt(index));
+
+    private Task MoveRuleAsync(int index, int by) => EditRules(rules =>
+    {
+        var to = index + by;
+        if (to < 0 || to >= rules.Count) return;
+
+        (rules[index], rules[to]) = (rules[to], rules[index]);
+    });
+
+    private Task EditRules(Action<List<string>> edit) => MutateAsync(t =>
+    {
+        if (t.Games.FirstOrDefault(g => g.Id == SpellingBeeService.GameId) is not { } game) return;
+
+        edit(game.Rules);
+
+        // The slideshow may have been pointing at a rule that just moved or stopped existing.
+        if (t.SpellingBee.Game.RuleSlide >= game.Rules.Count) t.SpellingBee.Game.RuleSlide = -1;
+    });
+
+    // ------------------------------------------------------------ full screen
+
+    /// <summary>
+    /// Ask for the whole display.
+    ///
+    /// The bee is started from the host's phone, and a browser will not go full screen for a page
+    /// nobody has touched — so this usually fails at the moment of Start, and the module arms
+    /// itself instead: the next click or key anywhere on the wall spends itself on going full
+    /// screen. The button in the corner is the third way in, for when somebody has pressed
+    /// Escape and wants back.
+    /// </summary>
+    private async Task FullScreenAsync()
+    {
+        try
+        {
+            _screen ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/bee-screen.js");
+            _full = await _screen.InvokeAsync<bool>("enter");
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+    }
+
+    /// <summary>Called from the browser whenever full screen is entered or left, Escape included.</summary>
+    [JSInvokable]
+    public Task FullScreenChanged(bool full)
+    {
+        _full = full;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ArmFullScreenAsync(bool armed)
+    {
+        try
+        {
+            _screen ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/bee-screen.js");
+            await _screen.InvokeVoidAsync("arm", armed);
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+    }
+
+    // ---------------------------------------------------------------- testing
+
+    private bool IsDev => Env.IsDevelopment();
+    private bool _testingOpen;
+    private int _simPerTeam = 1;
+    private int _simSeed = 1;
+    private HashSet<string> _openFrames = [];
+    private bool _restored;
+
+    /// <summary>
+    /// Where the testing panel's own state lives.
+    ///
+    /// In the browser, because that is the only place it can survive what breaks it: this
+    /// component is destroyed and rebuilt every time somebody navigates away and back, and the
+    /// game state comes back from the trip while the panel came back as defaults — a panel folded
+    /// shut and a strip of frames re-shuffled, in the middle of testing.
+    /// </summary>
+    private const string TestingKey = "bee.wall.testing";
+
+    private sealed record TestingState(bool Open, bool Setup, int PerTeam, int Seed, string[] Frames);
+
+    /// <summary>
+    /// Who the simulated phones are: <c>_simPerTeam</c> people from each team, so asking for one
+    /// gives you four — one per team — and the field always has every team in it.
+    ///
+    /// Picked with a fixed seed rather than freshly at random, so the same frame is the same
+    /// person across a re-render. A strip that reshuffled itself every time the wall updated
+    /// would be a puzzle, not a testing aid.
+    /// </summary>
+    private IEnumerable<RosterPerson> SimPeople
+    {
+        get
+        {
+            var perTeam = Math.Clamp(_simPerTeam, 1, 6);
+            var random = new Random(_simSeed);
+
+            return Trip.Teams
+                .SelectMany(team => WordDeck
+                    .Shuffle(SpellingBeeService.Joinable(Trip).Where(p => p.TeamId == team.Id).ToList(), random)
+                    .Take(perTeam))
+                .ToList();
+        }
+    }
+
+    private string SimUrl(string personId) => $"{BeeUrl(Game.GuestCode)}?as={personId}";
+
+    private Task ReadyEveryoneAsync() => MutateAsync(t =>
+    {
+        foreach (var person in SpellingBeeService.Joinable(t))
+            SpellingBeeService.SetReady(t, person.Id, true);
+    });
+
+    private Task ReadyNobodyAsync() => MutateAsync(t =>
+    {
+        foreach (var person in SpellingBeeService.Joinable(t))
+            SpellingBeeService.SetReady(t, person.Id, false);
+    });
+
+    private Task DropAsync(string personId) =>
+        MutateAsync(t => SpellingBeeService.SetReady(t, personId, false));
+
+    private Task SetTestingAsync(bool open)
+    {
+        _testingOpen = open;
+        return SaveTestingAsync();
+    }
+
+    private Task ToggleSetupAsync()
+    {
+        _setupOpen = !_setupOpen;
+        return SaveTestingAsync();
+    }
+
+    private Task SetPerTeamAsync(string? raw)
+    {
+        _simPerTeam = Clamp(raw, 1, 6, _simPerTeam);
+        return SaveTestingAsync();
+    }
+
+    private Task ShuffleSimAsync()
+    {
+        _simSeed++;
+        return SaveTestingAsync();
+    }
+
+    private Task ToggleFrameAsync(string personId)
+    {
+        if (!_openFrames.Add(personId)) _openFrames.Remove(personId);
+        return SaveTestingAsync();
+    }
+
+    private Task SetAllFramesAsync(bool open)
+    {
+        _openFrames = open ? SimPeople.Select(p => p.Id).ToHashSet() : [];
+        return SaveTestingAsync();
+    }
+
+    private async Task SaveTestingAsync()
+    {
+        try
+        {
+            var state = new TestingState(_testingOpen, _setupOpen, _simPerTeam, _simSeed, [.. _openFrames]);
+            await JS.InvokeVoidAsync("localStorage.setItem", TestingKey, JsonSerializer.Serialize(state));
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+    }
+
+    private async Task RestoreTestingAsync()
+    {
+        try
+        {
+            var raw = await JS.InvokeAsync<string?>("localStorage.getItem", TestingKey);
+            if (string.IsNullOrWhiteSpace(raw)) return;
+
+            if (JsonSerializer.Deserialize<TestingState>(raw) is not { } state) return;
+
+            _testingOpen = state.Open;
+            _setupOpen = state.Setup;
+            _simPerTeam = Math.Clamp(state.PerTeam, 1, 6);
+            _simSeed = state.Seed;
+            _openFrames = [.. state.Frames ?? []];
+            StateHasChanged();
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+        catch (JsonException) { /* somebody's half-written key; defaults are fine */ }
+    }
+
+    private RosterPerson? Person(string? id) => SpellingBeeService.Person(Trip, id);
+    private string Name(string? id) => Person(id)?.Name ?? "—";
 
     private string RevivedNames => string.Join(", ", Game.JustRevived.Select(Name));
-
-    private string Name(string? personId) => SpellingBeeService.Person(Trip, personId)?.Name ?? "—";
 
     private Team? TeamOf(RosterPerson? person) =>
         person is null ? null : Trip.Teams.FirstOrDefault(t => t.Id == person.TeamId);
@@ -277,59 +693,163 @@ else
     private string TeamNameOf(RosterPerson? person) => TeamOf(person)?.Name ?? "";
     private string ColourOf(RosterPerson? person) => TeamOf(person)?.Color ?? "#d4af37";
 
-    private int LeftOn(string teamId) => SpellingBeeService.SurvivorsOn(Trip, teamId).Count;
+    private int LeftOn(string teamId) =>
+        SpellingBeeService.Survivors(Trip).Count(p => p.TeamId == teamId);
 
     /// <summary>
-    /// A team's column: who is still in, in the order they will be called, then everyone it has
-    /// lost, in the order it lost them.
+    /// Mint the codes if there are none, so the join screen works the moment the page opens.
+    /// Deliberately not a Reset — loading a page must never clear the scores.
     /// </summary>
-    private IEnumerable<RosterPerson> Field(string teamId) =>
-        SpellingBeeService.SurvivorsOn(Trip, teamId)
-            .Concat(Game.Eliminated
-                .Select(id => SpellingBeeService.Person(Trip, id))
-                .Where(p => p is not null && p.TeamId == teamId)
-                .Select(p => p!));
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        _lastPhase = Game.Phase;
+        _lastSpellerId = Game.CurrentPersonId;
+        _lastJoinedCount = JoinedPeople.Count;
+
+        if (SpellingBeeService.EnsureCodes(Trip, Random.Shared))
+        {
+            _ = MutateAsync(t => SpellingBeeService.EnsureCodes(t, Random.Shared));
+        }
+    }
+
+    // ------------------------------------------------------------------ cues
+
+    /// <summary>
+    /// Sound is decided here rather than in the handlers because the thing that changes the game
+    /// is usually the host's phone, not this screen. Comparing what is on the wall now against
+    /// what was on it last render is what lets the wall react to a tap that happened somewhere
+    /// else entirely.
+    /// </summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var phase = Game.Phase;
+        var spellerId = Game.CurrentPersonId;
+        var joined = JoinedPeople.Count;
+
+        // Written before the cue is started, not after. The cue is fire-and-forget precisely
+        // because a blocked AudioContext can hang rather than fail, and bookkeeping left behind
+        // such a hang would leave the wall permanently comparing against a stale render.
+        var wasPhase = _lastPhase;
+        var wasSpeller = _lastSpellerId;
+        var wasJoined = _lastJoinedCount;
+
+        _lastPhase = phase;
+        _lastSpellerId = spellerId;
+        _lastJoinedCount = joined;
+
+        if (firstRender)
+        {
+            await WatchScreenAsync();
+
+            if (IsDev && !_restored)
+            {
+                _restored = true;
+                await RestoreTestingAsync();
+            }
+
+            return;
+        }
+
+        // The bee just started somewhere else — on the host's phone, which is the only place it
+        // can start from. Worth one attempt at the whole display; when the browser refuses,
+        // arming it means the next thing anybody does at this laptop finishes the job.
+        if (wasPhase == BeePhase.NotStarted && phase != BeePhase.NotStarted)
+        {
+            await FullScreenAsync();
+            if (!_full) await ArmFullScreenAsync(true);
+        }
+
+        if (phase == BeePhase.NotStarted && joined > wasJoined) Cue("joined");
+        else if (phase == BeePhase.Finished && wasPhase != BeePhase.Finished) Cue("fanfare");
+        else if (phase == BeePhase.Revealed && wasPhase != BeePhase.Revealed)
+            Cue(Game.LastCorrect ? "correct" : Game.JustRevived.Count > 0 ? "revival" : "strike");
+        else if (phase == BeePhase.Spelling && spellerId != wasSpeller) Cue("up");
+    }
+
+    private async Task WatchScreenAsync()
+    {
+        try
+        {
+            _screen ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/bee-screen.js");
+            _self ??= DotNetObjectReference.Create(this);
+            _full = await _screen.InvokeAsync<bool>("watch", _self);
+
+            // Somebody who lands on a bee already in progress — a reload mid-game — gets the same
+            // arrangement as somebody who watched it start.
+            if (Started && !_full) await _screen.InvokeVoidAsync("arm", true);
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+    }
+
+    /// <summary>
+    /// One sound, started and never awaited.
+    ///
+    /// The module is imported on the first cue rather than up front, because a browser will not
+    /// make noise until the page has been touched. On a wall nobody ever touches, that permission
+    /// may simply never arrive — and an unlock that hangs rather than fails must not be sitting in
+    /// the render path when it does.
+    /// </summary>
+    private void Cue(string name) => _ = CueAsync(name);
+
+    private async Task CueAsync(string name)
+    {
+        try
+        {
+            _audio ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/bee-audio.js");
+            await _audio.InvokeVoidAsync("unlock");
+            await _audio.InvokeVoidAsync(name);
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { /* no audio on this device; the bee carries on regardless */ }
+        catch (ObjectDisposedException) { /* the page went away mid-cue */ }
+    }
+
+    private async Task ToggleMuteAsync()
+    {
+        _muted = !_muted;
+
+        try
+        {
+            _audio ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/bee-audio.js");
+            await _audio.InvokeVoidAsync("setMuted", _muted);
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+    }
 
     // ------------------------------------------------------------------ flow
 
-    private Task StartAsync() => MutateAsync(SpellingBeeService.Start);
-    private Task CorrectAsync() => MutateAsync(SpellingBeeService.JudgeCorrect);
-    private Task WrongAsync() => MutateAsync(SpellingBeeService.JudgeWrong);
-    private Task ContinueAsync() => MutateAsync(SpellingBeeService.Continue);
-    private Task SkipAsync() => MutateAsync(SpellingBeeService.SkipWord);
-
-    private Task ReinstateAsync(string personId) =>
-        MutateAsync(t => SpellingBeeService.Reinstate(t, personId));
+    private Task NewCodesAsync() => MutateAsync(t =>
+    {
+        t.SpellingBee.Game.GuestCode = "";
+        t.SpellingBee.Game.HostCode = "";
+        SpellingBeeService.EnsureCodes(t, Random.Shared);
+    });
 
     /// <summary>The only destructive action here, and the only one that asks first.</summary>
     private void ConfirmReset() =>
         _confirm?.Show("Reset the bee? Everyone comes back in and the spelling points leave the standings.",
-            () => MutateAsync(SpellingBeeService.Reset), "Reset");
+            () => MutateAsync(t => SpellingBeeService.Reset(t, Random.Shared)), "Reset");
 
-    // --------------------------------------------------------------- editing
-
-    /// <summary>
-    /// The word is looked up by id inside the mutation rather than captured from the render, so
-    /// an edit cannot land on a stale object if the list changed underneath it.
-    /// </summary>
-    private Task EditWordAsync(string wordId, Action<BeeWord> edit) =>
-        MutateAsync(t =>
+    public async ValueTask DisposeAsync()
+    {
+        if (_screen is not null)
         {
-            if (t.SpellingBee.Words.FirstOrDefault(w => w.Id == wordId) is { } word) edit(word);
-        });
+            try { await _screen.InvokeVoidAsync("unwatch"); } catch (JSDisconnectedException) { } catch (JSException) { }
+            try { await _screen.DisposeAsync(); } catch (JSDisconnectedException) { }
+        }
 
-    /// <summary>
-    /// New words go to the top, next to the button that made them. Appending put a blank row at
-    /// the bottom of forty-five, off the screen and out of reach of the click that was meant to
-    /// start typing into it.
-    ///
-    /// It does mean a new word is read first, since the order is the running order. That is only
-    /// safe because this list is reachable on the title card alone — nothing can be inserted
-    /// underneath a game already counting its way down the list.
-    /// </summary>
-    private Task AddWordAsync() =>
-        MutateAsync(t => t.SpellingBee.Words.Insert(0, new BeeWord { Id = Ids.New("sb") }));
+        _self?.Dispose();
 
-    private Task RemoveWordAsync(string wordId) =>
-        MutateAsync(t => t.SpellingBee.Words.RemoveAll(w => w.Id == wordId));
+        if (_audio is not null)
+        {
+            try { await _audio.InvokeVoidAsync("dispose"); } catch (JSDisconnectedException) { }
+            try { await _audio.DisposeAsync(); } catch (JSDisconnectedException) { }
+        }
+
+        Dispose();
+    }
 }

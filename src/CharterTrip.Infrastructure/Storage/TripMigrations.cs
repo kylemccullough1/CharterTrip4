@@ -1,5 +1,6 @@
 using CharterTrip.Core.Models;
 using CharterTrip.Core.Services;
+using CharterTrip.Core.Words;
 using CharterTrip.Infrastructure.Seed;
 
 namespace CharterTrip.Infrastructure.Storage;
@@ -13,7 +14,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 19;
+    public const int CurrentVersion = 21;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -33,7 +34,12 @@ public static class TripMigrations
         if (trip.SchemaVersion < 12) changed |= ToV12_CheckInIsTwo(trip);
         if (trip.SchemaVersion < 13) changed |= ToV13_MenuBoard(trip);
         if (trip.SchemaVersion < 14) changed |= ToV14_GroupedEssentials(trip);
-        if (trip.SchemaVersion < 19) changed |= ToV19_SpellingBeeWords(trip);
+        if (trip.SchemaVersion < 20) changed |= ToV20_BeeDealsItsOwnWords(trip);
+        if (trip.SchemaVersion < 21) changed |= ToV21_BeeDrawsAtADifficulty(trip);
+
+        // v19 carried the seed's hand-written word list across to a file that predated the
+        // bee. No step any more: v20 deals the list instead of shipping one, so there is
+        // nothing in the seed left for that step to copy and it would run to no effect.
 
         // v18 gave a carpool's ETA a day to go with the time. No step, same as the two
         // before it: the field defaults to empty and an older file simply has not said.
@@ -319,20 +325,77 @@ public static class TripMigrations
     }
 
     /// <summary>
-    /// The bee arrived with a word list, and a trip.json that already exists has no way to come
-    /// by it — the seed only ever builds a file from nothing, so on the deployed copy the bee
-    /// would have opened with nothing to read. Same shape as <see cref="ToV9_JeopardyBoard"/>,
-    /// which had to carry the Jeopardy board across for exactly this reason.
+    /// The bee stopped keeping a hand-written word list and started dealing one out of the
+    /// embedded Scripps bank. Three things change shape at once, and all of them for the same
+    /// reason: the list is no longer something a person authored.
     ///
-    /// Only the words are taken, and only when there are none: a host who has already written
-    /// their own list must never find it replaced. The version guard means this runs once, so
-    /// emptying the list deliberately does not bring the seed's words back on the next load.
+    /// The words go. A v19 file holds forty-five words with hints, written into the seed by hand;
+    /// the new <c>BeeWord</c> has no hint to put them in and carries a tier key it cannot invent,
+    /// so keeping them would produce a deck that renders as blanks in the host's difficulty
+    /// readout. They are cleared instead, and the next Start deals two hundred real ones. Nobody
+    /// loses authored work — the bee has never been played, and the seed is where those forty-five
+    /// came from anyway.
+    ///
+    /// The deck settings arrive with their defaults, and scoring moves from one award at the end
+    /// to five points a word as it happens, so any half-played v19 game is sent back to the title
+    /// card: its Survivors/TeamCursor rotation has no counterpart in a fixed shuffled row, and
+    /// resuming it would mean inventing an order nobody stood in.
     /// </summary>
-    private static bool ToV19_SpellingBeeWords(TripData trip)
+    private static bool ToV20_BeeDealsItsOwnWords(TripData trip)
     {
-        if (trip.SpellingBee.Words.Count > 0) return false;
+        var bee = trip.SpellingBee;
+        var seedTrip = SeedLoader.Load();
+        var seed = seedTrip.SpellingBee;
 
-        trip.SpellingBee.Words = SeedLoader.Load().SpellingBee.Words;
+        bee.Words.Clear();
+        bee.Game = new BeeGame();
+
+        // The deck settings this step used to install — tier weights and a deck target — are not
+        // on the model any more; v21 replaced them with one difficulty dial and sets it itself.
+        if (bee.PointsPerWord <= 0) bee.PointsPerWord = seed.PointsPerWord;
+
+        // The old game awarded once, at the end. Those entries are for a rule that no longer
+        // exists, so they leave with it rather than sitting in the standings unexplained.
+        trip.Scores.RemoveAll(s => s.GameId == SpellingBeeService.GameId);
+
+        // Rules text describes the game, and the game changed. Taken wholesale because these
+        // are the committee's words in the seed, not something edited through the app.
+        if (trip.Games.FirstOrDefault(g => g.Id == SpellingBeeService.GameId) is { } game &&
+            seedTrip.Games.FirstOrDefault(g => g.Id == SpellingBeeService.GameId) is { } fresh)
+        {
+            game.Rules = fresh.Rules;
+            game.Blurb = fresh.Blurb;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// The bee stopped dealing a deck up front and started drawing a word per turn at a
+    /// difficulty the host moves while the room plays.
+    ///
+    /// Three fields go with the deck: the tier weights and the deck target, which described a
+    /// hand nobody deals any more, and the word cursor, which pointed into it. What replaces
+    /// them is one tier key — where the dial starts — and a matching one on the game for where
+    /// the host has moved it to.
+    ///
+    /// A v20 <c>Words</c> list is a dealt deck: two hundred words nobody has read yet. Under the
+    /// new model that list means the opposite — every word already spent — so keeping it would
+    /// retire two hundred words on the first turn. It goes, and any bee mid-flight goes back to
+    /// the title card with it, which costs the room one tap on Start.
+    /// </summary>
+    private static bool ToV21_BeeDrawsAtADifficulty(TripData trip)
+    {
+        var bee = trip.SpellingBee;
+
+        bee.Words.Clear();
+        bee.Game = new BeeGame();
+
+        if (!WordBank.IsTier(bee.DifficultyKey)) bee.DifficultyKey = WordDeck.DefaultDifficulty;
+        bee.Game.DifficultyKey = bee.DifficultyKey;
+
+        // Banked word by word, so what is in the standings is a tally of a game that was played
+        // under rules that have not changed. It stays.
         return true;
     }
 

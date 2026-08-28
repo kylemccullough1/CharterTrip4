@@ -1035,57 +1035,695 @@ select.textfield { cursor: pointer; }
 .buzz-final-input { width: 100%; font: inherit; font-size: 1rem; padding: 12px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); color: var(--text); }
 
 /* -------------------------------------------------------- spelling bee -- */
-/* One screen, held by the host, never pointed at the room — the word on it is the answer.
-   So this is a page read at arm's length rather than a wall display: normal gutters, normal
-   sections, and only the word itself blown up, because that is the one thing the host is
-   reading aloud across a noisy room. */
+/* Three screens, and the difference between them is the game's one real rule.
 
-.bee { text-align: center; padding: 24px; }
+   .bee-wall is pointed at the room and is a wall display: no gutters, no sections, everything
+   sized off the viewport, and the word on it only ever after the turn is settled.
+   .bee-phone is held at arm's length. The host's copy is the only place a live word exists.
+
+   The look is a beehive — gold on near-black, hexagons, honey. Cheap to do and it makes the
+   row of faces read as a comb rather than as a list of avatars. */
+
+.bee-wall {
+  display: flex; flex-direction: column; gap: 12px; text-align: center;
+  padding: 18px clamp(12px, 2.5vw, 40px) 12px;
+  min-height: calc(100dvh - var(--topbar-h));
+}
+
+/* Full screen means the whole display, not the page with a navigation bar across the top of it.
+   Done in CSS off :fullscreen rather than by toggling a class, so it is true whenever the browser
+   says it is — including the times we did not ask, and including Escape putting it back. The
+   topbar is sticky rather than fixed, so hiding it gives its height back to the page; zeroing
+   --topbar-h is what stops the wall subtracting a bar that is no longer there. */
+:root:fullscreen { --topbar-h: 0px; }
+:root:fullscreen .topbar,
+:root:fullscreen .site-footer,
+:root:fullscreen .bee-testing { display: none; }
+
+/* The way back in after Escape. Bottom left, out of the corner the turn card and the scores
+   want, and big enough to hit while walking past. */
+.bee-fs {
+  position: fixed; left: 16px; bottom: 16px; z-index: 20;
+  opacity: .85;
+}
+.bee-fs:hover { opacity: 1; }
+
+/* Once it is playing the wall is a fixed frame, not a page: exactly the viewport, nothing
+   scrolls, and the row and the stage divide what there is between them. A wall that can be
+   scrolled is a wall showing the wrong thing the moment somebody nudges it. */
+.bee-wall.is-playing {
+  position: relative; height: calc(100dvh - var(--topbar-h)); min-height: 0; overflow: hidden;
+}
+
+/* Whose turn it is, in the corner. The dropped face is the message; this only names it. */
+/* Bottom right, deliberately. The top left is where the row's own first faces are, and a card
+   there sits on top of two of them. */
+.bee-turn {
+  position: absolute; bottom: 58px; right: clamp(12px, 2.5vw, 40px); z-index: 6;
+  display: flex; flex-direction: column; text-align: right; gap: 2px;
+  padding-right: 12px; border-right: 3px solid var(--team, var(--gold));
+  animation: bee-turn-in .45s cubic-bezier(.22,1.2,.36,1) both;
+}
+.bee-turn-team {
+  font-size: clamp(.62rem, 1vw, .8rem); letter-spacing: .28em; text-transform: uppercase;
+  color: var(--team, var(--gold));
+}
+.bee-turn-name {
+  font-family: var(--display); font-weight: 900; line-height: 1;
+  font-size: clamp(1.5rem, 3.4vw, 3rem); color: var(--text);
+}
+
+@keyframes bee-turn-in {
+  from { opacity: 0; transform: translateX(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* The honeycomb wash. One repeating gradient rather than an image, so it costs nothing to
+   ship and scales to whatever the television is. */
+.bee-wall::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .5;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(212,175,55,.13), transparent 62%),
+    repeating-linear-gradient(60deg,  rgba(212,175,55,.05) 0 1px, transparent 1px 46px),
+    repeating-linear-gradient(-60deg, rgba(212,175,55,.05) 0 1px, transparent 1px 46px),
+    repeating-linear-gradient(0deg,   rgba(212,175,55,.05) 0 1px, transparent 1px 40px);
+}
+
+/* ------------------------------------------------------------- the title */
+
+.bee-title { margin: auto; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.bee-kicker { font-size: 0.75rem; letter-spacing: .3em; text-transform: uppercase; color: var(--gold); margin: 0; }
+.bee-logo {
+  font-family: var(--display); font-weight: 900; margin: 0; line-height: .95;
+  font-size: clamp(2.5rem, 9vw, 7rem); letter-spacing: .06em;
+  color: var(--gold-light); text-shadow: 0 0 40px rgba(212,175,55,.35);
+}
+.bee-tagline { color: var(--text-dim); margin: 0; font-size: clamp(.9rem, 1.6vw, 1.15rem); }
+.bee-hint { color: var(--text-faint); font-size: 0.875rem; margin: 0; }
+
+.bee-join { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(14px, 3vw, 36px); }
+.bee-join-card {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 16px 18px; background: var(--panel); border-radius: var(--radius);
+  border: 1px solid var(--gold-dim);
+}
+.bee-join-card.is-host { border-style: dashed; opacity: .9; }
+.bee-join-role {
+  font-family: var(--display); font-size: 0.8rem; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--gold);
+}
+.bee-join-code { font-family: var(--display); font-size: 1.6rem; letter-spacing: .3em; color: var(--text); }
+.bee-join-note { font-size: 0.75rem; color: var(--text-faint); }
+
+/* Who has readied up. Faces appear as they arrive, which is the only thing happening on this
+   screen while the room fills up, so it is worth the space. */
+.bee-lobby { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+.bee-lobby-head {
+  font-family: var(--display); letter-spacing: .2em; text-transform: uppercase;
+  font-size: 0.8rem; color: var(--gold); margin: 0;
+}
+.bee-lobby-faces {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start;
+  gap: 12px 16px; max-width: 76rem; min-height: 96px;
+}
+/* Each face lands as its phone joins, so the lobby fills up rather than counting down. */
+.bee-lobby-person {
+  --face: 68px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px; width: var(--face);
+  animation: bee-join-drop .5s cubic-bezier(.22,1.4,.36,1) both;
+}
+
+@keyframes bee-join-drop {
+  0%   { opacity: 0; transform: translateY(-22px) scale(.6); }
+  70%  { opacity: 1; transform: translateY(3px) scale(1.08); }
+  100% { opacity: 1; transform: none; }
+}
+
+.bee-title-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
+
+/* ------------------------------------------------------------- a face */
+/* A hexagon, because twenty-five of them side by side is a honeycomb. clip-path rather than
+   a border trick so the photo itself is cut to the shape. */
+
+.bee-face {
+  position: relative; display: grid; place-items: center;
+  width: var(--face, 60px); height: calc(var(--face, 60px) * 1.14);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(160deg, var(--team, var(--gold)) 0%, rgba(0,0,0,.55) 140%);
+  flex: 0 0 auto;
+}
+.bee-face-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bee-face-mono {
+  font-family: var(--display); font-weight: 900; color: var(--ink);
+  font-size: calc(var(--face, 60px) * .42); line-height: 1;
+}
+.bee-face-big { --face: 132px; margin: 4px auto; }
+
+/* ------------------------------------------------------------- the row */
+/* The row is the turn order. It never re-sorts — a face you were watching stays where you were
+   watching it — so "whose turn" has to be shown by moving one seat rather than by reordering. */
+
+/* One line, always. It used to wrap, which put half the field directly underneath the face being
+   pulled out of it — so the person whose turn it was landed on top of two or three other people.
+   Seats shrink to fit instead, and --seats is what they divide the width by. */
+.bee-row {
+  --row-gap: clamp(3px, .7vw, 12px);
+  display: flex; flex-wrap: nowrap; justify-content: center; align-items: flex-start;
+  gap: 6px var(--row-gap); padding: 4px 0 0; flex: 0 0 auto; position: relative; z-index: 4;
+}
+
+.bee-seat {
+  --face: min(clamp(30px, 3.6vw, 72px), calc((94vw - (var(--seats, 1) - 1) * var(--row-gap)) / var(--seats, 1)));
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  width: var(--face); position: relative;
+  transition: transform .55s cubic-bezier(.22,1.2,.36,1), opacity .4s ease, filter .4s ease;
+}
+/* Attached to the shape rather than floating under it: a small plate in the team's colour,
+   tucked up under the hexagon's lower point so the two read as one object. */
+.bee-seat-name {
+  font-size: clamp(.5rem, .62vw, .74rem); font-weight: 600; letter-spacing: .02em;
+  color: var(--text); max-width: 118%; margin-top: -4px; padding: 1px 6px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  background: color-mix(in srgb, var(--team, var(--gold)) 26%, var(--ink-2));
+  border: 1px solid color-mix(in srgb, var(--team, var(--gold)) 55%, transparent);
+  border-radius: 999px;
+}
+
+/* Dragged down out of the row into the middle of the stage: it is your turn.
+   The drop overshoots and settles rather than easing to a stop, so it reads as something with
+   weight being pulled down, and the idle hover only starts once it has landed — a face that is
+   bobbing while it falls looks like it is floating, which is the opposite of the point. */
+.bee-seat.is-up {
+  --grow: 3;
+
+  /* Far enough down that the top of the blown-up hexagon clears the row it came out of,
+     whatever the row is sized at — nobody standing in it can be covered. */
+  --drop: max(clamp(80px, 24vh, 230px), calc(var(--face) * 1.14 * var(--grow) / 2 + 26px));
+
+  /* And sideways into the middle: how far this seat's own centre is from the row's. Every seat
+     is the same width, so it is simply how many seats away from the middle it sits. */
+  --pull: calc((calc((var(--seats, 1) - 1) / 2) - var(--i, 0)) * (var(--face) + var(--row-gap)));
+
+  transform: translateX(var(--pull)) translateY(var(--drop)) scale(var(--grow));
+  z-index: 5;
+  animation: bee-drag .72s cubic-bezier(.34,1.28,.5,1) both;
+}
+.bee-seat.is-up .bee-face {
+  box-shadow: 0 0 0 2px var(--team, var(--gold)), 0 0 44px rgba(212,175,55,.5);
+  animation: bee-hover 2.4s ease-in-out .8s infinite;
+}
+/* The one name on the wall anybody is reading, so it is the one name that must not be an
+   ellipsis. In the row a plate is clipped to its own hexagon's width; pulled out, it is allowed
+   to be as wide as the name is — there is nothing beside it down there to collide with. */
+.bee-seat.is-up .bee-seat-name {
+  color: var(--text); font-weight: 700; opacity: 0; animation: bee-name-in .3s .55s ease both;
+  max-width: none; overflow: visible; text-overflow: clip;
+}
+
+/* Pulled out of the row and into the middle: down and across at once, overshooting a little so
+   it reads as something with weight being dragged rather than sliding to a stop. */
+@keyframes bee-drag {
+  0%   { transform: translateX(0) translateY(0) scale(1); }
+  55%  { transform: translateX(calc(var(--pull) * 1.02)) translateY(calc(var(--drop) * 1.06)) scale(calc(var(--grow) * 1.04)); }
+  100% { transform: translateX(var(--pull)) translateY(var(--drop)) scale(var(--grow)); }
+}
+@keyframes bee-name-in { to { opacity: 1; } }
+
+/* Knocked over and left in place. Their spot in the row is part of the story. */
+.bee-seat.is-out { opacity: .3; filter: grayscale(1); transform: rotate(-9deg) translateY(6px); }
+.bee-seat.is-out .bee-seat-name { text-decoration: line-through; }
+
+/* Back from the dead. They were grey and rotated a second ago and they are in their own seat
+   again, which is the thing worth watching — so it pops rather than just fading in. */
+.bee-seat.is-revived { animation: bee-back .7s cubic-bezier(.22,1.35,.36,1) both; }
+
+@keyframes bee-back {
+  0%   { opacity: .3; filter: grayscale(1); transform: rotate(-9deg) translateY(6px) scale(1); }
+  55%  { opacity: 1;  filter: none;         transform: rotate(3deg)  translateY(-6px) scale(1.35); }
+  100% { opacity: 1;  filter: none;         transform: none; }
+}
+
+@keyframes bee-hover {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+
+/* ------------------------------------------------------------- the stage */
+
+.bee-stage {
+  flex: 1 1 auto; display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-end; gap: 8px; min-height: 0;
+  padding-bottom: 2vh;
+}
+/* While somebody is spelling the stage holds nothing but the face dropped into it, so it keeps
+   its height out of the way of the scoreboard rather than collapsing to its (empty) content. */
+.bee-wall.is-playing .bee-stage:empty { min-height: clamp(150px, 34vh, 320px); }
+.bee-eyebrow {
+  font-family: var(--display); font-size: clamp(.7rem, 1.1vw, .95rem); letter-spacing: .3em;
+  text-transform: uppercase; color: var(--gold); margin: 0;
+}
+.bee-eyebrow.is-good { color: var(--emerald); }
+.bee-eyebrow.is-bad { color: var(--ruby); }
+.bee-headline {
+  font-family: var(--display); font-weight: 900; margin: 0; line-height: 1;
+  font-size: clamp(2rem, 7vw, 5.5rem); letter-spacing: .05em; color: var(--team, var(--gold));
+}
+.bee-sub { color: var(--text-dim); margin: 0; font-size: clamp(.85rem, 1.4vw, 1.1rem); }
+
+/* The word, and the only moment it is ever on this screen. */
 .bee-word {
-  font-family: var(--display); font-weight: 900;
-  font-size: clamp(1.875rem, 7vw, 4.25rem); letter-spacing: .04em; color: var(--gold);
-  margin-bottom: 18px; text-transform: lowercase;
+  font-family: var(--display); font-weight: 900; margin: 4px 0;
+  font-size: clamp(2.25rem, 9vw, 6.5rem); letter-spacing: .04em;
+  color: var(--gold-light); text-transform: lowercase;
+  animation: bee-word-in .5s cubic-bezier(.22,1.2,.36,1) both;
 }
-.bee-team { display: flex; flex-direction: column; gap: 9px; }
+.bee-word.is-missed { color: var(--ruby); font-size: clamp(1.75rem, 6vw, 4rem); opacity: .9; }
 
-.bee-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
-.bee-kicker { font-size: 0.75rem; letter-spacing: .3em; text-transform: uppercase; color: var(--gold); margin: 0 0 6px; }
-.bee-speller {
-  font-family: var(--display); font-size: clamp(1.75rem, 5vw, 3.25rem);
-  letter-spacing: .06em; color: var(--team, var(--gold)); margin: 0 0 18px; line-height: 1;
+@keyframes bee-word-in {
+  from { opacity: 0; transform: scale(.86) translateY(10px); letter-spacing: .3em; }
+  to   { opacity: 1; transform: none; letter-spacing: .04em; }
 }
-.bee-hint { color: var(--text-dim); max-width: 46rem; margin: -8px auto 20px; }
-.bee-took { color: var(--text-dim); margin: 0; }
 
-.bee-result { font-size: 1.25rem; margin: 0 0 18px; }
-.bee-result.is-good { color: var(--emerald); }
-.bee-result.is-bad { color: var(--ruby); }
+/* --------------------------------------------------------- shot o'clock */
+/* Three seconds of bar, drawn in CSS. The glass slides in, gets poured, tips back empty and
+   slams down hard enough to throw a ring of splash. Deliberately the loudest thing on the wall:
+   an elimination is the moment the room reacts to, and it used to be a line of grey text.
 
-/* The rule nobody remembers being told, so the screen has to explain itself. */
+   It runs second, not first. The name and the word land on their own and get a beat to be read,
+   and only then does the glass slide in underneath them — the two used to start together, which
+   put the word behind a moving glass at the moment it mattered most. */
+
+.bee-out { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
+.bee-out .bee-eyebrow { animation: bee-word-in .4s cubic-bezier(.22,1.2,.36,1) both; }
+
+.bee-shot {
+  --shot-wait: 1.5s;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%;
+  animation: bee-shot-arrive .45s var(--shot-wait) ease-out both;
+}
+
+@keyframes bee-shot-arrive {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.bee-shot-bar {
+  position: relative; width: min(420px, 60vw); height: clamp(110px, 15vh, 170px);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+/* The bar top the glass lands on. */
+.bee-shot-bar::after {
+  content: ''; position: absolute; left: 8%; right: 8%; bottom: 0; height: 4px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+}
+
+/* The glass: a tumbler tapering slightly to the base. */
+.bee-shot-glass {
+  position: relative; width: 62px; height: 74px; margin-bottom: 4px;
+  border: 2px solid rgba(240,217,140,.75); border-top: none;
+  border-radius: 4px 4px 9px 9px;
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  clip-path: polygon(6% 0, 94% 0, 86% 100%, 14% 100%);
+  transform-origin: 50% 100%;
+  animation: bee-glass 3s var(--shot-wait) cubic-bezier(.3,.9,.4,1) both;
+}
+/* What is in it. Fills while the pour runs, empties when the glass tips. */
+.bee-shot-fill {
+  position: absolute; left: 3px; right: 3px; bottom: 3px; border-radius: 0 0 7px 7px;
+  background: linear-gradient(180deg, #e0a83c, #b9741d);
+  box-shadow: inset 0 3px 6px rgba(255,255,255,.28);
+  height: 0; animation: bee-fill 3s var(--shot-wait) linear both;
+}
+/* The stream from above. */
+.bee-shot-pour {
+  position: absolute; top: 0; left: 50%; width: 7px; margin-left: -3.5px; height: 0;
+  background: linear-gradient(180deg, rgba(224,168,60,0), #e0a83c);
+  border-radius: 4px; animation: bee-pour 3s var(--shot-wait) linear both;
+}
+/* The ring thrown out sideways when it lands. */
+.bee-shot-splash {
+  position: absolute; bottom: 0; left: 50%; width: 34px; height: 34px; margin-left: -17px;
+  border: 3px solid rgba(240,217,140,.85); border-radius: 50%;
+  opacity: 0; animation: bee-splash 3s var(--shot-wait) ease-out both;
+}
+
+@keyframes bee-glass {
+  0%   { transform: translateX(-160%) rotate(-8deg); }
+  16%  { transform: translateX(0) rotate(0deg); }          /* slid in, waiting */
+  46%  { transform: translateY(0) rotate(0deg); }           /* poured */
+  56%  { transform: translateY(-34px) rotate(-6deg); }      /* lifted */
+  70%  { transform: translateY(-30px) rotate(-108deg); }    /* tipped back, drained */
+  78%  { transform: translateY(-36px) rotate(-4deg); }
+  86%  { transform: translateY(0) rotate(0deg); }           /* SLAM */
+  90%  { transform: translateY(-7px) rotate(0deg); }        /* bounce */
+  100% { transform: translateY(0) rotate(0deg); }
+}
+@keyframes bee-fill {
+  0%, 18% { height: 0; }
+  44%     { height: 46px; }
+  58%     { height: 46px; }
+  68%     { height: 0; }                                    /* drunk */
+  100%    { height: 0; }
+}
+@keyframes bee-pour {
+  0%, 17%  { height: 0; opacity: 0; }
+  20%      { height: 46px; opacity: 1; }
+  42%      { height: 46px; opacity: 1; }
+  46%, 100%{ height: 0; opacity: 0; }
+}
+@keyframes bee-splash {
+  0%, 85% { opacity: 0; transform: scale(.3); }
+  88%     { opacity: .9; transform: scale(1); }
+  100%    { opacity: 0; transform: scale(2.1); }
+}
+
+.bee-shot-shout {
+  font-family: var(--display); font-weight: 900; margin: 0;
+  font-size: clamp(1.5rem, 5vw, 3.5rem); letter-spacing: .12em; color: var(--gold-light);
+  animation: bee-shout .5s calc(var(--shot-wait) + 2.55s) cubic-bezier(.22,1.3,.36,1) both;
+}
+
+@keyframes bee-shout {
+  0%   { opacity: 0; transform: scale(.5) rotate(-6deg); }
+  60%  { opacity: 1; transform: scale(1.16) rotate(2deg); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* The revival. The one moment the game reverses itself, so it is the one moment the wall
+   flashes: gold sweeps across the screen, the headline lands hard, and the faces coming back
+   drop in one after another instead of all at once. */
 .bee-revival {
-  max-width: 40rem; margin: 0 auto 20px; padding: 14px 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%;
+  animation: bee-revival-flash 1.1s ease-out both;
+}
+
+@keyframes bee-revival-flash {
+  0%   { background: radial-gradient(circle at 50% 45%, rgba(212,175,55,.55), transparent 62%); }
+  100% { background: radial-gradient(circle at 50% 45%, rgba(212,175,55,0), transparent 62%); }
+}
+
+.bee-revival-flash {
+  font-family: var(--display); font-weight: 900; margin: 0; line-height: 1;
+  font-size: clamp(1.75rem, 6.5vw, 4.5rem); letter-spacing: .1em; color: var(--gold-light);
+  text-shadow: 0 0 34px rgba(212,175,55,.65);
+  animation: bee-revival-slam .6s cubic-bezier(.2,1.5,.4,1) both;
+}
+
+@keyframes bee-revival-slam {
+  0%   { opacity: 0; transform: scale(2.4); letter-spacing: .5em; filter: blur(7px); }
+  70%  { opacity: 1; transform: scale(.94); letter-spacing: .08em; filter: none; }
+  100% { opacity: 1; transform: scale(1); letter-spacing: .1em; }
+}
+
+.bee-revival-why {
+  color: var(--text-dim); font-size: clamp(.8rem, 1.5vw, 1.05rem); margin: 0;
+  max-width: 46rem; animation: bee-word-in .5s .35s cubic-bezier(.22,1.2,.36,1) both;
+}
+
+/* Back from the dead, one at a time. --i is set per face so they land in sequence. */
+.bee-revival-faces { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 16px; margin: 4px 0; }
+.bee-revival-person {
+  --face: clamp(46px, 5vw, 82px);
+  display: flex; flex-direction: column; align-items: center; gap: 3px; width: var(--face);
+  animation: bee-revival-drop .55s cubic-bezier(.22,1.4,.36,1) both;
+  animation-delay: calc(.45s + var(--i, 0) * .13s);
+}
+
+@keyframes bee-revival-drop {
+  0%   { opacity: 0; transform: translateY(-40px) scale(.5) rotate(-12deg); filter: grayscale(1); }
+  70%  { opacity: 1; transform: translateY(4px) scale(1.12) rotate(3deg); filter: none; }
+  100% { opacity: 1; transform: none; filter: none; }
+}
+
+/* ---------------------------------------------------------- the standings */
+
+.bee-scores { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px clamp(10px, 2vw, 28px); padding-top: 6px; }
+.bee-score {
+  display: flex; align-items: baseline; gap: 8px; padding: 6px 14px;
+  border-radius: var(--radius-sm); background: var(--panel);
+  border-bottom: 2px solid var(--team, var(--gold));
+}
+.bee-score-name { font-size: 0.8rem; color: var(--text-dim); }
+.bee-score-value { font-family: var(--display); font-size: 1.35rem; color: var(--team, var(--gold)); }
+.bee-score-left { font-size: 0.7rem; color: var(--text-faint); }
+/* Beside the scores, not pushed to the far corner — the corner is where the turn card is
+   now, and a lone button over there reads as belonging to it. */
+.bee-reset { margin-left: 4px; opacity: .7; }
+.bee-reset:hover { opacity: 1; }
+
+/* The deck editor. Weights rather than counts, with the resulting split shown live beside
+   them, because "1, 1, 1, 1" does not tell anybody how many expert words they are about to face. */
+.bee-deck {
+  width: min(760px, 100%); margin: 4px auto 0; padding: 16px 18px; text-align: left;
   background: var(--panel); border: 1px solid var(--gold-dim); border-radius: var(--radius);
 }
-.bee-revival-head {
-  font-family: var(--display); font-size: 0.75rem; letter-spacing: .3em;
-  text-transform: uppercase; color: var(--gold); margin: 0 0 6px;
+.bee-deck-head {
+  font-family: var(--display); font-size: 0.78rem; letter-spacing: .26em;
+  text-transform: uppercase; color: var(--gold); margin: 0 0 10px;
 }
-.bee-revival-why { color: var(--text-dim); font-size: 0.875rem; margin: 0 0 8px; }
-.bee-revival-names { font-size: 1.125rem; color: var(--text); margin: 0; }
+/* Six tiers, one of them on. A row of buttons rather than a slider because the labels are the
+   point — "Moderately Difficult" is a thing the host recognises, "4" is not. */
+.bee-tier-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+.bee-tier {
+  flex: 1 1 140px; display: flex; flex-direction: column; gap: 2px; cursor: pointer;
+  padding: 8px 10px; text-align: left; font: inherit; color: var(--text);
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  border-left: 3px solid transparent; opacity: .6;
+}
+.bee-tier:hover { opacity: .85; }
+.bee-tier.is-on {
+  opacity: 1; border-left-color: var(--gold); background: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--gold-dim);
+}
+.bee-tier-name { font-size: 0.9rem; font-weight: 600; }
+.bee-tier-count { font-size: 0.72rem; color: var(--text-faint); }
 
-.bee-warn { color: var(--gold-light); font-size: 0.875rem; margin: 0 0 12px; }
+/* Editing the rules where the words are set, because they are the same job: what the host is
+   about to stand up and say. */
+.bee-rules-edit { display: flex; flex-direction: column; gap: 6px; }
+.bee-rule-row { display: flex; gap: 8px; align-items: flex-start; }
+.bee-rule-row textarea {
+  flex: 1; font: inherit; font-size: 0.85rem; line-height: 1.35; padding: 7px 9px; resize: vertical;
+  background: var(--ink-2); border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--text);
+}
+.bee-rule-btns { display: flex; flex-direction: column; gap: 3px; }
+.bee-deck input[type=number] {
+  width: 100%; font: inherit; padding: 5px 7px; border-radius: var(--radius-sm);
+  background: var(--ink-2); border: 1px solid var(--line); color: var(--text);
+}
+.bee-deck-numbers {
+  display: flex; flex-wrap: wrap; align-items: end; gap: 14px; margin-top: 14px;
+  padding-top: 12px; border-top: 1px solid var(--line-soft);
+}
+.bee-deck-numbers label { display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; color: var(--text-dim); }
+.bee-deck-numbers input { width: 110px; }
+.bee-deck-note { font-size: 0.78rem; color: var(--text-faint); margin: 12px 0 0; }
 
-/* The word list, before anyone has started. */
-.bee-words { list-style: decimal; margin: 0; padding-left: 2.2rem; display: flex; flex-direction: column; gap: 4px; }
-.bee-word-row { display: flex; align-items: flex-start; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--line-soft); }
-.bee-word-row.is-empty { opacity: .62; }
-.bee-word-fields { display: flex; flex-direction: column; gap: 1px; flex: 1 1 auto; min-width: 0; }
-.bee-word-fields .editable, .bee-word-fields .inline-edit { width: 100%; }
+/* ------------------------------------------------------- the rules slideshow */
+/* One rule, the size of the room. The host drives it from their phone and reads it out; the
+   wall's job is to be legible from the back and to make it obvious there is more coming. */
 
-/* Out, but still in their team's column — losing four of six is the thing to notice. */
-.person.is-out { opacity: .45; }
-.person.is-out .person-name { text-decoration: line-through; }
-.person.is-up { border-color: var(--team, var(--gold)); box-shadow: 0 0 0 1px var(--team, var(--gold)) inset; }
+.bee-rules-show {
+  margin: auto; display: flex; flex-direction: column; align-items: center; gap: 22px;
+  max-width: 46rem; padding: 0 4vw;
+}
+.bee-rule-text {
+  font-family: var(--display); font-weight: 700; margin: 0; line-height: 1.15;
+  font-size: clamp(1.5rem, 4.4vw, 3.4rem); color: var(--text);
+  animation: bee-rule-in .45s cubic-bezier(.22,1.2,.36,1) both;
+}
+@keyframes bee-rule-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+.bee-rule-dots { display: flex; gap: 8px; }
+.bee-rule-dots span {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--line);
+  transition: background .25s ease, transform .25s ease;
+}
+.bee-rule-dots span.is-on { background: var(--gold); transform: scale(1.35); }
+
+/* ------------------------------------------------------------ the dial */
+/* Easier and harder, on the host's phone, in the middle of a game. Two taps wide because it is
+   used while somebody is also judging spelling. */
+
+.bee-dial {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
+  margin: 2px 0;
+}
+.bee-dial-now {
+  font-family: var(--display); font-size: 0.8rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--gold); text-align: center;
+}
+.bee-host-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.bee-host-rule {
+  font-size: 1.15rem; line-height: 1.35; margin: 0; color: var(--text);
+  padding: 10px 12px; background: var(--panel); border-left: 3px solid var(--gold);
+  border-radius: var(--radius-sm);
+}
+
+/* --------------------------------------------------------- the win screen */
+/* Built like Jeopardy's, because the bee is one of eight games and they should end the same
+   way. The team wins it: the last one standing takes it for whoever they play for. */
+
+.bee-win {
+  position: relative; flex: 1; overflow: hidden auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; text-align: center; padding: 30px 20px;
+}
+.bee-win-team {
+  font-family: var(--display); font-weight: 900; margin: 0; line-height: 1;
+  font-size: clamp(1.9rem, 6.5vw, 5rem); letter-spacing: .04em; color: var(--team, var(--gold));
+  text-shadow: 0 0 60px color-mix(in srgb, var(--team, #d4af37) 45%, transparent);
+  animation: bee-win-pop .9s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+@keyframes bee-win-pop {
+  from { opacity: 0; transform: scale(.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.bee-win-who { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.bee-win-name {
+  font-family: var(--display); font-weight: 900; margin: 0; line-height: 1;
+  font-size: clamp(1.3rem, 3.4vw, 2.6rem); color: var(--text);
+}
+.bee-final-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.bee-final-card {
+  min-width: 130px; padding: 10px 16px; border-radius: var(--radius-sm);
+  background: var(--panel); border: 1px solid var(--line-soft); border-bottom: 2px solid var(--team, var(--gold));
+}
+.bee-final-card.is-winner {
+  border-color: var(--team); box-shadow: 0 0 0 1px var(--team), 0 10px 40px rgba(0,0,0,.5);
+}
+.bee-final-score { font-family: var(--display); font-size: 1.8rem; margin: 2px 0 0; color: var(--team, var(--gold)); }
+
+/* Twelve hexagons thrown outward from behind the name — the bee's own shape, fanned around the
+   circle rather than fired straight up. */
+.bee-win-burst { position: absolute; inset: 0; pointer-events: none; }
+.bee-win-burst span {
+  position: absolute; top: 50%; left: 50%; width: 15px; height: 17px; margin: -8px 0 0 -7px;
+  background: var(--gold); opacity: 0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  animation: bee-win-fly 2s ease-out both;
+  animation-delay: calc(var(--i) * 55ms);
+  rotate: calc(var(--i) * 30deg);
+}
+.bee-win-burst span:nth-child(even) { background: var(--gold-light); }
+@keyframes bee-win-fly {
+  0%   { opacity: 0; transform: translate(0, 0) scale(.4); }
+  18%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(0, -48vh) scale(1.15); }
+}
+
+/* The host's answers, under the word. */
+.bee-host-help { margin: 4px 0 12px; display: flex; flex-direction: column; gap: 8px; }
+.bee-host-help dt {
+  font-size: 0.68rem; letter-spacing: .2em; text-transform: uppercase; color: var(--gold);
+}
+.bee-host-help dd { margin: 2px 0 0; font-size: 1rem; line-height: 1.35; color: var(--text); }
+.bee-host-nohelp { font-size: 0.8rem; color: var(--text-faint); margin: 4px 0 12px; }
+
+/* Local-only testing panel: collapsed behind one toggle, holding real /bee pages embedded per
+   simulated player plus the host, so what is being tested is exactly what a phone would show. */
+.bee-testing { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line-soft); text-align: left; }
+.bee-testing-panel { margin-top: 12px; }
+.bee-testing-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.bee-testing-count { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-dim); }
+.bee-testing-count input {
+  width: 62px; font: inherit; padding: 4px 6px; border-radius: var(--radius-sm);
+  background: var(--panel); border: 1px solid var(--line); color: var(--text);
+}
+.bee-simstrip-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.bee-simcard {
+  flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 6px;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
+  padding: 10px;
+}
+.bee-simcard.is-host { flex: 1 1 100%; border-color: var(--gold-dim); margin-bottom: 10px; }
+.bee-simcard-label {
+  font-size: 0.813rem; font-weight: 600; text-align: left; cursor: pointer;
+  background: none; border: 0; padding: 0; font-family: inherit;
+}
+.bee-simframe { width: 100%; height: 460px; border: 0; border-radius: var(--radius-sm); background: var(--ink-2); }
+.bee-simframe.is-tall { height: 620px; }
+
+/* Who is in, as chips you can knock out one at a time. Testing a five-person field means being
+   able to take twenty people out without resetting the bee. */
+.bee-testing-in { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.bee-testing-in .chip { cursor: pointer; }
+
+/* ------------------------------------------------------------- the phone */
+
+.bee-phone { display: flex; flex-direction: column; min-height: 100dvh; padding: 18px; gap: 12px; width: 100%; }
+
+/* The code box owns the width it is given rather than shrinking to its longest word. Without
+   this the whole screen resizes as the placeholder and the error line come and go, which on a
+   laptop reads as the page being broken. */
+.bee-phone .buzz-enter {
+  width: 100%; max-width: 30rem; margin: auto; display: flex; flex-direction: column;
+  align-items: stretch; text-align: center; gap: 12px;
+}
+.bee-phone .buzz-enter h1 { margin: 0; font-family: var(--display); }
+.bee-phone .buzz-enter .buzz-code-input { width: 100%; box-sizing: border-box; }
+.bee-phone header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+
+/* Picking your own name off a list is the whole of joining. */
+.bee-pick { display: flex; flex-direction: column; gap: 10px; }
+.bee-pick h1 { font-family: var(--display); margin: 0; }
+.bee-pick-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.bee-pick-name {
+  --face: 40px;
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px; text-align: left;
+  font: inherit; color: var(--text); cursor: pointer;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  border-left: 3px solid var(--team, var(--gold));
+}
+.bee-pick-name:active { background: var(--panel-2); }
+.bee-pick-tick { margin-left: auto; color: var(--emerald); }
+
+.bee-me { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; flex: 1 1 auto; }
+.bee-me-status { color: var(--text-dim); margin: 0; font-size: 1.05rem; }
+.bee-me-status.is-up { color: var(--gold-light); font-size: 1.4rem; font-family: var(--display); }
+.bee-me-status.is-out { color: var(--ruby); }
+.bee-me-word { font-family: var(--display); font-size: 2rem; color: var(--gold-light); margin: 0; text-transform: lowercase; }
+
+/* The host's phone. The word is enormous because it is read aloud across a noisy room, and it
+   is the only screen in the building that has it. */
+.bee-host { display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; }
+.bee-host-who { font-family: var(--display); font-size: 1.2rem; color: var(--gold); margin: 0; }
+.bee-host-tier { font-size: 0.75rem; letter-spacing: .18em; text-transform: uppercase; color: var(--text-faint); margin: 0; }
+.bee-host-word {
+  font-family: var(--display); font-weight: 900; margin: 6px 0 10px;
+  font-size: clamp(2rem, 12vw, 3.5rem); line-height: 1.05; color: var(--gold-light);
+  text-transform: lowercase; word-break: break-word;
+}
+.bee-host-verdict { font-family: var(--display); letter-spacing: .2em; text-transform: uppercase; font-size: 0.9rem; margin: 0; }
+.bee-host-verdict.is-good { color: var(--emerald); }
+.bee-host-verdict.is-bad { color: var(--ruby); }
+.bee-host-label { font-size: 0.72rem; letter-spacing: .24em; text-transform: uppercase; color: var(--gold); margin: 10px 0 2px; }
+.bee-host-field { display: flex; flex-direction: column; gap: 3px; }
+.bee-host-person {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 6px 9px; border-radius: var(--radius-sm); background: var(--panel);
+  border-left: 3px solid transparent;
+}
+.bee-host-person.is-up { border-left-color: var(--gold); }
+.bee-host-person.is-out { opacity: .5; }
+.bee-host-person.is-out span:first-child { text-decoration: line-through; }
+
+/* Nothing here is information — it is all emphasis — so it all goes when asked. */
+@media (prefers-reduced-motion: reduce) {
+  .bee-seat, .bee-seat.is-up, .bee-seat.is-up .bee-face, .bee-seat.is-up .bee-seat-name,
+  .bee-word, .bee-turn, .bee-revival, .bee-revival-flash, .bee-revival-why, .bee-revival-person,
+  .bee-seat.is-revived,
+  .bee-shot-glass, .bee-shot-fill, .bee-shot-pour, .bee-shot-splash, .bee-shot-shout,
+  .bee-shot, .bee-out .bee-eyebrow, .bee-rule-text, .bee-win-team, .bee-win-burst span {
+    animation: none; transition: none;
+  }
+  .bee-win-burst { display: none; }
+  .bee-seat.is-up { transform: translateX(var(--pull)) translateY(var(--drop)) scale(var(--grow)); }
+  .bee-seat.is-up .bee-seat-name { opacity: 1; }
+  .bee-shot-fill { height: 46px; }
+}
 
 /* ----------------------------------------------------- other widgets ---- */
 .qlist { margin: 0; padding-left: 22px; }

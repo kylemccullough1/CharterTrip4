@@ -1,5 +1,6 @@
 using System.Text.Json;
 using CharterTrip.Core.Models;
+using CharterTrip.Core.Words;
 using CharterTrip.Infrastructure.Storage;
 
 namespace CharterTrip.Tests;
@@ -578,29 +579,102 @@ public class TripMigrationsTests
     }
 
     /// <summary>
-    /// The live trip.json predates the bee entirely, and the seed only builds a file from
-    /// nothing — so without this step the bee opens on the deployed site with no words to read.
+    /// The bee stopped shipping a word list and started dealing one. A file written before that
+    /// holds forty-five hand-written words with hints and no tier — a shape the new deck cannot
+    /// represent — so they go, and the next Start draws two hundred real ones.
     /// </summary>
     [Fact]
-    public void V19_brings_the_word_list_to_a_file_that_predates_the_bee()
+    public void V20_clears_the_old_hand_written_word_list()
     {
-        var trip = new TripData { SchemaVersion = 18 };
-        Assert.Empty(trip.SpellingBee.Words);
+        var trip = new TripData { SchemaVersion = 19 };
+        trip.SpellingBee.Words.Add(new BeeWord { Id = "old", Word = "rhythm" });
 
         TripMigrations.Apply(trip);
 
-        Assert.NotEmpty(trip.SpellingBee.Words);
-        Assert.All(trip.SpellingBee.Words, w => Assert.False(w.IsEmpty));
+        Assert.Empty(trip.SpellingBee.Words);
     }
 
     [Fact]
-    public void V19_never_replaces_a_word_list_somebody_has_already_written()
+    public void V20_arrives_with_per_word_scoring()
     {
-        var trip = new TripData { SchemaVersion = 18 };
-        trip.SpellingBee.Words.Add(new BeeWord { Id = "mine", Word = "onomatopoeia" });
+        var trip = new TripData { SchemaVersion = 19 };
 
         TripMigrations.Apply(trip);
 
-        Assert.Equal("mine", Assert.Single(trip.SpellingBee.Words).Id);
+        Assert.Equal(5, trip.SpellingBee.PointsPerWord);
+    }
+
+    /// <summary>
+    /// v21 traded the dealt deck for one dial. A file written before it has no difficulty on it
+    /// at all — or, if it was hand-edited, something that is not a tier — and either way the bee
+    /// has to come up pointing at a real tier rather than drawing from nowhere.
+    /// </summary>
+    [Fact]
+    public void V21_lands_on_a_real_difficulty_whatever_the_old_file_said()
+    {
+        var trip = new TripData { SchemaVersion = 20 };
+        trip.SpellingBee.DifficultyKey = "nonsense";
+
+        TripMigrations.Apply(trip);
+
+        var bee = trip.SpellingBee;
+        Assert.True(WordBank.IsTier(bee.DifficultyKey), $"'{bee.DifficultyKey}' is not a tier");
+        Assert.Equal(bee.DifficultyKey, bee.Game.DifficultyKey);
+    }
+
+    /// <summary>
+    /// A v20 Words list is a dealt deck — words nobody has read yet. Under v21 the same list
+    /// means the opposite: every word already spent. Carrying it across would retire two hundred
+    /// words on the first turn, so it goes.
+    /// </summary>
+    [Fact]
+    public void V21_throws_away_the_undealt_deck_rather_than_calling_it_spent()
+    {
+        var trip = new TripData { SchemaVersion = 20 };
+        trip.SpellingBee.Words.Add(new BeeWord { Id = "sb-1", Word = "rhythm", TierKey = "moderate" });
+        trip.SpellingBee.Game.Phase = BeePhase.Spelling;
+
+        TripMigrations.Apply(trip);
+
+        Assert.Empty(trip.SpellingBee.Words);
+        Assert.Equal(BeePhase.NotStarted, trip.SpellingBee.Game.Phase);
+    }
+
+    /// <summary>
+    /// A game saved mid-v19 rotated by team through a Survivors queue, which has no counterpart
+    /// in a fixed shuffled row. Resuming it would mean inventing an order nobody stood in, so it
+    /// goes back to the title card — and its points go with it, because they were awarded once at
+    /// the end under a rule that no longer exists.
+    /// </summary>
+    [Fact]
+    public void V20_sends_a_half_played_bee_back_to_the_title_card()
+    {
+        var trip = new TripData { SchemaVersion = 19 };
+        trip.SpellingBee.Game.Phase = BeePhase.Spelling;
+        trip.SpellingBee.Game.CurrentPersonId = "p-someone";
+        trip.Scores.Add(new ScoreEntry { Id = "sc-old", GameId = "spelling", TeamId = "a", Points = 10 });
+        trip.Scores.Add(new ScoreEntry { Id = "sc-keep", GameId = "jeopardy", TeamId = "a", Points = 15 });
+
+        TripMigrations.Apply(trip);
+
+        var game = trip.SpellingBee.Game;
+        Assert.Equal(BeePhase.NotStarted, game.Phase);
+        Assert.Null(game.CurrentPersonId);
+        Assert.Empty(game.Order);
+
+        Assert.Equal("sc-keep", Assert.Single(trip.Scores).Id);
+    }
+
+    [Fact]
+    public void V20_freshens_the_bees_rules_because_the_game_changed()
+    {
+        var trip = new TripData { SchemaVersion = 19 };
+        trip.Games.Add(new Game { Id = "spelling", Name = "Spelling Bee", Rules = ["Alternating order across teams."] });
+
+        TripMigrations.Apply(trip);
+
+        var rules = trip.Games.Single(g => g.Id == "spelling").Rules;
+        Assert.DoesNotContain(rules, r => r.Contains("Alternating"));
+        Assert.Contains(rules, r => r.Contains("shuffled into one row"));
     }
 }

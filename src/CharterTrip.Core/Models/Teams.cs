@@ -20,6 +20,13 @@ public sealed class RosterPerson
     public string Name { get; set; } = "";
     public string TeamId { get; set; } = "";
 
+    /// <summary>
+    /// Their face, as <c>/photos/{id}</c>. Taken on their own phone when they join the spelling
+    /// bee, because a row of twenty-five headshots is not something anybody was going to collect
+    /// in advance. Null until then, and the row draws a monogram instead.
+    /// </summary>
+    public string? PhotoId { get; set; }
+
     /// <summary>Phase 2: the secret in their personal /join/{token} link.</summary>
     public string? JoinToken { get; set; }
 

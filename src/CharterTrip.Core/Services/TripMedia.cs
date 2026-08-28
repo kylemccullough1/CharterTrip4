@@ -94,6 +94,12 @@ public static class TripMedia
         foreach (var team in trip.Teams)
             if (!string.IsNullOrWhiteSpace(team.PhotoId)) ids.Add(team.PhotoId);
 
+        // A guest's bee photo is stored as a path, the way a clue's is, because it was uploaded
+        // through the same route. Collected here or the next release would delete somebody's face
+        // off the wall the moment an unrelated clue photo was swapped out.
+        foreach (var person in trip.Roster)
+            if (IdFrom(person.PhotoId) is { } face) ids.Add(face);
+
         return ids;
     }
 

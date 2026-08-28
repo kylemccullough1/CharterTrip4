@@ -26,3 +26,4 @@ src/CharterTrip.Web/App_Data/
 appsettings.*.local.json
 *.publishsettings
 *.pubxml.user
+tools/word-data/sentence-checked.json

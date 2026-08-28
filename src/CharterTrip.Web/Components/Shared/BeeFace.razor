@@ -1,0 +1,51 @@
+@* A person's face, or a monogram where there isn't one.
+
+   Both the wall and the phone need this and they need it to agree: a guest who has just taken
+   their photo should recognise the thing that appears in the row as the thing they took. The
+   fallback is a hexagon rather than a grey circle because a row of twenty-five hexagons is a
+   honeycomb, which is the one visual joke this game gets for free. *@
+
+<span class="bee-face @CssClass" style="--team:@Color"
+      role="img" aria-label="@(Person?.Name ?? "Unknown")" title="@Person?.Name">
+    @if (HasPhoto)
+    {
+        @* alt is empty rather than the name: the wrapper is already the labelled image, and a
+           screen reader reading both says every name twice. *@
+        <img class="bee-face-img" src="@Person!.PhotoId" alt="" loading="lazy" />
+    }
+    else
+    {
+        <span class="bee-face-mono" aria-hidden="true">@Monogram</span>
+    }
+</span>
+
+@code {
+    [Parameter, EditorRequired] public RosterPerson? Person { get; set; }
+
+    /// <summary>Their team's colour, which is what the hexagon's rim is drawn in.</summary>
+    [Parameter] public string Color { get; set; } = "#d4af37";
+
+    [Parameter] public string? CssClass { get; set; }
+
+    private bool HasPhoto => !string.IsNullOrWhiteSpace(Person?.PhotoId);
+
+    /// <summary>
+    /// Up to two letters. The roster is mostly single first names, so this is usually one — and
+    /// one big letter reads better across a room than two small ones.
+    /// </summary>
+    private string Monogram
+    {
+        get
+        {
+            var parts = (Person?.Name ?? "")
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            return parts.Length switch
+            {
+                0 => "?",
+                1 => parts[0][..1].ToUpperInvariant(),
+                _ => $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant()
+            };
+        }
+    }
+}

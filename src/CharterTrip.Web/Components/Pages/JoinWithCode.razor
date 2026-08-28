@@ -203,10 +203,23 @@ else
 
             CodeKind.BuzzerHost => (TripSignIn.ForBuzzerHost(), "/buzz"),
 
+
             _ => (null, SafeRedirect.Home)
         };
 
         if (principal is null) return;
+
+        // The board refuses to start until every team's phone has been through here, so coming
+        // through here is what has to record it. Inferring it from the first buzz would be too
+        // late: a team whose buzzer never worked would find out on the opening clue.
+        if (match.Kind is CodeKind.BuzzerTeam or CodeKind.BuzzerHost)
+        {
+            await Store.MutateAsync(t =>
+            {
+                if (match.Kind == CodeKind.BuzzerTeam) JeopardyService.RecordTeamJoin(t, match.TeamId!);
+                else JeopardyService.RecordHostJoin(t);
+            }, TripArea.Jeopardy);
+        }
 
         await SignInAndGo(principal, landing);
     }

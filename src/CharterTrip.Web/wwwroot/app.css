@@ -3967,3 +3967,18 @@ pre.code {
   .pr-sheet { break-after: page; }
   .no-print { display: none !important; }
 }
+
+/* --- who is actually in the room -------------------------------------------- */
+
+/* A join card says whether that phone has been through the door. Without it the
+   only way to find out a buzzer never worked was the team failing to buzz on the
+   opening clue. */
+.jeo-join-state {
+  font-size: 0.7rem; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--text-faint);
+}
+.jeo-join-card.is-in { border-color: var(--emerald); }
+.jeo-join-card.is-in .jeo-join-state { color: var(--emerald); }
+
+.jeo-hint.is-ready { color: var(--emerald); }
+.jeo-force { margin-top: 10px; }

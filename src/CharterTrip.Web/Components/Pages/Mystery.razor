@@ -251,10 +251,13 @@
        codes on the wall: a code signs you in, and twenty-five iframes sharing this page's cookie
        would fight over one session and sign you out of your own board.
 
-       Everybody has a card, the way the Jeopardy strip gives every team a buzzer. Twenty-five live
-       circuits at once would be a lot, so the frames are lazy: the browser only mounts one when you
-       scroll it into view, which makes the whole cast affordable without any of it being a choice
-       you have to make first. *@
+       A card per person who is actually in the game, not per character in the story — because
+       opening a frame with ?as= renders somebody's phone without putting them through the door,
+       and a strip full of phones for people who never joined is a strip that lies about the room.
+       Fill the room first and they all appear.
+
+       Twenty-five live circuits at once would be a lot, so the frames are lazy: the browser mounts
+       one when you scroll it into view. *@
     <section class="jeo-testing no-print">
         <button class="btn btn-ghost btn-sm" @onclick="() => _simOpen = !_simOpen">
             🧪 Testing @(_simOpen ? "▲" : "▼")
@@ -272,33 +275,47 @@
 
                 @* Anchors rather than buttons, so jumping to somebody is the browser scrolling its
                    own container. No JS, and it survives the page re-rendering under it. *@
-                <div class="chip-row sim-jump">
-                    @foreach (var character in Story.Characters)
-                    {
-                        <a class="chip" href="@($"#sim-{character.Id}")" @key="character.Id">
-                            @character.Name@(character.IsKiller ? " 🔪" : "")@(character.IsStaff ? " ★" : "")
-                        </a>
-                    }
-                </div>
+                @if (InTheGame.Count == 0)
+                {
+                    <p class="muted tiny">Nobody is in the game yet. Fill the room and their phones appear here.</p>
+                }
+                else
+                {
+                    @* Anchors rather than buttons, so jumping to somebody is the browser scrolling
+                       its own container — no JS, and it survives a re-render.
 
-                <div class="sim-rail">
-                    @foreach (var character in Story.Characters)
-                    {
-                        <div class="sim-card" id="@($"sim-{character.Id}")" @key="character.Id">
-                            <span class="sim-label">
-                                @character.Name
-                                @if (character.IsKiller) { <span class="mys-tag mys-killer">@character.GuiltSlot</span> }
-                                else if (character.IsStaff) { <span class="mys-tag">staff</span> }
-                            </span>
-                            <iframe class="sim-frame" loading="lazy"
-                                    src="@($"/m?as={character.Id}")" title="@($"Phone — {character.Name}")"></iframe>
-                        </div>
-                    }
-                </div>
+                       Two things this needs. The path is spelled out because a bare "#id" resolves
+                       against <base href="/"> and lands on the home page, which is exactly what it
+                       did. And enhanced navigation is off, because Blazor intercepting a same-page
+                       fragment gives you a re-render instead of a scroll. *@
+                    <div class="chip-row sim-jump" data-enhance-nav="false">
+                        @foreach (var character in InTheGame)
+                        {
+                            <a class="chip" href="@($"/games/mystery#sim-{character.Id}")" @key="character.Id">
+                                @character.Name@(character.IsKiller ? " 🔪" : "")@(character.IsStaff ? " ★" : "")
+                            </a>
+                        }
+                    </div>
 
-                <p class="muted tiny">
-                    @Story.Characters.Count phones. Scroll the rail, or tap a name to jump to one.
-                </p>
+                    <div class="sim-rail">
+                        @foreach (var character in InTheGame)
+                        {
+                            <div class="sim-card" id="@($"sim-{character.Id}")" @key="character.Id">
+                                <span class="sim-label">
+                                    @character.Name
+                                    @if (character.IsKiller) { <span class="mys-tag mys-killer">@character.GuiltSlot</span> }
+                                    else if (character.IsStaff) { <span class="mys-tag">staff</span> }
+                                </span>
+                                <iframe class="sim-frame" loading="lazy"
+                                        src="@($"/m?as={character.Id}")" title="@($"Phone — {character.Name}")"></iframe>
+                            </div>
+                        }
+                    </div>
+
+                    <p class="muted tiny">
+                        @InTheGame.Count of @Story.Characters.Count in the game. Scroll the rail, or tap a name.
+                    </p>
+                }
             </div>
         }
     </section>
@@ -455,6 +472,16 @@
 
     private bool IsDev => Env.IsDevelopment();
     private bool _simOpen;
+
+    /// <summary>
+    /// Everybody who has actually taken a part, in story order.
+    ///
+    /// The rail is a mirror of the room rather than of the cast list — a phone for somebody who
+    /// never came through the door would make the strip disagree with the arrivals count and with
+    /// whether the evening can start.
+    /// </summary>
+    private IReadOnlyList<MysteryCharacter> InTheGame =>
+        Story.Characters.Where(c => Play.ForCharacter(c.Id)?.PersonId is not null).ToList();
 
     /// <summary>
     /// Everything here goes through the real service calls rather than writing state directly, so

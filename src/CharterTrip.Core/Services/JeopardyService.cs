@@ -50,6 +50,11 @@ public static class JeopardyService
         game.BuzzerCodes = trip.Teams.ToDictionary(t => t.Id, _ => NewCode(random), StringComparer.Ordinal);
         game.HostCode = NewCode(random);
 
+        // New codes mean every phone in the room is holding a dead one, so nobody is joined any
+        // more. Leaving these set would let the next game start with four teams that cannot buzz.
+        game.JoinedTeamIds.Clear();
+        game.HostJoined = false;
+
         trip.Scores.RemoveAll(s => s.GameId == GameId);
     }
 
@@ -404,6 +409,62 @@ public static class JeopardyService
 
     public static IReadOnlyList<(Team Team, int Score)> Scoreboard(TripData trip) =>
         trip.Teams.Select(t => (Team: t, Score: ScoreFor(trip, t.Id))).ToList();
+
+    /// <summary>
+    /// A phone has come through the door for this team. Idempotent — the same phone rejoining, or a
+    /// second phone for one team, is still one team present.
+    /// </summary>
+    public static bool RecordTeamJoin(TripData trip, string teamId)
+    {
+        if (trip.Jeopardy.Game.JoinedTeamIds.Contains(teamId)) return false;
+
+        trip.Jeopardy.Game.JoinedTeamIds.Add(teamId);
+        return true;
+    }
+
+    public static bool RecordHostJoin(TripData trip)
+    {
+        if (trip.Jeopardy.Game.HostJoined) return false;
+
+        trip.Jeopardy.Game.HostJoined = true;
+        return true;
+    }
+
+    /// <summary>
+    /// Whether the game can begin, and if not, the sentence to put beside the greyed button.
+    ///
+    /// A reason rather than a bare false, because somebody is standing in front of a television
+    /// wondering why the button does nothing. The board used to start regardless, which meant the
+    /// first anybody heard about a phone that never made it in was a team failing to buzz on the
+    /// opening clue.
+    /// </summary>
+    public static (bool Ready, string Reason) CanStart(TripData trip)
+    {
+        var game = trip.Jeopardy.Game;
+
+        var missing = trip.Teams
+            .Where(t => !game.JoinedTeamIds.Contains(t.Id))
+            .Select(t => t.Name)
+            .ToList();
+
+        if (trip.Teams.Count == 0)
+            return (false, "There are no teams yet.");
+
+        if (missing.Count > 0)
+            return (false, $"Still waiting on {Names(missing)}.");
+
+        if (!game.HostJoined)
+            return (false, "The host's answer sheet is not in anybody's hand yet.");
+
+        return (true, "Everybody is in.");
+    }
+
+    private static string Names(IReadOnlyList<string> names) => names.Count switch
+    {
+        1 => names[0],
+        2 => $"{names[0]} and {names[1]}",
+        _ => string.Join(", ", names.Take(names.Count - 1)) + $" and {names[^1]}"
+    };
 
     public static string? TeamForCode(TripData trip, string code) =>
         trip.Jeopardy.Game.BuzzerCodes

@@ -35,27 +35,19 @@
     }
     else
     {
-        @* ---- the two doors ------------------------------------------------------------- *@
+        @* ---- the door ------------------------------------------------------------------ *@
+        @* One poster, where there were two. The second was the organizers' and it came with a
+           warning about leaving it lying around; there is nothing to leave lying around now. The
+           four house parts are offered behind this same code to a browser signed in as the
+           committee, so the sheet on the wall is the sheet everybody uses. *@
         <section class="pr-sheet">
             <h1 class="pr-h1">The door</h1>
 
-            <div class="pr-doors">
             <div class="pr-poster">
                 <QrImage Content="@JoinUrl(Play.PartyCode)" Size="300" Alt="Join the party" />
                 <p class="pr-poster-code">@Play.PartyCode</p>
                 <p class="pr-poster-label">Murder at Braun Manor</p>
                 <p class="pr-poster-sub">Point your camera at this, or go to @JoinHost/join and type the code.</p>
-            </div>
-
-            <div class="pr-poster pr-poster-host">
-                <QrImage Content="@JoinUrl(Play.HostCode)" Size="220" Alt="Take a house part" />
-                <p class="pr-poster-code">@Play.HostCode</p>
-                <p class="pr-poster-label">The four of you</p>
-                <p class="pr-poster-sub">
-                    Braun, Leo, Chloe and Bertram. Safe to leave lying around only because the picker
-                    behind it refuses anybody who is not an organizer — but don't test that.
-                </p>
-            </div>
             </div>
         </section>
 

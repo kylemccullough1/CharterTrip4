@@ -1,4 +1,4 @@
-using CharterTrip.Core.Models;
+﻿using CharterTrip.Core.Models;
 using CharterTrip.Core.Mystery;
 using CharterTrip.Core.Services;
 
@@ -55,6 +55,17 @@ public class GameResetTests
         CastingService.ClaimCharacter(trip, "person-1", new Random(3));
         PhaseService.GoToPhase(trip, MysteryPhase.Trial1, T0);
 
+        trip.Games.Add(new Game { Id = "spelling", Name = "Spelling Bee", Rules = ["Spell it.", "Sit down if you miss."] });
+        SpellingBeeService.Reset(trip, new Random(4));
+        SpellingBeeService.ShowRule(trip, 1);
+        trip.SpellingBee.Game.Ready.Add("person-1");
+
+        trip.Party.Sketch.Phase = PartyGamePhase.Playing;
+        trip.Party.Sketch.Round = 3;
+        trip.Party.Sketch.UsedCharacters.Add("braun");
+        trip.Party.Sketch.CurrentCharacter = "molly";
+        trip.Party.Relay.Phase = PartyGamePhase.Playing;
+
         trip.Scores.Add(new ScoreEntry { Id = "s1", TeamId = "jou", GameId = "jeopardy", Points = 15, At = T0 });
         trip.Scores.Add(new ScoreEntry { Id = "s2", TeamId = "ali", GameId = "relay", Points = 30, At = T0 });
 
@@ -65,7 +76,7 @@ public class GameResetTests
     public void It_puts_jeopardy_back_to_the_title_card()
     {
         var trip = Played();
-        var codes = trip.Jeopardy.Game.BuzzerCodes.ToDictionary(x => x.Key, x => x.Value);
+        var code = trip.Jeopardy.Game.PartyCode;
 
         GameReset.All(trip, new Random(9));
 
@@ -75,7 +86,7 @@ public class GameResetTests
         Assert.False(trip.Jeopardy.Game.HostJoined);
 
         // New codes, or a phone left connected from the last game can buzz into the new one.
-        Assert.NotEqual(codes["jou"], trip.Jeopardy.Game.BuzzerCodes["jou"]);
+        Assert.NotEqual(code, trip.Jeopardy.Game.PartyCode);
     }
 
     [Fact]
@@ -130,13 +141,13 @@ public class GameResetTests
         var trip = Played();
 
         GameReset.All(trip, new Random(9));
-        var codes = trip.Jeopardy.Game.BuzzerCodes.ToDictionary(x => x.Key, x => x.Value);
+        var code = trip.Jeopardy.Game.PartyCode;
 
         GameReset.All(trip, new Random(9));
 
         Assert.Equal(MysteryPhase.Lobby, trip.Mystery.Phase);
         Assert.Empty(trip.Scores);
-        Assert.Equal(codes, trip.Jeopardy.Game.BuzzerCodes);
+        Assert.Equal(code, trip.Jeopardy.Game.PartyCode);
     }
 
     // ------------------------------------------------------------------------------------------
@@ -153,14 +164,89 @@ public class GameResetTests
     }
 
     [Fact]
-    public void It_names_all_three_things_it_would_take()
+    public void It_names_every_game_it_would_take()
     {
         var lines = GameReset.WhatWouldGo(Played());
 
-        Assert.Equal(3, lines.Count);
+        Assert.Equal(5, lines.Count);
         Assert.Contains(lines, l => l.Contains("Jeopardy"));
+        Assert.Contains(lines, l => l.Contains("spelling bee"));
+        Assert.Contains(lines, l => l.Contains("Police Sketch") && l.Contains("the relay"));
         Assert.Contains(lines, l => l.Contains("murder mystery"));
         Assert.Contains(lines, l => l.Contains("45 points"));
+    }
+
+    // ------------------------------------------------------------------------------------------
+    //  The games that were live but invisible to it
+    // ------------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// The bee was not in the reset at all, and the way that showed up was the slideshow: the wall
+    /// renders one rule at a time instead of the title card, driven from a phone, so a bee left on
+    /// rule two by a host who has put their phone down looks like a bee that will not start — and
+    /// the one button that says it resets every game left it exactly where it was.
+    /// </summary>
+    [Fact]
+    public void It_takes_the_bees_rules_off_the_wall()
+    {
+        var trip = Played();
+
+        GameReset.All(trip, new Random(9));
+
+        Assert.Equal(-1, trip.SpellingBee.Game.RuleSlide);
+        Assert.Equal(BeePhase.NotStarted, trip.SpellingBee.Game.Phase);
+        Assert.Empty(trip.SpellingBee.Game.Ready);
+    }
+
+    /// <summary>
+    /// A bee stranded on a rule with nothing else played is the whole of what there is to clear.
+    /// If the summary cannot see it the button is disabled, and the state that most needs the
+    /// button is the one state the button refuses to act on.
+    /// </summary>
+    [Fact]
+    public void A_bee_stuck_on_a_rule_is_something_to_clear()
+    {
+        var trip = new TripData();
+        trip.Games.Add(new Game { Id = "spelling", Name = "Spelling Bee", Rules = ["Spell it."] });
+        SpellingBeeService.ShowRule(trip, 0);
+
+        Assert.True(GameReset.AnythingToClear(trip));
+
+        GameReset.All(trip, new Random(9));
+
+        Assert.Equal(-1, trip.SpellingBee.Game.RuleSlide);
+    }
+
+    /// <summary>
+    /// Points are not the whole of a round game's state. Clearing the standings left Police Sketch
+    /// on round three with a face already spent, so the next round opened halfway through the cast.
+    /// </summary>
+    [Fact]
+    public void It_puts_the_standing_games_back_to_their_rules_card()
+    {
+        var trip = Played();
+
+        GameReset.All(trip, new Random(9));
+
+        Assert.Equal(PartyGamePhase.NotStarted, trip.Party.Sketch.Phase);
+        Assert.Equal(1, trip.Party.Sketch.Round);
+        Assert.Empty(trip.Party.Sketch.UsedCharacters);
+        Assert.Null(trip.Party.Sketch.CurrentCharacter);
+        Assert.Equal(PartyGamePhase.NotStarted, trip.Party.Relay.Phase);
+    }
+
+    /// <summary>Settings are how a game is set up, not how it went. They survive.</summary>
+    [Fact]
+    public void It_keeps_what_the_committee_set_up()
+    {
+        var trip = Played();
+        trip.Party.Sketch.PointValue = 20;
+        trip.Party.Sketch.Characters.Add(new SketchCharacter { Name = "James Braun" });
+
+        GameReset.All(trip, new Random(9));
+
+        Assert.Equal(20, trip.Party.Sketch.PointValue);
+        Assert.Single(trip.Party.Sketch.Characters);
     }
 
     /// <summary>

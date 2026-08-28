@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using CharterTrip.Core.Models;
 
 namespace CharterTrip.Core.Services;
@@ -21,18 +21,22 @@ public enum CodeKind
     MysteryParty,
 
     /// <summary>
-    /// The organizers' code, which opens the picker for Braun and the three facilitators.
+    /// Jeopardy's one code, which is the code on the wall.
     ///
-    /// Those parts see the guilty list, so this code never goes on the wall — it lives on the host
-    /// console and the organizers' own printed card.
+    /// It used to be one code per team, and typing it *was* being that team. Now it is a door like
+    /// the other two: which buzzer you get is decided by the name you tap, and that comes off the
+    /// roster — so there is no team-shaped input for anybody to get wrong.
     /// </summary>
-    MysteryHost,
+    BuzzerParty,
 
-    /// <summary>A Jeopardy buzzer code, shared by everyone on that team.</summary>
-    BuzzerTeam,
-
-    /// <summary>The Jeopardy host code. A job, not a person.</summary>
-    BuzzerHost
+    /// <summary>
+    /// The spelling bee's guest code, which is the code on the wall.
+    ///
+    /// A door, exactly like the mystery's: it proves you are in the room and says nothing about
+    /// who you are. Tapping your own name off the list is the rest of it, and it is also how you
+    /// join the bee — being in the row and being signed in are one act.
+    /// </summary>
+    BeeParty
 }
 
 public readonly record struct CodeMatch(CodeKind Kind, string? PersonId = null, string? TeamId = null)
@@ -125,28 +129,24 @@ public static class JoinCodes
         if (person is not null)
             return new CodeMatch(CodeKind.Person, PersonId: person.Id, TeamId: NullIfBlank(person.TeamId));
 
-        // The two mystery codes, which are doors rather than identities. The host one is checked
-        // first so a collision could never hand an organizer's door to a guest.
-        if (trip.Mystery.Play.HostCode is { Length: > 0 } host &&
-            string.Equals(Clean(host), cleaned, StringComparison.OrdinalIgnoreCase))
-        {
-            return new CodeMatch(CodeKind.MysteryHost);
-        }
+        // Then the doors. Each of these proves you are in the room and nothing else; who you are is
+        // the next question, and the answer is choosing your own name on the far side.
+        //
+        // There used to be a host code per game, resolved above these so that a four-character
+        // collision could never read as "the guest code happened to match the host's, so here is
+        // the word list". There is one code per game now and the host job is offered behind it to
+        // a browser signed in as an organizer, so both the second code and the ordering rule that
+        // protected it have gone.
+        if (Matches(trip.Mystery.Play.PartyCode, cleaned)) return new CodeMatch(CodeKind.MysteryParty);
+        if (SpellingBeeService.IsGuestCode(trip, cleaned)) return new CodeMatch(CodeKind.BeeParty);
 
-        if (trip.Mystery.Play.PartyCode is { Length: > 0 } party &&
-            string.Equals(Clean(party), cleaned, StringComparison.OrdinalIgnoreCase))
-        {
-            return new CodeMatch(CodeKind.MysteryParty);
-        }
-
-        if (JeopardyService.TeamForCode(trip, cleaned) is { } teamId)
-            return new CodeMatch(CodeKind.BuzzerTeam, TeamId: teamId);
-
-        if (JeopardyService.IsHostCode(trip, cleaned))
-            return new CodeMatch(CodeKind.BuzzerHost);
+        if (JeopardyService.IsPartyCode(trip, cleaned)) return new CodeMatch(CodeKind.BuzzerParty);
 
         return CodeMatch.None;
     }
+
+    private static bool Matches(string? code, string cleaned) =>
+        code is { Length: > 0 } && string.Equals(Clean(code), cleaned, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The link to hand one person, for the print sheet and the roster admin page.</summary>
     public static string PathFor(RosterPerson person) => $"/join/{person.JoinToken}";

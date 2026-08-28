@@ -1,13 +1,14 @@
-using CharterTrip.Core.Models;
+﻿using CharterTrip.Core.Models;
+using CharterTrip.Core.Mystery;
 using CharterTrip.Core.Services;
 using CharterTrip.Infrastructure.Seed;
 
 namespace CharterTrip.Tests;
 
 /// <summary>
-/// The one front door. Every code on this trip — a person's own link, a Jeopardy buzzer code, the
-/// host code — resolves here, so this is the test that stops two games disagreeing about who is
-/// holding the phone.
+/// The one front door. Every code on this trip — a person's own link and each game's one door —
+/// resolves here, so this is the test that stops two games disagreeing about who is holding the
+/// phone.
 /// </summary>
 public class JoinCodesTests
 {
@@ -16,6 +17,8 @@ public class JoinCodesTests
         var trip = SeedLoader.Load();
         JoinCodes.EnsureTokens(trip);
         JeopardyService.EnsureCodes(trip, new Random(1));
+        SpellingBeeService.EnsureCodes(trip, new Random(2));
+        CastingService.OpenDoors(trip, new Random(3));
         return trip;
     }
 
@@ -112,21 +115,48 @@ public class JoinCodesTests
         }
     }
 
+    /// <summary>
+    /// One code per game, and it is a door: it says you are in the room and nothing about who you
+    /// are. There used to be a second code per game carrying the host job, resolved ahead of these
+    /// so that a four-character collision could never read as "here is the word list". The job is
+    /// offered behind the door now, to a browser signed in as the committee, so there is one code
+    /// to recognise and nothing for it to lose a race to.
+    /// </summary>
     [Fact]
-    public void A_buzzer_code_resolves_to_its_team_and_the_host_code_to_the_host()
+    public void Each_game_has_one_door_and_it_carries_no_identity()
     {
         var trip = Trip();
-        var teamId = trip.Teams[1].Id;
 
-        var team = JoinCodes.Resolve(trip, trip.Jeopardy.Game.BuzzerCodes[teamId]);
-        Assert.Equal(CodeKind.BuzzerTeam, team.Kind);
-        Assert.Equal(teamId, team.TeamId);
-        Assert.Null(team.PersonId);
+        foreach (var (code, expected) in new (string, CodeKind)[]
+                 {
+                     (trip.Jeopardy.Game.PartyCode, CodeKind.BuzzerParty),
+                     (trip.SpellingBee.Game.GuestCode, CodeKind.BeeParty),
+                     (trip.Mystery.Play.PartyCode, CodeKind.MysteryParty)
+                 })
+        {
+            var match = JoinCodes.Resolve(trip, code);
 
-        var host = JoinCodes.Resolve(trip, trip.Jeopardy.Game.HostCode);
-        Assert.Equal(CodeKind.BuzzerHost, host.Kind);
-        Assert.Null(host.PersonId);
-        Assert.Null(host.TeamId);
+            Assert.Equal(expected, match.Kind);
+            Assert.Null(match.PersonId);
+            Assert.Null(match.TeamId);
+        }
+    }
+
+    [Fact]
+    public void A_persons_own_link_still_outranks_every_game_door()
+    {
+        var trip = Trip();
+
+        foreach (var code in new[]
+                 {
+                     trip.SpellingBee.Game.GuestCode,
+                     trip.Jeopardy.Game.PartyCode,
+                     trip.Mystery.Play.PartyCode
+                 })
+        {
+            trip.Roster[0].JoinToken = code;
+            Assert.Equal(CodeKind.Person, JoinCodes.Resolve(trip, code).Kind);
+        }
     }
 
     [Theory]
@@ -150,8 +180,7 @@ public class JoinCodesTests
     public void A_person_wins_over_a_buzzer_code_that_happens_to_collide()
     {
         var trip = Trip();
-        var teamId = trip.Teams[0].Id;
-        var collision = trip.Jeopardy.Game.BuzzerCodes[teamId];
+        var collision = trip.Jeopardy.Game.PartyCode;
 
         // Contrived — a 4-character buzzer code cannot equal a 10-character token by accident.
         // The point is the precedence rule: being yourself outranks being a seat at a table,

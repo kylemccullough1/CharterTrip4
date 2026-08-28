@@ -23,6 +23,52 @@ public class AccentPaletteTests
     private static void Award(TripData trip, string teamId, int points) =>
         trip.Scores.Add(new ScoreEntry { Id = Ids.New("sc"), TeamId = teamId, Points = points });
 
+    // ------------------------------------------------------------------ swatches
+
+    /// <summary>
+    /// The four the teams started as are the first four of the palette, in their original order.
+    /// The teams page and the carpools both draw from this list, so reordering it would silently
+    /// repaint things people recognise by colour.
+    /// </summary>
+    [Fact]
+    public void The_palette_still_opens_with_the_four_original_team_colours()
+    {
+        Assert.Equal(
+            ["#d4af37", "#2e9e7e", "#c94f5a", "#4a7fd6"],
+            AccentPalette.Swatches.Take(4));
+
+        Assert.Equal(10, AccentPalette.Swatches.Count);
+        Assert.Equal(AccentPalette.Swatches.Count, AccentPalette.Swatches.Distinct().Count());
+    }
+
+    [Fact]
+    public void Every_swatch_is_a_colour_the_stylesheet_will_accept()
+    {
+        Assert.All(AccentPalette.Swatches, s => Assert.NotNull(AccentPalette.Parse(s)));
+    }
+
+    [Theory]
+    [InlineData("#d4af37", "#d4af37")]   // as written
+    [InlineData("#D4AF37", "#d4af37")]   // the same colour, shouted
+    [InlineData("#4a7fd6", "#4a7fd6")]
+    public void A_palette_colour_matches_and_comes_back_in_the_palettes_own_spelling(string given, string expected)
+    {
+        Assert.Equal(expected, AccentPalette.MatchSwatch(given));
+        Assert.True(AccentPalette.IsSwatch(given));
+    }
+
+    [Theory]
+    [InlineData("#123456")]   // a real colour, but not one of ours
+    [InlineData("rebeccapurple")]
+    [InlineData("red; background: url(evil)")]
+    [InlineData("")]
+    [InlineData(null)]
+    public void Anything_outside_the_palette_does_not_match(string? given)
+    {
+        Assert.Null(AccentPalette.MatchSwatch(given));
+        Assert.False(AccentPalette.IsSwatch(given));
+    }
+
     // ------------------------------------------------------------------ parsing
 
     [Theory]

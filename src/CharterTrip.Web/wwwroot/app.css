@@ -763,13 +763,65 @@ select.textfield { cursor: pointer; }
 }
 .team-col.is-drop { border-color: var(--gold); background: var(--panel-2); }
 
+/* The column clips its children so the rounded corners hold. That would also clip the colour
+   palette, which hangs below the header and out of the column — so the one column with a palette
+   open stops clipping, and lifts above its neighbours, for exactly as long as it is open. */
+.team-col.is-picking { overflow: visible; position: relative; z-index: 40; }
+
 .team-col-head { padding: 11px 13px; border-bottom: 1px solid var(--line-soft); }
 .team-title { display: flex; align-items: center; gap: 8px; }
 .team-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--team, var(--gold)); flex: 0 0 auto; }
+
+/* The dot, when it is also the button that opens the palette. It stays the same 9px mark it has
+   always been — the hit area is grown with padding and pulled back out with a negative margin, so
+   it is comfortable to hit without pushing the team name sideways. */
+.team-colour { position: relative; display: flex; flex: 0 0 auto; }
+button.team-dot.is-pickable {
+  padding: 6px; margin: -6px; box-sizing: content-box;
+  border: 0; cursor: pointer; background: none;
+}
+button.team-dot.is-pickable::before {
+  content: ""; display: block; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--team, var(--gold)); transition: box-shadow .12s, transform .12s;
+}
+button.team-dot.is-pickable:hover::before { transform: scale(1.25); }
+button.team-dot.is-pickable:focus-visible::before,
+button.team-dot.is-pickable[aria-expanded="true"]::before {
+  box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--team, var(--gold));
+}
+
 .team-col-head h3 {
   font-family: var(--display); font-size: 0.875rem; letter-spacing: .1em;
   text-transform: uppercase; margin: 0; min-width: 0;
 }
+
+/* The palette itself. Five across, two down, so the four the teams started as sit along the top
+   row in the order they have always been in and the six added ones sit underneath.
+
+   Named for what it is rather than for the teams page, because it is the same ten colours the
+   carpools pick from; the carpool one is still .car-palette only because it has to be placed by
+   JS to escape a scrolling panel, which this one does not. */
+.swatch-grid {
+  position: absolute; top: calc(100% + 10px); left: -8px; z-index: 30;
+  display: grid; grid-template-columns: repeat(5, 22px); gap: 6px;
+  padding: 10px; border-radius: var(--radius-sm);
+  background: var(--panel-2); border: 1px solid var(--line); box-shadow: var(--shadow);
+}
+.swatch {
+  width: 22px; height: 22px; padding: 0; cursor: pointer;
+  border-radius: 6px; background: var(--swatch, transparent);
+  border: 1px solid color-mix(in srgb, var(--swatch, var(--line)) 65%, transparent);
+  transition: transform .1s;
+}
+.swatch:hover { transform: scale(1.15); }
+.swatch.is-on { box-shadow: 0 0 0 2px var(--panel-2), 0 0 0 4px var(--swatch); }
+
+/* Already worn by another team. Still pickable — two teams in one colour is allowed, it just
+   should never happen without being seen first. */
+.swatch.is-taken:not(.is-on) { opacity: .34; }
+.swatch.is-taken:not(.is-on):hover { opacity: .75; }
+
+.swatch-backdrop { position: fixed; inset: 0; z-index: 20; }
 
 .team-people { padding: 8px; display: flex; flex-direction: column; gap: 5px; min-height: 60px; }
 
@@ -870,7 +922,6 @@ select.textfield { cursor: pointer; }
   border-top: 3px solid var(--team, var(--gold-dim));
   border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; gap: 8px; align-items: center;
 }
-.jeo-join-card.is-host { border-top-color: var(--gold); }
 .jeo-join-team {
   font-family: var(--display); font-size: 0.75rem; letter-spacing: .12em; text-transform: uppercase;
   text-align: center; max-width: 100%; overflow-wrap: anywhere;
@@ -1021,19 +1072,13 @@ select.textfield { cursor: pointer; }
   .jeo-final-timer.is-urgent, .jeo-shot-text { animation: none; }
 }
 
-/* Local-only testing panel: collapsed behind one toggle, holding real /buzz pages embedded per
-   team plus the host, so what's being tested is exactly what a phone would show — not a stand-in. */
-.jeo-testing { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line-soft); }
-.jeo-testing-panel { margin-top: 12px; }
-.jeo-simstrip-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-.jeo-simcard {
-  flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 6px;
-  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
-  padding: 10px;
-}
-.jeo-simcard-label { font-size: 0.813rem; font-weight: 600; }
-.jeo-simframe { width: 100%; height: 420px; border: 0; border-radius: var(--radius-sm); background: var(--ink-2); }
 
+/* Local-only testing panel: collapsed behind one toggle, holding real game pages embedded per
+   seat plus the host, so what's being tested is exactly what a phone would show — not a stand-in.
+   One panel for every game now that TestPhones carries the markup; the embedded phones inside it
+   are the shared .sim-* cards, which is why there is no per-game copy of any of this any more. */
+.game-testing { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line-soft); text-align: left; }
+.game-testing-panel { margin-top: 12px; }
 .jeo-answer { font-size: clamp(1.125rem, 2.2vw, 1.875rem); color: var(--emerald); margin: 0; }
 .jeo-buzzed { display: flex; flex-direction: column; gap: 4px; }
 .jeo-buzzed-team { font-family: var(--display); font-size: clamp(1.5rem, 3vw, 2.5rem); color: var(--team, var(--gold)); }
@@ -1169,15 +1214,46 @@ select.textfield { cursor: pointer; }
   min-height: calc(100dvh - var(--topbar-h));
 }
 
-/* Full screen means the whole display, not the page with a navigation bar across the top of it.
-   Done in CSS off :fullscreen rather than by toggling a class, so it is true whenever the browser
-   says it is — including the times we did not ask, and including Escape putting it back. The
-   topbar is sticky rather than fixed, so hiding it gives its height back to the page; zeroing
-   --topbar-h is what stops the wall subtracting a bar that is no longer there. */
+/* Game Mode means the whole display, not the page with a navigation bar across the top of it.
+
+   Keyed off .game-mode — the class game-screen.js puts on <html> — rather than off :fullscreen,
+   because real full screen is the half the browser is allowed to refuse. It refuses every time
+   the game was started from somebody's phone, which is most nights, and it hands the display
+   back the moment a thumb finds Escape. The class is the half that always holds, so the class is
+   what the chrome hides on. :fullscreen is kept beside it for the one case the class does not
+   cover: somebody pressing F11 on a page that never entered Game Mode.
+
+   The topbar is sticky rather than fixed, so hiding it gives its height back to the page; zeroing
+   --topbar-h is what stops a wall sized off the viewport subtracting a bar that is no longer
+   there. */
+:root.game-mode,
 :root:fullscreen { --topbar-h: 0px; }
+
+:root.game-mode .topbar,
+:root.game-mode .footer,
+:root.game-mode .game-testing,
 :root:fullscreen .topbar,
-:root:fullscreen .site-footer,
-:root:fullscreen .bee-testing { display: none; }
+:root:fullscreen .footer,
+:root:fullscreen .game-testing { display: none; }
+
+/* A wall that can be scrolled is a wall showing the wrong thing the moment somebody nudges the
+   table it is standing on — and a scrollbar down the side of a television is just a scrollbar on
+   a television. So in Game Mode the viewport is the whole surface and nothing moves: the shell
+   stops being a page that grows past the fold and becomes a frame exactly one screen tall.
+
+   Which means a screen with more in it than fits is cut off rather than reachable. That is the
+   trade being made deliberately — every screen that enters Game Mode is built to a viewport
+   already, and the alternative is the bar. */
+:root.game-mode,
+:root.game-mode body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+
+:root.game-mode .shell { height: 100%; min-height: 0; }
+:root.game-mode .main { height: 100%; min-height: 0; overflow: hidden; }
+
+/* The page wrapper's 60px of bottom padding is there to keep the last card off the footer. With
+   no footer to clear it is 60px of nothing, and on a screen sized to the viewport it is 60px of
+   nothing that pushes the bottom of the game off the bottom of the display. */
+:root.game-mode .page { padding-top: 0; padding-bottom: 0; }
 
 /* The way back in after Escape. Bottom left, out of the corner the turn card and the scores
    want, and big enough to hit while walking past. */
@@ -1246,7 +1322,6 @@ select.textfield { cursor: pointer; }
   padding: 16px 18px; background: var(--panel); border-radius: var(--radius);
   border: 1px solid var(--gold-dim);
 }
-.bee-join-card.is-host { border-style: dashed; opacity: .9; }
 .bee-join-role {
   font-family: var(--display); font-size: 0.8rem; letter-spacing: .22em;
   text-transform: uppercase; color: var(--gold);
@@ -1741,34 +1816,12 @@ select.textfield { cursor: pointer; }
 .bee-host-help dd { margin: 2px 0 0; font-size: 1rem; line-height: 1.35; color: var(--text); }
 .bee-host-nohelp { font-size: 0.8rem; color: var(--text-faint); margin: 4px 0 12px; }
 
-/* Local-only testing panel: collapsed behind one toggle, holding real /bee pages embedded per
-   simulated player plus the host, so what is being tested is exactly what a phone would show. */
-.bee-testing { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line-soft); text-align: left; }
-.bee-testing-panel { margin-top: 12px; }
-.bee-testing-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.bee-testing-count { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-dim); }
-.bee-testing-count input {
-  width: 62px; font: inherit; padding: 4px 6px; border-radius: var(--radius-sm);
-  background: var(--panel); border: 1px solid var(--line); color: var(--text);
-}
-.bee-simstrip-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-.bee-simcard {
-  flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 6px;
-  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
-  padding: 10px;
-}
-.bee-simcard.is-host { flex: 1 1 100%; border-color: var(--gold-dim); margin-bottom: 10px; }
-.bee-simcard-label {
-  font-size: 0.813rem; font-weight: 600; text-align: left; cursor: pointer;
-  background: none; border: 0; padding: 0; font-family: inherit;
-}
-.bee-simframe { width: 100%; height: 460px; border: 0; border-radius: var(--radius-sm); background: var(--ink-2); }
-.bee-simframe.is-tall { height: 620px; }
 
-/* Who is in, as chips you can knock out one at a time. Testing a five-person field means being
-   able to take twenty people out without resetting the bee. */
-.bee-testing-in { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.bee-testing-in .chip { cursor: pointer; }
+/* The host's way out of the rules slideshow, when the phone that put it up is not in the room.
+   Sits under the dots rather than in a corner: it is only ever on screen while the wall is
+   showing rules, and it leaves with them. */
+.bee-rules-out { margin-top: 22px; opacity: .5; }
+.bee-rules-out:hover, .bee-rules-out:focus-visible { opacity: 1; }
 
 /* ------------------------------------------------------------- the phone */
 
@@ -4369,27 +4422,21 @@ pre.code {
    lives on its own page and the two never share a screen.
    ------------------------------------------------------------------------------ */
 
-/* Names are buttons rather than a dropdown. On a phone, in a dark room, one tap
-   beats a select plus a submit — and twenty-one names fit fine in a wrap. */
-.join-names {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  justify-content: center;
-  margin: 6px 0 14px;
-}
-.join-name {
-  padding: 11px 18px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--panel);
-  color: var(--text);
-  font: inherit;
-  font-size: 0.938rem;
+/* One select, where the names used to be a wrap of pills.
+   The pills were chosen on the argument that one tap beats a select plus a submit, which is true
+   of the tap and was wrong about the wrap: twenty-five names is a wall to read in a dark room, and
+   the one you want is wherever the wrap happened to put it. A list you scroll is one place to
+   look, and it is where the host job is offered to the committee.
+
+   Sized like the code box on the door before it — same card, same field, so the two screens of the
+   same journey do not look like two different sites. 16px on the control itself, because anything
+   smaller makes iOS zoom the page when it takes focus and never quite zoom back. */
+.join-picker {
+  font-size: 1rem;
+  margin-bottom: 14px;
   cursor: pointer;
 }
-.join-name:hover  { border-color: var(--gold); background: var(--panel-2); }
-.join-name:active { transform: translateY(1px); }
+.join-picker optgroup { font-style: normal; color: var(--text-dim); }
 
 /* --- the code, wherever it is shown ------------------------------------------- */
 
@@ -4429,6 +4476,12 @@ pre.code {
 
 /* The printed sign for the door. */
 .pr-poster {
+  /* The sheet is a grid of 230px card tracks, and the poster used to be wrapped in a .pr-doors
+     row that claimed the whole width for the two of them. There is one poster now and no wrapper,
+     so it has to claim that width itself — in a 230px track its own 300px QR hangs out over the
+     border, which on paper is a printed square with a line through it. */
+  grid-column: 1 / -1;
+
   display: grid;
   justify-items: center;
   gap: 8px;
@@ -4471,14 +4524,12 @@ pre.code {
   background: var(--ink-2);
   text-align: center;
 }
-.mys-door-host { border-color: rgba(201,79,90,.45); }
 .mys-door-who {
   font-size: 0.719rem;
   letter-spacing: .14em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
-.mys-door-host .mys-door-who { color: #e8919a; }
 
 .join-roles { display: grid; gap: 8px; margin: 6px 0 12px; }
 .join-role {
@@ -4499,37 +4550,25 @@ pre.code {
 .join-role-name  { font-family: var(--display); font-size: 1.06rem; color: var(--gold-light); }
 .join-role-title { font-size: 0.781rem; color: var(--text-dim); }
 
-.pr-poster-host { border-style: dashed; }
 
-/* The mystery's sim strip.
+/* The testing strip.
  *
- * Twenty-five phones do not wrap into a readable wall the way five buzzers do, so this is a
- * horizontal rail that snaps rather than a flex row that wraps — the shape of the cast stays legible
- * and the page stays one screen tall. The three rules that used to live here were never applied to
- * anything: the markup was using the Jeopardy classes, so the phones rendered buzzer-shaped. */
-
-/* Wraps to as many rows as it needs. Capping it clipped the last row through the middle of the
-   names, which reads as broken rather than as scrollable. */
-.sim-jump { margin: 12px 0 4px; }
-.sim-jump .chip { text-decoration: none; }
-
+ * A wrapping grid, not the horizontal rail this used to be. The rail was defended on the grounds
+ * that twenty-four phones do not wrap into a readable wall — but a row that only ever grows off the
+ * right-hand edge is not readable either, it is just readable one screenful at a time, and finding
+ * phone eleven meant paging to it. Wrapped, every phone somebody has added is on the page, and the
+ * page scrolls the way every other page does.
+ *
+ * auto-fill rather than auto-fit: at one or two phones, auto-fit would stretch a single card the
+ * whole width of the panel and give a 300px-wide phone a 1200px frame. */
 .sim-rail {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 12px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
   padding: 4px 4px 12px;
-  overscroll-behavior-x: contain;
 }
 
 .sim-card {
-  flex: 0 0 300px;
-  scroll-snap-align: center;
-
-  /* The anchors above scroll this container, and without the margin a jumped-to card lands flush
-     against the edge with its neighbour cropped in a way that reads as broken. */
-  scroll-margin-inline: 12px;
-
   display: flex; flex-direction: column; gap: 6px;
   background: var(--panel); border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm); padding: 10px;
@@ -4537,8 +4576,9 @@ pre.code {
 
 .sim-label { display: flex; align-items: center; gap: 6px; font-size: 0.813rem; font-weight: 600; }
 
-/* Phone-shaped, and lazy — the browser mounts a circuit only when the card is scrolled near, which
-   is what makes having all twenty-five of them affordable. */
+/* Phone-shaped. The frames are lazy, which they had to become when the rail started wrapping: this
+   comment claimed they already were and they were not, and scrolling was the only thing keeping
+   twenty-four live Blazor circuits from all opening at once. */
 .sim-frame {
   width: 100%; height: 620px;
   border: 0; border-radius: var(--radius-sm);
@@ -5004,12 +5044,6 @@ pre.code {
 .pr-sheet > .pr-badges,
 .pr-sheet > .pr-solution { grid-column: 1 / -1; }
 
-.pr-doors {
-  grid-column: 1 / -1;
-  display: grid; gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-}
-
 /* Explicit sizes rather than max-width: 100%. A QR is a grid item inside the
    poster, and an implicit auto track sizes to the image's own 300px — so a
    percentage cap is a percentage of the thing that is already too big. On paper
@@ -5043,15 +5077,12 @@ pre.code {
 
 /* --- who is actually in the room -------------------------------------------- */
 
-/* A join card says whether that phone has been through the door. Without it the
-   only way to find out a buzzer never worked was the team failing to buzz on the
-   opening clue. */
+/* The one join card's caption. It used to carry the host card's in/waiting state as well, which
+   is now a sentence under the code — there is no second card left to put a state on. */
 .jeo-join-state {
   font-size: 0.7rem; letter-spacing: .16em; text-transform: uppercase;
   color: var(--text-faint);
 }
-.jeo-join-card.is-in { border-color: var(--emerald); }
-.jeo-join-card.is-in .jeo-join-state { color: var(--emerald); }
 
 .jeo-hint.is-ready { color: var(--emerald); }
 .jeo-force { margin-top: 10px; }
@@ -5184,10 +5215,10 @@ pre.code {
 
 .ms-grid-scroll { overflow-y: auto; align-content: start; padding-right: 2px; }
 
-/* The doors on the left, the people who have come through them on the right.
-   Stacked, the two QR codes took four hundred pixels of a nine-hundred-pixel
-   screen and the arrivals wall — the thing everybody in the hall is watching —
-   got what was left. */
+/* The door on the left, the people who have come through it on the right.
+   There were two QR codes here and stacked they took four hundred pixels of a
+   nine-hundred-pixel screen, leaving the arrivals wall — the thing everybody in
+   the hall is watching — what was left. */
 .ms-lobby {
   display: grid;
   grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
@@ -5200,8 +5231,17 @@ pre.code {
   display: flex; flex-direction: column; gap: 12px;
   justify-content: center;
   justify-content: safe center;
+
+  /* Scrolls rather than spilling. The column is centred inside a stage that is exactly one screen
+     tall, and centred overflow goes out of both ends — so on a short window the count underneath
+     the door used to run out of the bottom and sit on top of the buttons below it. */
+  overflow-y: auto;
 }
-.ms-lobby .mys-doors { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+
+/* One door where the grid used to sit two side by side, so without a cap the card takes the whole
+   column: a QR blown up to 24rem, and a caption on one long line instead of two short ones. It is
+   scanned from across a hall, not read up close — the size it needs is the size it had. */
+.ms-lobby .mys-doors { margin: 0 auto; max-width: 20rem; }
 
 /* The QR carries a fixed size in the markup, because it is scanned from across a
    hall. On a short window that fixed size is the whole difference between the

@@ -1,4 +1,4 @@
-@page "/games/jeopardy"
+﻿@page "/games/jeopardy"
 @using CharterTrip.Core.Services
 @inherits TripAwareComponent
 @implements IAsyncDisposable
@@ -127,41 +127,40 @@
 else if (Game.Phase == JeopardyPhase.NotStarted)
 {
     <section class="jeo-title">
-        <p class="jeo-kicker">4th Annual Charter Trip</p>
         <h1>JEOPARDY</h1>
 
+        @* One code for the room — not one per team, and no longer one more for the host either.
+           Which buzzer you get is decided by the name you pick on the far side of it, and that
+           comes off the roster; the answer sheet is offered there too, to a browser already signed
+           in as the committee. One square to project, and the secret behind a password. *@
         <div class="jeo-join">
-            @foreach (var team in Trip.Teams)
-            {
-                <div class="jeo-join-card @(Joined(team.Id) ? "is-in" : "")" style="--team:@team.Color">
-                    <span class="jeo-join-team">@team.Name</span>
-                    <QrImage Content="@BuzzUrl(CodeFor(team.Id))" Size="150" Alt="@($"Buzzer for {team.Name}")" />
-                    <span class="jeo-code">@CodeFor(team.Id)</span>
-                    <span class="jeo-join-state">@(Joined(team.Id) ? "in" : "waiting")</span>
-                </div>
-            }
-            <div class="jeo-join-card is-host @(Game.HostJoined ? "is-in" : "")">
-                <span class="jeo-join-team">Host — answers</span>
-                <QrImage Content="@BuzzUrl(Game.HostCode)" Size="150" Alt="Host answer sheet" />
-                <span class="jeo-code">@Game.HostCode</span>
-                <span class="jeo-join-state">@(Game.HostJoined ? "in" : "waiting")</span>
+            <div class="jeo-join-card">
+                <span class="jeo-join-team">Everybody</span>
+                <QrImage Content="@JoinUrl(Game.PartyCode)" Size="170" Alt="Join Jeopardy" />
+                <span class="jeo-code">@Game.PartyCode</span>
+                <span class="jeo-join-state">Scan and pick your name</span>
             </div>
         </div>
 
-        <p class="jeo-hint">Scan a code, or go to <b>@JoinHost/join</b> and type it in.</p>
+        <p class="jeo-hint">
+            Scan it, or go to <b>@JoinHost/join</b> and type it in.
+            @(Game.HostJoined ? "The host's sheet is in somebody's hand." : "The host takes their sheet through the same code.")
+        </p>
 
+        @* Starting is the host moving the room forward, so it survives Game Mode. Setting up —
+           the questions, the codes, the mute — is the website, and goes with the rest of it. *@
         @if (CanEdit)
         {
-            @* Says who is missing rather than just refusing. Somebody is standing in front of a
-               television wondering why the button does nothing, and "waiting on Ali" is something
-               they can act on. *@
-            <p class="jeo-hint @(StartReady ? "is-ready" : "")">@StartReason</p>
-
             <div class="jeo-title-actions">
                 <button class="btn btn-gold btn-lg" disabled="@(!StartReady)" @onclick="BeginAsync">Start the game</button>
-                <button class="btn btn-ghost btn-sm" @onclick="() => _editingBoard = true">Edit questions</button>
-                <button class="btn btn-ghost btn-sm" @onclick="NewCodesAsync">New codes</button>
-                <button class="mini-btn" title="@(Muted ? "Unmute" : "Mute")" @onclick="ToggleMuteAsync">@(Muted ? "🔇" : "🔊")</button>
+
+                @if (CanHost)
+                {
+                    <GameModeButton Game="jeopardy" />
+                    <button class="btn btn-ghost btn-sm" @onclick="() => _editingBoard = true">Edit questions</button>
+                    <button class="btn btn-ghost btn-sm" @onclick="NewCodesAsync">New codes</button>
+                    <button class="mini-btn" title="@(Muted ? "Unmute" : "Mute")" @onclick="ToggleMuteAsync">@(Muted ? "🔇" : "🔊")</button>
+                }
             </div>
 
             @if (!StartReady)
@@ -196,7 +195,8 @@ else
                 </div>
             }
         </div>
-        @if (CanEdit)
+        @* Mute and Reset are the website's controls over the game, not the host's way through it. *@
+        @if (CanHost)
         {
             <div class="jeo-bar-actions">
                 <button class="mini-btn" title="@(Muted ? "Unmute" : "Mute")" @onclick="ToggleMuteAsync">@(Muted ? "🔇" : "🔊")</button>
@@ -416,54 +416,22 @@ else
     }
 }
 
-@if (IsDev)
-{
-    @* Local-only testing aid. Never reaches Azure — IsDev is IWebHostEnvironment.IsDevelopment(). *@
-    <section class="jeo-testing">
-        <button class="btn btn-ghost btn-sm" @onclick="() => _testingOpen = !_testingOpen">
-            🧪 Testing tools @(_testingOpen ? "▲" : "▼")
-        </button>
+<TestPhones Game="jeopardy" Landing="/buzz" Seats="@Trip.Roster.Count"
+            Door="@((t, r) => JeopardyService.SeatNextPlayer(t, r))">
+    <Chips>
+        <a class="chip" href="/buzz" target="_blank" rel="noopener">📱 Host sheet ↗</a>
 
-        @if (_testingOpen)
+        @if (!StartReady)
         {
-            <div class="jeo-testing-panel">
-                @if (Game.Phase is not (JeopardyPhase.Final or JeopardyPhase.FinalIntro or JeopardyPhase.Finished))
-                {
-                    <button class="btn btn-ghost btn-xs" @onclick="SkipToFinalAsync">⚡ Skip to Final Jeopardy</button>
-                }
-
-                @* Real /buzz pages, embedded — not a hand-rolled stand-in — so what you're testing
-                   against is exactly what a real phone would show, judging order included.
-
-                   They go through SimUrl rather than the codes on the wall: a code now signs you
-                   in, and five iframes sharing this page's cookie would fight over one session and
-                   sign you out of your own board.
-
-                   Which also means opening a frame does not put that team through the door — it
-                   renders their phone without joining. So testing gets its own way in, or the
-                   board would refuse to start with five buzzers open in front of it. *@
-                @if (!StartReady)
-                {
-                    <button class="btn btn-ghost btn-xs" @onclick="EverybodyJoinsAsync">⚡ Everybody joins</button>
-                }
-
-                <div class="jeo-simstrip-row">
-                    @foreach (var team in Trip.Teams)
-                    {
-                        <div class="jeo-simcard" @key="team.Id">
-                            <span class="jeo-simcard-label" style="color:@team.Color">@team.Name</span>
-                            <iframe class="jeo-simframe" src="@SimUrl(team.Id)" title="@($"Test buzzer — {team.Name}")"></iframe>
-                        </div>
-                    }
-                    <div class="jeo-simcard">
-                        <span class="jeo-simcard-label">Host</span>
-                        <iframe class="jeo-simframe" src="@SimUrl("host")" title="Test host view"></iframe>
-                    </div>
-                </div>
-            </div>
+            <button class="chip chip-do" @onclick="EverybodyJoinsAsync">⚡ Everybody joins</button>
         }
-    </section>
-}
+
+        @if (Game.Phase is not (JeopardyPhase.Final or JeopardyPhase.FinalIntro or JeopardyPhase.Finished))
+        {
+            <button class="chip" @onclick="SkipToFinalAsync">⚡ Skip to Final Jeopardy</button>
+        }
+    </Chips>
+</TestPhones>
 
 </div>
 </AdminOnly>
@@ -514,7 +482,7 @@ else
     private ClueInPlay? InPlay => JeopardyService.InPlay(Trip);
 
     // Only ever reachable from the title card, so a stale flag cannot hijack a game in progress.
-    private bool IsEditingBoard => _editingBoard && CanEdit && Game.Phase == JeopardyPhase.NotStarted;
+    private bool IsEditingBoard => _editingBoard && CanHost && Game.Phase == JeopardyPhase.NotStarted;
     private bool IsTitleCard => Game.Phase == JeopardyPhase.NotStarted && !IsEditingBoard;
 
     private string? BuzzedFirst => Game.LeadingBuzzTeamId;
@@ -524,21 +492,11 @@ else
     /// <summary>What goes in the QR codes on the wall: a code, exchanged for a session.</summary>
     private string BuzzUrl(string code) => Nav.ToAbsoluteUri($"/join/{code}").ToString();
 
-    /// <summary>
-    /// A buzzer view for the sim strip, and deliberately not <see cref="BuzzUrl"/>.
-    ///
-    /// These are iframes sharing this page's cookies. Sending them through /login would have five
-    /// of them signing in at once, and the winner would replace the committee's own session — so
-    /// the strip says who to act as instead, which /buzz honours in Development only.
-    /// </summary>
-    private string SimUrl(string actor) => Nav.ToAbsoluteUri($"/buzz?as={actor}").ToString();
 
-    private string CodeFor(string teamId) => Game.BuzzerCodes.GetValueOrDefault(teamId, "—");
-
-    private bool Joined(string teamId) => Game.JoinedTeamIds.Contains(teamId);
+    /// <summary>The door, for a camera. Every code on this trip is handed to /join.</summary>
+    private string JoinUrl(string code) => Nav.ToAbsoluteUri($"/join/{code}").ToString();
 
     private bool StartReady => JeopardyService.CanStart(Trip).Ready;
-    private string StartReason => JeopardyService.CanStart(Trip).Reason;
 
     /// <summary>
     /// Always seconds. "4108 ms" is the sort of number a stopwatch reports and a person has to

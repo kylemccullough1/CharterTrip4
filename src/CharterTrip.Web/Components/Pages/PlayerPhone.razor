@@ -1,4 +1,4 @@
-@page "/m"
+﻿@page "/m"
 @layout BareLayout
 @using CharterTrip.Core.Models
 @using CharterTrip.Core.Mystery
@@ -304,7 +304,7 @@ else
 
             // ----------------------------------------------------------------------- control
             case "Control":
-                <StaffControl Trip="Trip" Me="Me" PersonId="@PersonId" OnChanged="StateHasChanged" />
+                <StaffControl Trip="Trip" Me="Me" MePersonId="@MePersonId" OnChanged="StateHasChanged" />
                 break;
         }
         </main>
@@ -334,22 +334,9 @@ else
 @code {
     protected override TripArea Watching => TripArea.Mystery;
 
-    /// <summary>
-    /// Dev-only impersonation, so the sim strip can open twenty-five real phones in iframes.
-    ///
-    /// Not sign-in: same-origin iframes share this page's cookie and would fight over one session,
-    /// signing whoever is testing out of their own console. Reads the query and writes nothing.
-    /// </summary>
-    [SupplyParameterFromQuery(Name = "as")] private string? ActAs { get; set; }
-
-    private bool DevActing => Env.IsDevelopment() && ActAs is { Length: > 0 };
-
     private string _tab = "You";
     private string _target = "";
     private string? _fired;
-
-    /// <summary>Which simulated phone this is, for the testing strip. Development only.</summary>
-    [SupplyParameterFromQuery(Name = "sim")] private int? Sim { get; set; }
 
     /// <summary>
     /// Which tab to open on.
@@ -360,21 +347,12 @@ else
     /// </summary>
     [SupplyParameterFromQuery(Name = "tab")] private string? OpenAt { get; set; }
 
-    /// <summary>
-    /// Identity, from the sim strip if this frame is one, otherwise from the cookie.
-    ///
-    /// A simulated phone went through the same front door as a real one; it just kept the result
-    /// somewhere twenty-five frames can each have their own.
-    /// </summary>
-    private string? PersonId =>
-        Env.IsDevelopment() && Sim is > 0 ? Sims.PersonFor(Sim.Value) : Permissions.PersonId;
-
     private MysteryStory Story => Trip.Mystery.Story;
     private MysteryBeats Beats => Story.Beats;
     private MysteryPhase Phase => Trip.Mystery.Phase;
 
     private MysteryCharacter? Me =>
-        DevActing ? Story.Character(ActAs!) : CastingService.CharacterFor(Trip, PersonId);
+        CastingService.CharacterFor(Trip, MePersonId);
 
     private MysteryCastMember? Seat => Me is null ? null : Trip.Mystery.Play.ForCharacter(Me.Id);
 

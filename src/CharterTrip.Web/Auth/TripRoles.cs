@@ -1,4 +1,4 @@
-namespace CharterTrip.Web.Auth;
+﻿namespace CharterTrip.Web.Auth;
 
 /// <summary>Role names, named rather than typed as a literal in three places.</summary>
 public static class TripRoles
@@ -7,6 +7,12 @@ public static class TripRoles
 
     /// <summary>Whoever is holding the Jeopardy host code. A job for one evening, not a person.</summary>
     public const string BuzzerHost = "buzzer-host";
+
+    /// <summary>
+    /// Whoever is holding the spelling bee's host code — the one phone in the building with the
+    /// word on it. A job, like the Jeopardy host, and for the same reason: it gets handed over.
+    /// </summary>
+    public const string BeeHost = "bee-host";
 }
 
 /// <summary>

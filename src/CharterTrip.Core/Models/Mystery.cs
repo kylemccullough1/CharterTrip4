@@ -581,14 +581,6 @@ public sealed class MysteryPlay
     /// <summary>The one code for the whole party. Goes on the wall.</summary>
     public string PartyCode { get; set; } = "";
 
-    /// <summary>
-    /// The four house parts.
-    ///
-    /// Safe to project only because the picker behind it lists organizers and refuses anybody else.
-    /// If that filter ever loosens, this code hands a guest the guilty list.
-    /// </summary>
-    public string HostCode { get; set; } = "";
-
     public List<MysteryCastMember> Cast { get; set; } = [];
     public List<MysteryClueState> ClueStates { get; set; } = [];
 

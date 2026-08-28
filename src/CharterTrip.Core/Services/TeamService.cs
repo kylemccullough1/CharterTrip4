@@ -87,6 +87,21 @@ public static class TeamService
         if (trimmed.Length > 0) team.Name = trimmed;
     }
 
+    /// <summary>
+    /// Repaints a team, and refuses anything that is not one of <see cref="AccentPalette.Swatches"/>.
+    ///
+    /// Narrow on purpose. A team's colour is not only a dot on this page — the leading team's colour
+    /// is written into the site's stylesheet by <see cref="AccentPalette.Leader"/>, so the set of
+    /// things it can be is the set of things somebody picked deliberately, not whatever arrives.
+    /// </summary>
+    public static void RecolorTeam(TripData trip, string teamId, string color)
+    {
+        var team = FindTeam(trip, teamId);
+        if (team is null || AccentPalette.MatchSwatch(color) is not { } swatch) return;
+
+        team.Color = swatch;
+    }
+
     public static RosterPerson? FindPerson(TripData trip, string personId) =>
         trip.Roster.FirstOrDefault(p => p.Id == personId);
 

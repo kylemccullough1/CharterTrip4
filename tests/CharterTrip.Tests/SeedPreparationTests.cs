@@ -1,4 +1,4 @@
-using CharterTrip.Core.Models;
+﻿using CharterTrip.Core.Models;
 using CharterTrip.Core.Services;
 using CharterTrip.Infrastructure.Seed;
 
@@ -24,8 +24,7 @@ public class SeedPreparationTests
         var game = trip.Jeopardy.Game;
         game.Phase = JeopardyPhase.Judging;
         game.UsedClueIds.Add(trip.Jeopardy.Categories[0].Clues[0].Id);
-        game.BuzzerCodes[trip.Teams[0].Id] = "XY4H";
-        game.HostCode = "AAKH";
+        game.PartyCode = "XY4H";
 
         trip.Mystery.Phase = MysteryPhase.Investigation;
         trip.Mystery.Story.Characters.Add(new MysteryCharacter
@@ -33,7 +32,6 @@ public class SeedPreparationTests
             Id = "wilhelm", Name = "Wilhelm Shepard", ZoneId = "entry", FactionId = "killer", GuiltSlot = "access"
         });
         trip.Mystery.Play.PartyCode = "ACDEF";
-        trip.Mystery.Play.HostCode = "GHJKM";
         trip.Mystery.Play.Cast.Add(new MysteryCastMember
         {
             CharacterId = "wilhelm", PersonId = trip.Roster[0].Id, BadgeToken = "ACDEFGHJKMNP"
@@ -58,8 +56,7 @@ public class SeedPreparationTests
         Assert.Empty(trip.Scores);
         Assert.Equal(JeopardyPhase.NotStarted, trip.Jeopardy.Game.Phase);
         Assert.Empty(trip.Jeopardy.Game.UsedClueIds);
-        Assert.Empty(trip.Jeopardy.Game.BuzzerCodes);
-        Assert.Equal("", trip.Jeopardy.Game.HostCode);
+        Assert.Empty(trip.Jeopardy.Game.PartyCode);
         Assert.Equal(MysteryPhase.Lobby, trip.Mystery.Phase);
 
         // The evening goes: the cast, the codes, the scans, the verdicts. All of it belongs to one
@@ -68,7 +65,6 @@ public class SeedPreparationTests
         Assert.Empty(trip.Mystery.Play.ClueScans);
         Assert.Empty(trip.Mystery.Play.Trials);
         Assert.Equal("", trip.Mystery.Play.PartyCode);
-        Assert.Equal("", trip.Mystery.Play.HostCode);
 
         // The written half stays. It is content — hours of it — and losing it to a seed refresh
         // would be throwing away the game rather than resetting it.

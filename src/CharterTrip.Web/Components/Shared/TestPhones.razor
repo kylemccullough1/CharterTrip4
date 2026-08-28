@@ -1,0 +1,248 @@
+@inherits TripAwareComponent
+@inject IJSRuntime JS
+
+@* Twenty-five phones without twenty-five phones, for whichever game asked.
+
+   There were three of these, one per game, and they disagreed about everything that matters. Two
+   faked identity with ?as=, which renders somebody's screen without ever signing them in — fine
+   for looking at, and useless for testing the way people actually get into a game, which is the
+   part that goes wrong on the night. The mystery's was the one built properly, so this is that
+   one, generalised.
+
+   Every frame here walks the real front door: it lands on /join, a code gets typed or a chip signs
+   it in, and what runs is the same page a guest's phone runs. The only thing that is not real is
+   the camera.
+
+   Development only, and not rendered at all in Game Mode — hiding it in CSS would leave a strip of
+   embedded pages loading and holding circuits behind a display:none. *@
+@if (Env.IsDevelopment() && !GameMode.On)
+{
+    <section class="game-testing">
+        <button class="btn btn-ghost btn-sm" @onclick="() => SetOpenAsync(!_open)">
+            🧪 Testing @(_open ? "▲" : "▼")
+        </button>
+
+        @if (_open)
+        {
+            <div class="game-testing-panel">
+                <div class="chip-row">
+                    @Chips
+                </div>
+
+                <div class="chip-row">
+                    <button class="chip" disabled="@Full" @onclick="() => AddPhones(1)">＋ a phone</button>
+                    <button class="chip" disabled="@Full" @onclick="() => AddPhones(5)">＋ 5</button>
+                    <button class="chip" disabled="@Full" @onclick="() => AddPhones(Ceiling)">＋ the rest</button>
+
+                    @if (Door is not null && Waiting > 0)
+                    {
+                        <button class="chip chip-do" @onclick="SignEveryPhoneInAsync">
+                            🔑 Sign in @Waiting @(Waiting == 1 ? "phone" : "phones")
+                        </button>
+                    }
+
+                    @if (Sims.Count > 0)
+                    {
+                        <button class="chip" @onclick="() => Sims.RemoveLast()">− last</button>
+                        <button class="chip" @onclick="() => Sims.Reset()">clear</button>
+                    }
+                </div>
+
+                @if (Sims.Count == 0)
+                {
+                    <p class="muted tiny">
+                        No phones yet. Add one and it lands on the code screen, exactly as somebody's
+                        would.
+                    </p>
+                }
+                else
+                {
+                    <div class="sim-rail">
+                        @foreach (var slot in Sims.Slots)
+                        {
+                            var seat = slot;
+                            var holder = Sims.PersonFor(seat);
+
+                            <div class="sim-card" @key="seat">
+                                <span class="sim-label">Phone @seat @NameOf(holder)</span>
+
+                                @* The nonce is what moves a frame: bumping it changes the src, which
+                                   is a reload, and leaving every other slot's alone is what stops a
+                                   phone somebody is mid-something on from being yanked back.
+
+                                   Lazy because the rail wraps. Each of these is a live Blazor
+                                   circuit, and a horizontal scroller only ever had one screenful in
+                                   view — a grid puts all twenty-four there at once. *@
+                                <iframe class="sim-frame" loading="lazy" title="@($"Phone {seat}")"
+                                        allow="camera; microphone"
+                                        src="@FrameSrc(seat)"></iframe>
+
+                                @if (holder is not null && Destinations.Count > 0)
+                                {
+                                    <div class="sim-drive">
+                                        @foreach (var group in Destinations)
+                                        {
+                                            var stops = group.For(Trip, holder);
+                                            if (stops.Count == 0) continue;
+
+                                            <select class="sim-select" @onchange="e => DriveAsync(seat, group, e)">
+                                                <option value="">@group.Label</option>
+                                                @foreach (var stop in stops)
+                                                {
+                                                    <option value="@stop.Id">@stop.Name</option>
+                                                }
+                                            </select>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <p class="muted tiny center sim-nav">@Sims.Joined of @Sims.Count signed in</p>
+                }
+            </div>
+        }
+    </section>
+}
+
+@code {
+    /// <summary>Which game this rail belongs to. Names the persisted panel state and the rail.</summary>
+    [Parameter, EditorRequired] public string Game { get; set; } = "";
+
+    /// <summary>
+    /// How many frames are useful here. The service's own ceiling still wins — and it is one short
+    /// of the roster on purpose, because the last phone is the one in the hand of whoever is
+    /// testing.
+    /// </summary>
+    [Parameter] public int Seats { get; set; } = SimPhones.MaxPhones;
+
+    /// <summary>
+    /// Walk one phone through the front door with no camera and no typing, and say who it became.
+    ///
+    /// A delegate rather than an interface because there is exactly one of these per game, each is
+    /// one line, and each is already a static call on that game's service. It keeps the rule in the
+    /// game's own page, where somebody would look for it, and keeps this component ignorant of all
+    /// three — which is the only reason one component can serve them.
+    ///
+    /// Null when a game has no headless door; the frames then type the code by hand like a guest.
+    /// </summary>
+    [Parameter] public Func<TripData, Random, string?>? Door { get; set; }
+
+    /// <summary>Where a phone lands the instant the door lets it in.</summary>
+    [Parameter] public string Landing { get; set; } = "/";
+
+    /// <summary>
+    /// The game's own one-tap shortcuts. A fragment rather than a list because Jeopardy's are
+    /// conditional on the room being ready, the mystery's disable on a full rail, and the bee's
+    /// contains a select.
+    /// </summary>
+    [Parameter] public RenderFragment? Chips { get; set; }
+
+    /// <summary>Places one frame can be driven, the way a QR code would have driven it.</summary>
+    [Parameter] public IReadOnlyList<PhoneDestinations> Destinations { get; set; } = [];
+
+    /// <summary>All: a testing panel watches whatever the game it is testing watches.</summary>
+    protected override TripArea Watching => TripArea.All;
+
+    private bool _open;
+    private bool _restored;
+
+
+    /// <summary>
+    /// Open or closed, remembered in the browser.
+    ///
+    /// Because this component is destroyed and rebuilt every time somebody navigates away and
+    /// back: the game state comes back from the trip, and without this the panel would come back
+    /// folded shut in the middle of testing.
+    /// </summary>
+    private string StorageKey => $"trip.testing.{Game}";
+
+    private int Ceiling => Math.Clamp(Seats, 1, SimPhones.MaxPhones);
+    private bool Full => Sims.Count >= Ceiling;
+
+    /// <summary>Frames on screen that nobody has signed into yet.</summary>
+    private int Waiting => Sims.Count - Sims.Joined;
+
+    private string NameOf(string? personId) =>
+        personId is null ? "" : $"· {Trip.Roster.FirstOrDefault(p => p.Id == personId)?.Name ?? personId}";
+
+    private string FrameSrc(int slot)
+    {
+        var route = Sims.RouteFor(slot);
+        var join = route.Contains('?') ? "&" : "?";
+
+        return $"{route}{join}sim={slot}&r={Sims.NonceFor(slot)}";
+    }
+
+    private void AddPhones(int count)
+    {
+        for (var i = 0; i < count && Sims.Count < Ceiling; i++) Sims.Add();
+    }
+
+    /// <summary>
+    /// Sign every waiting frame in, through the game's own door.
+    ///
+    /// One flush at the end rather than one per phone: twenty-four sessions is twenty-four
+    /// mutations behind one lock, and paying for a disk write on each of them is how a testing
+    /// aid becomes slower than the party it is standing in for.
+    /// </summary>
+    private async Task SignEveryPhoneInAsync()
+    {
+        if (Door is not { } door) return;
+
+        foreach (var slot in Sims.Slots)
+        {
+            if (Sims.PersonFor(slot) is not null) continue;
+
+            string? seated = null;
+            await MutateAsync(t => seated = door(t, Random.Shared));
+
+            if (seated is null) break;   // the room is full; the rest of the frames stay at the door
+
+            Sims.Bind(slot, seated);
+            Sims.Go(slot, Landing);
+        }
+
+        await Store.FlushAsync();
+    }
+
+    private Task DriveAsync(int slot, PhoneDestinations group, ChangeEventArgs e)
+    {
+        if (Sims.PersonFor(slot) is null) return Task.CompletedTask;
+        if (e.Value?.ToString() is not { Length: > 0 } id) return Task.CompletedTask;
+
+        if (group.Route(Trip, id) is { Length: > 0 } route) Sims.Go(slot, route);
+
+        return Task.CompletedTask;
+    }
+
+    private async Task SetOpenAsync(bool open)
+    {
+        _open = open;
+
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", StorageKey, open ? "1" : "0");
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _restored || !Env.IsDevelopment()) return;
+        _restored = true;
+
+        try
+        {
+            if (await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey) == "1")
+            {
+                _open = true;
+                StateHasChanged();
+            }
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { /* private browsing, storage disabled — it opens closed */ }
+    }
+}

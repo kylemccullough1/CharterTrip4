@@ -1,0 +1,31 @@
+@inject CharterTrip.Web.Services.GameModeState Mode
+@implements IDisposable
+
+@* The way in, and only the way in.
+
+   There is no matching way out on screen. Game Mode is the room's screen, and a button sitting in
+   the corner of it — however small — is the website showing through on the one surface that is
+   supposed to have stopped being one. So the corner stays empty and the ways out are the two
+   nobody has to be told about: Escape, and reloading the page.
+
+   Both work without this. Escape is handled in GameModeScope (game-screen.js only forwards the
+   press once the browser has already given full screen back, so it is the second press — the
+   person who meant it, not the one who fumbled a key). And GameModeState is scoped to the circuit,
+   so a reload comes back a website. *@
+@if (!Mode.On)
+{
+    <button class="btn btn-ghost btn-sm" @onclick="Toggle">⛶ Game mode</button>
+}
+
+@code {
+    /// <summary>Which game is asking, so the state can name what took the screen.</summary>
+    [Parameter, EditorRequired] public string Game { get; set; } = "";
+
+    protected override void OnInitialized() => Mode.Changed += OnChanged;
+
+    private void Toggle() => Mode.Toggle(Game);
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Mode.Changed -= OnChanged;
+}

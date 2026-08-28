@@ -1,4 +1,4 @@
-using CharterTrip.Core.Models;
+﻿using CharterTrip.Core.Models;
 using CharterTrip.Core.Services;
 using CharterTrip.Core.Words;
 
@@ -156,19 +156,17 @@ public class SpellingBeeServiceTests
     /// included, which is the one holding the words — back to the code box.
     /// </summary>
     [Fact]
-    public void Starting_the_bee_leaves_the_join_codes_alone()
+    public void Starting_the_bee_leaves_the_join_code_alone()
     {
         var trip = Trip();
         SpellingBeeService.EnsureCodes(trip, Rng());
 
         var guest = trip.SpellingBee.Game.GuestCode;
-        var host = trip.SpellingBee.Game.HostCode;
 
         ReadyEveryone(trip);
         SpellingBeeService.Start(trip, Rng());
 
         Assert.Equal(guest, trip.SpellingBee.Game.GuestCode);
-        Assert.Equal(host, trip.SpellingBee.Game.HostCode);
     }
 
     /// <summary>
@@ -176,16 +174,14 @@ public class SpellingBeeServiceTests
     /// from the last run should not be able to walk into the next one.
     /// </summary>
     [Fact]
-    public void Resetting_the_bee_issues_new_codes()
+    public void Resetting_the_bee_issues_a_new_code()
     {
         var trip = Started();
         var guest = trip.SpellingBee.Game.GuestCode;
-        var host = trip.SpellingBee.Game.HostCode;
 
         SpellingBeeService.Reset(trip, new Random(999));
 
         Assert.NotEqual(guest, trip.SpellingBee.Game.GuestCode);
-        Assert.NotEqual(host, trip.SpellingBee.Game.HostCode);
     }
 
     [Fact]
@@ -200,16 +196,31 @@ public class SpellingBeeServiceTests
     }
 
     [Fact]
-    public void The_two_join_codes_are_never_the_same()
+    public void The_door_recognises_itself_whatever_case_it_is_typed_in()
     {
         var trip = Trip();
         SpellingBeeService.EnsureCodes(trip, Rng());
 
         var game = trip.SpellingBee.Game;
-        Assert.NotEqual(game.GuestCode, game.HostCode);
+        Assert.True(SpellingBeeService.IsGuestCode(trip, game.GuestCode));
         Assert.True(SpellingBeeService.IsGuestCode(trip, game.GuestCode.ToLowerInvariant()));
-        Assert.True(SpellingBeeService.IsHostCode(trip, game.HostCode.ToLowerInvariant()));
-        Assert.False(SpellingBeeService.IsHostCode(trip, game.GuestCode));
+        Assert.False(SpellingBeeService.IsGuestCode(trip, "ZZZZ"));
+    }
+
+    /// <summary>
+    /// Ensure only fills a gap. It used to redraw the host's code whenever it collided with the
+    /// guest's, which made it a thing that could change a code somebody was already holding.
+    /// </summary>
+    [Fact]
+    public void Ensuring_a_code_that_is_already_there_changes_nothing()
+    {
+        var trip = Trip();
+        SpellingBeeService.EnsureCodes(trip, Rng());
+
+        var guest = trip.SpellingBee.Game.GuestCode;
+
+        Assert.False(SpellingBeeService.EnsureCodes(trip, Rng()));
+        Assert.Equal(guest, trip.SpellingBee.Game.GuestCode);
     }
 
     [Fact]
@@ -220,14 +231,11 @@ public class SpellingBeeServiceTests
         for (var i = 0; i < 200; i++)
         {
             trip.SpellingBee.Game.GuestCode = "";
-            trip.SpellingBee.Game.HostCode = "";
             SpellingBeeService.EnsureCodes(trip, Random.Shared);
 
-            foreach (var code in new[] { trip.SpellingBee.Game.GuestCode, trip.SpellingBee.Game.HostCode })
-            {
-                Assert.Equal(4, code.Length);
-                Assert.DoesNotContain(code, c => "O0I1S5B8".Contains(c));
-            }
+            var code = trip.SpellingBee.Game.GuestCode;
+            Assert.Equal(4, code.Length);
+            Assert.DoesNotContain(code, c => "O0I1S5B8".Contains(c));
         }
     }
 
@@ -241,6 +249,62 @@ public class SpellingBeeServiceTests
         Assert.False(SpellingBeeService.EnsureCodes(trip, Rng()));
         Assert.Equal(before, trip.Scores.Count);
         Assert.Equal(BeePhase.Spelling, trip.SpellingBee.Game.Phase);
+    }
+
+    /// <summary>
+    /// The laptop filling the room, minus whoever is running it — they are holding a phone, and a
+    /// field of the right size is the whole point of being able to do this from a laptop.
+    /// </summary>
+    [Fact]
+    public void Seating_the_room_leaves_out_whoever_is_running_it()
+    {
+        var trip = Trip();
+
+        SpellingBeeService.SeatEverybody(trip, "ann");
+
+        Assert.DoesNotContain("ann", trip.SpellingBee.Game.Ready);
+        Assert.Equal(trip.Roster.Count - 1, trip.SpellingBee.Game.Ready.Count);
+    }
+
+    /// <summary>
+    /// Null when the laptop is signed in as the committee rather than as anybody in particular.
+    /// Then nobody is holding a phone, so nobody is left out.
+    /// </summary>
+    [Fact]
+    public void Seating_the_room_with_nobody_to_leave_out_seats_everybody()
+    {
+        var trip = Trip();
+
+        SpellingBeeService.SeatEverybody(trip, null);
+        SpellingBeeService.SeatEverybody(trip, null);
+
+        Assert.Equal(trip.Roster.Count, trip.SpellingBee.Game.Ready.Count);
+        Assert.Equal(trip.Roster.Count, trip.SpellingBee.Game.Ready.Distinct().Count());
+    }
+
+    /// <summary>
+    /// The headless door: what a simulated phone calls where a real one has a camera. One person
+    /// per call, through the same SetReady a real tap makes, and null once the room is in.
+    /// </summary>
+    [Fact]
+    public void The_door_seats_one_more_person_each_time_and_then_runs_out()
+    {
+        var trip = Trip();
+        var seated = new List<string>();
+
+        for (var i = 0; i < trip.Roster.Count; i++)
+        {
+            var person = SpellingBeeService.SeatNextPlayer(trip, Rng());
+
+            Assert.NotNull(person);
+            Assert.DoesNotContain(person, seated);
+            Assert.Contains(person, trip.SpellingBee.Game.Ready);
+
+            seated.Add(person!);
+        }
+
+        Assert.Null(SpellingBeeService.SeatNextPlayer(trip, Rng()));
+        Assert.Empty(SpellingBeeService.NotYetIn(trip));
     }
 
     // --------------------------------------------------------------- rotation

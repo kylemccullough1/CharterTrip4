@@ -1,4 +1,4 @@
-@page "/join/{Code}"
+﻿@page "/join/{Code}"
 @attribute [ExcludeFromInteractiveRouting]
 @layout BareLayout
 @using CharterTrip.Core.Abstractions
@@ -41,15 +41,22 @@
     <h1 class="login-title">Which of you is this?</h1>
     <p class="login-sub">Then you choose your part, rather than being dealt one.</p>
 
-    <div class="join-names">
-        @foreach (var person in Organizers)
-        {
-            <form method="post" @formname="@($"host-{person.Id}")" @onsubmit="() => PickOrganiser(person.Id)">
-                <AntiforgeryToken />
-                <button type="submit" class="join-name">@person.Name</button>
-            </form>
-        }
-    </div>
+    <form method="post" @formname="pick-organiser" @onsubmit="PickOrganiserAsync">
+        <AntiforgeryToken />
+
+        <label class="login-field">
+            <span>Your name</span>
+            <select name="Picked" class="login-input join-picker" @bind="Picked">
+                <option value="">Choose…</option>
+                @foreach (var person in Organizers)
+                {
+                    <option value="@person.Id">@person.Name</option>
+                }
+            </select>
+        </label>
+
+        <button type="submit" class="btn btn-gold btn-block">That's me</button>
+    </form>
 }
 else if (_state == State.PickPart)
 {
@@ -82,35 +89,85 @@ else if (_state == State.PickPart)
 else if (_state == State.PickName)
 {
     <h1 class="login-title">Who are you?</h1>
-    <p class="login-sub">Tap your name and the house will find you a part.</p>
+    <p class="login-sub">
+        @(_door switch
+        {
+            CodeKind.BeeParty => "Pick your name to take your place in the row.",
+            CodeKind.BuzzerParty => "Pick your name and you get your team's buzzer.",
+            _ => "Pick your name and the house will find you a part."
+        })
+    </p>
 
-    @if (People.Count == 0)
+    @if (People.Count == 0 && !CanTakeTheHostJob)
     {
         <p class="login-sub">
-            Everyone's been given a character already. If that's wrong, find Bertram.
+            @(_door == CodeKind.MysteryParty
+                ? "Everyone's been given a character already. If that's wrong, find Bertram."
+                : "Nobody is on a team yet — find whoever is running the trip.")
         </p>
     }
     else
     {
-        @* A form per name rather than one form with a select: on a phone, in a dark room, one tap
-           beats a dropdown plus a submit. Static SSR, so each is a real post.
+        @* One form with a select, rather than a form per name. It used to be a wrap of pill
+           buttons on the argument that one tap beats a dropdown plus a submit, which is true of
+           the tap and was wrong about the wrap: twenty-five names is a wall of pills to read in a
+           dark room, and the name you want is wherever the wrap happened to put it. A list you
+           scroll is one place to look.
 
-           Plain forms rather than EditForm, and that is the whole bug fix. EditForm demands a Model,
-           the model here carried no data, and on a POST the form binder set it to null — so every
-           tap threw "EditForm requires either a Model parameter" and the front door 500'd for
-           everybody. A form that submits nothing but its own name does not need a model at all. *@
-        <div class="join-names">
-            @foreach (var person in People)
-            {
-                <form method="post" @formname="@($"claim-{person.Id}")" @onsubmit="() => ClaimAsync(person.Id)">
-                    <AntiforgeryToken />
-                    <button type="submit" class="join-name">@person.Name</button>
-                </form>
-            }
-        </div>
-        <p class="login-sub tiny">
-            Names disappear as people arrive. @SeatsLeft of @TotalSeats parts still going.
-        </p>
+           Still a plain form rather than EditForm, and that part is load-bearing. EditForm demands
+           a Model, the model here carried no data, and on a POST the form binder set it to null —
+           so every tap threw "EditForm requires either a Model parameter" and the front door 500'd
+           for everybody. A form that posts one string does not need a model at all. *@
+        <form method="post" @formname="pick-name" @onsubmit="PickedAsync">
+            <AntiforgeryToken />
+
+            <label class="login-field">
+                <span>Your name</span>
+                <select name="Picked" class="login-input join-picker" @bind="Picked">
+                    <option value="">Choose…</option>
+
+                    @foreach (var person in People)
+                    {
+                        @* The bee's tick rides in the text. It used to be a span with no CSS rule
+                           anywhere, so it rendered as a bare ✓ regardless; inside an option it
+                           could not be anything else. *@
+                        <option value="@person.Id">
+                            @person.Name@(_door == CodeKind.BeeParty && AlreadyIn(person.Id) ? "  ✓" : "")
+                        </option>
+                    }
+
+                    @if (CanTakeTheHostJob)
+                    {
+                        @* Only ever on an organizer's own browser. This is the whole of what the
+                           second QR code used to buy, and it is bought better here: a password
+                           rather than four characters projected on a wall. *@
+                        <optgroup label="Committee">
+                            <option value="@HostOption">@HostLabel</option>
+                        </optgroup>
+                    }
+                </select>
+            </label>
+
+            <button type="submit" class="btn btn-gold btn-block">That's me</button>
+        </form>
+
+        @if (_door == CodeKind.MysteryParty)
+        {
+            <p class="login-sub tiny">
+                Names disappear as people arrive. @SeatsLeft of @TotalSeats parts still going.
+            </p>
+        }
+        else if (_door == CodeKind.BeeParty)
+        {
+            @* The bee's names stay on the list with a tick rather than vanishing. A phone gets
+               handed to somebody halfway through the lobby, and the person who lent it needs to be
+               able to take it back.
+
+               Only the bee. This was the else of a two-way branch, so Jeopardy's door — which has
+               no ticks on it and nothing that vanishes — was telling everybody who scanned it what
+               a tick meant. *@
+            <p class="login-sub tiny">A tick means they're already in the row.</p>
+        }
     }
 }
 else
@@ -157,12 +214,65 @@ else
 
     private State _state = State.Unknown;
 
+    /// <summary>
+    /// What the dropdown posted back: a person id, or <see cref="HostOption"/>.
+    ///
+    /// A plain bound property rather than a model on an EditForm, for the reason written beside
+    /// the form itself — the model was the bug. One string is all either picker sends.
+    /// </summary>
+    [SupplyParameterFromForm] private string? Picked { get; set; }
+
+    /// <summary>
+    /// The value the Host entry carries. Not a person id, and it cannot collide with one: roster
+    /// ids are minted by <c>Ids.New</c> and none of them is this.
+    /// </summary>
+    private const string HostOption = "!host";
+
     /// <summary>Which organizer is choosing, once they have said. Kept across the two steps.</summary>
     [SupplyParameterFromQuery(Name = "who")] private string? WhoQuery { get; set; }
 
     private string? _organiserId;
 
-    private IReadOnlyList<RosterPerson> People => CastingService.Unclaimed(Store.Current);
+    /// <summary>Which door opened the picker. The two ask the same question of different lists.</summary>
+    private CodeKind _door = CodeKind.MysteryParty;
+
+    /// <summary>
+    /// Who the picker offers. The mystery hands out parts, so a claimed name leaves the list; the
+    /// other two hand out nothing scarce, so everybody stays on it and a phone can be handed over.
+    /// </summary>
+    private IReadOnlyList<RosterPerson> People => _door switch
+    {
+        CodeKind.MysteryParty => CastingService.Unclaimed(Store.Current),
+        CodeKind.BuzzerParty => Store.Current.Roster
+            .Where(p => Store.Current.Teams.Any(t => t.Id == p.TeamId))
+            .ToList(),
+        _ => SpellingBeeService.Joinable(Store.Current)
+    };
+
+    private bool AlreadyIn(string personId) =>
+        Store.Current.SpellingBee.Game.Ready.Contains(personId);
+
+    /// <summary>
+    /// Whether to offer the host job on the far side of this door.
+    ///
+    /// This is what replaced the second QR code. The job used to be handed to whoever scanned the
+    /// other square, which meant the thing protecting the answer sheet was four characters that had
+    /// to be kept off a wall they were printed for. Now it is the committee's password: an
+    /// organizer's own browser is already signed in, and nobody else's is.
+    ///
+    /// Never for a simulated phone, whatever the cookie says. A frame in the testing rail stands in
+    /// for a guest's device and shares the laptop's cookie — so without this every test phone would
+    /// arrive holding the answer sheet, and the one rule worth testing could not be tested at all.
+    /// </summary>
+    private bool CanTakeTheHostJob => !IsSim && HttpContext.User.IsInRole(TripRoles.Admin);
+
+    /// <summary>What the host job is called at this particular door.</summary>
+    private string HostLabel => _door switch
+    {
+        CodeKind.BeeParty => "Host — the word list",
+        CodeKind.BuzzerParty => "Host — the answer sheet",
+        _ => "One of the house parts"
+    };
 
     private IReadOnlyList<RosterPerson> Organizers => CastingService.Organizers(Store.Current);
 
@@ -186,55 +296,36 @@ else
             return;
         }
 
-        if (match.Kind == CodeKind.MysteryParty)
+        if (match.Kind is CodeKind.MysteryParty or CodeKind.BeeParty or CodeKind.BuzzerParty)
         {
-            // The party code is a door, not an identity. Ask who walked through it.
+            // A party code is a door, not an identity. Ask who walked through it.
+            _door = match.Kind;
+
+            // An organizer part way through choosing a house part is mid-conversation, not
+            // arriving: they have already said which of them they are, and ?who= is carrying it.
+            // Everybody else, organizers included, gets the picker — the host job is an entry in
+            // it rather than a redirect past it, which is what having one code costs and is worth.
+            if (match.Kind == CodeKind.MysteryParty && WhoQuery is { Length: > 0 })
+            {
+                _organiserId = Store.Current.Roster
+                    .FirstOrDefault(p => p.Id == WhoQuery && p.Role == TripRole.Admin)?.Id;
+
+                if (_organiserId is not null)
+                {
+                    _state = State.PickPart;
+                    return;
+                }
+            }
+
             _state = State.PickName;
             return;
         }
 
-        if (match.Kind == CodeKind.MysteryHost)
-        {
-            // Same shape, two questions: who, then which part. An organizer already signed in as
-            // themselves skips straight to choosing.
-            _organiserId = Store.Current.Roster
-                .FirstOrDefault(p => (p.Id == WhoQuery || p.Id == CurrentPersonId) && p.Role == TripRole.Admin)?.Id;
+        if (match.Kind != CodeKind.Person) return;
 
-            _state = _organiserId is null ? State.PickHostName : State.PickPart;
-            return;
-        }
-
-        var (principal, landing) = match.Kind switch
-        {
-            CodeKind.Person => (
-                TripSignIn.ForPerson(Store.Current.Roster.First(p => p.Id == match.PersonId)),
-                SafeRedirect.Home),
-
-            CodeKind.BuzzerTeam => (
-                TripSignIn.ForBuzzerTeam(Store.Current.Teams.First(t => t.Id == match.TeamId)),
-                "/buzz"),
-
-            CodeKind.BuzzerHost => (TripSignIn.ForBuzzerHost(), "/buzz"),
-
-
-            _ => (null, SafeRedirect.Home)
-        };
-
-        if (principal is null) return;
-
-        // The board refuses to start until every team's phone has been through here, so coming
-        // through here is what has to record it. Inferring it from the first buzz would be too
-        // late: a team whose buzzer never worked would find out on the opening clue.
-        if (match.Kind is CodeKind.BuzzerTeam or CodeKind.BuzzerHost)
-        {
-            await Store.MutateAsync(t =>
-            {
-                if (match.Kind == CodeKind.BuzzerTeam) JeopardyService.RecordTeamJoin(t, match.TeamId!);
-                else JeopardyService.RecordHostJoin(t);
-            }, TripArea.Jeopardy);
-        }
-
-        await SignInAndGo(principal, landing);
+        await SignInAndGo(
+            TripSignIn.ForPerson(Store.Current.Roster.First(p => p.Id == match.PersonId)),
+            SafeRedirect.Home);
     }
 
     /// <summary>
@@ -246,6 +337,18 @@ else
     /// </summary>
     private async Task ClaimAsync(string personId)
     {
+        if (_door == CodeKind.BeeParty)
+        {
+            await JoinBeeAsync(personId);
+            return;
+        }
+
+        if (_door == CodeKind.BuzzerParty)
+        {
+            await JoinBuzzersAsync(personId);
+            return;
+        }
+
         var claimed = await Store.MutateAsync(
             t => CastingService.ClaimCharacter(t, personId, Random.Shared), TripArea.Mystery);
 
@@ -264,17 +367,116 @@ else
     }
 
     /// <summary>
-    /// Step one of the organizers' door: remember who, then ask which part.
+    /// Take a name and stand in the row.
     ///
-    /// Carried in the query rather than a field because this page is static SSR — each button is a
+    /// Joining the bee and signing in are one act: the tap that says which name you are is the
+    /// same tap that puts you in the running order. There is nothing to deal and nothing to race
+    /// over — two people tapping at once join twice, which is what should happen — so unlike the
+    /// mystery this does not need to read anything back out of the mutation.
+    ///
+    /// Not flushed to disk. A lobby is cheap to rebuild by asking the room to tap again, where a
+    /// dealt character is not.
+    /// </summary>
+    private async Task JoinBeeAsync(string personId)
+    {
+        if (Store.Current.Roster.FirstOrDefault(p => p.Id == personId) is not { } person) return;
+
+        await Store.MutateAsync(t => SpellingBeeService.SetReady(t, personId, true), TripArea.SpellingBee);
+        await SignInAndGo(TripSignIn.ForPerson(person), "/bee", person.Id);
+    }
+
+    /// <summary>
+    /// Take a name and pick up that person's team buzzer.
+    ///
+    /// Nobody chooses a team. A team is a property of the name that was tapped, read off the roster
+    /// on the server, and <see cref="TripSignIn.ForPerson"/> puts it in the cookie — so "somebody
+    /// took a team that is not theirs" is not a thing that can be expressed, let alone defended
+    /// against. What a guest can do is tap somebody else's name, which is exactly what they could
+    /// already do by typing that team's four characters off the wall.
+    ///
+    /// Every teammate ends up holding a buzzer rather than one phone per team. The board is
+    /// unchanged by that — <c>JeopardyService.Buzz</c> already ignores a team's second buzz — so
+    /// what it buys is four people hammering instead of whoever was handed the phone.
+    /// </summary>
+    private async Task JoinBuzzersAsync(string personId)
+    {
+        if (Store.Current.Roster.FirstOrDefault(p => p.Id == personId) is not { } person) return;
+
+        if (string.IsNullOrWhiteSpace(person.TeamId))
+        {
+            // Nothing to hand them. Says so rather than signing them into a game they cannot play.
+            _state = State.Unknown;
+            return;
+        }
+
+        await Store.MutateAsync(t => JeopardyService.RecordTeamJoin(t, person.TeamId), TripArea.Jeopardy);
+        await SignInAndGo(TripSignIn.ForPerson(person), "/buzz", person.Id);
+    }
+
+    /// <summary>
+    /// Step one of the house parts: remember who, then ask which part.
+    ///
+    /// Carried in the query rather than a field because this page is static SSR — the submit is a
     /// real post, and a field set on one request is gone by the next.
     /// </summary>
-    private void PickOrganiser(string personId)
+    private void PickOrganiserAsync()
     {
+        if (Picked is not { Length: > 0 } personId) return;
+
         var target = $"/join/{Uri.EscapeDataString(Code ?? "")}?who={Uri.EscapeDataString(personId)}";
         if (IsSim) target += $"&sim={Sim!.Value}";
 
         Nav.NavigateTo(target);
+    }
+
+    /// <summary>
+    /// What the one dropdown posted: a name, or the host job.
+    ///
+    /// Nothing chosen is a no-op rather than an error. On a phone in a dark room, submitting the
+    /// placeholder is a slip, and the page you are already looking at is the right answer to it.
+    /// </summary>
+    private Task PickedAsync() => Picked switch
+    {
+        null or "" => Task.CompletedTask,
+        HostOption => TakeTheHostJobAsync(),
+        var personId => ClaimAsync(personId)
+    };
+
+    /// <summary>
+    /// Sign this browser in as the host of whichever game's door it came through.
+    ///
+    /// <c>keepAdmin</c> on both, and it matters on exactly one device: the laptop running the wall,
+    /// where taking the host job would otherwise hand over the word list and take away the board.
+    ///
+    /// The mystery does not sign anybody in here. Its house parts are four named characters rather
+    /// than one job, so it falls into the same two-step it has always used — which of you, then
+    /// which part — and <c>CastingService.ClaimStaffPart</c> re-checks the roster role server-side
+    /// on the far side of it.
+    /// </summary>
+    private async Task TakeTheHostJobAsync()
+    {
+        if (!CanTakeTheHostJob) return;
+
+        switch (_door)
+        {
+            case CodeKind.BuzzerParty:
+                // The board refuses to start until the host's sheet is in somebody's hand, so
+                // taking it here is what has to record that. It was the host code's job before.
+                await Store.MutateAsync(JeopardyService.RecordHostJoin, TripArea.Jeopardy);
+                await SignInAndGo(TripSignIn.ForBuzzerHost(keepAdmin: true), "/buzz");
+                return;
+
+            case CodeKind.BeeParty:
+                await SignInAndGo(TripSignIn.ForBeeHost(keepAdmin: true), "/bee");
+                return;
+
+            default:
+                _organiserId = Store.Current.Roster
+                    .FirstOrDefault(p => p.Id == CurrentPersonId && p.Role == TripRole.Admin)?.Id;
+
+                _state = _organiserId is null ? State.PickHostName : State.PickPart;
+                return;
+        }
     }
 
     /// <summary>

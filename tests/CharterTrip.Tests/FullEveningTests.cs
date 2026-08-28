@@ -564,7 +564,6 @@ public class FullEveningTests
             }, TripArea.Mystery);
 
             var play = fx.Store.Current.Mystery.Play;
-            Assert.NotEqual(play.PartyCode, play.HostCode);
             Assert.Equal(5, play.PartyCode.Length);
         }
     }

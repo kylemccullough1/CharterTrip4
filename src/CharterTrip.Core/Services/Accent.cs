@@ -16,6 +16,38 @@ public readonly record struct Accent(string Hex, string Rgb);
 public static class AccentPalette
 {
     /// <summary>
+    /// The colours anything on the site is allowed to be painted: the four the teams started as —
+    /// gold, emerald, ruby, sapphire, the same four named in the stylesheet's :root — and then six
+    /// more in the same jewel key, muted the same amount so none of them shouts next to the others
+    /// on a dark panel.
+    ///
+    /// One list rather than one per feature. The carpools picked from these first, and teams pick
+    /// from them now, so a carpool and a team that look the same colour are the same colour.
+    /// </summary>
+    public static readonly IReadOnlyList<string> Swatches =
+    [
+        "#d4af37", "#2e9e7e", "#c94f5a", "#4a7fd6", "#b07cc6",
+        "#d98c3f", "#4fb0a5", "#c96f9b", "#8fb339", "#e0736d"
+    ];
+
+    /// <summary>
+    /// The entry in <see cref="Swatches"/> that a colour is, or null if it is not one of them.
+    ///
+    /// Matched as colours rather than as text, so <c>#D4AF37</c> and <c>#d4af37</c> are the one
+    /// colour they plainly are — and it hands back the list's own spelling rather than the caller's,
+    /// so what gets stored is a palette entry exactly and comparing two of them is comparing strings.
+    /// </summary>
+    public static string? MatchSwatch(string? color)
+    {
+        if (Parse(color) is not { } given) return null;
+
+        return Swatches.FirstOrDefault(s => Parse(s)!.Value.Rgb == given.Rgb);
+    }
+
+    /// <summary>Whether a colour is one of <see cref="Swatches"/>.</summary>
+    public static bool IsSwatch(string? color) => MatchSwatch(color) is not null;
+
+    /// <summary>
     /// The team to paint the site in, or null to leave it gold.
     ///
     /// Null while nobody has scored and while the top two are level: there is no leader to be, and

@@ -1,4 +1,4 @@
-using CharterTrip.Core.Models;
+﻿using CharterTrip.Core.Models;
 using CharterTrip.Core.Words;
 
 namespace CharterTrip.Core.Services;
@@ -37,7 +37,6 @@ public static class SpellingBeeService
         ClearGame(trip);
 
         trip.SpellingBee.Game.GuestCode = "";
-        trip.SpellingBee.Game.HostCode = "";
         EnsureCodes(trip, random);
     }
 
@@ -71,30 +70,23 @@ public static class SpellingBeeService
     }
 
     /// <summary>
-    /// Make sure there is a guest code and a host code, without touching anything else. Called
-    /// when the wall is opened so the join screen works straight away — a full Reset would clear
-    /// the scores, which is not what loading a page should do.
+    /// Make sure there is a door code, without touching anything else. Called when the wall is
+    /// opened so the join screen works straight away — a full Reset would clear the scores, which
+    /// is not what loading a page should do.
+    ///
+    /// One code, where there used to be two. The second was the host's, and it was what kept the
+    /// word off every phone but one. That is now the committee's password instead: the host job is
+    /// offered on the far side of this door to a browser already signed in as an organizer. The
+    /// word list is worth more than four characters projected on a wall.
     /// </summary>
     public static bool EnsureCodes(TripData trip, Random random)
     {
         var game = trip.SpellingBee.Game;
-        var changed = false;
 
-        if (string.IsNullOrWhiteSpace(game.GuestCode))
-        {
-            game.GuestCode = NewCode(random);
-            changed = true;
-        }
+        if (!string.IsNullOrWhiteSpace(game.GuestCode)) return false;
 
-        // Drawn again rather than reused if it collides, so the two codes can never be the same
-        // and hand a guest the word list.
-        if (string.IsNullOrWhiteSpace(game.HostCode) || game.HostCode == game.GuestCode)
-        {
-            do { game.HostCode = NewCode(random); } while (game.HostCode == game.GuestCode);
-            changed = true;
-        }
-
-        return changed;
+        game.GuestCode = NewCode(random);
+        return true;
     }
 
     private static string NewCode(Random random) =>
@@ -142,6 +134,44 @@ public static class SpellingBeeService
 
         BeginTurn(trip, random);
     }
+
+    /// <summary>
+    /// Put the room in, except for whoever is running it.
+    ///
+    /// The operator's own name is the one that must not be joined from the laptop: they are
+    /// holding a phone, and the whole point of testing a field of a particular size is that the
+    /// person testing it is standing in the row like everybody else. Called with their person id,
+    /// or with null when the laptop is signed in as the committee rather than as anybody.
+    /// </summary>
+    public static void SeatEverybody(TripData trip, string? exceptPersonId)
+    {
+        foreach (var person in Joinable(trip))
+        {
+            if (string.Equals(person.Id, exceptPersonId, StringComparison.Ordinal)) continue;
+
+            SetReady(trip, person.Id, true);
+        }
+    }
+
+    /// <summary>
+    /// Walk one more person through the door and say who it was, or null when the room is already
+    /// in. What a simulated phone calls instead of a camera — the same <see cref="SetReady"/> a
+    /// real guest's tap makes, so nothing it produces is a state the evening could not reach.
+    /// </summary>
+    public static string? SeatNextPlayer(TripData trip, Random random)
+    {
+        var waiting = Joinable(trip).Where(p => !trip.SpellingBee.Game.Ready.Contains(p.Id)).ToList();
+        if (waiting.Count == 0) return null;
+
+        var person = waiting[random.Next(waiting.Count)];
+        SetReady(trip, person.Id, true);
+
+        return person.Id;
+    }
+
+    /// <summary>Whoever has not tapped their name yet. The dropdown on the testing panel.</summary>
+    public static IReadOnlyList<RosterPerson> NotYetIn(TripData trip) =>
+        Joinable(trip).Where(p => !trip.SpellingBee.Game.Ready.Contains(p.Id)).ToList();
 
     /// <summary>A person may play if they exist and are on a team that exists.</summary>
     public static bool CanPlay(TripData trip, string personId) =>
@@ -487,10 +517,6 @@ public static class SpellingBeeService
     public static bool IsGuestCode(TripData trip, string? code) =>
         !string.IsNullOrWhiteSpace(code) &&
         string.Equals(trip.SpellingBee.Game.GuestCode, code, StringComparison.OrdinalIgnoreCase);
-
-    public static bool IsHostCode(TripData trip, string? code) =>
-        !string.IsNullOrWhiteSpace(code) &&
-        string.Equals(trip.SpellingBee.Game.HostCode, code, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>This team's bee score, read from the one place scores live.</summary>
     public static int ScoreFor(TripData trip, string teamId) =>

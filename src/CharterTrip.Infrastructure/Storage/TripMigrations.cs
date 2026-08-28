@@ -1,4 +1,4 @@
-using CharterTrip.Core.Models;
+﻿using CharterTrip.Core.Models;
 using CharterTrip.Core.Services;
 using CharterTrip.Core.Words;
 using CharterTrip.Infrastructure.Seed;
@@ -14,7 +14,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 29;
+    public const int CurrentVersion = 31;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -44,6 +44,8 @@ public static class TripMigrations
         if (trip.SchemaVersion < 27) changed |= ToV27_EverybodyHasAJoinToken(trip);
         if (trip.SchemaVersion < 28) changed |= ToV28_BraunManorReplacesWestEgg(trip);
         if (trip.SchemaVersion < 29) changed |= ToV29_StoryMode(trip);
+        if (trip.SchemaVersion < 30) changed |= ToV30_OneJeopardyDoor(trip);
+        if (trip.SchemaVersion < 31) changed |= ToV31_OneDoorPerGame(trip);
 
         // v19 carried the seed's hand-written word list across to a file that predated the
         // bee. No step any more: v20 deals the list instead of shipping one, so there is
@@ -824,6 +826,52 @@ public static class TripMigrations
     /// number the mystery branch gave it, because it describes the shape of the file it reads —
     /// the pre-story mystery — rather than a rung on this ladder.
     /// </summary>
+    /// <summary>
+    /// Jeopardy stopped handing out a code per team and started handing out one code to the room.
+    ///
+    /// A code used to <em>be</em> a team: whoever typed Team Ali's four characters was Team Ali's
+    /// buzzer. Now it is only a door, and which buzzer you get is decided by the name you tap on
+    /// the far side of it — read off your own roster row, so there is no way to ask for a team
+    /// that is not yours.
+    ///
+    /// <c>BuzzerCodes</c> is simply gone from the model, so the reader drops it on load and the
+    /// next save writes a file without it. All this has to do is make sure there is a door to
+    /// knock on, which matters for a file loaded by something that never opens the board.
+    /// </summary>
+    private static bool ToV30_OneJeopardyDoor(TripData trip)
+    {
+        // Deliberately not a reset. The scores are a tally of a game played under rules that have
+        // not changed, and JoinedTeamIds still means what it always meant.
+        return JeopardyService.EnsureCodes(trip, Random.Shared);
+    }
+
+    /// <summary>
+    /// v30 took Jeopardy from a code per team down to one code and a host's. This takes all three
+    /// games down to one code flat.
+    ///
+    /// What the second code bought was that a stray phone could not reach the answer sheet, the
+    /// word list, or the guilty list — and it bought it with four characters that had to be kept
+    /// off the wall they were printed for. That job now belongs to the committee's password: the
+    /// host option is offered on the far side of the one door, to a browser already signed in as
+    /// an organizer. A secret worth keeping is worth keeping behind a password.
+    ///
+    /// <c>HostCode</c> is simply gone from all three models, so the reader drops it on load and the
+    /// next save writes a file without it. What this has to do is make sure each game still has a
+    /// door to knock on, which matters for a file loaded by something that never opens a wall.
+    ///
+    /// Not a reset, for the same reason v30 was not: the scores, the joins and the cast are a
+    /// record of a night played under rules that have not changed.
+    /// </summary>
+    private static bool ToV31_OneDoorPerGame(TripData trip)
+    {
+        var changed = JeopardyService.EnsureCodes(trip, Random.Shared);
+        changed |= SpellingBeeService.EnsureCodes(trip, Random.Shared);
+
+        // The mystery's door is only opened when somebody creates the evening — an empty party
+        // code means no game, and OpenDoors would deal a cast for one nobody asked for.
+        return changed;
+    }
+
     private static bool ToV29_StoryMode(TripData trip)
     {
         var changed = trip.Mystery.Phase != MysteryPhase.Lobby

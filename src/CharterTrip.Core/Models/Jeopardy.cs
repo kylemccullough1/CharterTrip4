@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace CharterTrip.Core.Models;
 
@@ -115,11 +115,16 @@ public sealed class JeopardyGame
     // gone. Teams still write while they confer, but on their own phone and nowhere else, so
     // there is nothing to store. Older saved games simply drop the fields on load.
 
-    /// <summary>Short code each team types on their phone. Regenerated on reset.</summary>
-    public Dictionary<string, string> BuzzerCodes { get; set; } = [];
-
-    /// <summary>Code for the host's answer sheet, so a stray phone cannot judge the game.</summary>
-    public string HostCode { get; set; } = "";
+    /// <summary>
+    /// The one code on the wall. Regenerated on reset.
+    ///
+    /// One, not one per team. A code used to *be* a team — whoever typed Team Ali's four
+    /// characters was Team Ali's buzzer, and if a second phone typed them there were two. Now the
+    /// code is only a door: it proves you are in the room, and the next question is which name you
+    /// are. Your team comes off your roster row after that, which means there is no way to ask for
+    /// a team that is not yours, and nothing to guard against.
+    /// </summary>
+    public string PartyCode { get; set; } = "";
 
     /// <summary>
     /// Teams whose phone has been through the door, so the board can refuse to start without them.

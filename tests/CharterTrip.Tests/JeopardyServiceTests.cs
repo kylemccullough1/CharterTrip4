@@ -1,4 +1,4 @@
-using CharterTrip.Core.Models;
+﻿using CharterTrip.Core.Models;
 using CharterTrip.Core.Services;
 
 namespace CharterTrip.Tests;
@@ -68,15 +68,13 @@ public class JeopardyServiceTests
     // ------------------------------------------------------------------ setup
 
     [Fact]
-    public void Reset_gives_every_team_a_code_and_the_host_one_too()
+    public void Reset_gives_the_room_its_one_door()
     {
         var trip = Trip();
         JeopardyService.Reset(trip, new Random(1));
 
         var game = trip.Jeopardy.Game;
-        Assert.Equal(3, game.BuzzerCodes.Count);
-        Assert.All(game.BuzzerCodes.Values, c => Assert.Equal(4, c.Length));
-        Assert.Equal(4, game.HostCode.Length);
+        Assert.Equal(4, game.PartyCode.Length);
         Assert.Equal(JeopardyPhase.NotStarted, game.Phase);
     }
 
@@ -99,12 +97,12 @@ public class JeopardyServiceTests
     {
         var trip = Trip();
         JeopardyService.Reset(trip, new Random(1));
-        var before = trip.Jeopardy.Game.BuzzerCodes["jou"];
+        var before = trip.Jeopardy.Game.PartyCode;
 
         JeopardyService.Reset(trip, new Random(9));
 
-        Assert.NotEqual(before, trip.Jeopardy.Game.BuzzerCodes["jou"]);
-        Assert.Null(JeopardyService.TeamForCode(trip, before));
+        Assert.NotEqual(before, trip.Jeopardy.Game.PartyCode);
+        Assert.False(JeopardyService.IsPartyCode(trip, before));
     }
 
     /// <summary>
@@ -682,24 +680,33 @@ public class JeopardyServiceTests
     // ------------------------------------------------------------------ codes
 
     [Fact]
-    public void A_code_resolves_to_its_team_regardless_of_case()
+    public void The_door_code_is_recognised_regardless_of_case()
     {
         var trip = Trip();
         JeopardyService.Reset(trip, new Random(1));
-        var code = trip.Jeopardy.Game.BuzzerCodes["ali"];
 
-        Assert.Equal("ali", JeopardyService.TeamForCode(trip, code.ToLowerInvariant()));
-        Assert.Null(JeopardyService.TeamForCode(trip, "ZZZZ"));
+        Assert.True(JeopardyService.IsPartyCode(trip, trip.Jeopardy.Game.PartyCode.ToLowerInvariant()));
+        Assert.False(JeopardyService.IsPartyCode(trip, "ZZZZ"));
+        Assert.False(JeopardyService.IsPartyCode(trip, ""));
     }
 
+    /// <summary>
+    /// The one collision that must be impossible rather than unlikely: the code on the wall coming
+    /// out equal to the host's, which would hand the room the answer sheet.
+    /// </summary>
     [Fact]
-    public void The_host_code_is_not_one_of_the_team_codes()
+    public void The_door_recognises_itself_and_nothing_else()
     {
         var trip = Trip();
-        JeopardyService.Reset(trip, new Random(7));
 
-        Assert.True(JeopardyService.IsHostCode(trip, trip.Jeopardy.Game.HostCode));
-        Assert.DoesNotContain(trip.Jeopardy.Game.HostCode, trip.Jeopardy.Game.BuzzerCodes.Values);
+        for (var seed = 0; seed < 200; seed++)
+        {
+            JeopardyService.Reset(trip, new Random(seed));
+
+            Assert.True(JeopardyService.IsPartyCode(trip, trip.Jeopardy.Game.PartyCode));
+            Assert.True(JeopardyService.IsPartyCode(trip, trip.Jeopardy.Game.PartyCode.ToLowerInvariant()));
+            Assert.False(JeopardyService.IsPartyCode(trip, "ZZZZ"));
+        }
     }
 
     [Fact]
@@ -709,8 +716,40 @@ public class JeopardyServiceTests
         for (var seed = 0; seed < 40; seed++)
         {
             JeopardyService.Reset(trip, new Random(seed));
-            foreach (var code in trip.Jeopardy.Game.BuzzerCodes.Values.Append(trip.Jeopardy.Game.HostCode))
-                Assert.DoesNotContain(code, c => "O0I1S5B8".Contains(c));
+            Assert.DoesNotContain(trip.Jeopardy.Game.PartyCode, c => "O0I1S5B8".Contains(c));
         }
+    }
+
+    /// <summary>
+    /// The headless door the testing rail uses. It has to get the board startable rather than
+    /// crowd one team, so it deals from a team nobody has joined for before it deals a second
+    /// phone to a team that already has one.
+    /// </summary>
+    [Fact]
+    public void The_door_seats_a_team_that_is_missing_before_one_that_is_already_in()
+    {
+        var trip = Trip();
+        JeopardyService.Reset(trip, new Random(1));
+
+        // Two people per team, so "deal from a team nobody has joined for yet" is a rule with
+        // something to choose between rather than a list of three.
+        foreach (var team in trip.Teams.ToList())
+        {
+            trip.Roster.Add(new RosterPerson { Id = $"{team.Id}-1", Name = $"{team.Name} one", TeamId = team.Id });
+            trip.Roster.Add(new RosterPerson { Id = $"{team.Id}-2", Name = $"{team.Name} two", TeamId = team.Id });
+        }
+
+        var teams = new HashSet<string>();
+
+        for (var i = 0; i < trip.Teams.Count; i++)
+        {
+            var personId = JeopardyService.SeatNextPlayer(trip, new Random(i));
+
+            Assert.NotNull(personId);
+            var person = trip.Roster.First(p => p.Id == personId);
+            Assert.True(teams.Add(person.TeamId), $"{person.TeamId} was seated twice before every team was in");
+        }
+
+        Assert.Equal(trip.Teams.Count, trip.Jeopardy.Game.JoinedTeamIds.Count);
     }
 }

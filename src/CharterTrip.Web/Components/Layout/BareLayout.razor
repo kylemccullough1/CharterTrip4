@@ -1,4 +1,4 @@
-@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase
 @inject ICurrentUser CurrentUser
 
 @* No nav, no footer. A phone acting as a buzzer should be the buzzer and nothing else.
@@ -14,8 +14,18 @@
 {
     <CascadingValue Value="_permissions" IsFixed="true">
         <main class="bare">@Body</main>
+        <ToastHost />
     </CascadingValue>
 }
+
+@* Both of these are in MainLayout and neither was here, which meant a phone that threw showed
+   nothing at all — no message, no reload link, just a screen that had quietly stopped. On the one
+   kind of device in the building nobody can open developer tools on. *@
+<div id="blazor-error-ui" data-nosnippet>
+    Something went wrong.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
 
 @code {
     private TripPermissions? _permissions;

@@ -129,6 +129,54 @@ public class TeamServiceTests
     }
 
     [Fact]
+    public void Recolouring_a_team_takes_a_palette_colour()
+    {
+        var trip = Trip();
+
+        TeamService.RecolorTeam(trip, "jou", "#b07cc6");
+        Assert.Equal("#b07cc6", TeamService.FindTeam(trip, "jou")!.Color);
+    }
+
+    /// <summary>
+    /// The leading team's colour is written into the site's stylesheet, so a colour that is not
+    /// one somebody picked off the palette must not reach the field at all.
+    /// </summary>
+    [Theory]
+    [InlineData("#123456")]                        // a colour, but not one of ours
+    [InlineData("red")]
+    [InlineData("#c94f5a; background: url(evil)")] // a palette colour with a tail on it
+    [InlineData("")]
+    public void Recolouring_a_team_refuses_anything_off_the_palette(string given)
+    {
+        var trip = Trip();
+        var before = TeamService.FindTeam(trip, "jou")!.Color;
+
+        TeamService.RecolorTeam(trip, "jou", given);
+
+        Assert.Equal(before, TeamService.FindTeam(trip, "jou")!.Color);
+    }
+
+    [Fact]
+    public void Recolouring_stores_the_palettes_spelling_not_the_callers()
+    {
+        var trip = Trip();
+
+        TeamService.RecolorTeam(trip, "jou", "#D98C3F");
+
+        Assert.Equal("#d98c3f", TeamService.FindTeam(trip, "jou")!.Color);
+    }
+
+    [Fact]
+    public void Recolouring_a_team_that_is_not_there_changes_nothing()
+    {
+        var trip = Trip();
+
+        TeamService.RecolorTeam(trip, "nobody", "#4fb0a5");
+
+        Assert.DoesNotContain(trip.Teams, t => t.Color == "#4fb0a5");
+    }
+
+    [Fact]
     public void The_lead_does_not_count_as_a_player()
     {
         var jou = TeamService.Rosters(Trip()).Single(r => r.Team.Id == "jou");

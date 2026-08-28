@@ -177,7 +177,4 @@ public sealed class BeeGame
     /// thing to scan rather than twenty-five.
     /// </summary>
     public string GuestCode { get; set; } = "";
-
-    /// <summary>Code for the host's phone, which is the only place the word is ever shown.</summary>
-    public string HostCode { get; set; } = "";
 }

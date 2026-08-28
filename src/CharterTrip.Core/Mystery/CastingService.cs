@@ -39,21 +39,16 @@ public static class CastingService
     /// Open the doors: mint both codes, lay out a seat per character, and give every clue card a
     /// token to print.
     ///
-    /// Nobody is cast here. Guests take a part at the door with the party code, and the four
-    /// organizers pick one with the host code — so this can be run days before anybody arrives, and
-    /// re-run after a cancellation without anybody losing the character they already have.
+    /// Nobody is cast here. Everybody comes through the one party code; the four house parts are
+    /// offered behind it to a browser signed in as an organizer — so this can be run days before
+    /// anybody arrives, and re-run after a cancellation without anybody losing the character they
+    /// already have.
     /// </summary>
     public static void OpenDoors(TripData trip, Random random)
     {
         var play = trip.Mystery.Play;
 
         if (string.IsNullOrWhiteSpace(play.PartyCode)) play.PartyCode = NewCode(random);
-        if (string.IsNullOrWhiteSpace(play.HostCode)) play.HostCode = NewCode(random);
-
-        // Distinct, or the host door is unreachable behind the guest one — Resolve checks the host
-        // code first, so a collision would silently hand every guest the organizers' picker.
-        while (string.Equals(play.HostCode, play.PartyCode, StringComparison.OrdinalIgnoreCase))
-            play.HostCode = NewCode(random);
 
         foreach (var character in trip.Mystery.Story.Characters)
         {

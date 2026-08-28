@@ -126,7 +126,6 @@ public class SeedDataTests
         Assert.Empty(Seed.Mystery.Play.Cast);
         Assert.Empty(Seed.Mystery.Play.Trials);
         Assert.Equal("", Seed.Mystery.Play.PartyCode);
-        Assert.Equal("", Seed.Mystery.Play.HostCode);
     }
 
     [Fact]

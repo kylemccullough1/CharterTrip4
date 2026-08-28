@@ -1,4 +1,4 @@
-@page "/m/welcome"
+﻿@page "/m/welcome"
 @layout BareLayout
 @using CharterTrip.Core.Models
 @using CharterTrip.Core.Mystery
@@ -158,19 +158,15 @@ else
     private MysteryStory Story => Trip.Mystery.Story;
     private MysteryBeats Beats => Story.Beats;
 
-    /// <summary>Which simulated phone this is, for the testing strip. Development only.</summary>
-    [SupplyParameterFromQuery(Name = "sim")] private int? Sim { get; set; }
-
     /// <summary>
     /// Identity, from the sim strip if this frame is one, otherwise from the cookie.
     ///
     /// A simulated phone went through the same front door as a real one; it just kept the result
     /// somewhere twenty-five frames can each have their own.
     /// </summary>
-    private string? PersonId =>
-        Env.IsDevelopment() && Sim is > 0 ? Sims.PersonFor(Sim.Value) : Permissions.PersonId;
 
-    private MysteryCharacter? Me => CastingService.CharacterFor(Trip, PersonId);
+
+    private MysteryCharacter? Me => CastingService.CharacterFor(Trip, MePersonId);
     private MysteryCastMember? Seat => Me is null ? null : Trip.Mystery.Play.ForCharacter(Me.Id);
 
     private static string? Written(string? value) => MysteryText.Written(value);
@@ -196,7 +192,7 @@ else
         try
         {
             var url = await Attachments.SaveAsync(e.File);
-            await MutateAsync(t => CastingService.SetPhoto(t, PersonId!, url));
+            await MutateAsync(t => CastingService.SetPhoto(t, MePersonId!, url));
 
             // Worth forcing to disk. Re-taking twenty-one photographs after a restart is a real
             // cost, and it happens at the worst moment.
@@ -267,7 +263,7 @@ else
             if (dataUrl is null) { _error = "That did not come out. Try again."; return; }
 
             var url = await Attachments.SaveDataUrlAsync(dataUrl);
-            await MutateAsync(t => CastingService.SetPhoto(t, PersonId!, url));
+            await MutateAsync(t => CastingService.SetPhoto(t, MePersonId!, url));
 
             // Worth forcing to disk. Re-taking twenty-five photographs after a restart is a real
             // cost, and it lands at the worst moment.
@@ -312,7 +308,7 @@ else
 
     private async Task EnterAsync()
     {
-        await MutateAsync(t => CastingService.MarkLetterOpened(t, PersonId!));
+        await MutateAsync(t => CastingService.MarkLetterOpened(t, MePersonId!));
         Nav.NavigateTo(Sim is > 0 ? $"/m?sim={Sim}" : "/m");
     }
 }

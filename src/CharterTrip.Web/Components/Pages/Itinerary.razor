@@ -660,7 +660,7 @@
                         <button type="button" class="car-swatch is-none"
                                 title="No car" aria-label="No car"
                                 @onclick="() => SetCarAsync(_pickerFor, 0)">✕</button>
-                        @for (var slot = 1; slot <= CarColors.Length; slot++)
+                        @for (var slot = 1; slot <= CarColors.Count; slot++)
                         {
                             var pick = slot;
                             <button type="button"
@@ -1273,18 +1273,17 @@
     /// only works if everyone picks the same shade. Here the name picks the colour, in the order
     /// the cars first appear down the roster, so a car keeps its colour as rows are filled in.
     ///
-    /// Twelve colours because four was not enough the moment people split into small cars, and
-    /// the list wraps rather than running out.
+    /// Ten colours because four was not enough the moment people split into small cars, and the
+    /// list wraps rather than running out.
+    ///
+    /// The list itself lives in <see cref="AccentPalette.Swatches"/> now that the teams page picks
+    /// from it too — a carpool and a team that look the same colour should be the same colour.
     /// </summary>
-    private static readonly string[] CarColors =
-    [
-        "#d4af37", "#2e9e7e", "#c94f5a", "#4a7fd6", "#b07cc6",
-        "#d98c3f", "#4fb0a5", "#c96f9b", "#8fb339", "#e0736d"
-    ];
+    private static readonly IReadOnlyList<string> CarColors = AccentPalette.Swatches;
 
     /// <summary>The colour for a slot, or nothing for the unassigned zero.</summary>
     private static string ColorOf(int slot) =>
-        slot >= 1 && slot <= CarColors.Length ? CarColors[slot - 1] : "transparent";
+        slot >= 1 && slot <= CarColors.Count ? CarColors[slot - 1] : "transparent";
 
     /// <summary>
     /// A colour for a departure city, out of the same palette the carpools use, so a row of
@@ -1296,7 +1295,7 @@
     /// nothing to hang a remembered colour on — which also means adding a city can shift the
     /// ones after it. Nothing reads meaning into which colour, only that they differ.
     /// </summary>
-    private static string CityColor(int index) => CarColors[index % CarColors.Length];
+    private static string CityColor(int index) => CarColors[index % CarColors.Count];
 
     /// <summary>
     /// Every carpool in use, in palette order, with the people in it. Slots nobody picked simply
@@ -1308,7 +1307,7 @@
         {
             var groups = new List<CarGroup>();
 
-            for (var slot = 1; slot <= CarColors.Length; slot++)
+            for (var slot = 1; slot <= CarColors.Count; slot++)
             {
                 // Alphabetical, matching the table this key sits above — roster order here and
                 // sorted order there made the two look like different groups.

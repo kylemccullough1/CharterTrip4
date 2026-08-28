@@ -1099,7 +1099,7 @@
       "finalAnswers": {},
       "finalCorrectTeamIds": [],
       "finalRevealed": false,
-      "buzzerCodes": {},
+      "partyCode": "",
       "hostCode": ""
     }
   },

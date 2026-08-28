@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using CharterTrip.Core.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
@@ -55,13 +55,46 @@ public static class TripSignIn
                 new Claim(TripClaims.TeamId, team.Id)
             ]);
 
-    /// <summary>The Jeopardy host code: a job for one evening.</summary>
-    public static ClaimsPrincipal ForBuzzerHost() =>
-        Build(
-            [
-                new Claim(ClaimTypes.Name, "Host"),
-                new Claim(ClaimTypes.Role, TripRoles.BuzzerHost)
-            ]);
+    /// <summary>
+    /// The Jeopardy host code: a job for one evening.
+    ///
+    /// <paramref name="keepAdmin"/> for the same reason the bee's has it — signing in replaces the
+    /// session that was there, and an organizer reaching for the answer sheet on the laptop
+    /// running the board would otherwise take the sheet and lose the board in one tap.
+    /// </summary>
+    public static ClaimsPrincipal ForBuzzerHost(bool keepAdmin = false)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.Name, "Host"),
+            new(ClaimTypes.Role, TripRoles.BuzzerHost)
+        };
+
+        if (keepAdmin) claims.Add(new Claim(ClaimTypes.Role, TripRoles.Admin));
+
+        return Build(claims);
+    }
+
+    /// <summary>
+    /// The bee's host code: the word list, and nothing else on the trip.
+    ///
+    /// <paramref name="keepAdmin"/> is not a convenience. Signing in replaces the session that was
+    /// there, and the committee's own is the one that opens the wall — so an organizer who follows
+    /// the host link on the laptop they are running the game from would take the word list and lose
+    /// the board in the same tap. Whoever was already an organizer stays one.
+    /// </summary>
+    public static ClaimsPrincipal ForBeeHost(bool keepAdmin = false)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.Name, "Host"),
+            new(ClaimTypes.Role, TripRoles.BeeHost)
+        };
+
+        if (keepAdmin) claims.Add(new Claim(ClaimTypes.Role, TripRoles.Admin));
+
+        return Build(claims);
+    }
 
     private static ClaimsPrincipal Build(IEnumerable<Claim> claims) =>
         new(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));

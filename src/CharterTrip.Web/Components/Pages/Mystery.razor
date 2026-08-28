@@ -1,4 +1,4 @@
-@page "/games/mystery"
+﻿@page "/games/mystery"
 @using CharterTrip.Core.Models
 @using CharterTrip.Core.Mystery
 @using CharterTrip.Infrastructure.Mystery
@@ -50,7 +50,12 @@
                 {
                     <div class="row gap wrap center">
                         <button class="btn btn-gold btn-lg" @onclick="CreateAsync">Create the game</button>
-                        <a class="btn btn-ghost btn-sm" href="/games/mystery/story">Edit the story</a>
+
+                        @* The story editor is the website behind the evening, so Game Mode takes it. *@
+                        @if (CanHost)
+                        {
+                            <a class="btn btn-ghost btn-sm" href="/games/mystery/story">Edit the story</a>
+                        }
                     </div>
                 }
                 else
@@ -61,25 +66,24 @@
         }
         else
         {
-            @* Two columns while there is room: the doors on the left, and the wall of
-               people who have already walked through them on the right. Stacked, the
-               two QR codes ate the screen and the arrivals wall — the thing everybody
-               standing in the hall is actually watching — got a forty-pixel sliver. *@
+            @* Two columns while there is room: the door on the left, and the wall of
+               people who have already walked through it on the right. There were two
+               QR codes here and stacked they ate the screen, leaving the arrivals wall
+               — the thing everybody standing in the hall is actually watching — a
+               forty-pixel sliver. There is one now, so it has room either way. *@
             <div class="ms-lobby @(Seated == 0 ? "is-waiting" : "")">
               <div class="ms-lobby-doors">
                 <div class="mys-doors">
                     <div class="mys-door">
                         <QrImage Content="@JoinUrl(Play.PartyCode)" Size="190" Alt="Join the party" />
                         <p class="mys-code">@Play.PartyCode</p>
-                        <p class="mys-door-who">Guests</p>
-                        <p class="muted tiny">Point a camera at it, or go to <b>@JoinHost/join</b> and type it.</p>
-                    </div>
-
-                    <div class="mys-door mys-door-host">
-                        <QrImage Content="@JoinUrl(Play.HostCode)" Size="190" Alt="Take a house part" />
-                        <p class="mys-code">@Play.HostCode</p>
-                        <p class="mys-door-who">The four of you</p>
-                        <p class="muted tiny">Braun, Leo, Chloe or Bertram. Only an organizer can get past it.</p>
+                        <p class="mys-door-who">Everybody</p>
+                        @* One paragraph, not two. The lobby is exactly one screen tall and the
+                           arrivals count sits under this — every line here is a line of that. *@
+                        <p class="muted tiny">
+                            Point a camera at it, or go to <b>@JoinHost/join</b> and type it.
+                            The house parts are behind it too, for the committee.
+                        </p>
                     </div>
                 </div>
 
@@ -104,7 +108,8 @@
                 </div>
             </div>
 
-            @if (CanEdit)
+            @* Setup, printing and teardown — none of it is the evening itself. *@
+            @if (CanHost)
             {
                 <div class="row gap wrap center ms-lobby-actions">
                     <a class="btn btn-ghost btn-sm" href="/games/mystery/story">Edit the story</a>
@@ -370,133 +375,29 @@
 
 </div>
 
-@if (IsDev && HasGame)
+@if (HasGame)
 {
-    @* Local only — IsDev is IWebHostEnvironment.IsDevelopment(), so none of this reaches Azure.
+    @* Twenty-five phones without twenty-five phones, on the rail every game shares now.
+
+       What stays here is only what is this game's: the shortcuts for the things a laptop genuinely
+       cannot do by walking around the house, and the three places a frame can be driven. Both go
+       through the same service call the real page does, so nothing here can produce a state the
+       evening could not have reached on its own.
 
        Phones, not characters. Each frame is a real front door at /join?sim=N: type the code, tap a
-       name, read the letter, land on the sheet — the same path a guest walks, so the thing being
-       tested is the thing that happens. It works because ?sim= holds the session beside the others
-       instead of in the one cookie twenty-five frames would otherwise share.
-
-       Which is why there is no list of characters to pick from any more. Choosing who each phone is
-       ahead of time skipped the only part worth testing. *@
-    <section class="jeo-testing no-print">
-        <button class="btn btn-ghost btn-sm" @onclick="() => _simOpen = !_simOpen">
-            🧪 Testing @(_simOpen ? "▲" : "▼")
-        </button>
-
-        @if (_simOpen)
-        {
-            <div class="jeo-testing-panel">
-                <div class="chip-row">
-                    <button class="chip" disabled="@Sims.IsFull" @onclick="() => AddPhones(1)">＋ a phone</button>
-                    <button class="chip" disabled="@Sims.IsFull" @onclick="() => AddPhones(5)">＋ 5</button>
-                    <button class="chip" disabled="@Sims.IsFull" @onclick="() => AddPhones(CharterTrip.Web.Services.SimPhones.MaxPhones)">
-                        ＋ the rest
-                    </button>
-
-                    @if (PhonesWaiting > 0)
-                    {
-                        <button class="chip chip-do" @onclick="SignEveryPhoneInAsync">
-                            🔑 Sign in @PhonesWaiting @(PhonesWaiting == 1 ? "phone" : "phones")
-                        </button>
-                    }
-
-                    @if (Sims.Count > 0)
-                    {
-                        <button class="chip" @onclick="() => Sims.RemoveLast()">− last</button>
-                        <button class="chip" @onclick="() => Sims.Reset()">clear</button>
-                    }
-                </div>
-
-                @* The things a laptop genuinely cannot do by walking around the house. Each one goes
-                   through the same service call the real page does, so nothing here can produce a
-                   state the evening could not have reached on its own. *@
-                <div class="chip-row">
-                    <button class="chip" @onclick="EverybodyVotesAsync">⚡ Everybody votes</button>
-                    <button class="chip" @onclick="SplitTheVoteAsync">⚡ Split the vote four ways</button>
-                    <button class="chip" @onclick="MeetEverybodyAsync">⚡ Everybody mingles</button>
-                    <button class="chip" @onclick="FindEveryClueAsync">⚡ Find every clue</button>
-                    <button class="chip" @onclick="TamperOneAsync">⚡ Somebody tampers</button>
-                </div>
-
-                <p class="muted tiny">
-                    @Sims.Count of @CharterTrip.Web.Services.SimPhones.MaxPhones phones.
-                    The twenty-fifth is the one in your hand — it holds Braun, so the strip stops
-                    one short on purpose.
-                </p>
-
-                @if (Sims.Count == 0)
-                {
-                    <p class="muted tiny">
-                        No phones yet. Add one and it lands on the code screen, exactly as somebody's
-                        would. The party code is <b>@Play.PartyCode</b>; the host code is
-                        <b>@Play.HostCode</b>.
-                    </p>
-                }
-                else
-                {
-                    <div class="sim-rail" id="sim-rail">
-                        @foreach (var slot in Sims.Slots)
-                        {
-                            <div class="sim-card" @key="slot">
-                                <span class="sim-label">Phone @slot @SimWho(slot)</span>
-
-                                @* The nonce is what moves a frame: bumping it changes the src, which
-                                   is a reload, and leaving every other slot's alone is what stops a
-                                   phone somebody is mid-letter on from being yanked back. *@
-                                <iframe class="sim-frame" title="@($"Phone {slot}")"
-                                        allow="camera; microphone"
-                                        src="@FrameSrc(slot)"></iframe>
-
-                                @if (Sims.PersonFor(slot) is not null)
-                                {
-                                    @* Standing in a room with a camera is the one part of this game a
-                                       laptop cannot do. Driving the frame to the URL the QR code
-                                       holds is the same page arriving by the same route. *@
-                                    <div class="sim-drive">
-                                        @* A power is spent from the Role tab and a vote from the Vote
-                                           tab, and neither is reachable in a 300px frame without a
-                                           lot of tapping. *@
-                                        <select class="sim-select" @onchange="e => OpenTab(slot, e)">
-                                            <option value="">open a tab…</option>
-                                            @foreach (var tab in new[] { "You", "Map", "Say", "Do", "Role", "Clues", "Vote", "Control" })
-                                            {
-                                                <option value="@tab">@tab</option>
-                                            }
-                                        </select>
-
-                                        <select class="sim-select" @onchange="e => ScanClueAsync(slot, e)">
-                                            <option value="">scan a clue…</option>
-                                            @foreach (var clue in Story.Clues)
-                                            {
-                                                <option value="@clue.Id">@(Story.Zone(clue.ZoneId)?.Name ?? clue.Id)</option>
-                                            }
-                                        </select>
-
-                                        <select class="sim-select" @onchange="e => ScanBadgeAsync(slot, e)">
-                                            <option value="">scan a badge…</option>
-                                            @foreach (var other in Story.Characters.Where(c => c.Id != SimCharacter(slot)))
-                                            {
-                                                <option value="@other.Id">@other.Name</option>
-                                            }
-                                        </select>
-                                    </div>
-                                }
-                            </div>
-                        }
-                    </div>
-
-                    <div class="row gap center sim-nav">
-                        <button class="btn btn-ghost btn-xs" @onclick="() => ScrollRail(-1)">‹</button>
-                        <span class="muted tiny">@Sims.Joined of @Sims.Count signed in</span>
-                        <button class="btn btn-ghost btn-xs" @onclick="() => ScrollRail(1)">›</button>
-                    </div>
-                }
-            </div>
-        }
-    </section>
+       name, read the letter, land on the sheet. Choosing who each phone is ahead of time skipped
+       the only part worth testing. *@
+    <TestPhones Game="mystery" Landing="/m/welcome" Seats="@SimPhones.MaxPhones"
+                Door="@((t, r) => CastingService.SeatNextGuest(t, t.Mystery.Play.PartyCode, r))"
+                Destinations="@PhoneStops">
+        <Chips>
+            <button class="chip" @onclick="EverybodyVotesAsync">⚡ Everybody votes</button>
+            <button class="chip" @onclick="SplitTheVoteAsync">⚡ Split the vote four ways</button>
+            <button class="chip" @onclick="MeetEverybodyAsync">⚡ Everybody mingles</button>
+            <button class="chip" @onclick="FindEveryClueAsync">⚡ Find every clue</button>
+            <button class="chip" @onclick="TamperOneAsync">⚡ Somebody tampers</button>
+        </Chips>
+    </TestPhones>
 }
 
 </div>
@@ -662,101 +563,41 @@
     // ------------------------------------------------------------------------------------------
 
     private bool IsDev => Env.IsDevelopment();
-    private bool _simOpen;
-
-    private void AddPhones(int count)
-    {
-        for (var i = 0; i < count && !Sims.IsFull; i++) Sims.Add();
-    }
-
-    private int PhonesWaiting => Sims.Slots.Count(s => Sims.PersonFor(s) is null);
-
-    private string FrameSrc(int slot) =>
-        $"{Sims.RouteFor(slot)}{(Sims.RouteFor(slot).Contains('?') ? "&" : "?")}sim={slot}&r={Sims.NonceFor(slot)}";
 
     /// <summary>
-    /// Type the live party code into every phone still sitting at the door, and tap a name.
+    /// Where a phone can be driven, and the only part of this game's testing that is this game's.
     ///
-    /// The whole point of the strip is not having to do that twenty-five times by hand. Each seat
-    /// goes through the same CastingService the real door calls and binds the slot at the same
-    /// point JoinWithCode would, so a phone signed in from here is indistinguishable from one
-    /// somebody typed into — and it stops when the guest seats run out rather than pretending it
-    /// seated anybody else.
+    /// Standing in a room holding a camera at a sticker is the part a laptop cannot do; sending the
+    /// frame to the URL that sticker holds is the honest substitute, because the page that runs is
+    /// the page the camera would have opened and the scan it records is a real one.
     /// </summary>
-    private async Task SignEveryPhoneInAsync()
-    {
-        foreach (var slot in Sims.Slots.Where(s => Sims.PersonFor(s) is null).ToList())
-        {
-            var personId = await Store.MutateAsync(
-                t => CastingService.SeatNextGuest(t, t.Mystery.Play.PartyCode, Random.Shared), Watching);
+    private IReadOnlyList<PhoneDestinations> PhoneStops =>
+    [
+        // A power is spent from the Role tab and a vote from the Vote tab, and neither is
+        // reachable in a 300px frame without a lot of tapping.
+        new("open a tab…",
+            (_, _) => [.. new[] { "You", "Map", "Say", "Do", "Role", "Clues", "Vote", "Control" }
+                .Select(tab => new PhoneDestination(tab, tab))],
+            (_, tab) => $"/m?tab={tab}"),
 
-            if (personId is null) break;
+        // The clue's token rather than its id, because the page behind the QR is the only page
+        // that records a scan — pointing the frame anywhere else would produce a screenshot
+        // rather than a test.
+        new("scan a clue…",
+            (_, _) => [.. Story.Clues.Select(c => new PhoneDestination(c.Id, Story.Zone(c.ZoneId)?.Name ?? c.Id))],
+            (t, clueId) => t.Mystery.Play.StateFor(clueId) is { Token.Length: > 0 } state
+                ? $"/m/clue/{state.Token}"
+                : null),
 
-            Sims.Bind(slot, personId);
-            Sims.Go(slot, "/m/welcome");
-        }
-
-        // Twenty-five seats is worth forcing to disk, for the same reason the real door does it.
-        await Store.FlushAsync();
-    }
-
-    /// <summary>Whoever has signed into that frame, once they have.</summary>
-    private string SimWho(int slot) =>
-        SimCharacter(slot) is { } id ? $"· {Story.Character(id)?.Name}" : "";
-
-    private string? SimCharacter(int slot)
-    {
-        var personId = Sims.PersonFor(slot);
-        return personId is null ? null : Play.ForPerson(personId)?.CharacterId;
-    }
-
-    /// <summary>
-    /// Walk that phone into the room the card is in.
-    ///
-    /// The clue's token rather than its id, because the page behind the QR is the only page that
-    /// records a scan — pointing the frame anywhere else would produce a screenshot rather than a
-    /// test.
-    /// </summary>
-    private Task ScanClueAsync(int slot, ChangeEventArgs e)
-    {
-        var clueId = e.Value?.ToString();
-        if (string.IsNullOrEmpty(clueId)) return Task.CompletedTask;
-
-        if (Play.StateFor(clueId) is { Token.Length: > 0 } state)
-            Sims.Go(slot, $"/m/clue/{state.Token}");
-
-        return Task.CompletedTask;
-    }
-
-    private void OpenTab(int slot, ChangeEventArgs e)
-    {
-        var tab = e.Value?.ToString();
-        if (!string.IsNullOrEmpty(tab)) Sims.Go(slot, $"/m?tab={tab}");
-    }
-
-    private Task ScanBadgeAsync(int slot, ChangeEventArgs e)
-    {
-        var characterId = e.Value?.ToString();
-        if (string.IsNullOrEmpty(characterId)) return Task.CompletedTask;
-
-        if (Play.ForCharacter(characterId) is { BadgeToken.Length: > 0 } seat)
-            Sims.Go(slot, $"/m/meet/{seat.BadgeToken}");
-
-        return Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Pages the rail. The one place this needs JS — a scroll container cannot be moved from C#,
-    /// and scroll-snap makes a page land cleanly on a card rather than between two.
-    /// </summary>
-    private async Task ScrollRail(int direction)
-    {
-        try
-        {
-            await JS.InvokeVoidAsync("mysteryScrollRail", "sim-rail", direction);
-        }
-        catch (JSDisconnectedException) { }
-    }
+        // Everybody's badge except the one in their own pocket.
+        new("scan a badge…",
+            (t, personId) => [.. Story.Characters
+                .Where(c => c.Id != t.Mystery.Play.ForPerson(personId)?.CharacterId)
+                .Select(c => new PhoneDestination(c.Id, c.Name))],
+            (t, characterId) => t.Mystery.Play.ForCharacter(characterId) is { BadgeToken.Length: > 0 } seat
+                ? $"/m/meet/{seat.BadgeToken}"
+                : null)
+    ];
 
     /// <summary>
     /// A decisive vote: a clear front-runner, a clear second, and everybody else scattered.

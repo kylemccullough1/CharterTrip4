@@ -1,4 +1,4 @@
-@page "/buzz"
+﻿@page "/buzz"
 @using CharterTrip.Core.Services
 @inherits TripAwareComponent
 @implements IAsyncDisposable
@@ -157,40 +157,35 @@ else
     private JeopardyBoard Board => Trip.Jeopardy;
     private JeopardyGame Game => Trip.Jeopardy.Game;
 
-    /// <summary>Acting as, for the sim strip. See <see cref="ActAs"/>.</summary>
-    private const string HostActor = "host";
+    /// <summary>
+    /// The team this phone buzzes for.
+    ///
+    /// Off the signed-in person's own roster row, by way of the cookie — nobody ever chose it, so
+    /// there is nothing here to get wrong. A simulated phone reaches the same answer through its
+    /// slot instead of a cookie, because twenty-five iframes on one origin share one.
+    ///
+    /// Guarded against a stale session: a team that has been renamed away, or a game that has been
+    /// reset, should land the phone back on "enter a code" rather than have it buzzing for a team
+    /// that no longer exists.
+    /// </summary>
+    private string? TeamId
+    {
+        get
+        {
+            var teamId = MePersonId is { } personId
+                ? Trip.Roster.FirstOrDefault(p => p.Id == personId)?.TeamId
+                : IsSimPhone ? null : Permissions.TeamId;
+
+            return teamId is { Length: > 0 } id && Trip.Teams.Any(t => t.Id == id) ? id : null;
+        }
+    }
 
     /// <summary>
-    /// Pretend to be somebody, for the sim strip on the Jeopardy board. Development only.
-    ///
-    /// That strip embeds five real buzzers side by side, and identity now lives in a cookie —
-    /// which same-origin iframes share with the page around them. Five frames each signing in
-    /// would race over one cookie, and the last one home would sign the committee out of the very
-    /// board they were testing from. So this reads the query string and writes nothing.
-    ///
-    /// It replaces the old "TEST" code, which only ever covered the host frame; naming the actor
-    /// covers the team frames too, which is what makes the whole strip work rather than one fifth
-    /// of it.
+    /// Never a simulated phone. The rail's frames share the laptop's cookie, so an organizer who
+    /// has picked up the answer sheet would otherwise turn every test buzzer into a second copy
+    /// of their own host screen.
     /// </summary>
-    [SupplyParameterFromQuery(Name = "as")]
-    private string? ActAs { get; set; }
-
-    /// <summary>False the moment this is deployed — Azure runs Production.</summary>
-    private bool DevActing => Env.IsDevelopment() && ActAs is { Length: > 0 };
-
-    /// <summary>
-    /// The team this phone buzzes for, from the signed-in session.
-    ///
-    /// Guarded against a stale cookie: a team that has been renamed away or a game that has been
-    /// reset should land the phone back on "enter a code", not have it buzzing for a team that no
-    /// longer exists. The same guard covers a bad <c>?as=</c> value.
-    /// </summary>
-    private string? TeamId =>
-        DevActing
-            ? (ActAs == HostActor ? null : Trip.Teams.FirstOrDefault(t => t.Id == ActAs)?.Id)
-            : Permissions.TeamId is { } id && Trip.Teams.Any(t => t.Id == id) ? id : null;
-
-    private bool IsHost => DevActing ? ActAs == HostActor : Permissions.IsBuzzerHost;
+    private bool IsHost => !IsSimPhone && Permissions.IsBuzzerHost;
 
     private DateTimeOffset? FinalDeadline =>
         Game.Phase == JeopardyPhase.Final && Game.BuzzersOpen && Game.BuzzOpenedAt is { } opened

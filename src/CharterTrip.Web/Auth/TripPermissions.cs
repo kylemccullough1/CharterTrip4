@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 
 namespace CharterTrip.Web.Auth;
@@ -12,12 +12,14 @@ namespace CharterTrip.Web.Auth;
 /// <param name="PersonId">Their <c>RosterPerson.Id</c>, when they signed in as themselves.</param>
 /// <param name="TeamId">Their team, from a buzzer code or from their own roster entry.</param>
 /// <param name="IsBuzzerHost">Holding the Jeopardy host code.</param>
+/// <param name="IsBeeHost">Holding the spelling bee's host code — the phone with the word on it.</param>
 public sealed record TripPermissions(
     bool IsAdmin,
     string DisplayName,
     string? PersonId = null,
     string? TeamId = null,
-    bool IsBuzzerHost = false)
+    bool IsBuzzerHost = false,
+    bool IsBeeHost = false)
 {
     public bool CanEdit => IsAdmin;
 
@@ -75,7 +77,8 @@ public sealed class CookieCurrentUser(AuthenticationStateProvider provider) : IC
             DisplayName: user.Identity.Name ?? "Guest",
             PersonId: Claim(user, TripClaims.PersonId),
             TeamId: Claim(user, TripClaims.TeamId),
-            IsBuzzerHost: user.IsInRole(TripRoles.BuzzerHost));
+            IsBuzzerHost: user.IsInRole(TripRoles.BuzzerHost),
+            IsBeeHost: user.IsInRole(TripRoles.BeeHost));
     }
 
     private static string? Claim(ClaimsPrincipal user, string type)

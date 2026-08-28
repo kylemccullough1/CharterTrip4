@@ -1,5 +1,4 @@
-@page "/bee"
-@page "/bee/{Code}"
+﻿@page "/bee"
 @using CharterTrip.Core.Services
 @using CharterTrip.Core.Words
 @inherits TripAwareComponent
@@ -12,30 +11,22 @@
 
 <PageTitle>Spelling Bee · Charter Trip</PageTitle>
 
-@* Two screens behind one code box, exactly like /buzz.
+@* Two screens behind one session, exactly like /buzz.
 
-   The host's code shows the word. The guest code shows everything except the word — which is
+   The host's phone shows the word. Everybody else's shows everything except the word — which is
    the whole reason the bee is split across devices at all, since the wall is pointed at the room
-   and the room contains whoever is spelling. *@
+   and the room contains whoever is spelling.
+
+   No code in the URL any more. A code is a door, and /join is the door: it takes the code, asks
+   which name you are, and sends you here already signed in. This page only ever asks the cookie. *@
 <div class="bee-phone">
 
-@if (!IsGuest && !IsHost)
+@if (!IsHost && Me is null)
 {
     <div class="buzz-enter">
         <h1>Spelling Bee</h1>
-        <p class="muted">Type the code from the screen.</p>
-        @* No value binding on purpose. Rendering the field's own text back into it means every
-           keystroke is a server round trip that ends by overwriting what is in the box, and a
-           character typed while that is in flight is simply lost. The box owns its text; this
-           only reads it. Uppercase is CSS (.buzz-code-input), so nothing has to be written back
-           to make the code look right. *@
-        <input class="buzz-code-input" inputmode="latin" autocapitalize="characters" maxlength="4"
-               placeholder="CODE" @oninput="OnCodeInput" @onkeydown="OnKey" />
-        <button class="btn btn-gold btn-lg btn-block" @onclick="Go">Join</button>
-        @if (!string.IsNullOrWhiteSpace(Code))
-        {
-            <p class="buzz-bad">That code isn't live. The host may have reset the bee.</p>
-        }
+        <p class="muted">Scan the code on the screen, or type it in.</p>
+        <a class="btn btn-gold btn-lg btn-block" href="/join?returnUrl=%2Fbee">Enter a code</a>
     </div>
 }
 else if (IsHost)
@@ -248,38 +239,6 @@ else if (IsHost)
         }
     </div>
 }
-else if (Me is null)
-{
-    @* Picking your own name off a list is the whole of joining. There is nothing to protect —
-       the worst case is somebody joining as somebody else, which is a thing they could also do
-       by walking across the room and saying it. *@
-    <div class="bee-pick">
-        <h1>Who are you?</h1>
-        <p class="muted">Tap your name.</p>
-
-        <div class="bee-pick-list">
-            @foreach (var person in SpellingBeeService.Joinable(Trip))
-            {
-                var personId = person.Id;
-
-                <button class="bee-pick-name" style="--team:@ColourOf(person)"
-                        @key="personId" @onclick="() => PickAsync(personId)">
-                    <BeeFace Person="person" Color="@ColourOf(person)" />
-                    <span>@person.Name</span>
-                    @if (Game.Ready.Contains(personId))
-                    {
-                        <span class="bee-pick-tick">✓</span>
-                    }
-                </button>
-            }
-        </div>
-
-        @if (SpellingBeeService.Joinable(Trip).Count == 0)
-        {
-            <p class="warnfg">Nobody is on a team yet — find whoever is running the trip.</p>
-        }
-    </div>
-}
 else
 {
     <div class="bee-me" style="--team:@ColourOf(Me)">
@@ -317,10 +276,7 @@ else
             }
         }
 
-        @if (!IsPinned)
-        {
-            <button class="btn btn-ghost btn-xs" @onclick="ForgetAsync">Not @Me.Name?</button>
-        }
+        <button class="btn btn-ghost btn-xs" @onclick="ForgetAsync">Not @Me.Name?</button>
     </div>
 }
 
@@ -329,56 +285,28 @@ else
 <ConfirmDialog @ref="_confirm" />
 
 @code {
-    [Parameter] public string? Code { get; set; }
-
-    /// <summary>
-    /// Pins this phone to one person instead of asking, via <c>?as={personId}</c>.
-    ///
-    /// It exists for the wall's testing panel: simulated phones are iframes on one origin, and
-    /// one origin is one local storage, so without this every frame would come back as whoever
-    /// picked last. Pinned phones never read or write that storage at all. Nothing is protected
-    /// by the name you pick anyway — a guest self-selects off a list — so this gives away nothing
-    /// that walking across the room would not.
-    /// </summary>
-    [SupplyParameterFromQuery(Name = "as")] public string? As { get; set; }
-
     /// <summary>All, for the same reason the wall watches All: the points land in TripArea.Scores.</summary>
     protected override TripArea Watching => TripArea.All;
-
-    /// <summary>Where a guest's choice of name is kept, so a reload does not ask again.</summary>
-    private const string StorageKey = "bee.person";
 
     private ConfirmDialog? _confirm;
     private IJSObjectReference? _audio;
 
-    private string _typed = "";
-    private string? _personId;
-    private bool _restored;
     private bool _busy;
     private string? _error;
 
     private BeeGame Game => Trip.SpellingBee.Game;
     private bool Started => Game.Phase != BeePhase.NotStarted;
 
-    private bool IsGuest => SpellingBeeService.IsGuestCode(Trip, Code);
+    /// <summary>
+    /// Whoever came through the door holding the host code — and never a simulated phone, which
+    /// shares the laptop's cookie and would otherwise show the word list on every frame the moment
+    /// the laptop picked the host code up.
+    /// </summary>
+    private bool IsHost => !IsSimPhone && Permissions.IsBeeHost;
 
-    // The "TEST" bypass cannot collide with a real code — the bee's code alphabet excludes S,
-    // exactly as Jeopardy's does — and IsDevelopment() is false once deployed, so it is
-    // structurally unreachable outside a local run. It is what lets the wall's testing panel
-    // embed a working host phone without anybody reading a code off the screen first.
-    private bool IsHost => Code is not null &&
-        (SpellingBeeService.IsHostCode(Trip, Code) ||
-         (Env.IsDevelopment() && string.Equals(Code, "TEST", StringComparison.OrdinalIgnoreCase)));
-
-    /// <summary>A pinned phone is whoever the URL says; every other phone is whoever it remembered.</summary>
-    private string? WhoAmI => string.IsNullOrWhiteSpace(As) ? _personId : As;
-
-    /// <summary>True when the URL chose for us, so this phone must not offer to forget itself.</summary>
-    private bool IsPinned => !string.IsNullOrWhiteSpace(As);
-
-    /// <summary>Whoever this phone says it is — dropped if they leave the roster or their team.</summary>
+    /// <summary>Whoever this phone is signed in as — dropped if they leave the roster or their team.</summary>
     private RosterPerson? Me =>
-        WhoAmI is { } id && SpellingBeeService.CanPlay(Trip, id)
+        MePersonId is { } id && SpellingBeeService.CanPlay(Trip, id)
             ? SpellingBeeService.Person(Trip, id)
             : null;
 
@@ -461,76 +389,18 @@ else
 
     // ---------------------------------------------------------------- joining
 
-    private void OnKey(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter") Go();
-    }
-
-    private void OnCodeInput(ChangeEventArgs e) =>
-        _typed = (e.Value?.ToString() ?? string.Empty).Trim().ToUpperInvariant();
-
     /// <summary>
-    /// Go to the code's own URL rather than assigning the route parameter in place. That is what
-    /// makes a joined phone survive a reload, and what makes the address bar agree with the
-    /// screen — a phone that says it is connected but is sitting on /bee is one refresh away from
-    /// being back at the code box with no explanation.
+    /// Hand the phone back.
+    ///
+    /// Their place in the row goes with the name — a phone handed to somebody else must not leave
+    /// the first person standing in a row they have walked away from — and then the session goes
+    /// too, which puts this phone back at the door for whoever is holding it now.
     /// </summary>
-    private void Go()
-    {
-        if (_typed.Length > 0) Nav.NavigateTo($"/bee/{_typed}");
-    }
-
-    /// <summary>
-    /// Read back who this phone said it was. Done after the first render rather than in
-    /// OnInitialized because local storage lives in the browser and there is no browser to ask
-    /// during prerender.
-    /// </summary>
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender || _restored) return;
-        _restored = true;
-
-        // A pinned phone was told who it is; asking storage would only contradict the URL.
-        if (IsPinned) return;
-
-        try
-        {
-            var stored = await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey);
-            if (!string.IsNullOrWhiteSpace(stored) && SpellingBeeService.CanPlay(Trip, stored))
-            {
-                _personId = stored;
-                StateHasChanged();
-            }
-        }
-        catch (JSDisconnectedException) { }
-        catch (JSException) { /* private browsing, storage disabled — they just pick again */ }
-    }
-
-    private async Task PickAsync(string personId)
-    {
-        _personId = personId;
-        if (!IsPinned) await Remember(personId);
-    }
-
     private async Task ForgetAsync()
     {
-        // Their place goes with the name: a phone handed to somebody else should not leave the
-        // first person in a row they are not standing in.
         if (Me is { } me) await MutateAsync(t => SpellingBeeService.SetReady(t, me.Id, false));
 
-        _personId = null;
-        await Remember(null);
-    }
-
-    private async Task Remember(string? personId)
-    {
-        try
-        {
-            if (personId is null) await JS.InvokeVoidAsync("localStorage.removeItem", StorageKey);
-            else await JS.InvokeVoidAsync("localStorage.setItem", StorageKey, personId);
-        }
-        catch (JSDisconnectedException) { }
-        catch (JSException) { }
+        Nav.NavigateTo("/logout?returnUrl=%2Fbee", forceLoad: true);
     }
 
     private Task ToggleReadyAsync()

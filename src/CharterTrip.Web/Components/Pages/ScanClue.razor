@@ -1,4 +1,4 @@
-@page "/m/clue/{Token}"
+﻿@page "/m/clue/{Token}"
 @layout BareLayout
 @using CharterTrip.Core.Models
 @using CharterTrip.Core.Mystery
@@ -72,27 +72,7 @@ else
 
     [Parameter] public string? Token { get; set; }
 
-    [SupplyParameterFromQuery(Name = "as")] private string? ActAs { get; set; }
-
-    /// <summary>Which simulated phone this is, for the testing strip. Development only.</summary>
-    [SupplyParameterFromQuery(Name = "sim")] private int? Sim { get; set; }
-
-    /// <summary>
-    /// Identity, from the sim strip if this frame is one, otherwise from the cookie.
-    ///
-    /// A simulated phone went through the same front door as a real one; it just kept the result
-    /// somewhere twenty-five frames can each have their own.
-    /// </summary>
-    private string? PersonId =>
-        Env.IsDevelopment() && Sim is > 0 ? Sims.PersonFor(Sim.Value) : Permissions.PersonId;
-
-
-    private bool DevActing => Env.IsDevelopment() && ActAs is { Length: > 0 };
-
-    private MysteryCharacter? Me =>
-        DevActing
-            ? Trip.Mystery.Story.Character(ActAs!)
-            : CastingService.CharacterFor(Trip, PersonId);
+    private MysteryCharacter? Me => CastingService.CharacterFor(Trip, MePersonId);
 
     private MysteryClueCard? Clue => Token is null ? null : ScanShareService.ClueForToken(Trip, Token);
 

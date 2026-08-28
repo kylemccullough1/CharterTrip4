@@ -38,14 +38,50 @@
                 {
                     var team = roster.Team;
 
-                    <section class="team-col @(_dropTarget == team.Id ? "is-drop" : null)"
+                    <section class="team-col @(_dropTarget == team.Id ? "is-drop" : null) @(_pickerFor == team.Id ? "is-picking" : null)"
                              @key="team.Id"
                              data-team-id="@team.Id"
                              style="--team:@team.Color">
 
                         <header class="team-col-head">
                             <div class="team-title">
-                                <span class="team-dot" aria-hidden="true"></span>
+                                @* The dot was always the team's colour; now it is also the way to
+                                   change it, because it is the only thing on the page already
+                                   saying what the colour is. *@
+                                @if (CanEdit)
+                                {
+                                    <div class="team-colour">
+                                        <button type="button" class="team-dot is-pickable"
+                                                title="Change the team colour"
+                                                aria-label="@($"Change the colour of {team.Name}")"
+                                                aria-expanded="@(_pickerFor == team.Id)"
+                                                @onclick="() => TogglePicker(team.Id)"></button>
+
+                                        @if (_pickerFor == team.Id)
+                                        {
+                                            <div class="swatch-grid" role="group"
+                                                 aria-label="@($"Pick a colour for {team.Name}")">
+                                                @foreach (var swatch in AccentPalette.Swatches)
+                                                {
+                                                    var pick = swatch;
+                                                    var taken = TakenBy(pick, team.Id);
+
+                                                    <button type="button"
+                                                            class="swatch @(IsWearing(team, pick) ? "is-on" : null) @(taken is not null ? "is-taken" : null)"
+                                                            style="--swatch:@pick"
+                                                            title="@(taken is not null ? $"Also {taken}" : pick)"
+                                                            aria-label="@(taken is not null ? $"{pick} — also {taken}" : pick)"
+                                                            @onclick="() => RecolorAsync(team.Id, pick)"></button>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="team-dot" aria-hidden="true"></span>
+                                }
+
                                 <h3>
                                     <EditableText Value="@team.Name" ReadOnly="@(!CanEdit)"
                                                   ValueChanged="@(v => RenameAsync(team.Id, v))"
@@ -79,6 +115,13 @@
                     </section>
                 }
             </div>
+
+            @* Sits under the open palette and over everything else, so the next click anywhere
+               closes it rather than doing whatever it would otherwise have done. *@
+            @if (_pickerFor is not null)
+            {
+                <div class="swatch-backdrop" @onclick="() => _pickerFor = null"></div>
+            }
         </ChildContent>
     </SectionCard>
 </div>
@@ -95,12 +138,42 @@
     private IReadOnlyList<RosterPerson> Unassigned => TeamService.Unassigned(Trip);
 
     private string SubtitleText => CanEdit
-        ? "Drag a name onto another team. Click a team name to rename the team."
+        ? "Drag a name onto another team. Click a team name to rename it, or its dot to recolour it."
         : "Who is on which team.";
 
 
     private Task RenameAsync(string teamId, string name) =>
         MutateAsync(t => TeamService.RenameTeam(t, teamId, name));
+
+
+    // --------------------------------------------------------------- colour
+
+    /// <summary>Which team's palette is open, if any. Only ever one at a time.</summary>
+    private string? _pickerFor;
+
+    private void TogglePicker(string teamId) =>
+        _pickerFor = _pickerFor == teamId ? null : teamId;
+
+    private Task RecolorAsync(string teamId, string color)
+    {
+        _pickerFor = null;
+        return MutateAsync(t => TeamService.RecolorTeam(t, teamId, color));
+    }
+
+    /// <summary>
+    /// Whether this is the colour the team is already wearing. Compared through the palette rather
+    /// than as text so a team seeded with a differently-spelled hex still lights up its own swatch.
+    /// </summary>
+    private static bool IsWearing(Team team, string swatch) =>
+        AccentPalette.MatchSwatch(team.Color) == swatch;
+
+    /// <summary>
+    /// The other team already wearing this colour, or null. Ten colours and four teams means
+    /// picking one somebody else has is easy to do by accident and impossible to see afterwards,
+    /// so the swatch says so instead of quietly allowing it.
+    /// </summary>
+    private string? TakenBy(string swatch, string exceptTeamId) =>
+        Trip.Teams.FirstOrDefault(t => t.Id != exceptTeamId && IsWearing(t, swatch))?.Name;
 
 
     private async Task MoveAsync(string personId, string? teamId)

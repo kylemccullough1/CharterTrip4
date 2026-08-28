@@ -1,0 +1,129 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject CharterTrip.Web.Services.GameModeState Mode
+
+@* The one owner of "is this screen being a game".
+
+   It sits above the router rather than inside a layout or a page, because Game Mode has to survive
+   walking the wall from the bee to Jeopardy — and because a page that unmounted while holding the
+   full-screen watch would leave the browser listening to a circuit that is gone.
+
+   Above the router is also as high as this can go. App.razor renders <Routes> with a render mode,
+   and a cascade does not cross that boundary: Blazor marshals serialisable parameters into an
+   interactive island, never cascading values. Routes.razor is the topmost component that actually
+   runs inside the circuit, so it is the topmost place a per-circuit context can exist.
+
+   IsFixed on purpose. The reference never changes — the state object is the same one all night —
+   so there is nothing for Blazor to diff, and consumers hear about changes by subscribing to
+   GameModeState.Changed instead. That is the whole reason the state is an object with an event
+   rather than a bool: a non-fixed cascade of an unchanging reference notifies nobody. *@
+<CascadingValue Value="Mode" IsFixed="true">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private IJSObjectReference? _screen;
+    private DotNetObjectReference<GameModeScope>? _self;
+    private bool _applied;
+
+    protected override void OnInitialized() => Mode.Changed += OnChanged;
+
+    /// <summary>
+    /// The browser half, set up once the page is interactive.
+    ///
+    /// Never during the first render, and never at all on the static-SSR doors — /join, /login and
+    /// the rest render this scope exactly once with no circuit behind them, and asking those for
+    /// JS would throw. They are 15-second pages on a guest's phone; nobody puts a door into Game
+    /// Mode.
+    /// </summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await WatchAsync();
+
+        // Applied after the render rather than inside the event, so the class lands on <html> in
+        // the same frame the components that key off it redraw.
+        if (_applied != Mode.On) await ApplyAsync();
+    }
+
+    private async Task WatchAsync()
+    {
+        try
+        {
+            _screen ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/game-screen.js");
+            _self ??= DotNetObjectReference.Create(this);
+
+            Mode.ReportFullScreen(await _screen.InvokeAsync<bool>("watch", _self));
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+        catch (InvalidOperationException) { /* prerendering, or a page with no circuit */ }
+    }
+
+    /// <summary>
+    /// Put the class on, then ask for the display. In that order, and the second one is allowed to
+    /// fail: the class is what hides the chrome, and full screen is a bonus the browser may refuse
+    /// — which it will, every time, when the game was started from somebody else's phone. Arming
+    /// is the answer to that: the next thing anybody does at this laptop finishes the job.
+    /// </summary>
+    private async Task ApplyAsync()
+    {
+        _applied = Mode.On;
+
+        try
+        {
+            _screen ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/game-screen.js");
+            await _screen.InvokeVoidAsync("setMode", Mode.On);
+
+            if (Mode.On)
+            {
+                Mode.ReportFullScreen(await _screen.InvokeAsync<bool>("enter"));
+                if (!Mode.FullScreen) await _screen.InvokeVoidAsync("arm", true);
+            }
+            else
+            {
+                await _screen.InvokeVoidAsync("arm", false);
+                await _screen.InvokeVoidAsync("exit");
+            }
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+        catch (InvalidOperationException) { }
+    }
+
+    [JSInvokable]
+    public Task ScreenChanged(bool full)
+    {
+        Mode.ReportFullScreen(full);
+        return InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Escape, pressed while the chrome is already hidden and the display is already given back.
+    /// The way out for somebody who does not know where the corner button is — which is everybody
+    /// except whoever built it.
+    /// </summary>
+    [JSInvokable]
+    public Task EscapePressed()
+    {
+        if (Mode.On) Mode.Leave();
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public async ValueTask DisposeAsync()
+    {
+        Mode.Changed -= OnChanged;
+
+        if (_screen is not null)
+        {
+            try { await _screen.InvokeVoidAsync("unwatch"); } catch (JSDisconnectedException) { } catch (JSException) { }
+            try { await _screen.InvokeVoidAsync("setMode", false); } catch (JSDisconnectedException) { } catch (JSException) { }
+            try { await _screen.DisposeAsync(); } catch (JSDisconnectedException) { }
+        }
+
+        _self?.Dispose();
+    }
+}

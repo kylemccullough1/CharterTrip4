@@ -1,4 +1,4 @@
-using Microsoft.Net.Http.Headers;
+﻿using Microsoft.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using CharterTrip.Core.Abstractions;
@@ -78,6 +78,11 @@ builder.Services.AddDataProtection()
 builder.Services.AddScoped<CharterTrip.Web.Services.ToastService>();
 builder.Services.AddScoped<CharterTrip.Web.Services.MediaAttachments>();
 builder.Services.AddScoped<CharterTrip.Web.Services.GameCues>();
+
+// Whether this screen is being a game rather than a website. Scoped, because a browser tab is
+// exactly the thing that is or is not a game: the television can be in Game Mode while the phone
+// driving it is not.
+builder.Services.AddScoped<CharterTrip.Web.Services.GameModeState>();
 
 // Twenty-five independent sessions on one laptop, so the sim strip can walk the real front door
 // instead of impersonating past it. Development only — see SimPhones.

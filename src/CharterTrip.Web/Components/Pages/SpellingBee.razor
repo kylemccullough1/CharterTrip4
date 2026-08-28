@@ -1,4 +1,4 @@
-@page "/games/spelling"
+﻿@page "/games/spelling"
 @using System.Text.Json
 @using CharterTrip.Core.Services
 @using CharterTrip.Core.Words
@@ -37,6 +37,18 @@
                 <span class="@(i == Game.RuleSlide ? "is-on" : null)"></span>
             }
         </div>
+
+        @* The slideshow is driven from the host's phone, and this branch renders instead of the
+           title card — so every other control on the wall, Reset included, is behind a screen the
+           wall is not showing. Without this, a bee left on rule one by a phone that has since
+           gone home reads as a bee that will not start, and the only way out is the weekend's
+           own reset button on another page. *@
+        @if (CanHost)
+        {
+            <button class="btn btn-ghost btn-sm bee-rules-out" @onclick="TakeRulesDownAsync">
+                Take the rules down
+            </button>
+        }
     </section>
 }
 else if (Game.Phase == BeePhase.NotStarted)
@@ -44,22 +56,22 @@ else if (Game.Phase == BeePhase.NotStarted)
     <section class="bee-title">
         <h1 class="bee-logo">SPELLING&nbsp;BEE</h1>
 
+        @* One square, where there were two. The second was the host's, and it was the thing
+           keeping the word off every phone but one — which is now the committee's password: the
+           word list is offered on the far side of this code to a browser already signed in. *@
         <div class="bee-join">
             <div class="bee-join-card">
                 <span class="bee-join-role">Everybody</span>
-                <QrImage Content="@BeeUrl(Game.GuestCode)" Size="170" Alt="Join the spelling bee" />
+                <QrImage Content="@JoinUrl(Game.GuestCode)" Size="170" Alt="Join the spelling bee" />
                 <span class="bee-join-code">@Game.GuestCode</span>
-                <span class="bee-join-note">Scan and tap your name</span>
-            </div>
-            <div class="bee-join-card is-host">
-                <span class="bee-join-role">Host — words</span>
-                <QrImage Content="@BeeUrl(Game.HostCode)" Size="170" Alt="Host word list" />
-                <span class="bee-join-code">@Game.HostCode</span>
-                <span class="bee-join-note">Keep this one to yourself</span>
+                <span class="bee-join-note">Scan and pick your name</span>
             </div>
         </div>
 
-        <p class="bee-hint">Scan a code, or go to <b>@JoinHost/bee</b> and type it in.</p>
+        @* /join, not /bee. /bee is the host's phone and has no code box on it — it sends you
+           here. Typing the code at the wrong address is a dead end nobody would guess their way
+           out of. *@
+        <p class="bee-hint">Scan it, or go to <b>@JoinHost/join</b> and type it in.</p>
 
         @* Only the people who have actually joined, and nothing else: no count, no target, no
            grid of grey placeholders. The bee plays with whoever is standing there. *@
@@ -75,9 +87,10 @@ else if (Game.Phase == BeePhase.NotStarted)
             </div>
         </div>
 
-        @if (CanEdit)
+        @if (CanHost)
         {
             <div class="bee-title-actions">
+                <GameModeButton Game="spelling" />
                 <button class="btn btn-ghost btn-sm" @onclick="ToggleSetupAsync">
                     ⚙ Setup @(_setupOpen ? "▲" : "▼")
                 </button>
@@ -182,7 +195,7 @@ else if (Game.Phase == BeePhase.Finished)
 
         <div class="bee-title-actions">
             <a class="btn btn-gold btn-lg" href="/">Home</a>
-            @if (CanEdit)
+            @if (CanHost)
             {
                 <button class="btn btn-ghost" @onclick="ConfirmReset">Reset the bee</button>
             }
@@ -303,104 +316,40 @@ else
             </div>
         }
 
-        @if (CanEdit)
+        @if (CanHost)
         {
             <button class="btn btn-ghost btn-xs bee-reset" @onclick="ConfirmReset">Reset</button>
         }
     </footer>
 }
 
-@* Only ever on screen when the wall is playing and something took the display away — Escape,
-   usually. It is the way back, and it is a big target because whoever presses it is walking
-   past a laptop, not sitting at it. *@
-@if (Started && !_full && CanEdit)
-{
-    <button class="btn btn-gold bee-fs" @onclick="FullScreenAsync">⛶ Full screen</button>
-}
-
 </div>
 
-@if (IsDev)
-{
-    @* Local-only testing aid, same shape as Jeopardy's. Never reaches Azure — IsDev is
-       IWebHostEnvironment.IsDevelopment(). *@
-    <section class="bee-testing">
-        <button class="btn btn-ghost btn-sm" @onclick="() => SetTestingAsync(!_testingOpen)">
-            🧪 Testing tools @(_testingOpen ? "▲" : "▼")
-        </button>
+<TestPhones Game="spelling" Landing="/bee" Seats="@Joinable.Count"
+            Door="@((t, r) => SpellingBeeService.SeatNextPlayer(t, r))">
+    <Chips>
+        @* The host's screen is the one you want full size beside the wall, not three hundred
+           pixels wide in a rail — so it is a real second tab rather than a frame. *@
+        <a class="chip" href="/bee" target="_blank" rel="noopener">📱 Host phone ↗</a>
 
-        @if (_testingOpen)
+        @* Filling the room from the laptop, which is not the same job as adding a phone: this is
+           how you test a field of a particular size without signing twenty-four sessions in. The
+           one name left out is whoever is running it, because they are holding a phone. *@
+        <button class="chip chip-do" @onclick="EveryoneButMeAsync">⚡ Everyone but me</button>
+        <button class="chip" @onclick="EmptyLobbyAsync">Empty the lobby</button>
+
+        @if (NotYetIn.Count > 0)
         {
-            <div class="bee-testing-panel">
-                @* The host's phone first and always open. Everything below it collapses, because
-                   the reason to open this panel is usually to reach these controls. *@
-                <div class="bee-simcard is-host">
-                    <span class="bee-simcard-label">Host phone</span>
-                    <iframe class="bee-simframe is-tall" src="@BeeUrl("TEST")" title="Test host phone"></iframe>
-                </div>
-
-                <div class="bee-testing-actions">
-                    @* Twenty-five embedded phones would be twenty-five circuits for no benefit.
-                       Filling the lobby from the server is how you test a real-sized field; the
-                       frames below are for watching what a phone actually does. *@
-                    <button class="btn btn-ghost btn-xs" @onclick="ReadyEveryoneAsync">Everyone in</button>
-                    <button class="btn btn-ghost btn-xs" @onclick="ReadyNobodyAsync">Empty the lobby</button>
-
-                    <label class="bee-testing-count">
-                        Per team
-                        <input type="number" min="1" max="6" step="1" value="@_simPerTeam"
-                               @onchange="e => SetPerTeamAsync(e.Value?.ToString())" />
-                    </label>
-                    <button class="btn btn-ghost btn-xs" @onclick="ShuffleSimAsync">Different people</button>
-                    <button class="btn btn-ghost btn-xs" @onclick="() => SetAllFramesAsync(false)">Collapse all</button>
-                    <button class="btn btn-ghost btn-xs" @onclick="() => SetAllFramesAsync(true)">Open all</button>
-                </div>
-
-                @* Taking somebody out one at a time, which is what testing a field of a
-                   particular size actually needs. Doubles as the fix for the wrong name being
-                   tapped on the night. *@
-                @if (JoinedPeople.Count > 0)
+            <select class="sim-select" @onchange="SeatOneAsync">
+                <option value="">bring one person in…</option>
+                @foreach (var person in NotYetIn)
                 {
-                    <div class="bee-testing-in">
-                        @foreach (var person in JoinedPeople)
-                        {
-                            var personId = person.Id;
-                            <button class="chip tiny" style="border-color:@ColourOf(person)" @key="personId"
-                                    title="@($"Take {person.Name} out")" @onclick="() => DropAsync(personId)">
-                                @person.Name ✕
-                            </button>
-                        }
-                    </div>
+                    <option value="@person.Id">@person.Name</option>
                 }
-
-                @* Real /bee pages, embedded — not a hand-rolled stand-in — so what is being
-                   tested is exactly what a phone would show. Each guest frame is pinned with
-                   ?as= because all the frames share one origin, and therefore one local storage:
-                   without it they would all come back as whoever picked last. Collapsed by
-                   default: five iframes is a lot of screen to scroll past. *@
-                <div class="bee-simstrip-row">
-                    @foreach (var person in SimPeople)
-                    {
-                        var personId = person.Id;
-                        var open = _openFrames.Contains(personId);
-
-                        <div class="bee-simcard" @key="personId">
-                            <button class="bee-simcard-label" style="color:@ColourOf(person)"
-                                    @onclick="() => ToggleFrameAsync(personId)">
-                                @(open ? "▾" : "▸") @person.Name
-                            </button>
-                            @if (open)
-                            {
-                                <iframe class="bee-simframe" src="@SimUrl(personId)"
-                                        title="@($"Test phone — {person.Name}")"></iframe>
-                            }
-                        </div>
-                    }
-                </div>
-            </div>
+            </select>
         }
-    </section>
-}
+    </Chips>
+</TestPhones>
 
 </AdminOnly>
 
@@ -416,10 +365,7 @@ else
 
     private ConfirmDialog? _confirm;
     private IJSObjectReference? _audio;
-    private IJSObjectReference? _screen;
-    private DotNetObjectReference<SpellingBee>? _self;
     private bool _muted;
-    private bool _full;
 
     // What the last render was looking at, so a change can be turned into a sound. The wall is
     // never told anything — it derives its cues by noticing that the shared state moved.
@@ -455,16 +401,56 @@ else
     private string CurrentRule => ShowingRules ? Rules[Game.RuleSlide] : "";
 
     private string JoinHost => new Uri(Nav.BaseUri).Authority;
-    private string BeeUrl(string code) => Nav.ToAbsoluteUri($"/bee/{code}").ToString();
+    /// <summary>The door, for a camera. Every code on this trip is handed to /join.</summary>
+    private string JoinUrl(string code) => Nav.ToAbsoluteUri($"/join/{code}").ToString();
 
     // ----------------------------------------------------------------- setup
 
     private bool _setupOpen;
+    private bool _restoredSetup;
+
+    /// <summary>
+    /// Whether the word-and-rules drawer is open, remembered in this browser.
+    ///
+    /// Its own key rather than the testing panel's, because it is not a testing control: it is the
+    /// host editing what the room is about to be asked. It should not fold away with the rail, and
+    /// it should not come back as a default every time somebody navigates away and back.
+    /// </summary>
+    private const string SetupKey = "bee.wall.setup";
 
     private string StartingDifficulty => Trip.SpellingBee.DifficultyKey;
 
     private Task SetDifficultyAsync(string tierKey) =>
         MutateAsync(t => SpellingBeeService.SetStartingDifficulty(t, tierKey));
+
+    private async Task ToggleSetupAsync()
+    {
+        _setupOpen = !_setupOpen;
+
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", SetupKey, _setupOpen ? "1" : "0");
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+    }
+
+    private async Task RestoreSetupAsync()
+    {
+        if (_restoredSetup) return;
+        _restoredSetup = true;
+
+        try
+        {
+            if (await JS.InvokeAsync<string?>("localStorage.getItem", SetupKey) == "1")
+            {
+                _setupOpen = true;
+                StateHasChanged();
+            }
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+    }
 
     private Task SetPointsAsync(string? raw) =>
         MutateAsync(t => t.SpellingBee.PointsPerWord = Clamp(raw, 0, 100, t.SpellingBee.PointsPerWord));
@@ -512,175 +498,32 @@ else
         if (t.SpellingBee.Game.RuleSlide >= game.Rules.Count) t.SpellingBee.Game.RuleSlide = -1;
     });
 
-    // ------------------------------------------------------------ full screen
-
-    /// <summary>
-    /// Ask for the whole display.
-    ///
-    /// The bee is started from the host's phone, and a browser will not go full screen for a page
-    /// nobody has touched — so this usually fails at the moment of Start, and the module arms
-    /// itself instead: the next click or key anywhere on the wall spends itself on going full
-    /// screen. The button in the corner is the third way in, for when somebody has pressed
-    /// Escape and wants back.
-    /// </summary>
-    private async Task FullScreenAsync()
-    {
-        try
-        {
-            _screen ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/bee-screen.js");
-            _full = await _screen.InvokeAsync<bool>("enter");
-        }
-        catch (JSDisconnectedException) { }
-        catch (JSException) { }
-    }
-
-    /// <summary>Called from the browser whenever full screen is entered or left, Escape included.</summary>
-    [JSInvokable]
-    public Task FullScreenChanged(bool full)
-    {
-        _full = full;
-        return InvokeAsync(StateHasChanged);
-    }
-
-    private async Task ArmFullScreenAsync(bool armed)
-    {
-        try
-        {
-            _screen ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/bee-screen.js");
-            await _screen.InvokeVoidAsync("arm", armed);
-        }
-        catch (JSDisconnectedException) { }
-        catch (JSException) { }
-    }
-
     // ---------------------------------------------------------------- testing
 
-    private bool IsDev => Env.IsDevelopment();
-    private bool _testingOpen;
-    private int _simPerTeam = 1;
-    private int _simSeed = 1;
-    private HashSet<string> _openFrames = [];
-    private bool _restored;
+    private IReadOnlyList<RosterPerson> Joinable => SpellingBeeService.Joinable(Trip);
+
+    private IReadOnlyList<RosterPerson> NotYetIn => SpellingBeeService.NotYetIn(Trip);
 
     /// <summary>
-    /// Where the testing panel's own state lives.
+    /// Put the room in the row, except whoever is running it.
     ///
-    /// In the browser, because that is the only place it can survive what breaks it: this
-    /// component is destroyed and rebuilt every time somebody navigates away and back, and the
-    /// game state comes back from the trip while the panel came back as defaults — a panel folded
-    /// shut and a strip of frames re-shuffled, in the middle of testing.
+    /// "Me" is the person this laptop is signed in as. When it is signed in as the committee
+    /// rather than as anybody in particular there is nobody to leave out, and everybody joins —
+    /// which is the right answer, because then nobody is holding a phone.
     /// </summary>
-    private const string TestingKey = "bee.wall.testing";
+    private Task EveryoneButMeAsync() =>
+        MutateAsync(t => SpellingBeeService.SeatEverybody(t, Permissions.PersonId));
 
-    private sealed record TestingState(bool Open, bool Setup, int PerTeam, int Seed, string[] Frames);
-
-    /// <summary>
-    /// Who the simulated phones are: <c>_simPerTeam</c> people from each team, so asking for one
-    /// gives you four — one per team — and the field always has every team in it.
-    ///
-    /// Picked with a fixed seed rather than freshly at random, so the same frame is the same
-    /// person across a re-render. A strip that reshuffled itself every time the wall updated
-    /// would be a puzzle, not a testing aid.
-    /// </summary>
-    private IEnumerable<RosterPerson> SimPeople
-    {
-        get
-        {
-            var perTeam = Math.Clamp(_simPerTeam, 1, 6);
-            var random = new Random(_simSeed);
-
-            return Trip.Teams
-                .SelectMany(team => WordDeck
-                    .Shuffle(SpellingBeeService.Joinable(Trip).Where(p => p.TeamId == team.Id).ToList(), random)
-                    .Take(perTeam))
-                .ToList();
-        }
-    }
-
-    private string SimUrl(string personId) => $"{BeeUrl(Game.GuestCode)}?as={personId}";
-
-    private Task ReadyEveryoneAsync() => MutateAsync(t =>
-    {
-        foreach (var person in SpellingBeeService.Joinable(t))
-            SpellingBeeService.SetReady(t, person.Id, true);
-    });
-
-    private Task ReadyNobodyAsync() => MutateAsync(t =>
+    private Task EmptyLobbyAsync() => MutateAsync(t =>
     {
         foreach (var person in SpellingBeeService.Joinable(t))
             SpellingBeeService.SetReady(t, person.Id, false);
     });
 
-    private Task DropAsync(string personId) =>
-        MutateAsync(t => SpellingBeeService.SetReady(t, personId, false));
-
-    private Task SetTestingAsync(bool open)
-    {
-        _testingOpen = open;
-        return SaveTestingAsync();
-    }
-
-    private Task ToggleSetupAsync()
-    {
-        _setupOpen = !_setupOpen;
-        return SaveTestingAsync();
-    }
-
-    private Task SetPerTeamAsync(string? raw)
-    {
-        _simPerTeam = Clamp(raw, 1, 6, _simPerTeam);
-        return SaveTestingAsync();
-    }
-
-    private Task ShuffleSimAsync()
-    {
-        _simSeed++;
-        return SaveTestingAsync();
-    }
-
-    private Task ToggleFrameAsync(string personId)
-    {
-        if (!_openFrames.Add(personId)) _openFrames.Remove(personId);
-        return SaveTestingAsync();
-    }
-
-    private Task SetAllFramesAsync(bool open)
-    {
-        _openFrames = open ? SimPeople.Select(p => p.Id).ToHashSet() : [];
-        return SaveTestingAsync();
-    }
-
-    private async Task SaveTestingAsync()
-    {
-        try
-        {
-            var state = new TestingState(_testingOpen, _setupOpen, _simPerTeam, _simSeed, [.. _openFrames]);
-            await JS.InvokeVoidAsync("localStorage.setItem", TestingKey, JsonSerializer.Serialize(state));
-        }
-        catch (JSDisconnectedException) { }
-        catch (JSException) { }
-    }
-
-    private async Task RestoreTestingAsync()
-    {
-        try
-        {
-            var raw = await JS.InvokeAsync<string?>("localStorage.getItem", TestingKey);
-            if (string.IsNullOrWhiteSpace(raw)) return;
-
-            if (JsonSerializer.Deserialize<TestingState>(raw) is not { } state) return;
-
-            _testingOpen = state.Open;
-            _setupOpen = state.Setup;
-            _simPerTeam = Math.Clamp(state.PerTeam, 1, 6);
-            _simSeed = state.Seed;
-            _openFrames = [.. state.Frames ?? []];
-            StateHasChanged();
-        }
-        catch (JSDisconnectedException) { }
-        catch (JSException) { }
-        catch (JsonException) { /* somebody's half-written key; defaults are fine */ }
-    }
+    private Task SeatOneAsync(ChangeEventArgs e) =>
+        e.Value?.ToString() is { Length: > 0 } id
+            ? MutateAsync(t => SpellingBeeService.SetReady(t, id, true))
+            : Task.CompletedTask;
 
     private RosterPerson? Person(string? id) => SpellingBeeService.Person(Trip, id);
     private string Name(string? id) => Person(id)?.Name ?? "—";
@@ -741,47 +584,21 @@ else
 
         if (firstRender)
         {
-            await WatchScreenAsync();
-
-            if (IsDev && !_restored)
-            {
-                _restored = true;
-                await RestoreTestingAsync();
-            }
-
+            await RestoreSetupAsync();
             return;
         }
 
         // The bee just started somewhere else — on the host's phone, which is the only place it
-        // can start from. Worth one attempt at the whole display; when the browser refuses,
-        // arming it means the next thing anybody does at this laptop finishes the job.
-        if (wasPhase == BeePhase.NotStarted && phase != BeePhase.NotStarted)
-        {
-            await FullScreenAsync();
-            if (!_full) await ArmFullScreenAsync(true);
-        }
+        // can start from. That is the moment the wall stops being a web page, so it says so, and
+        // GameModeScope deals with the chrome, the class and the browser's opinion about full
+        // screen. Nothing here waits on any of it.
+        if (wasPhase == BeePhase.NotStarted && phase != BeePhase.NotStarted) GameMode.Enter("spelling");
 
         if (phase == BeePhase.NotStarted && joined > wasJoined) Cue("joined");
         else if (phase == BeePhase.Finished && wasPhase != BeePhase.Finished) Cue("fanfare");
         else if (phase == BeePhase.Revealed && wasPhase != BeePhase.Revealed)
             Cue(Game.LastCorrect ? "correct" : Game.JustRevived.Count > 0 ? "revival" : "strike");
         else if (phase == BeePhase.Spelling && spellerId != wasSpeller) Cue("up");
-    }
-
-    private async Task WatchScreenAsync()
-    {
-        try
-        {
-            _screen ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/bee-screen.js");
-            _self ??= DotNetObjectReference.Create(this);
-            _full = await _screen.InvokeAsync<bool>("watch", _self);
-
-            // Somebody who lands on a bee already in progress — a reload mid-game — gets the same
-            // arrangement as somebody who watched it start.
-            if (Started && !_full) await _screen.InvokeVoidAsync("arm", true);
-        }
-        catch (JSDisconnectedException) { }
-        catch (JSException) { }
     }
 
     /// <summary>
@@ -825,9 +642,11 @@ else
     private Task NewCodesAsync() => MutateAsync(t =>
     {
         t.SpellingBee.Game.GuestCode = "";
-        t.SpellingBee.Game.HostCode = "";
         SpellingBeeService.EnsureCodes(t, Random.Shared);
     });
+
+    /// <summary>End the slideshow from the wall, for when the phone that started it is not here.</summary>
+    private Task TakeRulesDownAsync() => MutateAsync(t => SpellingBeeService.ShowRule(t, -1));
 
     /// <summary>The only destructive action here, and the only one that asks first.</summary>
     private void ConfirmReset() =>
@@ -836,14 +655,6 @@ else
 
     public async ValueTask DisposeAsync()
     {
-        if (_screen is not null)
-        {
-            try { await _screen.InvokeVoidAsync("unwatch"); } catch (JSDisconnectedException) { } catch (JSException) { }
-            try { await _screen.DisposeAsync(); } catch (JSDisconnectedException) { }
-        }
-
-        _self?.Dispose();
-
         if (_audio is not null)
         {
             try { await _audio.InvokeVoidAsync("dispose"); } catch (JSDisconnectedException) { }

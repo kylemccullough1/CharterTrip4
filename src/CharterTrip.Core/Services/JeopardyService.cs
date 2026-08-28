@@ -1,4 +1,4 @@
-using CharterTrip.Core.Models;
+﻿using CharterTrip.Core.Models;
 
 namespace CharterTrip.Core.Services;
 
@@ -47,8 +47,8 @@ public static class JeopardyService
         game.BuzzersOpen = false;
         game.FinalTimerExpired = false;
 
-        game.BuzzerCodes = trip.Teams.ToDictionary(t => t.Id, _ => NewCode(random), StringComparer.Ordinal);
-        game.HostCode = NewCode(random);
+        game.PartyCode = "";
+        EnsureCodes(trip, random);
 
         // New codes mean every phone in the room is holding a dead one, so nobody is joined any
         // more. Leaving these set would let the next game start with four teams that cannot buzz.
@@ -59,28 +59,24 @@ public static class JeopardyService
     }
 
     /// <summary>
-    /// Make sure every team and the host have a code, without touching anything else. Called when
-    /// the board is opened so the join screen is usable straight away — a full Reset would clear
-    /// the scores, which is not what loading a page should do.
+    /// Make sure there is a door code, without touching anything else. Called when the board is
+    /// opened so the join screen is usable straight away — a full Reset would clear the scores,
+    /// which is not what loading a page should do.
+    ///
+    /// One code, where there used to be two. The second one was the host's, and what it bought was
+    /// that a stray phone could not reach the answers — which is now bought by the committee's
+    /// password instead: the host job is offered on the far side of this door, to a browser that is
+    /// already signed in as an organizer. A secret worth keeping is worth keeping behind a password
+    /// rather than behind four characters projected onto a wall.
     /// </summary>
     public static bool EnsureCodes(TripData trip, Random random)
     {
         var game = trip.Jeopardy.Game;
-        var changed = false;
 
-        foreach (var team in trip.Teams.Where(t => !game.BuzzerCodes.ContainsKey(t.Id)))
-        {
-            game.BuzzerCodes[team.Id] = NewCode(random);
-            changed = true;
-        }
+        if (!string.IsNullOrWhiteSpace(game.PartyCode)) return false;
 
-        if (string.IsNullOrWhiteSpace(game.HostCode))
-        {
-            game.HostCode = NewCode(random);
-            changed = true;
-        }
-
-        return changed;
+        game.PartyCode = NewCode(random);
+        return true;
     }
 
     private static string NewCode(Random random) =>
@@ -466,13 +462,36 @@ public static class JeopardyService
         _ => string.Join(", ", names.Take(names.Count - 1)) + $" and {names[^1]}"
     };
 
-    public static string? TeamForCode(TripData trip, string code) =>
-        trip.Jeopardy.Game.BuzzerCodes
-            .FirstOrDefault(kv => string.Equals(kv.Value, code, StringComparison.OrdinalIgnoreCase)).Key;
+    /// <summary>
+    /// Walk one more person through the door and say who it was, or null once every team has a
+    /// phone in the room. What a simulated phone calls where a real one has a camera.
+    ///
+    /// Deals a person from a team nobody has joined for yet, in preference to a fifth phone for a
+    /// team that already has four — because what the board is waiting on is teams, not people, and
+    /// a strip of five frames should get the game startable rather than crowd one team.
+    /// </summary>
+    public static string? SeatNextPlayer(TripData trip, Random random)
+    {
+        var game = trip.Jeopardy.Game;
 
-    public static bool IsHostCode(TripData trip, string code) =>
+        var waiting = trip.Roster
+            .Where(p => trip.Teams.Any(t => t.Id == p.TeamId))
+            .OrderBy(p => game.JoinedTeamIds.Contains(p.TeamId))
+            .ThenBy(_ => random.Next())
+            .ToList();
+
+        if (waiting.Count == 0) return null;
+
+        var person = waiting[0];
+        RecordTeamJoin(trip, person.TeamId);
+
+        return person.Id;
+    }
+
+    /// <summary>The one code on the wall. A door, not a team — see <see cref="JeopardyGame.PartyCode"/>.</summary>
+    public static bool IsPartyCode(TripData trip, string? code) =>
         !string.IsNullOrWhiteSpace(code) &&
-        string.Equals(trip.Jeopardy.Game.HostCode, code, StringComparison.OrdinalIgnoreCase);
+        string.Equals(trip.Jeopardy.Game.PartyCode, code, StringComparison.OrdinalIgnoreCase);
 
     private static void Award(TripData trip, string teamId, int points, string note, DateTimeOffset now) =>
         trip.Scores.Add(new ScoreEntry

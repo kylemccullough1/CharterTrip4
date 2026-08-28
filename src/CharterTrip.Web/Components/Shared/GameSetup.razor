@@ -1,0 +1,190 @@
+@* The card every game opens on: what it is, what the rules are, what the points are worth, and
+   the button that starts it.
+
+   Edit turns the whole card editable rather than only the numbers. Everything here was written
+   on a budget sheet months ago and half of it is already wrong by the time anybody is standing
+   in the garden holding a phone — the host swapped, the game moved to Saturday, a rule got
+   argued into a different rule. So the name, the night, the host, the blurb, the rules and the
+   legs are all just text on the trip, and all of them are edited where they are read. *@
+
+@inject ITripStore Store
+
+<div class="game-head">
+    <div class="grow">
+        <h1 class="game-title">
+            <EditableText Value="@Game.Name" ReadOnly="@(!_editing)"
+                          ValueChanged="@(v => SetAsync(g => g.Name = v))" Placeholder="Untitled game" />
+        </h1>
+        <p class="game-meta">
+            <b><EditableText Value="@Game.When" ReadOnly="@(!_editing)"
+                             ValueChanged="@(v => SetAsync(g => g.When = v))" Placeholder="when" /></b>
+            · hosted by
+            <b><EditableText Value="@Game.Host" ReadOnly="@(!_editing)"
+                             ValueChanged="@(v => SetAsync(g => g.Host = v))" Placeholder="who" /></b>
+        </p>
+        <p class="game-blurb">
+            <EditableText Value="@Game.Blurb" ReadOnly="@(!_editing)" Multiline="true"
+                          ValueChanged="@(v => SetAsync(g => g.Blurb = v))" Placeholder="what it is" />
+        </p>
+    </div>
+    <a class="btn btn-ghost btn-sm" href="/games">← All games</a>
+</div>
+
+<SectionCard Title="How it scores">
+    <Actions>
+        @if (CanEdit)
+        {
+            <button class="btn @(_editing ? "btn-gold" : "btn-ghost") btn-sm" @onclick="() => _editing = !_editing">
+                @(_editing ? "Done" : "Edit")
+            </button>
+        }
+    </Actions>
+    <ChildContent>
+        <div class="card game-structure">
+            @Structure
+        </div>
+
+        @if (_editing && Settings is not null)
+        {
+            <div class="card game-settings">
+                <p class="hb-label">Settings</p>
+                @Settings
+            </div>
+        }
+    </ChildContent>
+</SectionCard>
+
+<SectionCard Title="Rules">
+    <Actions>
+        @if (_editing)
+        {
+            <button class="btn btn-gold btn-sm" @onclick="AddRuleAsync">Add a rule</button>
+        }
+    </Actions>
+    <ChildContent>
+        <div class="card rules-card">
+            <ul class="rules">
+                @for (var i = 0; i < Game.Rules.Count; i++)
+                {
+                    var index = i;
+                    <li @key="index">
+                        <span class="rule-line">
+                            <EditableText Value="@Game.Rules[index]" ReadOnly="@(!_editing)"
+                                          CssClass="grow"
+                                          ValueChanged="@(v => EditRuleAsync(index, v))" Placeholder="—" />
+                            @if (_editing)
+                            {
+                                <button class="btn btn-danger-ghost btn-xs" @onclick="() => RemoveRuleAsync(index)">Delete</button>
+                            }
+                        </span>
+                    </li>
+                }
+            </ul>
+            @if (Game.Rules.Count == 0)
+            {
+                <p class="muted">No rules written down yet.</p>
+            }
+
+            @if (Game.Legs.Count > 0 || _editing && ShowLegs)
+            {
+                <div class="row between center mt">
+                    <h4>Legs</h4>
+                    @if (_editing)
+                    {
+                        <button class="btn btn-gold btn-xs" @onclick="AddLegAsync">Add a leg</button>
+                    }
+                </div>
+                <ol class="rules">
+                    @for (var i = 0; i < Game.Legs.Count; i++)
+                    {
+                        var index = i;
+                        <li @key="index">
+                            <span class="rule-line">
+                                <EditableText Value="@Game.Legs[index]" ReadOnly="@(!_editing)"
+                                              CssClass="grow"
+                                              ValueChanged="@(v => EditLegAsync(index, v))" Placeholder="—" />
+                                @if (_editing)
+                                {
+                                    <button class="btn btn-danger-ghost btn-xs" @onclick="() => RemoveLegAsync(index)">Delete</button>
+                                }
+                            </span>
+                        </li>
+                    }
+                </ol>
+            }
+        </div>
+    </ChildContent>
+</SectionCard>
+
+@* Not while the card is being edited. Starting the game is the one thing on this screen that
+   cannot be taken back, and a host halfway through retyping the rules is not reaching for it —
+   so it stays out of the way until they press Done. *@
+@if (CanEdit && !_editing)
+{
+    <div class="game-start">
+        <button class="btn btn-gold btn-lg" @onclick="OnStart" disabled="@(!CanStart)">@StartLabel</button>
+        @if (!CanStart && StartBlockedReason is { Length: > 0 })
+        {
+            <p class="muted tiny">@StartBlockedReason</p>
+        }
+    </div>
+}
+
+@code {
+    [CascadingParameter] private TripPermissions Permissions { get; set; } = new(false, "Guest");
+
+    [Parameter, EditorRequired] public Game Game { get; set; } = default!;
+
+    /// <summary>What the points are worth, in words. Always on show.</summary>
+    [Parameter] public RenderFragment? Structure { get; set; }
+
+    /// <summary>The same numbers, editable. Behind the Edit button.</summary>
+    [Parameter] public RenderFragment? Settings { get; set; }
+
+    /// <summary>Offer legs even when there are none yet — the relay wants them, nothing else does.</summary>
+    [Parameter] public bool ShowLegs { get; set; }
+
+    [Parameter] public EventCallback OnStart { get; set; }
+    [Parameter] public string StartLabel { get; set; } = "Start the game";
+
+    [Parameter] public bool CanStart { get; set; } = true;
+    [Parameter] public string? StartBlockedReason { get; set; }
+
+    private bool _editing;
+
+    private bool CanEdit => Permissions.CanEdit;
+
+    /// <summary>
+    /// Reaches the live game by id rather than writing through the parameter: what is passed in
+    /// is a handle on whatever the store held when this rendered, and a mutation has to be
+    /// applied to the document the store is about to save.
+    /// </summary>
+    private Task SetAsync(Action<Game> apply) => Store.MutateAsync(t =>
+    {
+        if (t.Games.FirstOrDefault(g => g.Id == Game.Id) is { } game) apply(game);
+    }, TripArea.Games);
+
+    private Task AddRuleAsync() => SetAsync(g => g.Rules.Add("A new rule"));
+
+    private Task EditRuleAsync(int index, string value) => SetAsync(g =>
+    {
+        if (index >= 0 && index < g.Rules.Count && value.Trim().Length > 0) g.Rules[index] = value.Trim();
+    });
+
+    private Task RemoveRuleAsync(int index) => SetAsync(g =>
+    {
+        if (index >= 0 && index < g.Rules.Count) g.Rules.RemoveAt(index);
+    });
+
+    private Task AddLegAsync() => SetAsync(g => g.Legs.Add("A new leg"));
+
+    private Task EditLegAsync(int index, string value) => SetAsync(g =>
+    {
+        if (index >= 0 && index < g.Legs.Count && value.Trim().Length > 0) g.Legs[index] = value.Trim();
+    });
+
+    private Task RemoveLegAsync(int index) => SetAsync(g =>
+    {
+        if (index >= 0 && index < g.Legs.Count) g.Legs.RemoveAt(index);
+    });
+}

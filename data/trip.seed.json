@@ -804,6 +804,55 @@
       ]
     }
   ],
+  "party": {
+    "sketch": {
+      "phase": "notStarted",
+      "pointValue": 20,
+      "roundCount": 5,
+      "round": 1,
+      "characters": [
+        { "name": "Shrek", "imageUrl": "" },
+        { "name": "Edna Mode", "imageUrl": "" },
+        { "name": "Snoopy", "imageUrl": "" },
+        { "name": "Charlie Brown", "imageUrl": "" },
+        { "name": "Caillou", "imageUrl": "" },
+        { "name": "Dora", "imageUrl": "" },
+        { "name": "Minion", "imageUrl": "" },
+        { "name": "Phineas and Ferb", "imageUrl": "" },
+        { "name": "Winnie the Pooh", "imageUrl": "" },
+        { "name": "Buzz Lightyear", "imageUrl": "" },
+        { "name": "Pikachu", "imageUrl": "" },
+        { "name": "Johnny Bravo", "imageUrl": "" },
+        { "name": "Sid the Sloth", "imageUrl": "" },
+        { "name": "Hyperpigmentation", "imageUrl": "" }
+      ],
+      "usedCharacters": []
+    },
+    "noodleCup": {
+      "phase": "notStarted",
+      "pointValue": 10,
+      "roundCount": 6,
+      "round": 1,
+      "characters": [],
+      "usedCharacters": []
+    },
+    "beerRun": {
+      "phase": "notStarted",
+      "pointValue": 10,
+      "roundCount": 4,
+      "takeToWin": 4,
+      "round": 1,
+      "characters": [],
+      "usedCharacters": []
+    },
+    "relay": {
+      "phase": "notStarted",
+      "winnerPoints": 100,
+      "smallTeamPoints": 120,
+      "smallTeamSize": 5,
+      "timers": {}
+    }
+  },
   "jeopardy": {
     "title": "4th Annual Charter Trip Jeopardy",
     "categories": [

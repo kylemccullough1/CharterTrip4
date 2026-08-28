@@ -47,9 +47,12 @@ else
             }
         </div>
 
-        <EditableText Value="@Value" CssClass="jeo-editor-url"
-                      ValueChanged="SetAsync"
-                      Placeholder="@Placeholder" />
+        @if (ShowUrl)
+        {
+            <EditableText Value="@Value" CssClass="jeo-editor-url"
+                          ValueChanged="SetAsync"
+                          Placeholder="@Placeholder" />
+        }
 
         @if (_error is not null)
         {
@@ -68,6 +71,13 @@ else
     [Parameter] public string Label { get; set; } = "Image";
 
     [Parameter] public string Placeholder { get; set; } = "nothing yet — upload or paste a link";
+
+    /// <summary>
+    /// Show the address alongside the upload button. On for the board, where pasting a link to
+    /// an album somebody already shares is the fastest way to fill twenty-five clues; off where
+    /// a picture is only ever going to be picked off a phone and the box is just clutter.
+    /// </summary>
+    [Parameter] public bool ShowUrl { get; set; } = true;
 
     /// <summary>Lets a caller force read-only even for an admin.</summary>
     [Parameter] public bool ReadOnly { get; set; }

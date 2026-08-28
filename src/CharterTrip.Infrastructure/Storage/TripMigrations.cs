@@ -14,7 +14,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 21;
+    public const int CurrentVersion = 25;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -36,10 +36,20 @@ public static class TripMigrations
         if (trip.SchemaVersion < 14) changed |= ToV14_GroupedEssentials(trip);
         if (trip.SchemaVersion < 20) changed |= ToV20_BeeDealsItsOwnWords(trip);
         if (trip.SchemaVersion < 21) changed |= ToV21_BeeDrawsAtADifficulty(trip);
+        if (trip.SchemaVersion < 22) changed |= ToV22_PartyGames(trip);
+        if (trip.SchemaVersion < 23) changed |= ToV23_SketchCharactersHavePictures(trip);
+        if (trip.SchemaVersion < 24) changed |= ToV24_FourBeersTakesTheRound(trip);
+        if (trip.SchemaVersion < 25) changed |= ToV25_TheStackIsWorkedOut(trip);
 
         // v19 carried the seed's hand-written word list across to a file that predated the
         // bee. No step any more: v20 deals the list instead of shipping one, so there is
         // nothing in the seed left for that step to copy and it would run to no effect.
+
+        // The four steps from v22 arrived on a branch of their own, where they were numbered
+        // from 19 and the bee did not exist. They were renumbered onto the end of the ladder
+        // rather than left where they were, because a file the bee had already stamped 21 would
+        // have skipped every one of them and come back with no party games in it. Each guards on
+        // what it finds rather than on the number it carries, so moving them costs nothing.
 
         // v18 gave a carpool's ETA a day to go with the time. No step, same as the two
         // before it: the field defaults to empty and an older file simply has not said.
@@ -424,6 +434,85 @@ public static class TripMigrations
         game.LockedOutTeamIds.Clear();
         return true;
     }
+
+    /// <summary>
+    /// The four games played on their feet got screens of their own, which means point values,
+    /// round counts and Police Sketch's character list now have to live somewhere rather than
+    /// being written on the back of the budget sheet.
+    ///
+    /// Taken from the seed, like the board at v9 and the guide at v11, so the numbers have one
+    /// home. Only ever fills a set that has never been played or edited — a point value someone
+    /// has since changed is left alone.
+    /// </summary>
+    private static bool ToV22_PartyGames(TripData trip)
+    {
+        var party = trip.Party;
+        var untouched =
+            party.Sketch.PointValue == 0 &&
+            party.NoodleCup.PointValue == 0 && party.BeerRun.PointValue == 0;
+
+        if (!untouched) return false;
+
+        trip.Party = SeedLoader.Load().Party;
+        return true;
+    }
+
+    /// <summary>
+    /// A Police Sketch character used to be a name and nothing else. It is now a name and a
+    /// picture of them, so whoever is describing one has something to describe.
+    ///
+    /// The list moved from <c>prompts</c> to <c>characters</c> rather than changing shape under
+    /// the same key, which is what makes this safe to load: a v22 file's array of bare strings is
+    /// simply a key the model no longer has, ignored on read and gone on the next write, instead
+    /// of a type mismatch that would fail the whole document before any migration could run.
+    ///
+    /// Refilled from the seed, like the board at v9 — nobody has had a chance to edit this list
+    /// yet, and the names in it are the ones off the budget sheet either way.
+    /// </summary>
+    private static bool ToV23_SketchCharactersHavePictures(TripData trip)
+    {
+        if (trip.Party.Sketch.Characters.Count > 0) return false;
+
+        trip.Party.Sketch.Characters = SeedLoader.Load().Party.Sketch.Characters;
+        trip.Party.Sketch.UsedCharacters.Clear();
+        trip.Party.Sketch.CurrentCharacter = null;
+        return true;
+    }
+
+    /// <summary>
+    /// The beer run is a race to a number rather than a share-out: four beers back to your corner
+    /// takes the round, and no corner can be credited with more than that because the run stops
+    /// the moment somebody gets there. Before this there was no such number, so the only way a
+    /// round could end was by running the stack out — the cups' rule, which was never this one's.
+    ///
+    /// The cups still get none: nothing wins their round early, it simply runs out.
+    /// </summary>
+    private static bool ToV24_FourBeersTakesTheRound(TripData trip)
+    {
+        if (trip.Party.BeerRun.TakeToWin is not null) return false;
+
+        trip.Party.BeerRun.TakeToWin = SeedLoader.Load().Party.BeerRun.TakeToWin;
+        return true;
+    }
+
+    /// <summary>
+    /// How many beers are in a round was never a free choice, and the shape before this one
+    /// offered it as one.
+    ///
+    /// To be sure a corner reaches four, the stack has to be more than every corner can hold on
+    /// three — at least 3 x teams + 1. For only one corner to reach four, every other corner has
+    /// to be able to stop on three — at most 4 + 3 x (teams - 1). Those are the same number:
+    /// thirteen, across four corners, and nothing else. So it is worked out rather than stored.
+    ///
+    /// A host who had set anything smaller had a round that could dead-end. Seven beers going
+    /// three, three and one leaves nobody on four and nothing left to give them.
+    ///
+    /// Nothing to convert — the property is gone from the model, so the key is ignored on read.
+    /// What this earns is the version bump, which flushes it out of the file rather than leaving
+    /// it there until somebody happens to make an edit. Same as v4.
+    /// </summary>
+    private static bool ToV25_TheStackIsWorkedOut(TripData trip) => true;
+
 
     private static bool ClearLegacy(ItineraryItem item)
     {

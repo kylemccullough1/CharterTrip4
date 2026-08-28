@@ -40,5 +40,6 @@ public static class TripReplace
         target.Jeopardy = source.Jeopardy;
         target.SpellingBee = source.SpellingBee;
         target.Mystery = source.Mystery;
+        target.Party = source.Party;
     }
 }

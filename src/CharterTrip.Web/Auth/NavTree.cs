@@ -74,13 +74,20 @@ public static class NavTree
     /// shares one path, so all five lit up together. An href that names a tab or an anchor is
     /// therefore matched exactly — for those the query IS the destination — while a plain path
     /// still covers everything beneath it, so Games stays lit on /games/jeopardy.
+    ///
+    /// <paramref name="exact"/> turns that last rule off, and is what an entry inside a dropdown
+    /// is judged by. "All games" points at /games, the same address as the branch it sits under,
+    /// so sharing the branch's rule left it lit on every game page — it read as though the game
+    /// you were looking at were somehow also the list of them. A parent covering its children is
+    /// the point of a parent; a child covering its siblings is just wrong.
     /// </summary>
-    public static bool IsCurrent(string href, string current)
+    public static bool IsCurrent(string href, string current, bool exact = false)
     {
         href = Normalise(href);
         current = Normalise(current);
 
         if (string.Equals(href, current, StringComparison.OrdinalIgnoreCase)) return true;
+        if (exact) return false;
         if (href.Contains('?') || href.Contains('#')) return false;
         if (href == "/") return false;   // otherwise Home is the prefix of the whole site
 

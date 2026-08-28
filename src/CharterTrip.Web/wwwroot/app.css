@@ -13,6 +13,7 @@
   --line-soft:  #212936;
 
   --gold:       #d4af37;
+  --gold-rgb:   212, 175, 55;
   --gold-light: #f0d98c;
   --gold-dim:   #8d7526;
   --emerald:    #2e9e7e;
@@ -68,7 +69,7 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(1200px 600px at 80% -200px, rgba(212,175,55,.10), transparent 60%),
+    radial-gradient(1200px 600px at 80% -200px, rgba(var(--gold-rgb),.10), transparent 60%),
     radial-gradient(900px 500px at -10% 10%, rgba(46,158,126,.07), transparent 55%),
     var(--ink);
   color: var(--text);
@@ -149,7 +150,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .
   font-family: var(--sans); white-space: nowrap;
 }
 .navlink:hover { color: var(--text); background: rgba(255,255,255,.05); }
-.navlink.on { color: var(--gold); background: rgba(212,175,55,.10); }
+.navlink.on { color: var(--gold); background: rgba(var(--gold-rgb),.10); }
 .caret { font-size: 0.563rem; opacity: .8; }
 
 .dropdown { position: relative; }
@@ -165,7 +166,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .
   color: var(--text-dim); font-size: 0.844rem;
 }
 .dropdown-item:hover { background: rgba(255,255,255,.06); color: var(--text); }
-.dropdown-item.on { color: var(--gold); background: rgba(212,175,55,.10); }
+.dropdown-item.on { color: var(--gold); background: rgba(var(--gold-rgb),.10); }
 
 .topbar-actions { flex: 0 0 auto; }
 .icon-btn {
@@ -295,7 +296,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .
   white-space: pre-wrap; word-break: break-word;
 }
 .editable:hover { border-bottom-color: var(--line); background: rgba(255,255,255,.03); }
-.editable:focus { background: rgba(212,175,55,.10); border-bottom-color: var(--gold); }
+.editable:focus { background: rgba(var(--gold-rgb),.10); border-bottom-color: var(--gold); }
 .editable:empty::before { content: attr(data-placeholder); color: var(--text-faint); font-style: italic; }
 
 .textfield, .textarea, .numfield {
@@ -305,7 +306,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .
 }
 .textarea { resize: vertical; line-height: 1.5; }
 .textarea.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.781rem; }
-.textfield:focus, .textarea:focus, .numfield:focus { outline: none; border-color: var(--gold-dim); box-shadow: 0 0 0 2px rgba(212,175,55,.14); }
+.textfield:focus, .textarea:focus, .numfield:focus { outline: none; border-color: var(--gold-dim); box-shadow: 0 0 0 2px rgba(var(--gold-rgb),.14); }
 .textfield.sm { padding: 4px 7px; font-size: 0.781rem; }
 .numfield { width: 78px; text-align: right; padding: 5px 7px; }
 .numfield.big { width: 100%; font-size: 1.25rem; text-align: left; }
@@ -336,7 +337,7 @@ select.textfield { cursor: pointer; }
   content: '✓'; display: block; text-align: center; color: #1b1405;
   font-size: 0.813rem; line-height: 15px; font-weight: 800;
 }
-.cbox input:focus-visible + .cbox-mark { box-shadow: 0 0 0 3px rgba(212,175,55,.3); }
+.cbox input:focus-visible + .cbox-mark { box-shadow: 0 0 0 3px rgba(var(--gold-rgb),.3); }
 
 /* ---------------------------------------------------------------- chips -- */
 .chip {
@@ -349,7 +350,7 @@ select.textfield { cursor: pointer; }
 .chip.ok   { color: #7fd9b5; border-color: rgba(46,158,126,.4); background: rgba(46,158,126,.12); }
 .chip.warn { color: #e8b04b; border-color: rgba(232,176,75,.35); background: rgba(232,176,75,.10); }
 .chip.bad  { color: #e0808a; border-color: rgba(201,79,90,.4); background: rgba(201,79,90,.12); }
-.chip.on   { border-color: var(--gold); color: var(--gold-light); background: rgba(212,175,55,.14); }
+.chip.on   { border-color: var(--gold); color: var(--gold-light); background: rgba(var(--gold-rgb),.14); }
 .chip.tap  { cursor: pointer; font-family: var(--sans); }
 .chip.tap:hover { border-color: var(--team, var(--gold)); color: var(--text); }
 .chip.tap.on { background: color-mix(in srgb, var(--team, var(--gold)) 20%, transparent); border-color: var(--team, var(--gold)); color: var(--text); }
@@ -379,7 +380,7 @@ select.textfield { cursor: pointer; }
   position: sticky; top: 0; z-index: 1;
 }
 .table tbody tr:hover { background: rgba(255,255,255,.025); }
-.table tfoot td { border-bottom: 0; background: rgba(212,175,55,.05); }
+.table tfoot td { border-bottom: 0; background: rgba(var(--gold-rgb),.05); }
 .table .r { text-align: right; }
 .table.small { font-size: 0.781rem; }
 .table.small th, .table.small td { padding: 6px 9px; }
@@ -504,7 +505,7 @@ select.textfield { cursor: pointer; }
   position: relative;
 }
 .hero-board::before {
-  content: ''; position: absolute; inset: 5px; border: 1px solid rgba(212,175,55,.16);
+  content: ''; position: absolute; inset: 5px; border: 1px solid rgba(var(--gold-rgb),.16);
   border-radius: 9px; pointer-events: none;
 }
 .hero-board-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
@@ -542,7 +543,7 @@ select.textfield { cursor: pointer; }
 .glance-day {
   font-family: var(--display); font-size: 0.875rem; letter-spacing: .12em; text-transform: uppercase;
   padding: 13px 18px; margin: 0; border-bottom: 1px solid var(--line-soft);
-  background: rgba(212,175,55,.06); display: flex; justify-content: space-between; align-items: baseline;
+  background: rgba(var(--gold-rgb),.06); display: flex; justify-content: space-between; align-items: baseline;
 }
 .glance-date { color: var(--text-faint); font-size: 0.719rem; letter-spacing: .08em; }
 .glance-list { list-style: none; margin: 0; padding: 8px 0; }
@@ -609,7 +610,7 @@ select.textfield { cursor: pointer; }
 .planner-gap {
   position: absolute; left: 0; right: 0;
   display: flex; align-items: center; justify-content: center;
-  background: repeating-linear-gradient(135deg, transparent 0 7px, rgba(212,175,55,.05) 7px 14px);
+  background: repeating-linear-gradient(135deg, transparent 0 7px, rgba(var(--gold-rgb),.05) 7px 14px);
   border: 1px dashed var(--line); border-radius: var(--radius-sm);
   color: var(--text-faint); font-size: 0.688rem; letter-spacing: .05em; cursor: pointer;
 }
@@ -781,7 +782,7 @@ select.textfield { cursor: pointer; }
 }
 .person:hover { border-color: var(--line); }
 .person.is-dragging { opacity: .9; box-shadow: var(--shadow); border-color: var(--gold-dim); z-index: 40; position: relative; cursor: grabbing; touch-action: none; }
-.person.is-lead { background: rgba(212,175,55,.08); cursor: default; }
+.person.is-lead { background: rgba(var(--gold-rgb),.08); cursor: default; }
 .person.is-lead:hover { border-color: transparent; }
 .person-name { flex: 1; min-width: 0; }
 .person-name .editable { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -870,7 +871,10 @@ select.textfield { cursor: pointer; }
   border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; gap: 8px; align-items: center;
 }
 .jeo-join-card.is-host { border-top-color: var(--gold); }
-.jeo-join-team { font-family: var(--display); font-size: 0.75rem; letter-spacing: .12em; text-transform: uppercase; }
+.jeo-join-team {
+  font-family: var(--display); font-size: 0.75rem; letter-spacing: .12em; text-transform: uppercase;
+  text-align: center; max-width: 100%; overflow-wrap: anywhere;
+}
 .jeo-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.375rem; letter-spacing: .3em; color: var(--gold); }
 .qr { border-radius: 6px; display: block; background: #fff; padding: 6px; }
 
@@ -1872,7 +1876,7 @@ select.textfield { cursor: pointer; }
   position: relative; margin: 8px 0 26px; padding: 40px 34px;
   border-radius: var(--radius); overflow: hidden; text-align: center;
   background:
-    repeating-linear-gradient(90deg, rgba(212,175,55,.05) 0 2px, transparent 2px 18px),
+    repeating-linear-gradient(90deg, rgba(var(--gold-rgb),.05) 0 2px, transparent 2px 18px),
     linear-gradient(180deg, #1a1410, #0d0b09);
   border: 1px solid #3a2f18;
 }
@@ -1932,7 +1936,7 @@ select.textfield { cursor: pointer; }
 .round span { font-size: 0.75rem; }
 .round:hover { border-color: var(--gold-dim); }
 .round.done { opacity: .5; }
-.round.on { border-color: var(--gold); background: rgba(212,175,55,.10); }
+.round.on { border-color: var(--gold); background: rgba(var(--gold-rgb),.10); }
 .round.on b { color: var(--gold); }
 
 .clue-list { display: flex; flex-direction: column; gap: 7px; }
@@ -1941,7 +1945,7 @@ select.textfield { cursor: pointer; }
   padding: 9px 12px; border-radius: var(--radius-sm);
   border: 1px solid var(--line-soft); background: var(--ink-2);
 }
-.clue.released { border-color: rgba(212,175,55,.4); background: rgba(212,175,55,.06); }
+.clue.released { border-color: rgba(var(--gold-rgb),.4); background: rgba(var(--gold-rgb),.06); }
 .clue-type { max-width: 160px; }
 .clue-round { max-width: 170px; }
 .clue-text { min-width: 200px; font-size: 0.844rem; }
@@ -2118,7 +2122,7 @@ select.textfield { cursor: pointer; }
 .inline-edit {
   font: inherit;
   color: var(--text);
-  background: rgba(212,175,55,.10);
+  background: rgba(var(--gold-rgb),.10);
   border: 0;
   border-bottom: 1px solid var(--gold);
   border-radius: 3px;
@@ -2128,7 +2132,7 @@ select.textfield { cursor: pointer; }
   outline: none;
   resize: vertical;
 }
-.inline-edit:focus { box-shadow: 0 0 0 2px rgba(212,175,55,.22); }
+.inline-edit:focus { box-shadow: 0 0 0 2px rgba(var(--gold-rgb),.22); }
 
 .editable.is-empty { color: var(--text-faint); font-style: italic; }
 .editable[role="button"] { cursor: text; }
@@ -2151,7 +2155,7 @@ select.textfield { cursor: pointer; }
   padding: 4px 9px;
   border-radius: 999px;
 }
-.shell-admin .topbar { box-shadow: inset 0 -2px 0 rgba(212,175,55,.35); }
+.shell-admin .topbar { box-shadow: inset 0 -2px 0 rgba(var(--gold-rgb),.35); }
 
 .footer-status { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
 
@@ -2171,7 +2175,7 @@ select.textfield { cursor: pointer; }
 
 /* --- itinerary drag feedback -------------------------------------------- */
 .itin-item.drop-before { box-shadow: 0 -3px 0 0 var(--gold); }
-.itin-list.drop-into { background: rgba(212,175,55,.06); border-radius: var(--radius-sm); }
+.itin-list.drop-into { background: rgba(var(--gold-rgb),.06); border-radius: var(--radius-sm); }
 .itin-item[draggable="true"] .drag-handle { cursor: grab; }
 
 /* --- Blazor's own error strip ------------------------------------------- */
@@ -2257,7 +2261,7 @@ pre.code {
 .jeo-finalintro {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 14px; text-align: center; padding: 40px 20px;
-  background: radial-gradient(120% 90% at 50% 0%, rgba(212,175,55,.10), transparent 62%), var(--ink-2);
+  background: radial-gradient(120% 90% at 50% 0%, rgba(var(--gold-rgb),.10), transparent 62%), var(--ink-2);
   border: 1px solid var(--gold-dim); border-radius: var(--radius);
   animation: fi-in .7s ease-out both;
 }
@@ -2275,7 +2279,7 @@ pre.code {
 .jeo-fi-title {
   font-family: var(--display); font-size: clamp(2.375rem, 8vw, 6rem); letter-spacing: .12em;
   margin: 0; line-height: 1; color: var(--gold-light);
-  text-shadow: 0 0 40px rgba(212,175,55,.35);
+  text-shadow: 0 0 40px rgba(var(--gold-rgb),.35);
   animation: fi-in .7s .25s ease-out both;
 }
 .jeo-fi-cat { font-size: clamp(0.938rem, 2vw, 1.375rem); color: var(--text-dim); margin: 0; animation: fi-in .7s .35s ease-out both; }
@@ -2296,7 +2300,9 @@ pre.code {
 .jeo-reveal-label { font-size: 0.688rem; letter-spacing: .22em; text-transform: uppercase; color: var(--text-faint); margin: 0; }
 .jeo-reveal-who { font-size: clamp(0.938rem, 1.8vw, 1.313rem); margin: 4px 0 0; }
 
-/* the winner */
+/* The winner. Shared by every game that ends in one — Jeopardy named these first, and the
+   four games played on their feet render the same celebration through GameVictory rather
+   than each growing a near-identical copy of it. */
 .jeo-win {
   position: relative; flex: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -2304,7 +2310,8 @@ pre.code {
 }
 .jeo-win-name {
   font-family: var(--display); font-size: clamp(2.5rem, 9vw, 6.75rem); letter-spacing: .08em;
-  margin: 0; line-height: 1; color: var(--team, var(--gold));
+  margin: 0; line-height: 1.05; color: var(--team, var(--gold));
+  max-width: 100%; overflow-wrap: anywhere; hyphens: auto;
   text-shadow: 0 0 60px color-mix(in srgb, var(--team, #d4af37) 45%, transparent);
   animation: win-pop .9s cubic-bezier(.2, 1.5, .4, 1) both;
 }
@@ -2482,7 +2489,7 @@ pre.code {
    eye once without turning the page into a fairground. */
 .fact.is-loud {
   border-color: var(--gold-dim);
-  background: linear-gradient(90deg, rgba(212,175,55,.13), rgba(212,175,55,.04));
+  background: linear-gradient(90deg, rgba(var(--gold-rgb),.13), rgba(var(--gold-rgb),.04));
   animation: fact-pulse 3.6s ease-in-out infinite;
 }
 .fact.is-loud .fact-label { color: var(--gold); }
@@ -2493,8 +2500,8 @@ pre.code {
 }
 
 @keyframes fact-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
-  50%      { box-shadow: 0 0 22px 0 rgba(212,175,55,.30); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--gold-rgb),0); }
+  50%      { box-shadow: 0 0 22px 0 rgba(var(--gold-rgb),.30); }
 }
 
 /* --- menu -------------------------------------------------------------- */
@@ -2578,7 +2585,7 @@ pre.code {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fact.is-loud { animation: none; box-shadow: 0 0 18px 0 rgba(212,175,55,.24); }
+  .fact.is-loud { animation: none; box-shadow: 0 0 18px 0 rgba(var(--gold-rgb),.24); }
 }
 
 /* ==================================================== definition + accent == */
@@ -2597,7 +2604,7 @@ pre.code {
 
 /* Per-section accent. Four tabs of dense text in one colour were hard to tell apart at a
    glance, so each one owns a hue and spends it on its edges, headings and rules. */
-[data-accent="gold"]     { --accent: var(--gold);     --accent-soft: rgba(212,175,55,.14); }
+[data-accent="gold"]     { --accent: var(--gold);     --accent-soft: rgba(var(--gold-rgb),.14); }
 [data-accent="emerald"]  { --accent: var(--emerald);  --accent-soft: rgba(46,158,126,.14); }
 [data-accent="ruby"]     { --accent: var(--ruby);     --accent-soft: rgba(201,79,90,.14); }
 [data-accent="sapphire"] { --accent: var(--sapphire); --accent-soft: rgba(74,127,214,.14); }
@@ -2731,7 +2738,7 @@ pre.code {
 .section-divider::before {
   content: ''; position: absolute; left: 50%; top: 50%; width: 9px; height: 9px;
   transform: translate(-50%, -50%) rotate(45deg);
-  background: var(--gold); box-shadow: 0 0 12px rgba(212,175,55,.45);
+  background: var(--gold); box-shadow: 0 0 12px rgba(var(--gold-rgb),.45);
 }
 .section-divider::after {
   content: ''; position: absolute; left: 50%; top: 50%; width: 74px; height: 1px;
@@ -2903,7 +2910,7 @@ pre.code {
    than an entire card. */
 .ess-row.is-loud {
   margin: 2px -10px; padding-left: 10px; padding-right: 34px;
-  background: linear-gradient(90deg, rgba(212,175,55,.14), rgba(212,175,55,.02));
+  background: linear-gradient(90deg, rgba(var(--gold-rgb),.14), rgba(var(--gold-rgb),.02));
   border: 1px solid var(--gold-dim); border-radius: var(--radius-sm);
   animation: fact-pulse 3.6s ease-in-out infinite;
 }
@@ -2975,7 +2982,7 @@ pre.code {
   background: none; border: 1px solid var(--line); border-radius: var(--radius-sm);
   color: var(--gold-light); font: inherit; font-size: 0.781rem;
 }
-.planner-side-back:hover { border-color: var(--gold-dim); background: rgba(212,175,55,.07); }
+.planner-side-back:hover { border-color: var(--gold-dim); background: rgba(var(--gold-rgb),.07); }
 .planner-side-day {
   display: flex; flex-direction: column; gap: 1px; padding: 10px 12px; text-align: left; cursor: pointer;
   background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
@@ -3334,7 +3341,7 @@ pre.code {
   min-height: 100vh; min-height: 100dvh;
   display: grid; place-items: center; padding: var(--gutter);
   background:
-    radial-gradient(120% 80% at 50% 0%, rgba(212,175,55,.10), transparent 60%),
+    radial-gradient(120% 80% at 50% 0%, rgba(var(--gold-rgb),.10), transparent 60%),
     var(--ink);
   color: var(--text);
 }
@@ -3444,3 +3451,386 @@ pre.code {
 /* The street address under the Where row: its own line, quieter than the name of the house. */
 .ess-address { display: block; margin-top: 3px; color: var(--text-dim); font-size: 0.844rem; }
 .when-sep { color: var(--text-faint); }
+
+/* ==========================================================================
+   The four games played on their feet — Police Sketch, Pool Noodle Cups,
+   Beer Run, the Relay Race.
+
+   Nobody playing these ever looks at the screen: one committee member is
+   holding a phone at arm's length in a garden, mid-game, probably one-handed.
+   So the tap targets are big, the numbers are big, everything is given more
+   room to breathe than the reading pages need, and the phone breakpoint
+   matters more here than anywhere else on the site.
+   ========================================================================== */
+
+/* A game page ends on whatever it ends on — often a single button — and the page's usual
+   generous tail left it floating a long way above the footer. */
+.page-game { padding-bottom: 16px; }
+.page-game > :last-child { margin-bottom: 0; }
+
+.page-game .section { margin: calc(var(--section-gap) * 1.35) 0; }
+.page-game .card { padding: 20px 22px; }
+.page-game .section-body > .card + .card { margin-top: 14px; }
+
+/* the rules card, before anyone has started */
+.game-structure p { margin: 0 0 10px; }
+.game-structure p:last-child { margin-bottom: 0; }
+.game-settings { margin-top: 14px; }
+.settings-row { display: flex; flex-wrap: wrap; gap: 18px; }
+.settings-row .field { flex: 0 1 auto; }
+.settings-row .numfield { width: 8ch; }
+
+.game-start { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 0 34px; }
+
+
+/* Police Sketch's cast, in the settings drawer. Laid out as cards rather than a list: fourteen
+   of them down a single column is a lot of scrolling to reach the one you want to fix. */
+.cast-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px; margin-top: 10px;
+}
+.cast-line {
+  display: flex; flex-direction: column; gap: 8px; padding: 12px; min-width: 0;
+  background: var(--ink-2); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
+}
+/* "Hyperpigmentation" is one word and wider than the card. Left alone a long name simply runs
+   out of the card and over whatever is next to it, so names are allowed to break inside the
+   word — hyphenated where the browser can, mid-word where it cannot. */
+.cast-line .cast-name {
+  font-weight: 600; min-width: 0; max-width: 100%;
+  overflow-wrap: anywhere; hyphens: auto;
+}
+.cast-line .inline-edit { width: 100%; min-width: 0; }
+.cast-line .mediafield { gap: 8px; min-width: 0; }
+.cast-line .mediafield-row { flex-wrap: wrap; }
+.cast-line .mediafield-thumb { width: 100%; height: 110px; object-fit: cover; border-radius: var(--radius-sm); }
+.cast-delete { align-self: flex-start; }
+
+/* An editable rule, with its delete alongside. */
+.rule-line { display: flex; align-items: center; gap: 10px; }
+.rule-line .editable, .rule-line .inline-edit { flex: 1 1 auto; min-width: 0; }
+.rule-line .editable { overflow-wrap: anywhere; }
+
+/* --------------------------------------------------- the round, announced --
+   Keyed on the round number in the markup, so this is a new element every
+   round and the animation runs again without anything having to schedule it. */
+.round-splash {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 18px 0 6px; text-align: center;
+  animation: round-in .7s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+.round-splash-kicker {
+  font-family: var(--display); font-size: clamp(1.75rem, 8vw, 3.25rem);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--gold); line-height: 1;
+}
+.round-splash-sub { font-size: 0.813rem; letter-spacing: .22em; text-transform: uppercase; color: var(--text-faint); }
+@keyframes round-in {
+  0%   { opacity: 0; transform: translateY(-14px) scale(.86); letter-spacing: .3em; }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ------------------------------------------------------ picking the character */
+.sketch-pick { padding: 0 !important; background: none; border: 0; box-shadow: none; }
+/* Wide enough that the longest name on the sheet — "Hyperpigmentation" — has a fighting chance
+   of fitting before anything has to break. */
+.cast-picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.cast-pick {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 12px 10px; cursor: pointer; min-width: 0;
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--line-soft); border-radius: var(--radius);
+}
+.cast-pick:hover { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, var(--panel)); }
+.cast-pick-face {
+  width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius-sm);
+  background: var(--ink-2); border: 1px solid var(--line-soft);
+}
+.cast-pick-face.is-empty {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-faint); font-family: var(--display); font-size: 1.75rem;
+}
+.cast-pick-name {
+  font-size: 0.813rem; text-align: center; line-height: 1.25;
+  width: 100%; min-width: 0; overflow-wrap: anywhere; hyphens: auto;
+}
+
+/* the character up for this round, with a picture to describe from */
+.sketch-now { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.sketch-image {
+  max-height: 40vh; max-width: 100%; border-radius: var(--radius-sm);
+  border: 1px solid var(--line-soft);
+}
+/* The name is set as big as it will go, which on a phone means a long one has to break rather
+   than run off the side. The letter-spacing comes off at the same time — tracking that flatters
+   a short name is what tips a long one over the edge in the first place. */
+.sketch-current {
+  font-family: var(--display); font-size: clamp(1.75rem, 6.5vw, 3.75rem);
+  color: var(--gold); margin: 0; line-height: 1.05; letter-spacing: .04em;
+  max-width: 100%; overflow-wrap: anywhere; hyphens: auto;
+}
+.sketch-current.is-long { font-size: clamp(1.5rem, 5vw, 2.75rem); letter-spacing: 0; }
+
+/* four buttons, thumb-sized: who guessed it, or which team am I running */
+.team-picks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.team-pick {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 20px 12px; cursor: pointer;
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--line-soft); border-top: 3px solid var(--team, var(--gold));
+  border-radius: var(--radius);
+}
+.team-pick:hover { border-color: var(--team, var(--gold)); background: color-mix(in srgb, var(--team, #d4af37) 12%, var(--panel)); }
+.team-pick-name {
+  font-family: var(--display); font-size: 1.063rem; letter-spacing: .04em;
+  text-align: center; width: 100%; min-width: 0; overflow-wrap: anywhere; hyphens: auto;
+}
+.team-pick-pts { color: var(--team, var(--gold)); font-size: 0.813rem; font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------ the round won --
+   Stars, briefly, in the leading team's colour. It replaces the round rather
+   than covering the screen, because the next thing to do is play the next one
+   and a full-screen overlay just got in the way of that.
+
+   Shared by all three round games: one team takes a round of Police Sketch,
+   three of them carry something off in the cups, and it is the same card. */
+.round-result {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 44px 20px; text-align: center;
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-top: 3px solid var(--team, var(--gold)); border-radius: var(--radius);
+}
+.round-result-kicker {
+  margin: 0 0 2px; font-size: 0.75rem; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--text-faint);
+}
+.round-result-who {
+  font-family: var(--display); font-size: clamp(1.5rem, 7vw, 3.5rem); letter-spacing: .06em;
+  margin: 0; line-height: 1.05; color: var(--team, var(--gold));
+  max-width: 100%; overflow-wrap: anywhere; hyphens: auto;
+  text-shadow: 0 0 50px color-mix(in srgb, var(--team, #d4af37) 55%, transparent);
+  animation: win-pop .55s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+.round-result-pts {
+  margin: 0; font-family: var(--display); font-size: 1.5rem; color: var(--gold-light);
+  animation: win-pop .55s .09s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+/* Everybody else who scored in the same round, small, underneath the one who led it. */
+.round-result-rest {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px;
+  margin-top: 10px; position: relative;
+  animation: win-pop .55s .18s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+.round-result-also {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.844rem; color: var(--text-dim);
+}
+.round-result-also b { color: var(--team, var(--gold)); font-variant-numeric: tabular-nums; }
+.round-result-caption { position: relative; }
+.round-result .muted { margin: 4px 0 0; }
+
+/* Twelve five-pointed stars thrown out from the middle. The star itself is a
+   clip-path rather than a glyph, so it is the same shape on every device. */
+.star-burst { position: absolute; inset: 0; pointer-events: none; }
+.star {
+  position: absolute; top: 50%; left: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px;
+  background: var(--gold); opacity: 0;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  animation: star-fly 2.2s ease-out both;
+  animation-delay: calc(var(--i) * 45ms);
+}
+.star:nth-child(even) { background: var(--team, var(--gold-light)); width: 13px; height: 13px; margin: -7px 0 0 -7px; }
+.star:nth-child(1)  { rotate: 0deg; }
+.star:nth-child(2)  { rotate: 30deg; }
+.star:nth-child(3)  { rotate: 60deg; }
+.star:nth-child(4)  { rotate: 90deg; }
+.star:nth-child(5)  { rotate: 120deg; }
+.star:nth-child(6)  { rotate: 150deg; }
+.star:nth-child(7)  { rotate: 180deg; }
+.star:nth-child(8)  { rotate: 210deg; }
+.star:nth-child(9)  { rotate: 240deg; }
+.star:nth-child(10) { rotate: 270deg; }
+.star:nth-child(11) { rotate: 300deg; }
+.star:nth-child(12) { rotate: 330deg; }
+@keyframes star-fly {
+  0%   { opacity: 0; transform: rotate(0deg) translate(0, 0) scale(.3); }
+  14%  { opacity: 1; }
+  100% { opacity: 0; transform: rotate(220deg) translate(0, -190px) scale(1.15); }
+}
+
+/* cups and beers: a counter per team */
+.count-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 22px; }
+.count-card {
+  display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 24px 16px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-top: 3px solid var(--team, var(--gold)); border-radius: var(--radius);
+  transition: border-color .15s, background .15s;
+}
+/* A team that has something this round wears its own colour, so a glance across the four says
+   where the cups went without reading a number off each one. */
+.count-card.is-scoring {
+  border-color: var(--team, var(--gold));
+  background: color-mix(in srgb, var(--team, #d4af37) 9%, var(--panel));
+}
+.count-team {
+  font-family: var(--display); font-size: 1rem; letter-spacing: .04em; text-align: center;
+  width: 100%; min-width: 0; overflow-wrap: anywhere; hyphens: auto;
+}
+.count-controls { display: flex; align-items: center; gap: 14px; }
+/* Round, big, and the same size as each other — this is tapped with a thumb, outdoors. */
+.count-step {
+  width: 46px; height: 46px; padding: 0; border-radius: 50%;
+  font-size: 1.375rem; line-height: 1;
+}
+.count-value {
+  min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums;
+  font-family: var(--display); font-size: 1.875rem; color: var(--team, var(--gold));
+}
+.count-points { font-size: 0.813rem; color: var(--text-dim); }
+
+/* One button, under the cards, in the middle — and only once every cup in the round has been
+   placed. It arrives rather than sitting there greyed out, so the round finishing is something
+   that happens on the screen rather than something you have to notice. */
+.count-go {
+  display: flex; justify-content: center; margin-top: 30px;
+  animation: count-arrive .5s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+.count-score { min-width: 260px; }
+@keyframes count-arrive {
+  0%   { opacity: 0; transform: translateY(10px) scale(.94); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ------------------------------------------------------- the score drawer --
+   Shut by default. It used to sit under the game and push the thing you were
+   actually working off a phone screen. */
+.score-tab {
+  position: fixed; right: 0; top: 50%; transform: translateY(-50%); z-index: 55;
+  display: flex; align-items: center; gap: 7px;
+  padding: 14px 10px; cursor: pointer;
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--line-soft); border-right: 0;
+  border-radius: var(--radius) 0 0 var(--radius);
+  box-shadow: var(--shadow-sm);
+  writing-mode: vertical-rl;
+}
+.score-tab:hover { color: var(--gold-light); border-color: var(--gold-dim); }
+.score-tab.is-open { right: min(360px, 88vw); }
+.score-tab-label { font-size: 0.75rem; letter-spacing: .18em; text-transform: uppercase; }
+.score-tab-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Starts below the topbar rather than at the top of the window. The topbar is fixed and
+   translucent, so a drawer running under it put this panel's own heading behind the site's
+   navigation and blurred it. */
+.score-sidebar {
+  position: fixed; top: var(--topbar-h); right: 0; bottom: 0; z-index: 56;
+  width: min(360px, 88vw);
+  display: flex; flex-direction: column;
+  background: var(--ink-2); border-left: 1px solid var(--line);
+  box-shadow: -18px 0 50px rgba(0, 0, 0, .5);
+  transform: translateX(100%);
+  transition: transform .22s ease;
+  overflow-y: auto;
+}
+.score-sidebar.is-open { transform: translateX(0); }
+.score-sidebar-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 18px 18px 10px;
+}
+.score-sidebar-head .section-title { margin: 0; }
+.score-sidebar-body { padding: 0 18px 24px; }
+/* The board sizes its name column to the longest name in it, which is fine across a page and
+   pushes the bar and the points off the edge of a drawer. In here the names give way instead. */
+.score-sidebar .hb-rows { grid-template-columns: 16px 9px minmax(0, 1.3fr) 1fr auto; }
+.score-sidebar .hb-pts { min-width: 34px; }
+
+.score-scrim { position: fixed; inset: 0; z-index: 54; background: rgba(0, 0, 0, .45); }
+
+/* what a game has paid out so far. Folds away, because it only ever grows. */
+.score-recent { margin-top: 16px; }
+.score-recent-head {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 8px 4px; cursor: pointer;
+  background: none; border: 0; color: inherit; text-align: left;
+}
+.score-recent-head:hover .hb-label { color: var(--gold-light); }
+.score-recent-head .caret { transition: rotate .15s ease; }
+.score-recent-head .caret.is-open { rotate: 180deg; }
+.score-recent-list { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; }
+.score-recent-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 4px; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 0.844rem;
+}
+.score-recent-row:last-child { border-bottom: 0; }
+.score-recent-team { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.score-recent-pts { color: var(--gold); font-variant-numeric: tabular-nums; }
+.score-recent-note { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.score-undo { flex: 0 0 auto; }
+
+/* the relay: one gun, then each lead works their own clock */
+.relay-gun {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 34px 16px; margin-bottom: 18px; text-align: center;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius);
+}
+.relay-go {
+  font-family: var(--display); font-size: clamp(1.75rem, 9vw, 3rem); letter-spacing: .12em;
+  padding: 26px 64px; border-radius: var(--radius);
+}
+
+.relay-mine {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 26px 18px; margin-bottom: 18px; text-align: center;
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-top: 3px solid var(--team, var(--gold)); border-radius: var(--radius);
+}
+.relay-clock-big {
+  font-family: var(--display); font-size: clamp(3rem, 15vw, 6rem); line-height: 1;
+  margin: 0; color: var(--team, var(--gold)); font-variant-numeric: tabular-nums;
+}
+.relay-clock-big.is-running { text-shadow: 0 0 40px color-mix(in srgb, var(--team, #d4af37) 45%, transparent); }
+.relay-action { min-width: 240px; }
+/* The stop button wears the team's colour, so a lead can find theirs without reading. */
+.relay-stop {
+  background: var(--team, var(--gold)); border-color: var(--team, var(--gold)); color: #0b0b0c;
+  font-family: var(--display); font-size: 1.5rem; letter-spacing: .12em; padding: 20px 40px;
+}
+.relay-stop:hover { filter: brightness(1.1); }
+
+.relay-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.relay-card {
+  display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 14px 10px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-top: 3px solid var(--team, var(--gold)); border-radius: var(--radius);
+}
+.relay-card.is-mine { border-color: var(--team, var(--gold)); }
+.relay-card.is-running { background: color-mix(in srgb, var(--team, #d4af37) 10%, var(--panel)); }
+.relay-team {
+  font-family: var(--display); font-size: 0.938rem; letter-spacing: .04em; text-align: center;
+  width: 100%; min-width: 0; overflow-wrap: anywhere; hyphens: auto;
+}
+.relay-clock { font-size: 1.375rem; color: var(--team, var(--gold)); font-variant-numeric: tabular-nums; }
+
+.relay-finish { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 18px; text-align: center; }
+.relay-finish p { margin: 0; }
+
+@media (max-width: 620px) {
+  .team-picks, .count-grid, .relay-grid { grid-template-columns: 1fr; }
+  .cast-picks { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+  .settings-row { gap: 12px; }
+  .relay-action, .relay-go { width: 100%; min-width: 0; padding-left: 0; padding-right: 0; }
+  .score-recent-note { display: none; }
+  .page-game .card { padding: 16px 15px; }
+  .score-tab.is-open { right: 88vw; }
+  .round-result { padding: 34px 16px; }
+  .count-grid { gap: 14px; }
+  .count-score { width: 100%; min-width: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .round-splash, .round-result-who, .round-result-pts, .round-result-rest, .star { animation: none; }
+  .star-burst { display: none; }
+  .score-sidebar { transition: none; }
+  .count-go { animation: none; }
+}

@@ -1,0 +1,47 @@
+@* The scoreboard, out of the way until it is wanted.
+
+   It used to sit under the game and push the thing you were actually working — the character,
+   the counters, the clocks — off a phone screen. Here it is a drawer: shut by default, one tap
+   from open, and it never moves what is behind it. *@
+
+<button type="button" class="score-tab @(_open ? "is-open" : null)"
+        @onclick="() => _open = !_open"
+        aria-expanded="@(_open ? "true" : "false")"
+        aria-controls="@_id">
+    <span class="score-tab-label">@(_open ? "Hide" : "Scores")</span>
+    @if (!_open && Leader is { } leader)
+    {
+        <span class="score-tab-dot" style="background: @leader.Color"></span>
+    }
+</button>
+
+<aside id="@_id" class="score-sidebar @(_open ? "is-open" : null)" aria-hidden="@(_open ? "false" : "true")">
+    <div class="score-sidebar-head">
+        <h2 class="section-title">@Label</h2>
+        <button type="button" class="icon-btn" @onclick="() => _open = false" aria-label="Close the scoreboard">✕</button>
+    </div>
+
+    <div class="score-sidebar-body">
+        <GameScoreStrip Trip="Trip" GameId="@GameId" Label="Standing" />
+    </div>
+</aside>
+
+@if (_open)
+{
+    @* Tapping the page shuts the drawer, which is the gesture everyone tries first. *@
+    <div class="score-scrim" @onclick="() => _open = false" aria-hidden="true"></div>
+}
+
+@code {
+    [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
+    [Parameter, EditorRequired] public string GameId { get; set; } = "";
+
+    [Parameter] public string Label { get; set; } = "Scores";
+
+    private readonly string _id = $"scores-{Guid.NewGuid():n}";
+
+    private bool _open;
+
+    /// <summary>Who is ahead, so the shut tab can still wear their colour.</summary>
+    private Team? Leader => ScoreService.Leader(Trip, GameId);
+}

@@ -47,7 +47,7 @@
                         <div class="dropdown-menu">
                             @foreach (var child in entry.Children!)
                             {
-                                <a class="dropdown-item @On(child.Href)" href="@child.LinkHref" @onclick="() => Close(child.LinkHref)">
+                                <a class="dropdown-item @On(child.Href, exact: true)" href="@child.LinkHref" @onclick="() => Close(child.LinkHref)">
                                     @child.Label
                                 </a>
                             }
@@ -94,8 +94,13 @@
     /// writes <c>active</c>, which nothing in app.css matches, so plain anchors and this do the
     /// job NavLink was silently failing at. <see cref="NavTree.IsCurrent"/> owns the rule.
     /// </summary>
-    private string? On(string href) =>
-        NavTree.IsCurrent(href, _goingTo ?? Nav.ToBaseRelativePath(Nav.Uri)) ? "on" : null;
+    /// <param name="exact">
+    /// True for an entry inside a dropdown, which is lit only where it actually is. See
+    /// <see cref="NavTree.IsCurrent"/> — the branch covers its children, the children do not
+    /// cover each other.
+    /// </param>
+    private string? On(string href, bool exact = false) =>
+        NavTree.IsCurrent(href, _goingTo ?? Nav.ToBaseRelativePath(Nav.Uri), exact) ? "on" : null;
 
     private void Close(string? goingTo = null)
     {

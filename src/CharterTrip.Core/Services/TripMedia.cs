@@ -86,6 +86,12 @@ public static class TripMedia
             if (IdFrom(clue.ResponseImage) is { } responseMedia) ids.Add(responseMedia);
         }
 
+        // Police Sketch's cast. Missing this would mean uploading a picture for one character and
+        // then replacing another's deleted the first, since release decides by asking what the
+        // trip still points at.
+        foreach (var character in trip.Party.Sketch.Characters)
+            if (IdFrom(character.ImageUrl) is { } face) ids.Add(face);
+
         // Slides and teams keep a bare id rather than a path. Both shapes are collected here so
         // that whichever one wires up next cannot have its files deleted out from under it.
         foreach (var slide in trip.Slides)

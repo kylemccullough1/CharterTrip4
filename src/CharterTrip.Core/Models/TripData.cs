@@ -46,6 +46,9 @@ public sealed class TripData
     public JeopardyBoard Jeopardy { get; set; } = new();
     public SpellingBee SpellingBee { get; set; } = new();
     public MysteryState Mystery { get; set; } = new();
+
+    /// <summary>Live state for the four games played on their feet. See <see cref="PartyGames"/>.</summary>
+    public PartyGames Party { get; set; } = new();
 }
 
 public sealed class TripInfo

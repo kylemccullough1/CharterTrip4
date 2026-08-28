@@ -1,0 +1,11 @@
+@page "/games/beerrun"
+
+@* Beer Run. Same shape as the cups, but it is a race to a number rather than a share-out: four
+   beers back to your corner takes the round. The stack in the middle is a setting, and it stops at
+   thirteen — four for the winner and three each for everybody else, which is the most that can
+   still come down to one corner. *@
+
+<CountGame Id="@RoundGameService.BeerRunId"
+           Title="Beer Run"
+           Unit="beers"
+           SelectFor="t => t.Party.BeerRun" />

@@ -23,6 +23,20 @@ public class SeedDataTests
         Assert.Equal("Braun Manor", Seed.Trip.Venue);
     }
 
+    /// <summary>
+    /// The beer run is a race to four; the cups are a share-out with nothing to win at. That one
+    /// difference is what makes their stacks different sizes, so it is worth pinning down here.
+    /// </summary>
+    [Fact]
+    public void The_beer_run_carries_its_own_stack_and_the_cups_do_not()
+    {
+        Assert.Equal(4, Seed.Party.BeerRun.TakeToWin);
+        Assert.Equal(13, RoundGameService.RoundPool(Seed, Seed.Party.BeerRun));
+
+        Assert.Null(Seed.Party.NoodleCup.TakeToWin);
+        Assert.Equal(Seed.Teams.Count, RoundGameService.RoundPool(Seed, Seed.Party.NoodleCup));
+    }
+
     [Fact]
     public void Everyone_is_on_the_trip_and_on_a_team()
     {

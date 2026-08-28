@@ -1,0 +1,12 @@
+@page "/games/noodlecup"
+
+@* Pool Noodle Cups. Four players in at a time, and whoever is not playing is watching for
+   cheating and counting cups — this is where the counting lands.
+
+   The screen itself is CountGame, which Beer Run also uses: same rounds, same counting, and only
+   the noun is different. *@
+
+<CountGame Id="@RoundGameService.NoodleCupId"
+           Title="Pool Noodle Cups"
+           Unit="cups"
+           SelectFor="t => t.Party.NoodleCup" />

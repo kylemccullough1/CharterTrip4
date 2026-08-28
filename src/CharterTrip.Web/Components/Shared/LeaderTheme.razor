@@ -1,0 +1,37 @@
+@* The site wears the colours of whoever is winning.
+
+   Everything gold on this site reads from three variables and a tint, so handing those four the
+   leading team's colour repaints the whole thing — nav, buttons, headings, rules — without a
+   single page knowing it happened.
+
+   Written as a style block rather than a wrapper element on purpose: a div around the shell
+   would be a new box in the middle of a layout that has a fixed topbar and a centred page, and
+   custom properties inherit down the DOM whether or not there is anything to inherit through.
+
+   Everybody sees it, guests included. The standings themselves are still the committee's to
+   read, and strictly this does leak which team is ahead to anyone who works out that the site
+   is wearing their colour — which is the point rather than a flaw. Nobody has the four team
+   colours memorised, and a site that quietly changes character as the weekend goes on is worth
+   more than the secret it gives away.
+
+   Which colour, and whether it is safe to write into a stylesheet at all, is AccentPalette's
+   business; this only decides where it goes. *@
+
+@inherits TripAwareComponent
+
+@if (AccentPalette.Leader(Trip) is { } accent)
+{
+    <style>
+        :root {
+        --gold: @accent.Hex;
+        --gold-rgb: @accent.Rgb;
+        --gold-light: color-mix(in srgb, @accent.Hex 58%, #ffffff);
+        --gold-dim: color-mix(in srgb, @accent.Hex 55%, #000000);
+        }
+    </style>
+}
+
+@code {
+    /// <summary>Scores move it, and so does a team being recoloured out from under it.</summary>
+    protected override TripArea Watching => TripArea.All;
+}

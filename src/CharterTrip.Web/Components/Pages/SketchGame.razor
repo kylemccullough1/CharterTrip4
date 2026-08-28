@@ -1,0 +1,249 @@
+@page "/games/sketch"
+@inherits RoundGamePage
+
+@* Police Sketch. Nobody playing ever looks at this screen — the drawing happens on paper and the
+   describing happens out loud.
+
+   The round runs one way only: the round opens, you pick who is being drawn, you say who got it,
+   and that is the round over. There is no way to score without a character up, because "who
+   guessed it" is not a question that means anything until somebody is being drawn.
+
+   The round splash, the result card and the noises are RoundGamePage's, shared with the cups and
+   the beer run. What is here is the half that is actually about drawing a cartoon. *@
+
+<PageTitle>Police Sketch · Charter Trip 2026</PageTitle>
+
+<AdminOnly>
+<div class="page page-game">
+    @if (Definition is null)
+    {
+        <SectionCard Title="Police Sketch" Subtitle="This game is not in the trip data.">
+            <a class="btn btn-gold btn-sm" href="/games">See all games</a>
+        </SectionCard>
+    }
+    else if (State.Phase == PartyGamePhase.NotStarted)
+    {
+        <GameSetup Game="Definition" OnStart="BeginAsync"
+                   CanStart="@(State.Characters.Count > 0)"
+                   StartBlockedReason="Add at least one character before starting.">
+            <Structure>
+                <p><b>@State.PointValue points</b> to the first team to name the character.</p>
+                <p><b>@State.RoundCount rounds</b>, from a cast of @State.Characters.Count.</p>
+            </Structure>
+            <Settings>
+                <div class="settings-row">
+                    <label class="field">
+                        <span>Points per round</span>
+                        <input class="numfield" type="number" min="0" value="@State.PointValue"
+                               @onchange="e => SetPointValueAsync(e.Value?.ToString())" />
+                    </label>
+                    <label class="field">
+                        <span>Rounds</span>
+                        <input class="numfield" type="number" min="1" value="@State.RoundCount"
+                               @onchange="e => SetRoundCountAsync(e.Value?.ToString())" />
+                    </label>
+                </div>
+
+                <div class="row between center mt">
+                    <span class="hb-label">The cast · @State.Characters.Count</span>
+                    <button class="btn btn-gold btn-sm" @onclick="AddAsync">Add a character</button>
+                </div>
+                <p class="muted tiny">
+                    Give each one a picture so whoever is describing them has something to look at.
+                </p>
+
+                <div class="cast-list">
+                    @for (var i = 0; i < State.Characters.Count; i++)
+                    {
+                        var index = i;
+                        var character = State.Characters[index];
+                        <div class="cast-line" @key="index">
+                            <EditableText Value="@character.Name"
+                                          CssClass="cast-name"
+                                          ValueChanged="@(v => EditNameAsync(index, v))"
+                                          Placeholder="Name them" />
+                            <MediaField Value="@character.ImageUrl"
+                                        Label="@character.Name"
+                                        ShowUrl="false"
+                                        ValueChanged="@(v => EditImageAsync(index, v))" />
+                            <button type="button" class="btn btn-danger-ghost btn-xs cast-delete"
+                                    @onclick="() => RemoveAsync(index)">Delete</button>
+                        </div>
+                    }
+                </div>
+            </Settings>
+        </GameSetup>
+    }
+    else if (State.Phase == PartyGamePhase.Playing)
+    {
+        <GamePlayHead Title="Police Sketch" OnReset="ConfirmReset">
+            <Detail>@State.PointValue points a round · a cast of @State.Characters.Count</Detail>
+        </GamePlayHead>
+
+        <RoundSplash Game="State" />
+
+        @if (ShowingResult)
+        {
+            <RoundResult Rows="ResultRows!" Kicker="@ResultKicker" Caption="@ResultCaption" />
+        }
+        else if (Current is { } current)
+        {
+            <SectionCard Title="Describing now">
+                <div class="card sketch-now">
+                    @if (current.ImageUrl is { Length: > 0 })
+                    {
+                        <MediaView Src="@current.ImageUrl" CssClass="sketch-image" Alt="@current.Name" />
+                    }
+                    <p class="sketch-current @(current.Name.Length > 14 ? "is-long" : null)">@current.Name</p>
+                    <button class="btn btn-ghost btn-sm" @onclick="ClearAsync">Pick a different one</button>
+                </div>
+            </SectionCard>
+
+            <SectionCard Title="Who guessed it first?"
+                         Subtitle="@($"Awards {State.PointValue} points and closes the round.")">
+                <div class="team-picks">
+                    @foreach (var team in Trip.Teams)
+                    {
+                        var pick = team;
+                        <button type="button" class="team-pick" style="--team:@team.Color"
+                                @onclick="() => AwardAsync(pick)" @key="team.Id">
+                            <span class="team-pick-name">@team.Name</span>
+                            <span class="team-pick-pts">+@State.PointValue</span>
+                        </button>
+                    }
+                </div>
+                <div class="row gap mt">
+                    <button class="btn btn-ghost btn-sm" @onclick="SkipRoundAsync">Nobody got it — skip the round</button>
+                </div>
+            </SectionCard>
+        }
+        else
+        {
+            <SectionCard Title="Who are they drawing?"
+                         Subtitle="Pick one and the round is on. Nobody can score until you do.">
+                <div class="card sketch-pick">
+                    @if (Remaining.Count > 0)
+                    {
+                        <div class="cast-picks">
+                            @foreach (var character in Remaining)
+                            {
+                                var pick = character.Name;
+                                <button type="button" class="cast-pick" @onclick="() => PickAsync(pick)" @key="pick">
+                                    @if (character.ImageUrl is { Length: > 0 })
+                                    {
+                                        <img class="cast-pick-face" src="@character.ImageUrl" alt="" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <span class="cast-pick-face is-empty" aria-hidden="true">?</span>
+                                    }
+                                    <span class="cast-pick-name">@character.Name</span>
+                                </button>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="muted">Everyone has been drawn. Reset to use the cast again.</p>
+                    }
+                </div>
+            </SectionCard>
+        }
+
+        <GameScoreSidebar Trip="Trip" GameId="@RoundGameService.SketchId" Label="Police Sketch" />
+    }
+    else
+    {
+        <GameVictory Rows="ScoreService.Scoreboard(Trip, RoundGameService.SketchId)"
+                     Winners="ScoreService.Leaders(Trip, RoundGameService.SketchId)"
+                     Kicker="Police Sketch">
+            <Actions>
+                <button class="btn btn-ghost btn-lg" @onclick="ConfirmReset">Play again</button>
+            </Actions>
+        </GameVictory>
+    }
+</div>
+
+<ConfirmDialog @ref="_confirm" />
+</AdminOnly>
+
+@code {
+    private ConfirmDialog? _confirm;
+
+    protected override string GameId => RoundGameService.SketchId;
+    protected override RoundGame State => Trip.Party.Sketch;
+    protected override RoundGame Select(TripData trip) => trip.Party.Sketch;
+
+    /// <summary>
+    /// A round is not really open until somebody is being drawn, so the noise waits for that
+    /// rather than landing while the host is still choosing from the cast.
+    /// </summary>
+    protected override bool ReadyToAnnounce => base.ReadyToAnnounce && State.CurrentCharacter is null;
+
+    private IReadOnlyList<SketchCharacter> Remaining => RoundGameService.RemainingCharacters(State);
+    private SketchCharacter? Current => RoundGameService.Find(State, State.CurrentCharacter);
+
+    private Task PickAsync(string name) =>
+        MutateAsync(t => RoundGameService.PickCharacter(t.Party.Sketch, name));
+
+    /// <summary>Puts the character back in the hat as well as off the screen — they were never drawn.</summary>
+    private Task ClearAsync() => MutateAsync(t =>
+    {
+        var game = t.Party.Sketch;
+        if (game.CurrentCharacter is { } name)
+            game.UsedCharacters.RemoveAll(u => string.Equals(u, name, StringComparison.OrdinalIgnoreCase));
+        game.CurrentCharacter = null;
+    });
+
+    private async Task AwardAsync(Team team)
+    {
+        var points = State.PointValue;
+        var character = State.CurrentCharacter;
+        var round = State.Round;
+
+        await MutateAsync(t =>
+            RoundGameService.AwardRoundWinner(
+                t, t.Party.Sketch, RoundGameService.SketchId, team.Id, DateTimeOffset.UtcNow));
+
+        _ = ShowResultAsync([new ScoreRow(team, points)], $"Round {round}", character);
+    }
+
+    private void ConfirmReset() => _confirm?.Show(
+        "This clears Police Sketch's points and puts the game back to the rules card. Nothing else is touched.",
+        ResetAsync,
+        "Reset the game",
+        "Reset Police Sketch");
+
+    // ------------------------------------------------------------------ settings
+
+    private Task SetPointValueAsync(string? raw) =>
+        int.TryParse(raw, out var value) && value >= 0
+            ? MutateAsync(t => t.Party.Sketch.PointValue = value)
+            : Task.CompletedTask;
+
+    private Task SetRoundCountAsync(string? raw) =>
+        int.TryParse(raw, out var value) && value >= 1
+            ? MutateAsync(t => t.Party.Sketch.RoundCount = value)
+            : Task.CompletedTask;
+
+    private Task AddAsync() =>
+        MutateAsync(t => t.Party.Sketch.Characters.Add(new SketchCharacter { Name = "New character" }));
+
+    private Task EditNameAsync(int index, string value) => MutateAsync(t =>
+    {
+        var cast = t.Party.Sketch.Characters;
+        if (index >= 0 && index < cast.Count && value.Trim().Length > 0) cast[index].Name = value.Trim();
+    });
+
+    private Task EditImageAsync(int index, string value) => MutateAsync(t =>
+    {
+        var cast = t.Party.Sketch.Characters;
+        if (index >= 0 && index < cast.Count) cast[index].ImageUrl = value.Trim();
+    });
+
+    private Task RemoveAsync(int index) => MutateAsync(t =>
+    {
+        var cast = t.Party.Sketch.Characters;
+        if (index >= 0 && index < cast.Count) cast.RemoveAt(index);
+    });
+}

@@ -1,0 +1,122 @@
+@* Pool Noodle Cups and Beer Run: after each round, say how many each team carried off.
+
+   There is no heading here. The round already announces itself above in letters an inch high,
+   and saying "Round 1" again immediately underneath it was the sort of thing you stop seeing
+   after a day and never stop paying for on a phone.
+
+   What is in a round is a fixed pool — four cups, or a stack of beers — so the counters share it
+   rather than each offering the whole stack. Claiming one takes it away from everybody else,
+   which is what the round actually does.
+
+   The beer run also has a number that wins it: four back to your corner and the round is over.
+   No team can be credited with more than that, and the beers still on the floor when somebody
+   gets there are not scored, because nobody carried them anywhere. *@
+
+@inject ITripStore Store
+
+<div class="count-grid">
+    @foreach (var team in Active)
+    {
+        var id = team.Id;
+        var mine = Count(id);
+        <div class="count-card @(mine > 0 ? "is-scoring" : null)" style="--team:@team.Color" @key="id">
+            <span class="count-team">@team.Name</span>
+            <div class="count-controls">
+                <button type="button" class="btn btn-ghost count-step"
+                        disabled="@(mine == 0)"
+                        @onclick="() => Nudge(id, -1)">−</button>
+                <span class="count-value">@mine</span>
+                <button type="button" class="btn btn-ghost count-step"
+                        disabled="@(Left == 0 || mine >= Cap)"
+                        @onclick="() => Nudge(id, 1)">+</button>
+            </div>
+            <span class="count-points">@(mine * State.PointValue) pts</span>
+        </div>
+    }
+</div>
+
+@* Nothing to press until the round is actually over. Before that the only thing to do is keep
+   counting, and a button offering to end it early is just a way to end it early by accident. *@
+@if (RoundOver)
+{
+    <div class="count-go">
+        <button class="btn btn-gold btn-lg count-score" @onclick="ScoreRoundAsync">Score the round</button>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
+    [Parameter, EditorRequired] public RoundGame State { get; set; } = default!;
+    [Parameter, EditorRequired] public string GameId { get; set; } = "";
+
+    /// <summary>What is being counted, plural: "cups", "beers".</summary>
+    [Parameter, EditorRequired] public string Unit { get; set; } = "";
+
+    /// <summary>Reaches into the live trip to find this game's state, since the parameter is a snapshot.</summary>
+    [Parameter, EditorRequired] public Func<TripData, RoundGame> Select { get; set; } = default!;
+
+    /// <summary>What the round paid out, so the page can put it on screen before moving on.</summary>
+    [Parameter] public EventCallback<IReadOnlyList<ScoreRow>> OnScored { get; set; }
+
+    /// <summary>This round's tally, per team. Local until the round is scored.</summary>
+    private readonly Dictionary<string, int> _counts = new(StringComparer.Ordinal);
+
+    private IReadOnlyList<Team> Active => Trip.Teams;
+
+    /// <summary>How many there are to go round, all teams together. Set per game.</summary>
+    private int Pool => RoundGameService.RoundPool(Trip, State);
+
+    /// <summary>The most one team can be credited with — four beers wins the round and ends it.</summary>
+    private int Cap => RoundGameService.MostOneTeamCanTake(Trip, State);
+
+    /// <summary>
+    /// Over when somebody has their four. That is the win, and it is the only thing that ends a
+    /// beer run round — a stack that has merely been emptied without anybody getting there is not
+    /// a result, and the stack is sized so it cannot happen anyway.
+    ///
+    /// A game with no number to win has nothing to reach, so it runs its stack out instead, which
+    /// is where the cups started.
+    /// </summary>
+    private bool RoundOver => State.TakeToWin is null
+        ? Left == 0
+        : Active.Any(t => Count(t.Id) >= Cap);
+
+    private int Count(string teamId) => _counts.GetValueOrDefault(teamId);
+
+    private int Total => Active.Sum(t => Count(t.Id));
+
+    private int Left => Math.Max(0, Pool - Total);
+
+    private void Nudge(string teamId, int by)
+    {
+        var next = Count(teamId) + by;
+        if (next < 0) return;
+        if (by > 0 && (Left == 0 || next > Cap)) return;
+
+        _counts[teamId] = next;
+    }
+
+    private async Task ScoreRoundAsync()
+    {
+        // Only teams that are still on the trip: a count left behind by a team deleted mid-game
+        // would otherwise write points to somebody who is no longer anywhere on the scoreboard.
+        var live = Active.Select(t => t.Id).ToHashSet(StringComparer.Ordinal);
+        var counts = _counts.Where(kv => live.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
+
+        // Captured before the mutation, which advances the round out from under these counts.
+        var scored = Active
+            .Where(t => Count(t.Id) > 0)
+            .Select(t => new ScoreRow(t, Count(t.Id) * State.PointValue))
+            .ToList();
+
+        var unit = Unit;
+        var gameId = GameId;
+
+        await Store.MutateAsync(
+            t => RoundGameService.AwardRoundCounts(t, Select(t), gameId, counts, unit, DateTimeOffset.UtcNow),
+            TripArea.Games);
+
+        _counts.Clear();
+        await OnScored.InvokeAsync(scored);
+    }
+}

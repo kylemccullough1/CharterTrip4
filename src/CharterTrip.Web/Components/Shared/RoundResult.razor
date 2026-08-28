@@ -1,0 +1,61 @@
+@* What just happened, with stars.
+
+   One team took the round in Police Sketch; three of them carried something off in the cups and
+   the beer run. Both are the same card — who scored and what they got — so it takes rows rather
+   than a single winner, and leads on whoever got the most. *@
+
+<section class="round-result" style="--team:@(Top?.Team.Color ?? "var(--gold)")">
+    <span class="star-burst" aria-hidden="true">
+        @for (var s = 0; s < 12; s++)
+        {
+            <span class="star" style="--i:@s"></span>
+        }
+    </span>
+
+    @if (Kicker is { Length: > 0 })
+    {
+        <p class="round-result-kicker">@Kicker</p>
+    }
+
+    @if (Top is { } top)
+    {
+        <p class="round-result-who">@top.Team.Name</p>
+        <p class="round-result-pts">+@top.Points</p>
+    }
+
+    @if (Rest.Count > 0)
+    {
+        <div class="round-result-rest">
+            @foreach (var row in Rest)
+            {
+                <span class="round-result-also" style="--team:@row.Team.Color" @key="row.Team.Id">
+                    <span class="hb-dot" style="background: @row.Team.Color"></span>
+                    @row.Team.Name
+                    <b>+@row.Points</b>
+                </span>
+            }
+        </div>
+    }
+
+    @if (Caption is { Length: > 0 })
+    {
+        <p class="muted round-result-caption">@Caption</p>
+    }
+</section>
+
+@code {
+    /// <summary>Who scored and what they got. Ordered here, so callers do not each pick an order.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<ScoreRow> Rows { get; set; } = [];
+
+    /// <summary>A word above the name — the round, or what the points were for.</summary>
+    [Parameter] public string? Kicker { get; set; }
+
+    /// <summary>A line underneath: the character that was drawn, the time that won it.</summary>
+    [Parameter] public string? Caption { get; set; }
+
+    private IReadOnlyList<ScoreRow> Ordered => Rows.OrderByDescending(r => r.Points).ToList();
+
+    private ScoreRow? Top => Ordered.FirstOrDefault();
+
+    private IReadOnlyList<ScoreRow> Rest => Ordered.Skip(1).ToList();
+}

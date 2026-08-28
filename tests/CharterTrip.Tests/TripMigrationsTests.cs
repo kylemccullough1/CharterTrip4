@@ -569,6 +569,72 @@ public class TripMigrationsTests
         Assert.Equal("Mine", Assert.Single(trip.Guide.Essentials).Group);
     }
 
+    // ------------------------------- v24/v25: the beer run is a race to four
+
+    [Fact]
+    public void V24_gives_the_beer_run_the_number_that_wins_a_round()
+    {
+        var trip = new TripData { SchemaVersion = 23 };
+
+        Assert.True(TripMigrations.Apply(trip));
+
+        Assert.Equal(4, trip.Party.BeerRun.TakeToWin);
+        Assert.Null(trip.Party.NoodleCup.TakeToWin);
+    }
+
+    /// <summary>
+    /// The party steps were numbered from 19 on the branch they were written on, where the bee did
+    /// not exist. A file the bee has already stamped 21 is exactly what that numbering would have
+    /// stranded — every party step behind it, none of them ever run. This is the test that says
+    /// they were moved to the end of the ladder rather than left where they were.
+    /// </summary>
+    [Fact]
+    public void The_party_games_reach_a_file_the_bee_already_stamped()
+    {
+        var trip = new TripData { SchemaVersion = 21 };
+
+        Assert.True(TripMigrations.Apply(trip));
+
+        Assert.NotEqual(0, trip.Party.Sketch.PointValue);
+        Assert.NotEmpty(trip.Party.Sketch.Characters);
+        Assert.Equal(4, trip.Party.BeerRun.TakeToWin);
+    }
+
+    /// <summary>A number the host has already chosen is theirs, not the seed's.</summary>
+    [Fact]
+    public void V24_leaves_a_number_to_win_that_has_already_been_set()
+    {
+        var trip = new TripData { SchemaVersion = 23 };
+        trip.Party.BeerRun.TakeToWin = 3;
+
+        TripMigrations.Apply(trip);
+
+        Assert.Equal(3, trip.Party.BeerRun.TakeToWin);
+    }
+
+    /// <summary>
+    /// v25 carries no data of its own — it exists to restamp the file so the roundPool key the
+    /// earlier shape wrote is flushed rather than sitting there ignored. So it must still report
+    /// a change.
+    /// </summary>
+    [Fact]
+    public void V25_restamps_a_file_that_still_carries_the_old_stack_key()
+    {
+        var trip = new TripData { SchemaVersion = 24 };
+
+        Assert.True(TripMigrations.Apply(trip));
+        Assert.Equal(TripMigrations.CurrentVersion, trip.SchemaVersion);
+    }
+
+    [Fact]
+    public void The_beer_run_migrations_run_twice_without_changing_anything()
+    {
+        var trip = new TripData { SchemaVersion = 23 };
+        TripMigrations.Apply(trip);
+
+        Assert.False(TripMigrations.Apply(trip));
+    }
+
     [Fact]
     public void V14_running_twice_changes_nothing_the_second_time()
     {

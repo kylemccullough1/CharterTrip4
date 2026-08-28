@@ -1,0 +1,159 @@
+{
+  "factions": [
+    {
+      "id": "killer",
+      "name": "The Syndicate Hand",
+      "blurb": "........",
+      "knowledge": "........",
+      "win_condition": "........",
+      "knows_each_other": true,
+      "abilities": [
+        {
+          "id": "evidence_hand",
+          "name": "The Syndicate's Hand (choose one)",
+          "text": "........",
+          "charges": 1,
+          "shared": true,
+          "unlock": "discussion2",
+          "modes": [
+            {
+              "id": "plant",
+              "name": "Plant",
+              "text": "........"
+            },
+            {
+              "id": "scrub",
+              "name": "Scrub",
+              "text": "........"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "minion",
+      "name": "Syndicate Associates",
+      "blurb": "........",
+      "knowledge": "........",
+      "win_condition": "........",
+      "knows_each_other": true,
+      "abilities": [
+        {
+          "id": "loyalty",
+          "name": "Loyalty (choose one)",
+          "text": "........",
+          "charges": 1,
+          "shared": true,
+          "unlock": "discussion2",
+          "modes": [
+            {
+              "id": "shield",
+              "name": "Shield",
+              "text": "........"
+            },
+            {
+              "id": "decoy",
+              "name": "Decoy",
+              "text": "........"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "detective",
+      "name": "The Investigators",
+      "blurb": "........",
+      "knowledge": "........",
+      "win_condition": "........",
+      "knows_each_other": true,
+      "abilities": [
+        {
+          "id": "sync",
+          "name": "Phone Sync",
+          "text": "........",
+          "charges": 2,
+          "shared": false,
+          "unlock": "studyScene",
+          "modes": []
+        },
+        {
+          "id": "tamper_check",
+          "name": "Forensics",
+          "text": "........",
+          "charges": 1,
+          "shared": false,
+          "unlock": "discussion1",
+          "modes": []
+        },
+        {
+          "id": "killer_check",
+          "name": "The Hard Question",
+          "text": "........",
+          "charges": 1,
+          "shared": false,
+          "unlock": "discussion2",
+          "modes": []
+        }
+      ]
+    },
+    {
+      "id": "jester",
+      "name": "The Desperate",
+      "blurb": "........",
+      "knowledge": "........",
+      "win_condition": "........",
+      "knows_each_other": false,
+      "abilities": [
+        {
+          "id": "self_frame",
+          "name": "Incriminate Yourself",
+          "text": "........",
+          "charges": 2,
+          "shared": false,
+          "unlock": "investigation",
+          "modes": [
+            {
+              "id": "subtle",
+              "name": "Subtle",
+              "text": "........"
+            },
+            {
+              "id": "blatant",
+              "name": "Blatant",
+              "text": "........"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inheritance",
+      "name": "The Braun Claim",
+      "blurb": "........",
+      "knowledge": "........",
+      "win_condition": "........",
+      "knows_each_other": true,
+      "abilities": [
+        {
+          "id": "dig_dirt",
+          "name": "Family Secrets",
+          "text": "........",
+          "charges": 1,
+          "shared": false,
+          "unlock": "discussion1",
+          "modes": []
+        }
+      ]
+    },
+    {
+      "id": "villager",
+      "name": "Guests of the House",
+      "blurb": "........",
+      "knowledge": "........",
+      "win_condition": "........",
+      "knows_each_other": false,
+      "abilities": []
+    }
+  ]
+}

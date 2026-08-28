@@ -121,8 +121,18 @@ public static class TripImporter
                 warnings.Add($"Jeopardy categories with no clues: {string.Join(", ", thin)}.");
         }
 
-        if (trip.Mystery.Characters.Count > 0 && trip.Mystery.Characters.Count < trip.Roster.Count)
-            warnings.Add($"Only {trip.Mystery.Characters.Count} mystery roles for {trip.Roster.Count} people.");
+        // A mystery file carries its own solution — who is guilty is written into the story, not
+        // drawn on the night — so importing one mid-evening swaps the murder out from under the room.
+        // Worth saying plainly rather than letting it be discovered on the wall.
+        if (trip.Mystery.Story.Characters.Count > 0)
+        {
+            var killers = trip.Mystery.Story.Killers.Count();
+            var seated = trip.Mystery.Play.Cast.Count(c => c.PersonId is not null);
+            warnings.Add(
+                $"This file carries a murder mystery: {trip.Mystery.Story.Characters.Count} characters " +
+                $"and {killers} killers, replacing the current story." +
+                (seated > 0 ? $" {seated} people are already cast in it." : ""));
+        }
 
         // Play state travels with the file. Nobody expects an upload to change the scoreboard,
         // so say so here rather than letting it be discovered on the wall.
@@ -134,8 +144,8 @@ public static class TripImporter
             warnings.Add($"This file has a Jeopardy game in progress ({trip.Jeopardy.Game.Phase}), " +
                          "including its buzzer codes.");
 
-        if (trip.Mystery.Active)
-            warnings.Add("This file has the murder mystery running.");
+        if (trip.Mystery.Phase != MysteryPhase.Lobby)
+            warnings.Add($"This file has the murder mystery running ({trip.Mystery.Phase}).");
 
         return warnings;
     }
@@ -192,6 +202,6 @@ public readonly record struct TripCounts(
         trip.Itinerary.Count,
         trip.Itinerary.Sum(d => d.Items.Count),
         trip.Jeopardy.Categories.Sum(c => c.Clues.Count),
-        trip.Mystery.Characters.Count,
+        trip.Mystery.Story.Characters.Count,
         trip.Scores.Count);
 }

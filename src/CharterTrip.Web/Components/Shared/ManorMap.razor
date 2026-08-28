@@ -1,0 +1,162 @@
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+
+@* The house, drawn rather than photographed.
+
+   Positioned HTML rather than SVG: the rooms are rectangles, which divs do perfectly well, and it
+   keeps the labels as real text that inherits the site's type and theming. (Razor also reserves
+   <text> as its own escape tag, so SVG labels fight the compiler.)
+
+   The layout is faithful to the adjacency in zones.json — the study touches only the Entry and the
+   Family Room, which is exactly why the access killer had to be standing near one of them, and the
+   Driveway and Lawn are outside the front door. Somebody reading this to work out who could have
+   reached the body needs it to be true, not just tidy.
+
+   Four modes, one component: labels only before the murder, evidence dots during the investigation,
+   the scan trail once the detectives need it, and the cards themselves laid into their rooms when
+   the room is talking it through. One component rather than four, so the gate that hides where
+   people walked lives in exactly one place and cannot half-open. *@
+
+<div class="mm-wrap @(Big ? "is-big" : "")">
+    <div class="mm">
+
+        @* Roped off for the night, and drawn so people stop asking. *@
+        <div class="mm-room is-shut" style="@Box(300, 14, 146, 86)">
+            <span class="mm-name">West wing</span>
+            <span class="mm-sub">wet paint</span>
+        </div>
+
+        @foreach (var room in Rooms)
+        {
+            var zone = Story.Zone(room.Id);
+            if (zone is null) { continue; }
+
+            var clueId = ClueIn(room.Id);
+            var hasClue = clueId.Length > 0;
+            var found = ShowPins && hasClue && ScanShareService.IsFound(Trip, clueId);
+            var seen = ShowTrail && hasClue ? TrailCount(room.Id) : 0;
+
+            <div class="mm-room @(room.Id == Highlight ? "is-you" : "") @(zone.PlayersAllowed ? "" : "is-scene") @(found ? "has-card" : "")"
+                 style="@Box(room.X, room.Y, room.W, room.H)"
+                 @key="room.Id">
+
+                <span class="mm-name">@zone.Name</span>
+
+                @if (room.Id == Highlight && !ShowCards)
+                {
+                    <span class="mm-sub">you were here</span>
+                }
+
+                @if (ShowPins && hasClue)
+                {
+                    @* Evidence, never people. Every room holds a card, so the dot is always there and
+                       only its colour is news — a dot that appeared on being found made the rooms
+                       nobody had searched look like rooms with nothing in them. *@
+                    <span class="mm-dot @(found ? "is-found" : "")" aria-hidden="true"></span>
+                }
+
+                @if (ShowCards && found)
+                {
+                    @* The card itself, lying in the room it was found in. The board used to stack
+                       nine of these in a column, which threw away the one thing that makes them
+                       argue: where they were in relation to each other and to the study. *@
+                    <p class="mm-card" style="--lines:@Lines(room.H)">@ScanShareService.PublicReading(Trip, clueId)</p>
+                }
+
+                @if (seen > 0)
+                {
+                    <span class="mm-trail" title="@seen @(seen == 1 ? "person" : "people") read this card">
+                        @seen read
+                    </span>
+                }
+            </div>
+        }
+    </div>
+
+    @if (ShowPins || ShowTrail)
+    {
+        @* The key does the explaining, because it sits against the thing it is
+           explaining. A paragraph above the plan costs the plan a hundred pixels of
+           height and is read once. *@
+        <p class="mm-key">
+            @if (ShowCards)
+            {
+                <span class="mm-key-item">Every card that has been found, lying in the room it was found in.</span>
+            }
+            <span class="mm-key-item"><i class="mm-dot" aria-hidden="true"></i> a card nobody has found</span>
+            <span class="mm-key-item"><i class="mm-dot is-found" aria-hidden="true"></i> found and read out</span>
+
+            @if (ShowTrail)
+            {
+                <span class="mm-key-item"><i class="mm-key-trail" aria-hidden="true"></i> how many people read it</span>
+            }
+        </p>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
+
+    /// <summary>The room to mark as yours, if any.</summary>
+    [Parameter] public string? Highlight { get; set; }
+
+    /// <summary>Evidence dots. Off before the murder — there is nothing to find yet.</summary>
+    [Parameter] public bool ShowPins { get; set; }
+
+    /// <summary>Who read what. Gated on the phase; see <c>PhaseService.TrailVisible</c>.</summary>
+    [Parameter] public bool ShowTrail { get; set; }
+
+    /// <summary>Lay the found cards into their rooms. The board's discussion rounds.</summary>
+    [Parameter] public bool ShowCards { get; set; }
+
+    /// <summary>Sized for a television rather than a hand.</summary>
+    [Parameter] public bool Big { get; set; }
+
+    private MysteryStory Story => Trip.Mystery.Story;
+
+    private string ClueIn(string zoneId) =>
+        Story.Clues.FirstOrDefault(c => c.ZoneId == zoneId)?.Id ?? "";
+
+    /// <summary>
+    /// Reads through <c>ScanShareService.Trail</c> rather than the scan list directly, so the phase
+    /// gate applies even if a caller passes ShowTrail when it should not.
+    /// </summary>
+    private int TrailCount(string zoneId) => ScanShareService.Trail(Trip, ClueIn(zoneId)).Count;
+
+    /// <summary>
+    /// How many lines of card this room can hold.
+    ///
+    /// The rooms are four different heights, so one clamp cannot fit them all: at four lines the
+    /// Grand Hall Extension cut a sentence off mid-word with no ellipsis, and at two the Study
+    /// wasted half its box. Derived from the room's own height, so it stays right if a room moves.
+    /// </summary>
+    private static int Lines(int height) => height switch
+    {
+        >= 100 => 4,
+        >= 80 => 3,
+        >= 66 => 2,
+        _ => 1
+    };
+
+    /// <summary>Percentages of a 460x360 plan, so the whole map scales to whatever it is put in.</summary>
+    private static string Box(int x, int y, int w, int h) =>
+        $"left:{Pc(x, 460)}%;top:{Pc(y, 360)}%;width:{Pc(w, 460)}%;height:{Pc(h, 360)}%";
+
+    private static string Pc(int value, int of) =>
+        (value * 100.0 / of).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+
+    private sealed record Room(string Id, int X, int Y, int W, int H);
+
+    private static readonly Room[] Rooms =
+    [
+        new("study",          150,  14, 140,  86),
+        new("entry",          150, 108, 140,  70),
+        new("family_room",     14, 108, 128,  70),
+        new("kitchen",         14, 186, 128,  70),
+        new("sitting_room",   150, 186, 140,  70),
+        new("grand_hall",     300, 108, 146, 100),
+        new("extension_room", 300, 216, 146,  60),
+        new("driveway",        14, 264, 128,  82),
+        new("lawn",           150, 264, 140,  82)
+    ];
+}

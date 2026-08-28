@@ -1,0 +1,107 @@
+{
+  "zones": [
+    {
+      "id": "study",
+      "name": "The Study",
+      "players_allowed": false,
+      "notes": "Murder site. Braun only. Reachable only via entry and family_room. Exterior windows face the lawn.",
+      "adjacent": [
+        "entry",
+        "family_room"
+      ],
+      "clue_spot": "The scene itself. The bloody QR."
+    },
+    {
+      "id": "entry",
+      "name": "Entry",
+      "players_allowed": true,
+      "notes": "........",
+      "adjacent": [
+        "study",
+        "family_room",
+        "driveway"
+      ],
+      "clue_spot": "The console table by the study corridor."
+    },
+    {
+      "id": "family_room",
+      "name": "Family Room",
+      "players_allowed": true,
+      "notes": "........",
+      "adjacent": [
+        "study",
+        "entry",
+        "kitchen",
+        "sitting_room"
+      ],
+      "clue_spot": "Braun's collection cabinets."
+    },
+    {
+      "id": "kitchen",
+      "name": "Kitchen",
+      "players_allowed": true,
+      "notes": "........",
+      "adjacent": [
+        "family_room",
+        "sitting_room",
+        "driveway"
+      ],
+      "clue_spot": "The service counter, among the delivery paperwork."
+    },
+    {
+      "id": "sitting_room",
+      "name": "Sitting Room & Stairs",
+      "players_allowed": true,
+      "notes": "Upstairs is roped off; the landing is visible from here.",
+      "adjacent": [
+        "family_room",
+        "kitchen",
+        "grand_hall"
+      ],
+      "clue_spot": "The stairwell closet."
+    },
+    {
+      "id": "grand_hall",
+      "name": "Grand Hall",
+      "players_allowed": true,
+      "notes": "........",
+      "adjacent": [
+        "sitting_room",
+        "extension_room"
+      ],
+      "clue_spot": "The stage area and the champagne tower wreckage."
+    },
+    {
+      "id": "extension_room",
+      "name": "Grand Hall Extension",
+      "players_allowed": true,
+      "notes": "Far end of the closed west wing. The most private room in the house.",
+      "adjacent": [
+        "grand_hall"
+      ],
+      "clue_spot": "The bar crates and the storage door."
+    },
+    {
+      "id": "driveway",
+      "name": "Driveway",
+      "players_allowed": true,
+      "notes": "The side path wraps to the study side of the house. Access via side_path route.",
+      "adjacent": [
+        "entry",
+        "kitchen",
+        "lawn"
+      ],
+      "clue_spot": "Around the parked cars and the side path."
+    },
+    {
+      "id": "lawn",
+      "name": "The Lawn & Gardens",
+      "players_allowed": true,
+      "notes": "The study's exterior windows face the lawn. Access via window route.",
+      "adjacent": [
+        "driveway"
+      ],
+      "clue_spot": "The far garden bed and beneath the study windows."
+    }
+  ]
+}

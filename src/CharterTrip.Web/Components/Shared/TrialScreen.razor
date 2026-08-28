@@ -1,0 +1,232 @@
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+
+@* A trial, on the screen everybody is looking at.
+
+   No clocks. During a vote the board shows who has not locked in — the typing dots are doing the
+   work a countdown used to, and doing it better, because they point at the actual holdout rather
+   than at an arbitrary deadline.
+
+   Every stage says out loud what is happening and what the room is supposed to do next. Four of
+   the five used to be a grid of faces and a headline, which reads fine to whoever built it and
+   leaves twenty-one people asking each other whether they are meant to be talking. *@
+
+@if (Trial is null)
+{
+    <p class="ms-idle">Waiting for the trial to open.</p>
+}
+else
+{
+    <section class="ms-head">
+        <p class="ms-round">@TrialLabel · @MysteryTrialStages.Label(Trial.Stage)</p>
+        <h1 class="ms-title-big">@StageHeadline</h1>
+        @if (StageInstruction is { } instruction)
+        {
+            <p class="ms-lede">@instruction</p>
+        }
+    </section>
+
+    @switch (Trial.Stage)
+    {
+        case MysteryTrialStage.Nominating:
+        case MysteryTrialStage.FinalVote:
+
+            @* Deliberately no running tally. Showing one turns the vote into a bandwagon, and the
+               people who vote last would decide everything. *@
+            <div class="ms-grid ms-grid-voting">
+                @foreach (var character in Electorate)
+                {
+                    var waiting = Awaiting.Contains(character.Id);
+                    <div class="ms-guest @(waiting ? "is-thinking" : "is-locked")" @key="character.Id">
+                        <Portrait Seat="@SeatFor(character.Id)" Character="character" />
+                        <span class="ms-guest-name">@character.Name</span>
+
+                        @if (waiting)
+                        {
+                            <span class="ms-typing" aria-label="still deciding">
+                                <i></i><i></i><i></i>
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="ms-locked" aria-label="voted">✓</span>
+                        }
+                    </div>
+                }
+            </div>
+
+            <p class="ms-count">
+                @if (Awaiting.Count == 0)
+                {
+                    <b>Everybody has voted.</b>
+                }
+                else
+                {
+                    <span>Waiting on <b>@Awaiting.Count</b></span>
+                }
+            </p>
+            break;
+
+        case MysteryTrialStage.Tallying:
+            <div class="ms-nominees">
+                @foreach (var (characterId, votes) in Tally)
+                {
+                    <div class="ms-nominee @(Trial.NomineeCharacterIds.Contains(characterId) ? "is-standing" : "")"
+                         @key="characterId">
+                        <Portrait Seat="@SeatFor(characterId)" Character="@Story.Character(characterId)" />
+                        <span class="ms-nominee-name">@Story.Character(characterId)?.Name</span>
+                        <span class="ms-nominee-votes">@votes @(votes == 1 ? "vote" : "votes")</span>
+
+                        @if (Trial.NomineeCharacterIds.Contains(characterId))
+                        {
+                            <span class="ms-nominee-flag">on the stand</span>
+                        }
+                    </div>
+                }
+            </div>
+            break;
+
+        case MysteryTrialStage.Defence:
+            <div class="ms-nominees">
+                @foreach (var characterId in Trial.NomineeCharacterIds)
+                {
+                    var spoken = Trial.NomineeCharacterIds.IndexOf(characterId) < Trial.SpeakingIndex;
+
+                    <div class="ms-nominee @(characterId == Speaking ? "is-speaking" : "") @(spoken ? "is-spoken" : "")"
+                         @key="characterId">
+                        <Portrait Seat="@SeatFor(characterId)" Character="@Story.Character(characterId)" />
+                        <span class="ms-nominee-name">@Story.Character(characterId)?.Name</span>
+                        <span class="ms-nominee-flag">
+                            @(characterId == Speaking ? "speaking now" : spoken ? "has spoken" : "waiting")
+                        </span>
+                    </div>
+                }
+            </div>
+
+            @if (Speaking is { } speaker)
+            {
+                <p class="ms-count">
+                    <b>@(Story.Character(speaker)?.Name)</b> has the floor —
+                    @(Story.Character(speaker)?.Job). Ask them anything.
+                </p>
+            }
+            break;
+
+        case MysteryTrialStage.Verdict:
+            <div class="ms-nominees ms-verdict">
+                @foreach (var characterId in Trial.ConvictedCharacterIds)
+                {
+                    var shown = TrialService.VerdictShown(Trip, characterId);
+                    var killer = shown && TrialService.ShowsAsKiller(Trip, characterId);
+
+                    <div class="ms-nominee is-jailed @(shown ? "is-turned" : "is-facedown")" @key="characterId">
+                        <Portrait Seat="@SeatFor(characterId)" Character="@Story.Character(characterId)" />
+                        <span class="ms-bars" aria-hidden="true"></span>
+                        <span class="ms-nominee-name">@Story.Character(characterId)?.Name</span>
+                        <span class="ms-nominee-votes">
+                            @TrialService.FinalVotesFor(Trip, characterId) against
+                        </span>
+
+                        @* Killer or not, and never which faction. Naming "detective" would hand the
+                           Syndicate a confirmed kill list, and naming "jester" would end the fun of
+                           a win nobody is supposed to notice. *@
+                        @if (shown)
+                        {
+                            <span class="ms-card-verdict @(killer ? "is-killer" : "is-clean")">
+                                @(killer ? "KILLER" : "NOT A KILLER")
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="ms-card-verdict is-hidden">?</span>
+                        }
+                    </div>
+                }
+            </div>
+
+            <p class="ms-count">
+                @if (TrialService.NextVerdictCharacterId(Trip) is { } next)
+                {
+                    <span>@(Story.Character(next)?.Name) is next.</span>
+                }
+                else if (TrialService.ConvictedOnATie(Trip))
+                {
+                    @* A four-way tie taking four people away is legal and baffling if nobody says so. *@
+                    <span>
+                        <b>@Trial.ConvictedCharacterIds.Count taken away.</b>
+                        The room split evenly, and a tie widens the cut rather than breaking it.
+                    </span>
+                }
+                else
+                {
+                    <b>That's the verdict.</b>
+                }
+            </p>
+            break;
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
+
+    private MysteryStory Story => Trip.Mystery.Story;
+    private MysteryTrial? Trial => TrialService.Current(Trip);
+
+    private IReadOnlyList<MysteryCharacter> Electorate => TrialService.Electorate(Trip);
+
+    private HashSet<string> Awaiting =>
+        TrialService.AwaitingVote(Trip).Select(c => c.Id).ToHashSet(StringComparer.Ordinal);
+
+    private IReadOnlyList<(string CharacterId, int Votes)> Tally => TrialService.Tally(Trip);
+    private string? Speaking => TrialService.CurrentSpeaker(Trip);
+
+    private MysteryCastMember? SeatFor(string characterId) => Trip.Mystery.Play.ForCharacter(characterId);
+
+    private string TrialLabel => Trial?.Phase switch
+    {
+        MysteryPhase.Trial1 => "First trial",
+        MysteryPhase.Trial2 => "Second trial",
+        MysteryPhase.Trial3 => "Final trial",
+        _ => "Trial"
+    };
+
+    private string StageHeadline => Trial?.Stage switch
+    {
+        MysteryTrialStage.Nominating => "Who was it?",
+        MysteryTrialStage.Tallying => "The room has decided",
+        MysteryTrialStage.Defence => "Their last chance",
+        MysteryTrialStage.FinalVote => "Now choose.",
+        MysteryTrialStage.Verdict => "Taken away",
+        _ => ""
+    };
+
+    /// <summary>
+    /// The sentence that tells the room what it is supposed to be doing.
+    ///
+    /// The defence round is the one that needed it most: four people are stood up in front of
+    /// everybody with no explanation of what the next ten minutes are, and the room politely waits
+    /// for the app to do something.
+    /// </summary>
+    private string? StageInstruction => Trial?.Stage switch
+    {
+        MysteryTrialStage.Nominating =>
+            "Everybody names one person. Nothing is shown until the last phone is in.",
+
+        MysteryTrialStage.Tallying => Trial.NomineeCharacterIds.Count > TrialService.NomineeCount
+            ? "The top four, and everybody level with the fourth. They all stand."
+            : "These four are on the stand.",
+
+        MysteryTrialStage.Defence =>
+            "Each of them gets the floor to account for their evening. "
+            + "Ask them where they were, who saw them, and what they touched. "
+            + "When the last one has spoken, the room votes again.",
+
+        MysteryTrialStage.FinalVote =>
+            "Only the people standing can be named, and they do not vote on themselves.",
+
+        MysteryTrialStage.Verdict =>
+            "Turned over one at a time.",
+
+        _ => null
+    };
+}

@@ -117,27 +117,25 @@ public class SeedDataTests
     }
 
     [Fact]
-    public void Mystery_has_26_roles_five_conspirators_and_one_mastermind()
+    public void The_seed_carries_no_mystery_in_progress()
     {
-        Assert.Equal(26, Seed.Mystery.Characters.Count);
-        Assert.Equal(5, Seed.Mystery.Characters.Count(c => c.IsConspirator));
-        Assert.Single(Seed.Mystery.Characters, c => c.IsMastermind);
-
-        // The mastermind must be one of the conspirators.
-        var mastermind = Seed.Mystery.Characters.Single(c => c.IsMastermind);
-        Assert.True(mastermind.IsConspirator);
+        // The story is seeded into a trip from data/braun-manor/ on first use, and the evening
+        // played on top of it belongs to one night. A committed seed carrying either would ship a
+        // guilty list and a set of live join codes in git.
+        Assert.Equal(MysteryPhase.Lobby, Seed.Mystery.Phase);
+        Assert.Empty(Seed.Mystery.Play.Cast);
+        Assert.Empty(Seed.Mystery.Play.Trials);
+        Assert.Equal("", Seed.Mystery.Play.PartyCode);
+        Assert.Equal("", Seed.Mystery.Play.HostCode);
     }
 
     [Fact]
-    public void There_is_a_mystery_role_for_everyone_going()
+    public void The_seed_carries_no_join_tokens()
     {
-        // West Egg Manor is written for 26 and the roster is 25, so a role goes spare. What
-        // matters is that nobody is left without one — the surplus is the host's to trim.
-        Assert.True(Seed.Mystery.Characters.Count >= Seed.Roster.Count,
-            $"{Seed.Roster.Count} people but only {Seed.Mystery.Characters.Count} roles");
-
-        Assert.Equal(5, Seed.Mystery.Characters.Count(c => c.IsConspirator));
-        Assert.Equal(1, Seed.Mystery.Characters.Count(c => c.IsMastermind));
+        // A join token is somebody's identity for the weekend. Twenty-five of them committed to a
+        // repository is twenty-five accounts anybody who can read it can use. SeedPreparation
+        // strips them on the way out; this is what notices if that stops happening.
+        Assert.All(Seed.Roster, p => Assert.True(string.IsNullOrEmpty(p.JoinToken)));
     }
     [Fact]
     public void The_bee_ships_with_a_difficulty_rather_than_a_word_list()

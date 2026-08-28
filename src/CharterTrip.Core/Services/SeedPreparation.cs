@@ -10,10 +10,15 @@ namespace CharterTrip.Core.Services;
 /// to be refreshed from the real trip as the weekend gets planned.
 ///
 /// The line drawn here is between what the host wrote and what happened during play. Everything
-/// authored survives: the itinerary, the roster, the Jeopardy board, the mystery cast and their
-/// secrets. Everything earned or issued does not: scores, buzzer codes, which clues have been
-/// used, which round the mystery is on. A seed that restored a half-finished game would be worse
-/// than useless — it would put a stale scoreboard back on the wall.
+/// authored survives: the itinerary, the roster, the Jeopardy board. Everything earned or issued
+/// does not: scores, buzzer codes, join tokens, and the whole of the murder mystery. A seed that
+/// restored a half-finished game would be worse than useless — it would put a stale scoreboard
+/// back on the wall.
+///
+/// "Issued" is the important half, because this file goes into git. Buzzer codes were always
+/// cleared here; join tokens have to be too, and for a stronger reason — a buzzer code is worth
+/// one evening's mischief, while a join token is somebody's identity for the weekend. Twenty-five
+/// of them committed to a repository is twenty-five accounts anybody who can read it can use.
 /// </summary>
 public static class SeedPreparation
 {
@@ -36,14 +41,15 @@ public static class SeedPreparation
         // The board is content; the game on top of it is not.
         trip.Jeopardy.Game = new JeopardyGame();
 
-        var mystery = trip.Mystery;
-        mystery.Active = false;
-        mystery.CastRevealed = false;
-        mystery.VotingOpen = false;
-        mystery.CurrentRound = -1;
+        // The murder mystery's written half is content and survives; the evening played on top of
+        // it does not. Story is the characters, the rooms, the clues and the prose, all of it edited
+        // on the site — losing that to a seed refresh would throw away the work. Play is the cast,
+        // the scans, the votes and the verdicts, which mean nothing outside the night they happened.
+        trip.Mystery.Phase = MysteryPhase.Lobby;
+        trip.Mystery.Play = new MysteryPlay();
 
-        // Clue cards are written by the host, so they stay — but a released clue is a played one.
-        foreach (var clue in mystery.Clues)
-            clue.Released = false;
+        // Issued identity, not authored content, and this file is committed. See the class note.
+        foreach (var person in trip.Roster)
+            person.JoinToken = null;
     }
 }

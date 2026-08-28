@@ -1,0 +1,12 @@
+@* A labelled line in the story editor. The label is fixed-width so a column of
+   them reads as a form rather than as a pile of paragraphs. *@
+
+<div class="se-field">
+    <span class="se-label">@Label</span>
+    <div class="se-value">@ChildContent</div>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

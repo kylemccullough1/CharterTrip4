@@ -1,0 +1,154 @@
+{
+  "objectives": [
+    {
+      "id": "mingle-three",
+      "label": "Meet three people",
+      "text": "........",
+      "phase": "mingling",
+      "audience": "everyone",
+      "faction_id": null,
+      "slots": []
+    },
+    {
+      "id": "to-the-study",
+      "label": "Everyone to the study",
+      "text": "........",
+      "phase": "murder",
+      "audience": "everyone",
+      "faction_id": null,
+      "slots": []
+    },
+    {
+      "id": "investigate",
+      "label": "Follow what you saw",
+      "text": "........",
+      "phase": "investigation",
+      "audience": "everyone",
+      "faction_id": null,
+      "slots": []
+    },
+    {
+      "id": "jester-frame",
+      "label": "Point it at yourself",
+      "text": "........",
+      "phase": "investigation",
+      "audience": "faction",
+      "faction_id": "jester",
+      "slots": []
+    },
+    {
+      "id": "killer-cover",
+      "label": "Get your story straight",
+      "text": "........",
+      "phase": "investigation",
+      "audience": "faction",
+      "faction_id": "killer",
+      "slots": []
+    },
+    {
+      "id": "gather-for-trial",
+      "label": "Back to the main room",
+      "text": "........",
+      "phase": "trial1",
+      "audience": "everyone",
+      "faction_id": null,
+      "slots": []
+    },
+    {
+      "id": "tamper-hunt",
+      "label": "Which card was touched?",
+      "text": "........",
+      "phase": "discussion1",
+      "audience": "faction",
+      "faction_id": "detective",
+      "slots": []
+    },
+    {
+      "id": "loyalty",
+      "label": "Cover for one of yours",
+      "text": "........",
+      "phase": "discussion1",
+      "audience": "faction",
+      "faction_id": "minion",
+      "slots": []
+    },
+    {
+      "id": "dig-dirt",
+      "label": "Family secrets",
+      "text": "........",
+      "phase": "discussion1",
+      "audience": "faction",
+      "faction_id": "inheritance",
+      "slots": []
+    },
+    {
+      "id": "second-trial",
+      "label": "Back to the main room",
+      "text": "........",
+      "phase": "trial2",
+      "audience": "everyone",
+      "faction_id": null,
+      "slots": []
+    },
+    {
+      "id": "last-loyalty",
+      "label": "Last chance",
+      "text": "........",
+      "phase": "discussion2",
+      "audience": "faction",
+      "faction_id": "minion",
+      "slots": []
+    },
+    {
+      "id": "hard-question",
+      "label": "Find the killer",
+      "text": "........",
+      "phase": "discussion2",
+      "audience": "faction",
+      "faction_id": "detective",
+      "slots": []
+    },
+    {
+      "id": "final-trial",
+      "label": "Back to the main room",
+      "text": "........",
+      "phase": "trial3",
+      "audience": "everyone",
+      "faction_id": null,
+      "slots": []
+    },
+    {
+      "id": "go-question",
+      "label": "Question someone",
+      "text": "Find {target}. ........",
+      "phase": null,
+      "audience": "characters",
+      "faction_id": null,
+      "slots": [
+        "target"
+      ]
+    },
+    {
+      "id": "go-search",
+      "label": "Search a room",
+      "text": "Nobody has looked properly in {zone}. ........",
+      "phase": null,
+      "audience": "characters",
+      "faction_id": null,
+      "slots": [
+        "zone"
+      ]
+    },
+    {
+      "id": "go-compare",
+      "label": "Compare notes",
+      "text": "Find {target}. ........",
+      "phase": null,
+      "audience": "characters",
+      "faction_id": null,
+      "slots": [
+        "target"
+      ]
+    }
+  ]
+}

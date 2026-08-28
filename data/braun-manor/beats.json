@@ -1,0 +1,17 @@
+{
+  "premise": "........",
+  "invitation_letter": "........",
+  "murder_announcement": "........",
+  "study_scene": "........",
+  "house_rules": "........",
+  "reveal_paragraphs": [
+    "........",
+    "........",
+    "........"
+  ],
+  "town_win": "........",
+  "killer_win": "........",
+  "tamper_subtle": "Half-hidden beneath it, {insert}.",
+  "tamper_blatant": "And unmissable beside it: {insert}.",
+  "tamper_scrubbed": "This scene has been disturbed — someone got here first."
+}

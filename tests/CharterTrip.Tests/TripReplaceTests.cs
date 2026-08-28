@@ -83,6 +83,6 @@ public class TripReplaceTests
         Superlatives = [new Superlative { Id = "sup", Title = "Most likely to nap" }],
         Jeopardy = new JeopardyBoard { Title = "Charter Jeopardy" },
         SpellingBee = new SpellingBee { Title = "Charter Spelling Bee" },
-        Mystery = new MysteryState { Title = "Murder at West Egg Manor" }
+        Mystery = new MysteryState { Phase = MysteryPhase.Investigation }
     };
 }

@@ -1,0 +1,339 @@
+@page "/join/{Code}"
+@attribute [ExcludeFromInteractiveRouting]
+@layout BareLayout
+@using CharterTrip.Core.Abstractions
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+@using CharterTrip.Web.Auth
+@using CharterTrip.Core.Services
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@inject ITripStore Store
+@inject NavigationManager Nav
+@inject ILogger<JoinWithCode> Log
+@inject IWebHostEnvironment Env
+@inject CharterTrip.Web.Services.SimPhones Sims
+
+@* The one door for every code on this trip.
+
+   Static SSR on purpose: taking a code and turning it into a session means writing a cookie, and a
+   cookie needs an HTTP response to be written to. An interactive circuit is a WebSocket long after
+   the response has gone.
+
+   Most codes resolve to somebody and this page redirects without rendering. The party code is the
+   exception — it proves you are in the house but says nothing about who you are, so it stops here
+   and asks. *@
+
+<PageTitle>Join · Charter Trip 2026</PageTitle>
+
+<div class="login-page">
+    <div class="login-card">
+
+@if (Stale)
+{
+    @* Bounced back here by the antiforgery guard in Program.cs rather than shown a 400. Says what
+       to do, because "your token expired" is not something anybody at a party can act on. *@
+    <p class="login-error" role="alert">That took a moment too long. Tap again.</p>
+}
+
+@if (_state == State.PickHostName)
+{
+    <h1 class="login-title">Which of you is this?</h1>
+    <p class="login-sub">Then you choose your part, rather than being dealt one.</p>
+
+    <div class="join-names">
+        @foreach (var person in Organizers)
+        {
+            <form method="post" @formname="@($"host-{person.Id}")" @onsubmit="() => PickOrganiser(person.Id)">
+                <AntiforgeryToken />
+                <button type="submit" class="join-name">@person.Name</button>
+            </form>
+        }
+    </div>
+}
+else if (_state == State.PickPart)
+{
+    <h1 class="login-title">Which part?</h1>
+    <p class="login-sub">
+        These four run the evening. Braun works the room, dies, and takes the game master's console;
+        the other three are guests who are secretly staff.
+    </p>
+
+    @if (StaffParts.Count == 0)
+    {
+        <p class="login-sub">All four are taken. If that's wrong, somebody needs to hand one back.</p>
+    }
+    else
+    {
+        <div class="join-roles">
+            @foreach (var part in StaffParts)
+            {
+                <form method="post" @formname="@($"npc-{part.Id}")" @onsubmit="() => ClaimStaffAsync(part.Id)">
+                    <AntiforgeryToken />
+                    <button type="submit" class="join-role">
+                        <span class="join-role-name">@part.Name</span>
+                        <span class="join-role-title">@part.Job</span>
+                    </button>
+                </form>
+            }
+        </div>
+    }
+}
+else if (_state == State.PickName)
+{
+    <h1 class="login-title">Who are you?</h1>
+    <p class="login-sub">Tap your name and the house will find you a part.</p>
+
+    @if (People.Count == 0)
+    {
+        <p class="login-sub">
+            Everyone's been given a character already. If that's wrong, find Bertram.
+        </p>
+    }
+    else
+    {
+        @* A form per name rather than one form with a select: on a phone, in a dark room, one tap
+           beats a dropdown plus a submit. Static SSR, so each is a real post.
+
+           Plain forms rather than EditForm, and that is the whole bug fix. EditForm demands a Model,
+           the model here carried no data, and on a POST the form binder set it to null — so every
+           tap threw "EditForm requires either a Model parameter" and the front door 500'd for
+           everybody. A form that submits nothing but its own name does not need a model at all. *@
+        <div class="join-names">
+            @foreach (var person in People)
+            {
+                <form method="post" @formname="@($"claim-{person.Id}")" @onsubmit="() => ClaimAsync(person.Id)">
+                    <AntiforgeryToken />
+                    <button type="submit" class="join-name">@person.Name</button>
+                </form>
+            }
+        </div>
+        <p class="login-sub tiny">
+            Names disappear as people arrive. @SeatsLeft of @TotalSeats parts still going.
+        </p>
+    }
+}
+else
+{
+    <h1 class="login-title">That code isn't live</h1>
+    <p class="login-sub">
+        Check it against the screen — codes skip the letters that look like numbers, so there's no
+        O, I, S or B to mistype.
+    </p>
+    <p class="row-actions">
+        <a class="btn btn-gold btn-sm" href="/join">Try again</a>
+        <a class="btn btn-ghost btn-sm" href="/">Back to the trip</a>
+    </p>
+}
+
+    </div>
+</div>
+
+@code {
+    private enum State { Unknown, PickName, PickHostName, PickPart }
+
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+
+    [Parameter] public string? Code { get; set; }
+
+    /// <summary>Where to land afterwards. Only ever a path on this site — see <see cref="SafeRedirect"/>.</summary>
+    [SupplyParameterFromQuery(Name = "returnUrl")] private string? ReturnUrl { get; set; }
+
+    /// <summary>Set by the antiforgery guard when it sends a stale form back for another go.</summary>
+    [SupplyParameterFromQuery(Name = "stale")] private string? StaleFlag { get; set; }
+
+    /// <summary>
+    /// Which simulated phone this is, for the testing strip. Development only.
+    ///
+    /// A frame carrying this signs into <see cref="SimPhones"/> rather than the cookie it would
+    /// otherwise share with the twenty-four frames beside it — everything else about the journey,
+    /// the code, the picker, the claim, is the same code a real phone runs.
+    /// </summary>
+    [SupplyParameterFromQuery(Name = "sim")] private int? Sim { get; set; }
+
+    private bool IsSim => Env.IsDevelopment() && Sim is > 0;
+
+    private bool Stale => StaleFlag is { Length: > 0 };
+
+    private State _state = State.Unknown;
+
+    /// <summary>Which organizer is choosing, once they have said. Kept across the two steps.</summary>
+    [SupplyParameterFromQuery(Name = "who")] private string? WhoQuery { get; set; }
+
+    private string? _organiserId;
+
+    private IReadOnlyList<RosterPerson> People => CastingService.Unclaimed(Store.Current);
+
+    private IReadOnlyList<RosterPerson> Organizers => CastingService.Organizers(Store.Current);
+
+    private IReadOnlyList<MysteryCharacter> StaffParts => CastingService.UnclaimedStaffParts(Store.Current);
+
+    /// <summary>Whoever is already signed in, if anybody.</summary>
+    private string? CurrentPersonId =>
+        HttpContext.User.FindFirst(TripClaims.PersonId)?.Value is { Length: > 0 } id ? id : null;
+    private int SeatsLeft => CastingService.SeatsLeft(Store.Current);
+    private int TotalSeats => CastingService.TotalSeats(Store.Current);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var match = JoinCodes.Resolve(Store.Current, Code);
+
+        if (!match.Found)
+        {
+            // Never say which of the four kinds it failed to be — that turns a wrong guess into a
+            // hint about what sort of code exists.
+            Log.LogWarning("Unrecognised join code from {Ip}.", HttpContext.Connection.RemoteIpAddress);
+            return;
+        }
+
+        if (match.Kind == CodeKind.MysteryParty)
+        {
+            // The party code is a door, not an identity. Ask who walked through it.
+            _state = State.PickName;
+            return;
+        }
+
+        if (match.Kind == CodeKind.MysteryHost)
+        {
+            // Same shape, two questions: who, then which part. An organizer already signed in as
+            // themselves skips straight to choosing.
+            _organiserId = Store.Current.Roster
+                .FirstOrDefault(p => (p.Id == WhoQuery || p.Id == CurrentPersonId) && p.Role == TripRole.Admin)?.Id;
+
+            _state = _organiserId is null ? State.PickHostName : State.PickPart;
+            return;
+        }
+
+        var (principal, landing) = match.Kind switch
+        {
+            CodeKind.Person => (
+                TripSignIn.ForPerson(Store.Current.Roster.First(p => p.Id == match.PersonId)),
+                SafeRedirect.Home),
+
+            CodeKind.BuzzerTeam => (
+                TripSignIn.ForBuzzerTeam(Store.Current.Teams.First(t => t.Id == match.TeamId)),
+                "/buzz"),
+
+            CodeKind.BuzzerHost => (TripSignIn.ForBuzzerHost(), "/buzz"),
+
+
+            _ => (null, SafeRedirect.Home)
+        };
+
+        if (principal is null) return;
+
+        // The board refuses to start until every team's phone has been through here, so coming
+        // through here is what has to record it. Inferring it from the first buzz would be too
+        // late: a team whose buzzer never worked would find out on the opening clue.
+        if (match.Kind is CodeKind.BuzzerTeam or CodeKind.BuzzerHost)
+        {
+            await Store.MutateAsync(t =>
+            {
+                if (match.Kind == CodeKind.BuzzerTeam) JeopardyService.RecordTeamJoin(t, match.TeamId!);
+                else JeopardyService.RecordHostJoin(t);
+            }, TripArea.Jeopardy);
+        }
+
+        await SignInAndGo(principal, landing);
+    }
+
+    /// <summary>
+    /// Take a name, deal a character, and land on the phone.
+    ///
+    /// The claim happens inside the mutation so that two people tapping their names at the same
+    /// moment cannot be dealt the same part. It is idempotent by person, so somebody coming back on
+    /// a new phone gets the character they already had rather than a second one.
+    /// </summary>
+    private async Task ClaimAsync(string personId)
+    {
+        var claimed = await Store.MutateAsync(
+            t => CastingService.ClaimCharacter(t, personId, Random.Shared), TripArea.Mystery);
+
+        if (claimed is null)
+        {
+            _state = State.Unknown;
+            return;
+        }
+
+        // Casting is worth forcing to disk. Reconstructing who is playing whom after a restart
+        // means asking twenty-one people, in character, what their own name is.
+        await Store.FlushAsync();
+
+        var person = Store.Current.Roster.First(p => p.Id == personId);
+        await SignInAndGo(TripSignIn.ForPerson(person), "/m/welcome", person.Id);
+    }
+
+    /// <summary>
+    /// Step one of the organizers' door: remember who, then ask which part.
+    ///
+    /// Carried in the query rather than a field because this page is static SSR — each button is a
+    /// real post, and a field set on one request is gone by the next.
+    /// </summary>
+    private void PickOrganiser(string personId)
+    {
+        var target = $"/join/{Uri.EscapeDataString(Code ?? "")}?who={Uri.EscapeDataString(personId)}";
+        if (IsSim) target += $"&sim={Sim!.Value}";
+
+        Nav.NavigateTo(target);
+    }
+
+    /// <summary>
+    /// Take a house part and sign in as the organizer holding it.
+    ///
+    /// Forced to disk: this is who is running the evening, and reconstructing it after a restart
+    /// means asking four people which of them was meant to be Bertram.
+    /// </summary>
+    private async Task ClaimStaffAsync(string characterId)
+    {
+        var personId = _organiserId ?? WhoQuery;
+        if (personId is null) { _state = State.Unknown; return; }
+
+        var ok = await Store.MutateAsync(
+            t => CastingService.ClaimStaffPart(t, personId, characterId), TripArea.Mystery);
+
+        if (!ok)
+        {
+            // Somebody else got there between the page rendering and the tap. Show what is left.
+            _state = State.PickPart;
+            return;
+        }
+
+        await Store.FlushAsync();
+
+        var person = Store.Current.Roster.First(p => p.Id == personId);
+        await SignInAndGo(TripSignIn.ForPerson(person), "/m/welcome", person.Id);
+    }
+
+    /// <param name="personId">
+    /// Who this is, when it is somebody in particular. A simulated phone needs the id rather than
+    /// the principal, because it is binding a slot instead of writing a cookie.
+    /// </param>
+    private async Task SignInAndGo(
+        System.Security.Claims.ClaimsPrincipal principal, string landing, string? personId = null)
+    {
+        if (IsSim && personId is { Length: > 0 })
+        {
+            // A simulated phone keeps its identity beside the others rather than in the one cookie
+            // every frame on this page shares.
+            Sims.Bind(Sim!.Value, personId);
+            Nav.NavigateTo(Append(landing, Sim.Value));
+            return;
+        }
+
+        // Persistent, so closing the tab does not mean finding the code again halfway through the
+        // evening. Signing in replaces whatever session was here before, which is what makes
+        // handing a phone to somebody else work.
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            principal,
+            new AuthenticationProperties { IsPersistent = true });
+
+        Nav.NavigateTo(ReturnUrl is { Length: > 0 } ? SafeRedirect.Local(ReturnUrl) : landing);
+    }
+
+    /// <summary>Carries the sim slot through every hop, since it is standing in for a cookie.</summary>
+    private static string Append(string path, int slot) =>
+        path + (path.Contains('?') ? "&" : "?") + "sim=" + slot;
+
+
+}

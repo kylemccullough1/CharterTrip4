@@ -1,0 +1,116 @@
+@page "/m/meet/{Token}"
+@layout BareLayout
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+@inherits TripAwareComponent
+@inject IClock Clock
+@inject IWebHostEnvironment Env
+@inject CharterTrip.Web.Services.SimPhones Sims
+
+<PageTitle>@(Them?.Name ?? "Somebody")</PageTitle>
+
+@* A name tag, opened by somebody else's camera.
+
+   Not an in-app scanner. QRCoder writes codes and cannot read them, and BarcodeDetector does not
+   exist in iOS Safari — which is half the party. So the tag is a URL, the phone's own camera opens
+   it, and this is an ordinary page: no permission prompt, no library, nothing to go wrong in a
+   dark room. *@
+
+@if (Me is null)
+{
+    <div class="mp-empty">
+        <h1 class="mp-title">Sign in first</h1>
+        <p class="muted">Scan the code on the big screen, then try this tag again.</p>
+        <a class="btn btn-gold btn-sm" href="/join">Join in</a>
+    </div>
+}
+else if (Them is null)
+{
+    <div class="mp-empty">
+        <h1 class="mp-title">That tag isn't from this game</h1>
+        <a class="btn btn-ghost btn-sm" href="/m">Back to your phone</a>
+    </div>
+}
+else if (Them.Id == Me.Id)
+{
+    <div class="mp-empty">
+        <h1 class="mp-title">That's your own tag</h1>
+        <a class="btn btn-ghost btn-sm" href="/m">Back to your phone</a>
+    </div>
+}
+else
+{
+    <div class="mp-met">
+        <Portrait Seat="@Trip.Mystery.Play.ForCharacter(Them.Id)" Character="Them" />
+        <h1 class="mp-title">@Them.Name</h1>
+        <p class="mp-zone">@Them.Job</p>
+
+        @if (MysteryText.Written(Them.WhyInvited) is { } blurb)
+        {
+            <p class="mp-note">@blurb</p>
+        }
+
+        @if (Beef is { } line)
+        {
+            @* History, and nothing to do with the murder. It is here to give two people who have
+               never spoken something to open with that is not the weather. *@
+            <p class="mp-beef">@line</p>
+        }
+
+        <p class="muted tiny">Added to your phone.</p>
+        <a class="btn btn-gold btn-sm" href="/m">Back to your phone</a>
+    </div>
+}
+
+@code {
+    protected override TripArea Watching => TripArea.Mystery;
+
+    [Parameter] public string? Token { get; set; }
+
+    /// <summary>Dev-only, so the sim strip can drive real scans. Reads the query, writes nothing.</summary>
+    [SupplyParameterFromQuery(Name = "as")] private string? ActAs { get; set; }
+
+    /// <summary>Which simulated phone this is, for the testing strip. Development only.</summary>
+    [SupplyParameterFromQuery(Name = "sim")] private int? Sim { get; set; }
+
+    /// <summary>
+    /// Identity, from the sim strip if this frame is one, otherwise from the cookie.
+    ///
+    /// A simulated phone went through the same front door as a real one; it just kept the result
+    /// somewhere twenty-five frames can each have their own.
+    /// </summary>
+    private string? PersonId =>
+        Env.IsDevelopment() && Sim is > 0 ? Sims.PersonFor(Sim.Value) : Permissions.PersonId;
+
+
+    private bool DevActing => Env.IsDevelopment() && ActAs is { Length: > 0 };
+
+    private MysteryCharacter? Me =>
+        DevActing
+            ? Trip.Mystery.Story.Character(ActAs!)
+            : CastingService.CharacterFor(Trip, PersonId);
+
+    private MysteryCharacter? Them
+    {
+        get
+        {
+            var seat = Token is null ? null : ScanShareService.CastForBadge(Trip, Token);
+            return seat is null ? null : Trip.Mystery.Story.Character(seat.CharacterId);
+        }
+    }
+
+    private string? Beef => Me is null || Them is null
+        ? null
+        : ScanShareService.BeefLineFor(Trip, Me.Id, Them.Id);
+
+    /// <summary>
+    /// Logged on arrival, with no confirm button. You are standing in front of somebody holding a
+    /// phone; that is the only confirmation that means anything.
+    /// </summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Me is null || Them is null || Me.Id == Them.Id) return;
+
+        await MutateAsync(t => ScanShareService.RecordMeeting(t, Me.Id, Them.Id, Clock.UtcNow));
+    }
+}

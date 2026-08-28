@@ -14,7 +14,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 26;
+    public const int CurrentVersion = 29;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -41,6 +41,9 @@ public static class TripMigrations
         if (trip.SchemaVersion < 24) changed |= ToV24_FourBeersTakesTheRound(trip);
         if (trip.SchemaVersion < 25) changed |= ToV25_TheStackIsWorkedOut(trip);
         if (trip.SchemaVersion < 26) changed |= ToV26_NoNewlywedGame(trip);
+        if (trip.SchemaVersion < 27) changed |= ToV27_EverybodyHasAJoinToken(trip);
+        if (trip.SchemaVersion < 28) changed |= ToV28_BraunManorReplacesWestEgg(trip);
+        if (trip.SchemaVersion < 29) changed |= ToV29_StoryMode(trip);
 
         // v19 carried the seed's hand-written word list across to a file that predated the
         // bee. No step any more: v20 deals the list instead of shipping one, so there is
@@ -51,6 +54,14 @@ public static class TripMigrations
         // rather than left where they were, because a file the bee had already stamped 21 would
         // have skipped every one of them and come back with no party games in it. Each guards on
         // what it finds rather than on the number it carries, so moving them costs nothing.
+
+        // The last three arrived the same way and were renumbered for the same reason. The
+        // mystery was built on a branch of its own, where it numbered its steps 19, 20 and 21 —
+        // the same three numbers the bee and its difficulty dial were taking here, meaning
+        // different things. Two ladders cannot both be right, so the one the deployed file has
+        // already climbed wins: this file is stamped 26 out there, and a step that renumbered
+        // itself under it would be skipped by every copy that matters. The mystery's three go on
+        // the end instead, and none of them cares what number it is called by.
 
         // v18 gave a carpool's ETA a day to go with the time. No step, same as the two
         // before it: the field defaults to empty and an older file simply has not said.
@@ -724,5 +735,102 @@ public static class TripMigrations
         {
             if (facts.FirstOrDefault(f => f.Label == from) is { } fact) fact.Label = to;
         }
+    }
+
+    /// <summary>
+    /// v27 gives everybody on the roster their own join token.
+    ///
+    /// <c>RosterPerson.JoinToken</c> has existed unused since phase 2 was first sketched. It is
+    /// what turns "authenticated" from a synonym for "is an admin" into an actual identity: the
+    /// murder mystery needs twenty-one people to be twenty-one different people on twenty-one
+    /// phones, and a shared committee password cannot express that.
+    ///
+    /// A numbered step rather than minting on demand, because these end up printed on name tags.
+    /// Something that gets printed should be decided once, written down, and then stable —
+    /// generating a token the first time somebody happens to load a page means the badge in your
+    /// hand and the token in the file can disagree.
+    ///
+    /// Idempotent, and existing tokens are never reissued.
+    /// </summary>
+    private static bool ToV27_EverybodyHasAJoinToken(TripData trip) => JoinCodes.EnsureTokens(trip);
+
+    /// <summary>
+    /// v28 replaces Murder at West Egg Manor with Murder at Braun Manor.
+    ///
+    /// The old game was 26 characters, a mastermind and five conspirators, with clue cards the host
+    /// typed in and released by round. Braun Manor shares none of that structure: 21 characters, six
+    /// factions, three killers drawn per guilt slot, and every word of it composed from embedded
+    /// content. So <c>MysteryState</c> was replaced rather than extended, and the old properties
+    /// simply stop existing — <see cref="TripMigrations"/> already establishes that a removed
+    /// property is ignored on load and gone on the next save.
+    ///
+    /// This is nonetheless a numbered step rather than a silent model change, for two reasons. The
+    /// stamp records the shape of a file, and a document half-way between two different games is
+    /// unrecoverable on the one screen — the reveal — where being wrong is worst. And the titles
+    /// need rewriting, which no amount of default-value handling would do on its own.
+    ///
+    /// Guarded on finding the old text, so a title someone has since chosen deliberately survives.
+    /// </summary>
+    private static bool ToV28_BraunManorReplacesWestEgg(TripData trip)
+    {
+        const string old = "Murder at West Egg Manor";
+        const string now = "Murder at Braun Manor";
+
+        // The mystery reset this step used to do now belongs to the step below, which replaced
+        // the model again. Resetting here as well would be a second implementation of the same
+        // decision, and it can no longer be expressed in terms of the current shape anyway.
+        var changed = false;
+
+        // The name appears in three places, all of them read by guests before the night.
+        foreach (var slide in trip.Slides.Where(s => s.Caption == old))
+        {
+            slide.Caption = now;
+            changed = true;
+        }
+
+        foreach (var item in trip.Itinerary
+                     .SelectMany(d => d.Items)
+                     .Where(i => i.Title.Contains(old, StringComparison.Ordinal)))
+        {
+            item.Title = item.Title.Replace(old, now, StringComparison.Ordinal);
+            changed = true;
+        }
+
+        foreach (var game in trip.Games.Where(g => g.Name.Contains(old, StringComparison.Ordinal)))
+        {
+            game.Name = game.Name.Replace(old, now, StringComparison.Ordinal);
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    /// <summary>
+    /// v29 rebuilds the murder mystery as one written story rather than a generator.
+    ///
+    /// The generated game dealt a different evening every time: a seeded dealer placed everybody, drew three
+    /// killers by guilt slot, picked red herrings and laid out clues, and a compiler wrote every
+    /// sentence from templates plus a guilty-or-innocent reading per character. This one is played
+    /// once, so all of that has gone and the story is written by hand instead — which also means it
+    /// can live here, in the trip, and be edited on the site like everything else.
+    ///
+    /// Nothing carries over. <c>CurrentRoundIndex</c> has no phase, the deal has no story, and the
+    /// prose the old model referenced by id was never in the document to begin with. So the section
+    /// is reset and reseeded from the embedded content on first use.
+    ///
+    /// The load-order half of this lives in <c>LegacyJsonShapes.DropPreV21Mystery</c>, which has to
+    /// run first: an enum name from the generated game that no longer exists would quarantine the
+    /// whole trip file before this method ever sees a <see cref="TripData"/>. That name keeps the
+    /// number the mystery branch gave it, because it describes the shape of the file it reads —
+    /// the pre-story mystery — rather than a rung on this ladder.
+    /// </summary>
+    private static bool ToV29_StoryMode(TripData trip)
+    {
+        var changed = trip.Mystery.Phase != MysteryPhase.Lobby
+                      || trip.Mystery.Play.Cast.Count > 0
+                      || trip.Mystery.Story.Characters.Count > 0;
+
+        trip.Mystery = new MysteryState();
+        return changed;
     }
 }

@@ -109,6 +109,33 @@ public sealed class MediaAttachments(IPhotoStore media, ITripStore store, ILogge
         return await StoreAsync(file, contentType, MaxVideoBytes, ct).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Store a frame the browser's camera handed us, already a JPEG data URL.
+    ///
+    /// Separate from the IBrowserFile path because there is no file — getUserMedia gives a canvas,
+    /// and routing that back through a fake upload would mean encoding it twice. It is already the
+    /// right size and format when it arrives; the only thing to check is that somebody has not sent
+    /// something enormous.
+    /// </summary>
+    public async Task<string> SaveDataUrlAsync(string dataUrl, CancellationToken ct = default)
+    {
+        const string prefix = "data:image/jpeg;base64,";
+
+        if (!dataUrl.StartsWith(prefix, StringComparison.Ordinal))
+            throw new InvalidOperationException("That photograph did not arrive as a JPEG.");
+
+        var bytes = Convert.FromBase64String(dataUrl[prefix.Length..]);
+
+        if (bytes.Length > MaxImageBytes)
+            throw new InvalidOperationException("That photograph is too large.");
+
+        using var stream = new MemoryStream(bytes);
+        var id = await media.SaveAsync(stream, "image/jpeg", ct).ConfigureAwait(false);
+
+        logger.LogInformation("Stored a camera frame as {Id} ({Size:N0} bytes).", id, bytes.Length);
+        return TripMedia.PathFor(id);
+    }
+
     private async Task<string> StoreAsync(IBrowserFile file, string contentType, long maxBytes, CancellationToken ct)
     {
         await using var stream = file.OpenReadStream(maxBytes, ct);

@@ -1,0 +1,117 @@
+@page "/join"
+@attribute [ExcludeFromInteractiveRouting]
+@layout BareLayout
+@inject NavigationManager Nav
+@inject IWebHostEnvironment Env
+@inject CharterTrip.Web.Services.SimPhones Sims
+
+@* Where a guest types the code off the screen.
+
+   Deliberately nothing to do with signing in. Nobody here has an account, a username or a
+   password — there is one code for the whole party, and the next page asks who you are. The
+   committee's password lives at /login and the two never share a screen, because putting them
+   together made this look like something you have to be enrolled in. *@
+
+<PageTitle>Join · Charter Trip 2026</PageTitle>
+
+<div class="login-page">
+    <div class="login-card">
+        <span class="login-mark" aria-hidden="true">
+            <svg viewBox="0 0 100 100" width="46" height="46">
+                <path d="M50 8 L78 50 L50 92 L22 50 Z" fill="none" stroke="currentColor" stroke-width="5" />
+                <path d="M50 28 L64 50 L50 72 L36 50 Z" fill="currentColor" />
+            </svg>
+        </span>
+
+        <h1 class="login-title">Join in</h1>
+        <p class="login-sub">Type the code from the screen. Scanning it does the same thing.</p>
+
+        <EditForm Model="Input" FormName="join" OnValidSubmit="Go" method="post">
+            <label class="login-field">
+                <span>Code</span>
+                <InputText @bind-Value="Input!.Code" class="login-input buzz-code-input"
+                           autocomplete="off" autocapitalize="characters" spellcheck="false"
+                           inputmode="latin" placeholder="CODE" autofocus />
+            </label>
+
+            @if (_error is not null)
+            {
+                <p class="login-error" role="alert">@_error</p>
+            }
+
+            <button type="submit" class="btn btn-gold login-submit">Continue</button>
+        </EditForm>
+
+        <a class="login-back" href="/">← Back to the trip</a>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// Nullable, and filled in <see cref="OnInitialized"/> rather than by an initializer.
+    ///
+    /// The form binder overwrites this property on every POST, initializer and all — which is what
+    /// BL0008 warns about, and what took the character picker down: a model with nothing to bind
+    /// came back null and EditForm threw. This one has a field to bind so it survives in practice,
+    /// but relying on that is relying on the shape of the form never changing.
+    /// </summary>
+    [SupplyParameterFromForm(FormName = "join")] private CodeEntry? Input { get; set; }
+
+    /// <summary>Where to land afterwards, when something bounced you here. See <see cref="SafeRedirect"/>.</summary>
+    [SupplyParameterFromQuery(Name = "returnUrl")] private string? ReturnUrl { get; set; }
+
+    /// <summary>
+    /// Which simulated phone this is, for the testing strip. Development only.
+    ///
+    /// Carried through every hop because it is standing in for a cookie — drop it here and the
+    /// frame falls back to the one session every frame on the page shares, which is the whole
+    /// thing this avoids.
+    /// </summary>
+    [SupplyParameterFromQuery(Name = "sim")] private int? Sim { get; set; }
+
+    private string? _error;
+
+    protected override void OnInitialized()
+    {
+        Input ??= new CodeEntry();
+
+        // A simulated phone that has already been signed in — by the testing panel, or by somebody
+        // typing the code into it — has no business being asked for one again. This is what makes
+        // "sign every phone in" land each frame on its own character rather than back at the door.
+        if (Env.IsDevelopment() && Sim is > 0 && Sims.PersonFor(Sim.Value) is not null)
+            Nav.NavigateTo($"/m?sim={Sim}");
+    }
+
+    /// <summary>
+    /// Hand the code straight to /join/{code}, which is the one place that works out what any code
+    /// is. Resolving it here as well would be a second implementation of the same decision, and the
+    /// two would eventually disagree about what counts as a live code.
+    /// </summary>
+    private void Go()
+    {
+        var typed = new string((Input?.Code ?? "").Where(char.IsLetterOrDigit).ToArray());
+
+        if (typed.Length == 0)
+        {
+            _error = "Type the code from the screen.";
+            return;
+        }
+
+        var target = $"/join/{Uri.EscapeDataString(typed)}";
+        var query = new List<string>();
+
+        if (ReturnUrl is { Length: > 0 })
+            query.Add($"returnUrl={Uri.EscapeDataString(SafeRedirect.Local(ReturnUrl))}");
+
+        if (Env.IsDevelopment() && Sim is > 0) query.Add($"sim={Sim}");
+
+        if (query.Count > 0) target += "?" + string.Join("&", query);
+
+        Nav.NavigateTo(target);
+    }
+
+    public sealed class CodeEntry
+    {
+        public string Code { get; set; } = "";
+    }
+}

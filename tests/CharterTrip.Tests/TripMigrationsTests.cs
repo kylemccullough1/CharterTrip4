@@ -802,6 +802,107 @@ public class TripMigrationsTests
         Assert.False(TripMigrations.Apply(trip));
     }
 
+    /// <summary>
+    /// A v18 document as it stood before phase 2: nobody has a join token, and the mystery is
+    /// still West Egg Manor, complete with the properties the model no longer has.
+    /// </summary>
+    private const string V18WestEggDocument = """
+    {
+      "schemaVersion": 18,
+      "trip": { "name": "Charter Trip", "year": 2026 },
+      "roster": [
+        { "id": "p1", "name": "Kyle", "teamId": "t1", "role": "admin" },
+        { "id": "p2", "name": "JB",   "teamId": "t1" }
+      ],
+      "teams": [ { "id": "t1", "name": "The Lambdas" } ],
+      "slides": [ { "id": "s3", "kind": "deco", "caption": "Murder at West Egg Manor" } ],
+      "games": [ { "id": "g1", "name": "Murder Mystery - Murder at West Egg Manor" } ],
+      "itinerary": [
+        {
+          "id": "sat",
+          "day": "Saturday",
+          "items": [
+            { "id": "i1", "startMinutes": 1200, "durationMinutes": 120,
+              "title": "Murder Mystery - Murder at West Egg Manor", "tag": "game" }
+          ]
+        }
+      ],
+      "mystery": {
+        "title": "Murder at West Egg Manor",
+        "subtitle": "A Great Gatsby-inspired murder mystery for 26 players",
+        "active": true,
+        "currentRound": 2,
+        "characters": [ { "id": "c1", "role": "The Heiress", "isMastermind": true } ],
+        "clues": [ { "id": "cc1", "text": "A torn photograph", "released": true } ]
+      }
+    }
+    """;
+
+    private static TripData LoadV18WestEgg() =>
+        JsonSerializer.Deserialize<TripData>(V18WestEggDocument, TripJson.Options)!;
+
+    [Fact]
+    public void V27_gives_everybody_a_join_token()
+    {
+        var trip = LoadV18WestEgg();
+
+        Assert.True(TripMigrations.Apply(trip));
+
+        Assert.All(trip.Roster, p => Assert.Equal(10, p.JoinToken!.Length));
+        Assert.Equal(2, trip.Roster.Select(p => p.JoinToken).Distinct().Count());
+    }
+
+    [Fact]
+    public void V28_renames_the_game_everywhere_a_guest_would_read_it()
+    {
+        var trip = LoadV18WestEgg();
+
+        TripMigrations.Apply(trip);
+
+        // Three places, all of them seen before the night: the deco slide, the itinerary row, and
+        // the games list. Missing one leaves the old name on somebody's phone.
+        Assert.Equal("Murder at Braun Manor", trip.Slides[0].Caption);
+        Assert.Equal("Murder Mystery - Murder at Braun Manor", trip.Itinerary[0].Items[0].Title);
+        Assert.Equal("Murder Mystery - Murder at Braun Manor", trip.Games[0].Name);
+    }
+
+    [Fact]
+    public void V29_throws_away_the_old_game_rather_than_converting_it()
+    {
+        var trip = LoadV18WestEgg();
+
+        TripMigrations.Apply(trip);
+
+        // West Egg was 26 characters and a mastermind; the first Braun Manor was a generator; this
+        // one is a written story and a phase machine. Nothing survives two rewrites, and a document
+        // half-way between any two of them would be worst exactly where being wrong matters most.
+        Assert.Equal(MysteryPhase.Lobby, trip.Mystery.Phase);
+        Assert.Empty(trip.Mystery.Play.Cast);
+        Assert.Empty(trip.Mystery.Play.Trials);
+        Assert.Empty(trip.Mystery.Story.Characters);
+        Assert.Equal(TripMigrations.CurrentVersion, trip.SchemaVersion);
+    }
+
+    [Fact]
+    public void V28_leaves_a_title_somebody_has_since_chosen_deliberately()
+    {
+        var trip = LoadV18WestEgg();
+        trip.Slides[0].Caption = "Murder at the Manor (final name TBC)";
+
+        TripMigrations.Apply(trip);
+
+        Assert.Equal("Murder at the Manor (final name TBC)", trip.Slides[0].Caption);
+    }
+
+    [Fact]
+    public void V27_and_V28_running_twice_change_nothing_the_second_time()
+    {
+        var trip = LoadV18WestEgg();
+        TripMigrations.Apply(trip);
+
+        Assert.False(TripMigrations.Apply(trip));
+    }
+
     /// <summary>A v25 file, listing the game the way every copy written before this one did.</summary>
     private static TripData NewlywedStillListed() => new()
     {
@@ -826,4 +927,18 @@ public class TripMigrationsTests
             }
         ]
     };
+
+    [Fact]
+    public void An_already_current_document_is_left_alone()
+    {
+        var trip = LoadV18WestEgg();
+        TripMigrations.Apply(trip);
+        var tokens = trip.Roster.ToDictionary(p => p.Id, p => p.JoinToken);
+
+        TripMigrations.Apply(trip);
+
+        // Tokens especially: reissuing one is a name tag that has stopped working.
+        Assert.All(trip.Roster, p => Assert.Equal(tokens[p.Id], p.JoinToken));
+        Assert.Equal(TripMigrations.CurrentVersion, trip.SchemaVersion);
+    }
 }

@@ -121,6 +121,18 @@ public sealed class JeopardyGame
     /// <summary>Code for the host's answer sheet, so a stray phone cannot judge the game.</summary>
     public string HostCode { get; set; } = "";
 
+    /// <summary>
+    /// Teams whose phone has been through the door, so the board can refuse to start without them.
+    ///
+    /// Recorded on sign-in rather than inferred from the first buzz, because the whole point is to
+    /// know before the game starts — a team that discovers its buzzer does not work on the opening
+    /// clue has already lost that clue.
+    /// </summary>
+    public List<string> JoinedTeamIds { get; set; } = [];
+
+    /// <summary>The host's answer sheet is in somebody's hand. Nobody can judge a clue without it.</summary>
+    public bool HostJoined { get; set; }
+
     [JsonIgnore]
     public string? LeadingBuzzTeamId => Buzzes.Count == 0 ? null : Buzzes[0].TeamId;
 }

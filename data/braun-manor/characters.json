@@ -1,0 +1,1379 @@
+{
+  "characters": [
+    {
+      "id": "wilhelm",
+      "name": "Wilhelm Shepard",
+      "age": 0,
+      "sex": "M",
+      "job": "Politician",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "entry",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": true,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "imogen",
+      "name": "Imogen Durham",
+      "age": 0,
+      "sex": "F",
+      "job": "Maid",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "family_room",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "yousef",
+      "name": "Yousef Mostafa",
+      "age": 0,
+      "sex": "M",
+      "job": "Family Attorney",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "sitting_room",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "santiago",
+      "name": "Santiago Costa",
+      "age": 0,
+      "sex": "M",
+      "job": "College Professor",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "extension_room",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "molly",
+      "name": "Molly Henderson",
+      "age": 0,
+      "sex": "F",
+      "job": "Newspaper Reporter",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "kitchen",
+      "faction_id": "detective",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "nishimoto",
+      "name": "Dr. Aiko Nishimoto",
+      "age": 0,
+      "sex": "F",
+      "job": "Family Doctor",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "kitchen",
+      "faction_id": "killer",
+      "guilt_slot": "means",
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "isla",
+      "name": "Isla Perry",
+      "age": 0,
+      "sex": "F",
+      "job": "Braun's Fiancée",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "sitting_room",
+      "faction_id": "inheritance",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": "harry",
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "emilia",
+      "name": "Emilia Cruz",
+      "age": 0,
+      "sex": "F",
+      "job": "Famous Actress",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "sitting_room",
+      "faction_id": "jester",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "giuliana",
+      "name": "Giuliana Andolpho",
+      "age": 0,
+      "sex": "F",
+      "job": "Socialite",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "grand_hall",
+      "faction_id": "minion",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "sutton",
+      "name": "Sutton Brady",
+      "age": 0,
+      "sex": "F",
+      "job": "Jazz Singer",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "grand_hall",
+      "faction_id": "minion",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "martha",
+      "name": "Martha Kim",
+      "age": 0,
+      "sex": "F",
+      "job": "Detective in Training",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "grand_hall",
+      "faction_id": "detective",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "hugo",
+      "name": "Hugo Hahn",
+      "age": 0,
+      "sex": "M",
+      "job": "Movie Director",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "entry",
+      "faction_id": "jester",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "sharkeisha",
+      "name": "Sharkeisha Noh",
+      "age": 0,
+      "sex": "F",
+      "job": "Famous Painter",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "family_room",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "cairo",
+      "name": "Cairo Iwobi",
+      "age": 0,
+      "sex": "M",
+      "job": "Neighboring Millionaire",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "grand_hall",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "priya",
+      "name": "Priya Patel",
+      "age": 0,
+      "sex": "F",
+      "job": "Golf Pro",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "extension_room",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": true,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "solomon",
+      "name": "Solomon Roka",
+      "age": 0,
+      "sex": "M",
+      "job": "Bootleg King",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "extension_room",
+      "faction_id": "killer",
+      "guilt_slot": "signature",
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "remington",
+      "name": "Remington Whitley",
+      "age": 0,
+      "sex": "M",
+      "job": "Police Detective",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "lawn",
+      "faction_id": "detective",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "carla",
+      "name": "Carla Lucciano",
+      "age": 0,
+      "sex": "F",
+      "job": "Chauffeur",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "driveway",
+      "faction_id": "killer",
+      "guilt_slot": "access",
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "harry",
+      "name": "Harry Braun",
+      "age": 0,
+      "sex": "M",
+      "job": "Braun's Estranged Brother",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "entry",
+      "faction_id": "inheritance",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": "isla",
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "florence",
+      "name": "Florence Li",
+      "age": 0,
+      "sex": "F",
+      "job": "Investment Banker",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "lawn",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "daquan",
+      "name": "Da'Quan Wilson",
+      "age": 0,
+      "sex": "M",
+      "job": "Personal Trainer",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "driveway",
+      "faction_id": "villager",
+      "guilt_slot": null,
+      "is_herring": true,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": null
+    },
+    {
+      "id": "braun",
+      "name": "James Braun",
+      "age": 0,
+      "sex": "M",
+      "job": "Master of Braun Manor",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "study",
+      "faction_id": "",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": "host"
+    },
+    {
+      "id": "leo",
+      "name": "Leo Raphael",
+      "age": 0,
+      "sex": "........",
+      "job": "French Chef",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "kitchen",
+      "faction_id": "",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": "facilitator"
+    },
+    {
+      "id": "chloe",
+      "name": "Chloe Zimmerman",
+      "age": 0,
+      "sex": "........",
+      "job": "Fashion Designer",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "grand_hall",
+      "faction_id": "",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": "facilitator"
+    },
+    {
+      "id": "bertram",
+      "name": "Bertram Ault",
+      "age": 0,
+      "sex": "........",
+      "job": "Estate Butler",
+      "voice": "........",
+      "backstory": "........",
+      "why_invited": "........",
+      "dislikes_braun": "........",
+      "zone_id": "grand_hall",
+      "faction_id": "",
+      "guilt_slot": null,
+      "is_herring": false,
+      "observable": "........",
+      "seen_as": "........",
+      "rival_character_id": null,
+      "dialogue": {
+        "life": [
+          "........",
+          "........",
+          "........"
+        ],
+        "weather": [
+          "........",
+          "........"
+        ],
+        "topics": [
+          {
+            "prompt": "The house",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "The other guests",
+            "lines": [
+              "........",
+              "........"
+            ]
+          },
+          {
+            "prompt": "Money and work",
+            "lines": [
+              "........",
+              "........"
+            ]
+          }
+        ]
+      },
+      "signature_item": "........",
+      "tamper_insert": "........",
+      "staff": "facilitator"
+    }
+  ]
+}

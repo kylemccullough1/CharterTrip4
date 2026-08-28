@@ -1,0 +1,501 @@
+@using CharterTrip.Core.Abstractions
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+@inject ITripStore Store
+@inject IClock Clock
+
+@* The tab the four of them have and nobody else does.
+
+   All four can move the evening on, jump it anywhere, and send an objective to the room or to one
+   person — the facilitators are hands, and hands that have to ask permission are not much use in a
+   house with twenty-one people in it. Braun gets the rest: the deck, the murder, the trial stages,
+   and the guilty list.
+
+   Sectioned rather than stacked. Six cards in a column meant the button that mattered right now was
+   somewhere in the middle of the tamper log and the quiet list, and the only way to find it was to
+   scroll past everything that did not matter. Same shape as the guide's tabs, for the same reason.
+
+   Every control here has a force beside it. Anything the app cannot do, a person does by hand from
+   this tab, which is the whole reason the evening survives a bug in front of a room. *@
+
+<div class="sc">
+    <div class="guide-tabs sc-tabs" role="tablist" aria-label="Control">
+        @foreach (var section in Sections)
+        {
+            <button role="tab"
+                    class="guide-tab @(_section == section.Key ? "is-active" : null)"
+                    aria-selected="@(_section == section.Key)"
+                    @key="section.Key"
+                    @onclick="() => _section = section.Key">
+                <span class="guide-tab-icon" aria-hidden="true">@section.Icon</span>
+                <span>@section.Label</span>
+            </button>
+        }
+    </div>
+
+@switch (_section)
+{
+    // --------------------------------------------------------------------------------- now
+    case "now":
+
+        <section class="mp-card sc-now">
+            <p class="sc-kicker">Right now</p>
+            <h3 class="mp-card-title">@MysteryPhases.Label(Phase)</h3>
+
+            @* One set of buttons, not two. The generic "on to the next thing" used to sit above
+               whatever the phase's own control was, so Assembling had two buttons that both
+               started the evening. Braun gets the specific one; the facilitators, who have no
+               specific one, keep the generic. *@
+            @if (!IsHost || !HasOwnControl)
+            {
+                <div class="row gap wrap">
+                    @if (NextPhase is { } next)
+                    {
+                        <button class="btn btn-gold btn-sm" @onclick="() => GoAsync(next)">@NextLabel</button>
+                    }
+                    else
+                    {
+                        <span class="muted tiny">That's the end of the night.</span>
+                    }
+                </div>
+            }
+        </section>
+
+        @if (IsHost)
+        {
+            @* --- the things only Braun does ------------------------------------------------- *@
+
+            @switch (Phase)
+            {
+                case MysteryPhase.Assembling:
+                    var (ready, reason) = CastingService.CanStart(Trip);
+                    <section class="mp-card sc-act">
+                        <h3 class="mp-card-title">Starting</h3>
+                        <p class="@(ready ? "" : "muted")">@reason</p>
+                        <button class="btn btn-gold btn-sm" disabled="@(!ready)"
+                                @onclick="() => GoAsync(MysteryPhase.Welcome)">
+                            Start the evening
+                        </button>
+                        @if (!ready)
+                        {
+                            @* A photo must never hold this up, and neither must one person in a bathroom. *@
+                            <details class="sc-force">
+                                <summary class="tiny muted">Start anyway</summary>
+                                <button class="btn btn-danger-ghost btn-xs"
+                                        @onclick="() => GoAsync(MysteryPhase.Welcome)">
+                                    Start without them
+                                </button>
+                            </details>
+                        }
+                    </section>
+                    break;
+
+                case MysteryPhase.Presentation:
+                    <section class="mp-card sc-act">
+                        <h3 class="mp-card-title">Slide @(Play.SlideIndex + 1) of @Story.Slides.Count</h3>
+                        @if (PhaseService.CurrentSlide(Trip) is { } slide && Written(slide.BraunSays) is { } line)
+                        {
+                            <p class="sc-say">@line</p>
+                        }
+
+                        @* The one phase that genuinely wants two buttons: one steps the deck, the
+                           other leaves it. They do different things, so they are allowed to sit
+                           side by side. *@
+                        <div class="row gap wrap">
+                            <button class="btn btn-ghost btn-xs" @onclick="PreviousSlideAsync">Back</button>
+                            <button class="btn btn-ghost btn-sm" @onclick="NextSlideAsync"
+                                    disabled="@PhaseService.OnLastSlide(Trip)">Next slide</button>
+                            <button class="btn btn-gold btn-sm" @onclick="() => GoAsync(MysteryPhase.Mingling)">
+                                Start the party
+                            </button>
+                        </div>
+                    </section>
+                    break;
+
+                case MysteryPhase.Mingling:
+                    <section class="mp-card sc-act sc-murder">
+                        <h3 class="mp-card-title">When you're ready</h3>
+                        <p class="muted tiny">
+                            Get yourself out of sight first. The empty chair is doing story work.
+                        </p>
+                        <button class="btn btn-danger btn-sm" @onclick="() => GoAsync(MysteryPhase.Murder)">
+                            Start the murder
+                        </button>
+                    </section>
+                    break;
+
+                case MysteryPhase.Reveal:
+                    <section class="mp-card sc-act">
+                        <h3 class="mp-card-title">@RevealWhere</h3>
+                        <p class="muted tiny">
+                            One at a time, on the big screen. Read the room rather than the clock.
+                        </p>
+                        <div class="row gap wrap">
+                            <button class="btn btn-ghost btn-xs" @onclick="PreviousRevealAsync"
+                                    disabled="@(Play.RevealIndex == 0)">Back</button>
+                            <button class="btn btn-gold btn-sm" @onclick="NextRevealAsync"
+                                    disabled="@PhaseService.OnRevealFinale(Trip)">Next</button>
+                        </div>
+
+                        @if (PhaseService.OnRevealFinale(Trip))
+                        {
+                            <p class="muted tiny">That's the night. The board has the way out.</p>
+                        }
+                    </section>
+                    break;
+            }
+
+            @if (Trial is { } trial)
+            {
+                <section class="mp-card sc-act">
+                    <h3 class="mp-card-title">@MysteryTrialStages.Label(trial.Stage)</h3>
+
+                    @switch (trial.Stage)
+                    {
+                        case MysteryTrialStage.Nominating:
+                            <p class="@(Waiting == 0 ? "" : "muted")">
+                                @(Waiting == 0 ? "Everybody has voted." : $"Waiting on {Waiting}.")
+                            </p>
+                            <button class="btn btn-gold btn-sm" @onclick="CloseNominationsAsync">
+                                Close the vote
+                            </button>
+                            break;
+
+                        case MysteryTrialStage.Tallying:
+                            <p class="muted tiny">
+                                @trial.NomineeCharacterIds.Count on the stand.
+                            </p>
+                            <button class="btn btn-gold btn-sm" @onclick="BeginDefenceAsync">
+                                Let them speak
+                            </button>
+                            break;
+
+                        case MysteryTrialStage.Defence:
+                            @if (TrialService.CurrentSpeaker(Trip) is { } speaker)
+                            {
+                                <p><b>@(Story.Character(speaker)?.Name)</b> has the floor.</p>
+                            }
+                            <p class="muted tiny">
+                                @(trial.SpeakingIndex + 1) of @trial.NomineeCharacterIds.Count.
+                                Everybody gets a turn before the room votes again.
+                            </p>
+                            <div class="row gap wrap">
+                                <button class="btn btn-ghost btn-sm" @onclick="NextSpeakerAsync"
+                                        disabled="@OnLastSpeaker">Next up</button>
+                                <button class="btn btn-gold btn-sm" @onclick="OpenFinalVoteAsync">Vote now</button>
+                            </div>
+                            break;
+
+                        case MysteryTrialStage.FinalVote:
+                            <p class="@(Waiting == 0 ? "" : "muted")">
+                                @(Waiting == 0 ? "Everybody has voted." : $"Waiting on {Waiting}.")
+                            </p>
+                            <button class="btn btn-gold btn-sm" @onclick="CloseFinalVoteAsync">Read the verdict</button>
+                            break;
+
+                        case MysteryTrialStage.Verdict:
+                            @* Turned over one at a time. The whole trial lands in this moment and it
+                               used to arrive as a wall of cards nobody read. *@
+                            @if (TrialService.NextVerdictCharacterId(Trip) is { } next)
+                            {
+                                <button class="btn btn-gold btn-sm" @onclick="RevealVerdictAsync">
+                                    Turn over @(Story.Character(next)?.Name)
+                                </button>
+                            }
+                            else
+                            {
+                                <p>
+                                    @string.Join(", ", trial.ConvictedCharacterIds.Select(id => Story.Character(id)?.Name))
+                                    — taken away.
+                                </p>
+                                @if (NextPhase is { } after)
+                                {
+                                    <button class="btn btn-gold btn-sm" @onclick="() => GoAsync(after)">
+                                        @NextLabel
+                                    </button>
+                                }
+                            }
+                            break;
+                    }
+                </section>
+            }
+        }
+        break;
+
+    // -------------------------------------------------------------------------------- send
+    case "send":
+
+        <section class="mp-card">
+            <h3 class="mp-card-title">Send an objective</h3>
+
+            <label class="sc-field">
+                <span class="tiny">Say</span>
+                <textarea class="sc-text" rows="2" @bind="_text"
+                          placeholder="Go and ask Martha where she was."></textarea>
+            </label>
+
+            @if (Templates.Count > 0)
+            {
+                <div class="chip-row">
+                    @foreach (var template in Templates)
+                    {
+                        <button class="chip" @key="template.Id" @onclick="() => _text = template.Text">
+                            @template.Label
+                        </button>
+                    }
+                </div>
+            }
+
+            <p class="sc-kicker">Who</p>
+            <div class="chip-row sc-targets">
+                <button class="chip @(_targets.Count == 0 ? "on" : "")" @onclick="() => _targets.Clear()">
+                    Everybody in the room
+                </button>
+                @foreach (var character in Story.Characters.Where(c => c.Staff != MysteryStaffRole.Host))
+                {
+                    <button class="chip @(_targets.Contains(character.Id) ? "on" : "") @(Seated(character.Id) ? "" : "is-empty")"
+                            @key="character.Id" @onclick="() => Toggle(character.Id)">
+                        @character.Name
+                    </button>
+                }
+            </div>
+
+            @* Said out loud, because "everybody" quietly meant something different from what the
+               person pressing it thought. It is the twenty-one guests and the three facilitators —
+               not Braun, who is holding this phone, and not the seats nobody has walked into yet. *@
+            <p class="muted tiny">
+                @if (_targets.Count == 0)
+                {
+                    @* Named, not "except you": three of the four people who can press this are
+                       facilitators, and they are in the room like everybody else. Braun is the
+                       one who is not. *@
+                    <span>@RoomSize people — everybody who has arrived, except Braun.</span>
+                }
+                else
+                {
+                    <span>@_targets.Count named.</span>
+                }
+            </p>
+
+            <button class="btn btn-gold btn-sm" disabled="@string.IsNullOrWhiteSpace(_text)" @onclick="SendAsync">
+                Send to @(_targets.Count == 0 ? $"{RoomSize}" : $"{_targets.Count}")
+            </button>
+        </section>
+        break;
+
+    // -------------------------------------------------------------------------------- room
+    case "room":
+
+        @if (IsHost)
+        {
+            <section class="mp-card sc-guilty">
+                <h3 class="mp-card-title">Who did it</h3>
+                <ul class="mp-people">
+                    @foreach (var killer in Story.Killers)
+                    {
+                        <li @key="killer.Id">
+                            <b>@killer.Name</b>
+                            <span class="muted tiny">@killer.GuiltSlot · @(Story.Zone(killer.ZoneId)?.Name)</span>
+                            @if (TrialService.IsGhost(Trip, killer.Id)) { <span class="mys-tag">caught</span> }
+                        </li>
+                    }
+                </ul>
+                <p class="muted tiny">@TrialService.KillersConvicted(Trip) of @Story.Killers.Count() caught.</p>
+            </section>
+        }
+
+        @if (Tampered.Count > 0)
+        {
+            @* The truth, which the room only ever gets told exists. Facilitators need it to steer
+               people toward a card worth re-reading without ever saying which. *@
+            <section class="mp-card">
+                <h3 class="mp-card-title">Tampered with</h3>
+                <ul class="mp-people">
+                    @foreach (var state in Tampered)
+                    {
+                        <li @key="state.ClueId">
+                            <b>@(Story.Zone(Story.Clue(state.ClueId)?.ZoneId ?? "")?.Name)</b>
+                            <span class="muted tiny">
+                                @state.Tamper!.Mode by @(Story.Character(state.Tamper.ByCharacterId)?.Name)
+                            </span>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+
+        <section class="mp-card">
+            <h3 class="mp-card-title">Nobody is talking to</h3>
+            <p class="muted tiny">Fewest conversations first. Point somebody at them.</p>
+            <ul class="mp-people">
+                @foreach (var (character, meetings) in Quietest)
+                {
+                    <li @key="character.Id">
+                        <b>@character.Name</b>
+                        <span class="muted tiny">@meetings @(meetings == 1 ? "conversation" : "conversations")</span>
+                    </li>
+                }
+            </ul>
+        </section>
+        break;
+
+    // -------------------------------------------------------------------------------- jump
+    case "jump":
+
+        <section class="mp-card sc-jump">
+            <h3 class="mp-card-title">Jump</h3>
+            <div class="mys-rounds">
+                @foreach (var phase in MysteryPhases.Order)
+                {
+                    <button class="mys-chip @(phase == Phase ? "on" : "")" @key="phase"
+                            @onclick="() => GoAsync(phase)">
+                        @MysteryPhases.ShortLabel(phase)
+                    </button>
+                }
+            </div>
+            <p class="muted tiny">
+                Jumping and stepping are the same thing to the game, so this is safe when something goes wrong.
+            </p>
+        </section>
+        break;
+}
+</div>
+
+@code {
+    [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
+    [Parameter, EditorRequired] public MysteryCharacter Me { get; set; } = default!;
+    [Parameter] public string? PersonId { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private string _text = "";
+    private string _section = "now";
+    private readonly HashSet<string> _targets = new(StringComparer.Ordinal);
+
+    private MysteryStory Story => Trip.Mystery.Story;
+    private MysteryPlay Play => Trip.Mystery.Play;
+    private MysteryPhase Phase => Trip.Mystery.Phase;
+
+    private bool IsHost => Me.Staff == MysteryStaffRole.Host;
+
+    private MysteryTrial? Trial => TrialService.Current(Trip);
+    private int Waiting => TrialService.AwaitingVote(Trip).Count;
+
+    private MysteryPhase? NextPhase => MysteryPhases.Next(Phase);
+
+    private sealed record Section(string Key, string Label, string Icon);
+
+    private static readonly Section[] Sections =
+    [
+        new("now",  "Now",  "▶"),
+        new("send", "Send", "✉"),
+        new("room", "Room", "◈"),
+        new("jump", "Jump", "⇥")
+    ];
+
+    /// <summary>
+    /// Whether this phase gives Braun a button of its own.
+    ///
+    /// What stops the console showing two buttons that do the same thing. It was showing "Start the
+    /// evening" twice in Assembling, and "On to Murder" beside "Start the murder" during the party —
+    /// which is worse, because the two are not the same sentence and one of them is a spoiler.
+    /// </summary>
+    private bool HasOwnControl =>
+        Phase is MysteryPhase.Assembling or MysteryPhase.Presentation
+              or MysteryPhase.Mingling or MysteryPhase.Reveal
+        || Trial is not null;
+
+    private bool OnLastSpeaker =>
+        Trial is null || Trial.SpeakingIndex + 1 >= Trial.NomineeCharacterIds.Count;
+
+    private string NextLabel => NextPhase switch
+    {
+        MysteryPhase.Welcome => "Start the evening",
+        MysteryPhase.Murder => "Start the murder",
+        MysteryPhase.Reveal => "Tell them everything",
+        { } p => $"On to {MysteryPhases.Label(p)}",
+        _ => "On"
+    };
+
+    /// <summary>Where the ending has got to, in the words the button needs.</summary>
+    private string RevealWhere
+    {
+        get
+        {
+            if (Play.RevealIndex == 0) return "The opening";
+            if (PhaseService.OnRevealFinale(Trip)) return "The sides";
+
+            return PhaseService.RevealSubject(Trip)?.Character.Name ?? "The ending";
+        }
+    }
+
+    private int RoomSize => ObjectiveBus.Room(Trip).Count;
+
+    private bool Seated(string characterId) => Play.ForCharacter(characterId)?.JoinedAt is not null;
+
+    private IReadOnlyList<MysteryObjectiveTemplate> Templates =>
+        Story.Objectives.Where(o => o.Phase is null || o.Phase == Phase).ToList();
+
+    private IReadOnlyList<MysteryClueState> Tampered =>
+        Play.ClueStates.Where(s => s.Tamper is not null).ToList();
+
+    private IReadOnlyList<(MysteryCharacter Character, int Meetings)> Quietest =>
+        ScanShareService.Underserved(Trip).Take(5).ToList();
+
+    private static string? Written(string? value) => MysteryText.Written(value);
+
+    private void Toggle(string characterId)
+    {
+        if (!_targets.Add(characterId)) _targets.Remove(characterId);
+    }
+
+    private async Task SendAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_text) || PersonId is null) return;
+
+        var text = _text.Trim();
+        var everybody = _targets.Count == 0;
+        var targets = _targets.ToList();
+
+        await Store.MutateAsync(t => ObjectiveBus.SendFreeText(
+            t, text, t.Mystery.Phase, Clock.UtcNow, PersonId,
+            everybody ? MysteryAudience.Everyone : MysteryAudience.Characters,
+            characterIds: everybody ? null : targets), TripArea.Mystery);
+
+        _text = "";
+        _targets.Clear();
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task GoAsync(MysteryPhase phase)
+    {
+        await Store.MutateAsync(t => PhaseService.GoToPhase(t, phase, Clock.UtcNow), TripArea.Mystery);
+
+        // The handful of moments that would be miserable to reconstruct after a crash. Votes and
+        // scans can ride the debounce; "which phase were we in" cannot.
+        await Store.FlushAsync();
+        await OnChanged.InvokeAsync();
+    }
+
+    private Task NextSlideAsync() => Mutate(t => PhaseService.NextSlide(t));
+    private Task PreviousSlideAsync() => Mutate(t => PhaseService.PreviousSlide(t));
+    private Task NextRevealAsync() => Mutate(t => PhaseService.NextReveal(t));
+    private Task PreviousRevealAsync() => Mutate(t => PhaseService.PreviousReveal(t));
+    private Task BeginDefenceAsync() => Mutate(t => TrialService.BeginDefence(t));
+    private Task NextSpeakerAsync() => Mutate(t => TrialService.NextSpeaker(t));
+    private Task OpenFinalVoteAsync() => Mutate(t => TrialService.OpenFinalVote(t));
+    private Task CloseNominationsAsync() => Mutate(t => TrialService.CloseNominations(t));
+    private Task RevealVerdictAsync() => Mutate(t => TrialService.RevealNextVerdict(t));
+
+    private async Task CloseFinalVoteAsync()
+    {
+        await Store.MutateAsync(t => TrialService.CloseFinalVote(t, Clock.UtcNow), TripArea.Mystery);
+        await Store.FlushAsync();
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task Mutate(Func<TripData, object?> act)
+    {
+        await Store.MutateAsync(t => act(t), TripArea.Mystery);
+        await OnChanged.InvokeAsync();
+    }
+}

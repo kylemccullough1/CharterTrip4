@@ -1,0 +1,88 @@
+{
+  "slides": [
+    {
+      "id": "phones",
+      "title": "Everything is on your phone",
+      "bullets": [
+        "........",
+        "........",
+        "........"
+      ],
+      "braun_says": "........",
+      "figure": "phone-tabs",
+      "callouts": []
+    },
+    {
+      "id": "who-you-are",
+      "title": "Who you are tonight",
+      "bullets": [
+        "........",
+        "........",
+        "........"
+      ],
+      "braun_says": "........",
+      "figure": "phone-tabs",
+      "callouts": []
+    },
+    {
+      "id": "factions",
+      "title": "Not everyone here is a guest",
+      "bullets": [
+        "........",
+        "........",
+        "........"
+      ],
+      "braun_says": "........",
+      "figure": "factions",
+      "callouts": []
+    },
+    {
+      "id": "clues",
+      "title": "Nine cards, hidden in the house",
+      "bullets": [
+        "........",
+        "........",
+        "........"
+      ],
+      "braun_says": "........",
+      "figure": "clue",
+      "callouts": []
+    },
+    {
+      "id": "scanning",
+      "title": "Scan the people you meet",
+      "bullets": [
+        "........",
+        "........",
+        "........"
+      ],
+      "braun_says": "........",
+      "figure": "badge",
+      "callouts": []
+    },
+    {
+      "id": "trials",
+      "title": "How somebody goes to jail",
+      "bullets": [
+        "........",
+        "........",
+        "........"
+      ],
+      "braun_says": "........",
+      "figure": "trial",
+      "callouts": []
+    },
+    {
+      "id": "mingle",
+      "title": "First, let's get to know each other",
+      "bullets": [
+        "........",
+        "........",
+        "........"
+      ],
+      "braun_says": "........",
+      "figure": null,
+      "callouts": []
+    }
+  ]
+}

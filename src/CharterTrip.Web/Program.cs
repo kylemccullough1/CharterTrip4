@@ -7,6 +7,7 @@ using CharterTrip.Infrastructure;
 using CharterTrip.Infrastructure.Storage;
 using CharterTrip.Web.Auth;
 using CharterTrip.Web.Components;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 
@@ -39,7 +40,16 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.Name = "chartertrip.admin";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+
+        // Always in Production, which is Azure and is HTTPS anyway. In Development it has to be
+        // SameAsRequest, because the fallback plan for the night is this app on a laptop and
+        // twenty-five phones on the house wifi over plain http — and a browser silently discards a
+        // Secure cookie on an http origin. Not "fails to sign in with an error": accepts the tap,
+        // redirects, and lands the guest back on "you're not in this one yet" with nothing to
+        // explain it. That cost an evening to find on a phone.
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
 
         // A whole weekend, renewed on use. Signing in again halfway through Saturday because a
         // cookie expired is exactly the friction this is meant to remove.
@@ -69,6 +79,10 @@ builder.Services.AddScoped<CharterTrip.Web.Services.ToastService>();
 builder.Services.AddScoped<CharterTrip.Web.Services.MediaAttachments>();
 builder.Services.AddScoped<CharterTrip.Web.Services.GameCues>();
 
+// Twenty-five independent sessions on one laptop, so the sim strip can walk the real front door
+// instead of impersonating past it. Development only — see SimPhones.
+builder.Services.AddSingleton<CharterTrip.Web.Services.SimPhones>();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -78,9 +92,46 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
+
+// Skipped in Development for the same reason as the cookie above: a phone pointed at
+// http://<this-laptop>:5235 would be redirected to https on a development certificate it has never
+// heard of, which is a full-page security warning rather than a party.
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+// A stale form is a retry, not a wall.
+//
+// An antiforgery token is tied to a cookie, and the cookie moves when the server restarts or when a
+// page has been sitting open on a phone in somebody's pocket. The framework's answer is a bare 400
+// reading "A valid antiforgery token was not provided" — which, on the one screen twenty-five people
+// meet this game through, is a dead end nobody in a dark room can act on. Sending them back to the
+// same page re-renders it with a fresh token and the next tap works.
+//
+// Checked here rather than caught downstream because UseAntiforgery handles its own exception and
+// turns it into a 400 by the time anything else could see it — so the check has to happen first.
+// IsRequestValidAsync buffers the form, which leaves it readable for the real middleware behind it.
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path;
+    var guarded = path.StartsWithSegments("/join") || path.StartsWithSegments("/login");
+
+    if (guarded && HttpMethods.IsPost(context.Request.Method))
+    {
+        var antiforgery = context.RequestServices.GetRequiredService<IAntiforgery>();
+
+        if (!await antiforgery.IsRequestValidAsync(context))
+        {
+            context.Response.Redirect(path + "?stale=1");
+            return;
+        }
+    }
+
+    await next();
+});
+
 app.UseAntiforgery();
 
 app.MapStaticAssets();

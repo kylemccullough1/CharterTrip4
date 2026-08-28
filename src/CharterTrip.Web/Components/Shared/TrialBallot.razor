@@ -1,0 +1,93 @@
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+
+@* The vote, on a phone, in a dark room.
+
+   One tap per name, and changing your mind replaces rather than adds. There is no submit button:
+   the ballot is a choice, not a form, and the moment the last person taps, the room's screen
+   resolves on its own. *@
+
+@if (Trial is null)
+{
+    <p class="mp-empty-note">The trial hasn't opened yet.</p>
+}
+else if (!CanVote)
+{
+    <p class="mp-empty-note">
+        @(Standing ? "You're standing. The room decides this one." : "You don't have a vote in this round.")
+    </p>
+}
+else
+{
+    <p class="mp-vote-ask">
+        @(Trial.Stage == MysteryTrialStage.Nominating ? "Who was it?" : "Now choose.")
+    </p>
+
+    <div class="mp-votes">
+        @foreach (var character in Candidates)
+        {
+            <button class="mp-vote @(Chosen == character.Id ? "mp-voted" : "")"
+                    @key="character.Id"
+                    @onclick="() => OnVote.InvokeAsync(character.Id)">
+                <span class="mp-vote-name">@character.Name</span>
+                <span class="muted tiny">@character.Job</span>
+            </button>
+        }
+    </div>
+
+    @if (Chosen is null)
+    {
+        <p class="muted tiny">Nothing is locked in until you tap a name.</p>
+    }
+    else
+    {
+        @* Said as well as shown. The card carries the state, but a sentence is what
+           somebody checks when they are holding a drink and half watching a room. *@
+        <p class="muted tiny">
+            You named <b>@(Trip.Mystery.Story.Character(Chosen)?.Name)</b>. Tap another to change it.
+        </p>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
+    [Parameter, EditorRequired] public MysteryCharacter Me { get; set; } = default!;
+    [Parameter] public EventCallback<string> OnVote { get; set; }
+
+    private MysteryTrial? Trial => TrialService.Current(Trip);
+
+    private bool CanVote => TrialService.Electorate(Trip).Any(c => c.Id == Me.Id);
+
+    private bool Standing => Trial?.NomineeCharacterIds.Contains(Me.Id) ?? false;
+
+    /// <summary>
+    /// Everybody you could name.
+    ///
+    /// In the final round only the people standing, and never yourself — voting to be convicted is
+    /// exactly what a jester wants, and it should cost them a conversation rather than a tap.
+    /// </summary>
+    private IReadOnlyList<MysteryCharacter> Candidates
+    {
+        get
+        {
+            if (Trial is null) return [];
+
+            var living = TrialService.Living(Trip);
+
+            return Trial.Stage == MysteryTrialStage.FinalVote
+                ? living.Where(c => Trial.NomineeCharacterIds.Contains(c.Id) && c.Id != Me.Id).ToList()
+                : living;
+        }
+    }
+
+    private string? Chosen
+    {
+        get
+        {
+            if (Trial is null) return null;
+
+            var ballots = Trial.Stage == MysteryTrialStage.FinalVote ? Trial.FinalVotes : Trial.Nominations;
+            return ballots.FirstOrDefault(v => v.VoterCharacterId == Me.Id)?.TargetCharacterId;
+        }
+    }
+}

@@ -2,6 +2,7 @@
 @attribute [ExcludeFromInteractiveRouting]
 @layout BareLayout
 @inject NavigationManager Nav
+@inject IWebHostEnvironment Env
 
 @* Where a guest types the code off the screen.
 
@@ -58,6 +59,15 @@
     /// <summary>Where to land afterwards, when something bounced you here. See <see cref="SafeRedirect"/>.</summary>
     [SupplyParameterFromQuery(Name = "returnUrl")] private string? ReturnUrl { get; set; }
 
+    /// <summary>
+    /// Which simulated phone this is, for the testing strip. Development only.
+    ///
+    /// Carried through every hop because it is standing in for a cookie — drop it here and the
+    /// frame falls back to the one session every frame on the page shares, which is the whole
+    /// thing this avoids.
+    /// </summary>
+    [SupplyParameterFromQuery(Name = "sim")] private int? Sim { get; set; }
+
     private string? _error;
 
     protected override void OnInitialized() => Input ??= new CodeEntry();
@@ -78,8 +88,14 @@
         }
 
         var target = $"/join/{Uri.EscapeDataString(typed)}";
+        var query = new List<string>();
+
         if (ReturnUrl is { Length: > 0 })
-            target += $"?returnUrl={Uri.EscapeDataString(SafeRedirect.Local(ReturnUrl))}";
+            query.Add($"returnUrl={Uri.EscapeDataString(SafeRedirect.Local(ReturnUrl))}");
+
+        if (Env.IsDevelopment() && Sim is > 0) query.Add($"sim={Sim}");
+
+        if (query.Count > 0) target += "?" + string.Join("&", query);
 
         Nav.NavigateTo(target);
     }

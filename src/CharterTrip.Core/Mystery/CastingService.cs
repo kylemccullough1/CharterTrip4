@@ -250,18 +250,34 @@ public static class CastingService
         if (story.Characters.Count == 0)
             return (false, "There is no story yet.");
 
-        var staffLeft = UnclaimedStaffParts(trip).Count;
-        if (staffLeft > 0)
-            return (false, $"{staffLeft} of the four house parts {(staffLeft == 1 ? "is" : "are")} still going.");
-
+        // Named rather than counted. "4 house parts still going" meant nothing to anybody standing
+        // in the room; "waiting on Braun and Chloe" is something they can go and fix.
+        var missingStaff = UnclaimedStaffParts(trip).Select(c => c.Name).ToList();
         var seatsLeft = SeatsLeft(trip);
-        if (seatsLeft > 0)
-            return (false, $"{seatsLeft} {(seatsLeft == 1 ? "person has" : "people have")} not arrived yet.");
 
-        return (true, "Everybody is here.");
+        if (missingStaff.Count > 0 && seatsLeft > 0)
+            return (false, $"Waiting on {Names(missingStaff)}, and {Guests(seatsLeft)} not here yet.");
+
+        if (missingStaff.Count > 0)
+            return (false, $"Waiting on {Names(missingStaff)}.");
+
+        if (seatsLeft > 0)
+            return (false, $"{Guests(seatsLeft)} not here yet.");
+
+        return (true, $"All {trip.Mystery.Play.Cast.Count} of them are in.");
     }
 
     // ------------------------------------------------------------------------------------------
+
+    private static string Guests(int count) =>
+        count == 1 ? "One guest is" : $"{count} guests are";
+
+    private static string Names(IReadOnlyList<string> names) => names.Count switch
+    {
+        1 => names[0],
+        2 => $"{names[0]} and {names[1]}",
+        _ => string.Join(", ", names.Take(names.Count - 1)) + $" and {names[^1]}"
+    };
 
     private static IEnumerable<MysteryCastMember> GuestSeats(TripData trip) =>
         trip.Mystery.Play.Cast.Where(c => trip.Mystery.Story.Character(c.CharacterId) is { IsStaff: false });

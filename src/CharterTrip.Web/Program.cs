@@ -78,6 +78,10 @@ builder.Services.AddDataProtection()
 builder.Services.AddScoped<CharterTrip.Web.Services.ToastService>();
 builder.Services.AddScoped<CharterTrip.Web.Services.MediaAttachments>();
 
+// Twenty-five independent sessions on one laptop, so the sim strip can walk the real front door
+// instead of impersonating past it. Development only — see SimPhones.
+builder.Services.AddSingleton<CharterTrip.Web.Services.SimPhones>();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

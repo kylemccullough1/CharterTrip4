@@ -11,6 +11,8 @@
 @inject ITripStore Store
 @inject NavigationManager Nav
 @inject ILogger<JoinWithCode> Log
+@inject IWebHostEnvironment Env
+@inject CharterTrip.Web.Services.SimPhones Sims
 
 @* The one door for every code on this trip.
 
@@ -140,6 +142,17 @@ else
     /// <summary>Set by the antiforgery guard when it sends a stale form back for another go.</summary>
     [SupplyParameterFromQuery(Name = "stale")] private string? StaleFlag { get; set; }
 
+    /// <summary>
+    /// Which simulated phone this is, for the testing strip. Development only.
+    ///
+    /// A frame carrying this signs into <see cref="SimPhones"/> rather than the cookie it would
+    /// otherwise share with the twenty-four frames beside it — everything else about the journey,
+    /// the code, the picker, the claim, is the same code a real phone runs.
+    /// </summary>
+    [SupplyParameterFromQuery(Name = "sim")] private int? Sim { get; set; }
+
+    private bool IsSim => Env.IsDevelopment() && Sim is > 0;
+
     private bool Stale => StaleFlag is { Length: > 0 };
 
     private State _state = State.Unknown;
@@ -247,7 +260,7 @@ else
         await Store.FlushAsync();
 
         var person = Store.Current.Roster.First(p => p.Id == personId);
-        await SignInAndGo(TripSignIn.ForPerson(person), "/m/welcome");
+        await SignInAndGo(TripSignIn.ForPerson(person), "/m/welcome", person.Id);
     }
 
     /// <summary>
@@ -259,6 +272,8 @@ else
     private void PickOrganiser(string personId)
     {
         var target = $"/join/{Uri.EscapeDataString(Code ?? "")}?who={Uri.EscapeDataString(personId)}";
+        if (IsSim) target += $"&sim={Sim!.Value}";
+
         Nav.NavigateTo(target);
     }
 
@@ -286,11 +301,25 @@ else
         await Store.FlushAsync();
 
         var person = Store.Current.Roster.First(p => p.Id == personId);
-        await SignInAndGo(TripSignIn.ForPerson(person), "/m/welcome");
+        await SignInAndGo(TripSignIn.ForPerson(person), "/m/welcome", person.Id);
     }
 
-    private async Task SignInAndGo(System.Security.Claims.ClaimsPrincipal principal, string landing)
+    /// <param name="personId">
+    /// Who this is, when it is somebody in particular. A simulated phone needs the id rather than
+    /// the principal, because it is binding a slot instead of writing a cookie.
+    /// </param>
+    private async Task SignInAndGo(
+        System.Security.Claims.ClaimsPrincipal principal, string landing, string? personId = null)
     {
+        if (IsSim && personId is { Length: > 0 })
+        {
+            // A simulated phone keeps its identity beside the others rather than in the one cookie
+            // every frame on this page shares.
+            Sims.Bind(Sim!.Value, personId);
+            Nav.NavigateTo(Append(landing, Sim.Value));
+            return;
+        }
+
         // Persistent, so closing the tab does not mean finding the code again halfway through the
         // evening. Signing in replaces whatever session was here before, which is what makes
         // handing a phone to somebody else work.
@@ -301,4 +330,10 @@ else
 
         Nav.NavigateTo(ReturnUrl is { Length: > 0 } ? SafeRedirect.Local(ReturnUrl) : landing);
     }
+
+    /// <summary>Carries the sim slot through every hop, since it is standing in for a cookie.</summary>
+    private static string Append(string path, int slot) =>
+        path + (path.Contains('?') ? "&" : "?") + "sim=" + slot;
+
+
 }

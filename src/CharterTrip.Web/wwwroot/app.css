@@ -3982,3 +3982,37 @@ pre.code {
 
 .jeo-hint.is-ready { color: var(--emerald); }
 .jeo-force { margin-top: 10px; }
+
+/* The board takes the whole screen only once the evening is actually running. Before that it is a
+   page with a nav bar like any other, because the lobby is something you use rather than watch. */
+.ms-screen.is-live {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  max-width: none;
+  margin: 0;
+  padding: clamp(16px, 3vw, 40px);
+  overflow-y: auto;
+  background: var(--ink);
+}
+
+/* --- the camera, and the letter's button ------------------------------------ */
+
+/* Mirrored, because a preview that moves the wrong way is unusable to aim with.
+   The captured frame is not — see camera.js — or every badge reads backwards. */
+.mw-cam { object-fit: cover; transform: scaleX(-1); background: var(--ink-2); }
+.mw-cam.is-hidden { display: none; }
+
+.mw-shutter { min-width: 160px; }
+
+/* The letter is longer than a phone screen, so the button is pinned rather than
+   run on after the last paragraph — below the fold it reads as nothing more to do. */
+.mw-actions {
+  position: sticky;
+  bottom: 0;
+  padding: 12px 0 4px;
+  margin-top: 18px;
+  background: linear-gradient(to top, var(--ink) 62%, transparent);
+}
+
+.sim-nav { margin-top: 8px; }

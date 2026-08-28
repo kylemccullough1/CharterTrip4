@@ -14,7 +14,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 25;
+    public const int CurrentVersion = 26;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -40,6 +40,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 23) changed |= ToV23_SketchCharactersHavePictures(trip);
         if (trip.SchemaVersion < 24) changed |= ToV24_FourBeersTakesTheRound(trip);
         if (trip.SchemaVersion < 25) changed |= ToV25_TheStackIsWorkedOut(trip);
+        if (trip.SchemaVersion < 26) changed |= ToV26_NoNewlywedGame(trip);
 
         // v19 carried the seed's hand-written word list across to a file that predated the
         // bee. No step any more: v20 deals the list instead of shipping one, so there is
@@ -512,6 +513,36 @@ public static class TripMigrations
     /// it there until somebody happens to make an edit. Same as v4.
     /// </summary>
     private static bool ToV25_TheStackIsWorkedOut(TripData trip) => true;
+
+    /// <summary>
+    /// Nobody is playing the Newlywed Game. The seed dropped it when the weekend was cut to six
+    /// games, but the seed only ever reaches a file that has none of its own — so a copy saved
+    /// before that still lists it on the games page, behind a card that opens on a game with no
+    /// screen of its own, and still holds three quarters of an hour for it on Friday night.
+    ///
+    /// The card goes by id, which is what the menu and the score log key on, rather than by the
+    /// name, which a host is free to have retitled. The Friday slot goes by its title instead:
+    /// it is an ordinary itinerary item that has been dragged and renumbered before now, so the
+    /// id it happens to carry is the weaker of the two identities.
+    ///
+    /// Points already awarded to it are left where they are. The log is append-only and a team's
+    /// total is the sum of its entries, so deleting them would move the standings — taking a game
+    /// off the page is not the same as taking back what a team won at it, and in practice there
+    /// is nothing here to take: the game never had a scoring screen to award from.
+    /// </summary>
+    private static bool ToV26_NoNewlywedGame(TripData trip)
+    {
+        var changed = trip.Games.RemoveAll(g => g.Id == "newlywed") > 0;
+
+        foreach (var day in trip.Itinerary)
+        {
+            if (day.Items.RemoveAll(i =>
+                    i.Title.Contains("Newlywed", StringComparison.OrdinalIgnoreCase)) > 0)
+                changed = true;
+        }
+
+        return changed;
+    }
 
 
     private static bool ClearLegacy(ItineraryItem item)

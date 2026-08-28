@@ -743,4 +743,87 @@ public class TripMigrationsTests
         Assert.DoesNotContain(rules, r => r.Contains("Alternating"));
         Assert.Contains(rules, r => r.Contains("shuffled into one row"));
     }
+
+    /// <summary>
+    /// A file saved while the Newlywed Game was still on the list loses the card and the Friday
+    /// slot it held, and nothing standing next to either of them moves.
+    /// </summary>
+    [Fact]
+    public void V26_takes_the_newlywed_game_off_the_list_and_off_friday()
+    {
+        var trip = NewlywedStillListed();
+
+        Assert.True(TripMigrations.Apply(trip));
+
+        Assert.DoesNotContain(trip.Games, g => g.Id == "newlywed");
+        Assert.Equal(["jeopardy", "sketch"], trip.Games.Select(g => g.Id));
+
+        var friday = trip.Itinerary.Single().Items;
+        Assert.DoesNotContain(friday, i => i.Title.Contains("Newlywed"));
+        Assert.Equal(["item-f4", "item-f6"], friday.Select(i => i.Id));
+    }
+
+    /// <summary>
+    /// The slot goes by what it says rather than by the id it happens to carry, because an
+    /// itinerary item is dragged and renumbered and a game card is not.
+    /// </summary>
+    [Fact]
+    public void V26_finds_the_friday_slot_even_when_it_has_been_renumbered()
+    {
+        var trip = NewlywedStillListed();
+        trip.Itinerary[0].Items[1].Id = "item-f9";
+
+        TripMigrations.Apply(trip);
+
+        Assert.DoesNotContain(trip.Itinerary[0].Items, i => i.Title.Contains("Newlywed"));
+    }
+
+    /// <summary>
+    /// Taking the card off the page is not taking back what a team won. The log is append-only
+    /// and the standings are its sum, so an entry against the game outlives the game.
+    /// </summary>
+    [Fact]
+    public void V26_leaves_points_already_awarded_where_they_are()
+    {
+        var trip = NewlywedStillListed();
+        trip.Scores.Add(new ScoreEntry { Id = "sc-1", GameId = "newlywed", TeamId = "jou", Points = 10 });
+
+        TripMigrations.Apply(trip);
+
+        Assert.Equal("sc-1", Assert.Single(trip.Scores).Id);
+    }
+
+    [Fact]
+    public void V26_running_twice_changes_nothing_the_second_time()
+    {
+        var trip = NewlywedStillListed();
+        TripMigrations.Apply(trip);
+
+        Assert.False(TripMigrations.Apply(trip));
+    }
+
+    /// <summary>A v25 file, listing the game the way every copy written before this one did.</summary>
+    private static TripData NewlywedStillListed() => new()
+    {
+        SchemaVersion = 25,
+        Games =
+        [
+            new Game { Id = "jeopardy", Name = "Jeopardy" },
+            new Game { Id = "newlywed", Name = "Newlywed Game", Scoring = "newlywed" },
+            new Game { Id = "sketch", Name = "Police Sketch" }
+        ],
+        Itinerary =
+        [
+            new ItineraryDay
+            {
+                Id = "day-fri",
+                Items =
+                [
+                    new ItineraryItem { Id = "item-f4", StartMinutes = 1320, DurationMinutes = 60, Title = "Jeopardy" },
+                    new ItineraryItem { Id = "item-f5", StartMinutes = 1380, DurationMinutes = 45, Title = "Newlywed Game" },
+                    new ItineraryItem { Id = "item-f6", StartMinutes = 1425, DurationMinutes = 45, Title = "Police Sketch (optional)" }
+                ]
+            }
+        ]
+    };
 }

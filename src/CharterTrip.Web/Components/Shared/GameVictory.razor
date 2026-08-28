@@ -14,7 +14,7 @@
     </div>
 
     <p class="jeo-kicker">@Kicker</p>
-    <h1 class="jeo-win-name" style="--team:@(Winner?.Color ?? "var(--gold)")">@(Winner?.Name ?? "No winner")</h1>
+    <h1 class="jeo-win-name" style="--team:@Colour">@Headline</h1>
 
     @if (Subtitle is { Length: > 0 })
     {
@@ -24,7 +24,7 @@
     <div class="jeo-final-grid">
         @foreach (var (team, score) in Rows.OrderByDescending(r => r.Score))
         {
-            <div class="jeo-final-card @(Winner is not null && team.Id == Winner.Id ? "is-winner" : null)"
+            <div class="jeo-final-card @(Won(team) ? "is-winner" : null)"
                  style="--team:@team.Color" @key="team.Id">
                 <span class="jeo-join-team">@team.Name</span>
                 <p class="jeo-final-score">@score</p>
@@ -45,8 +45,11 @@
     /// <summary>Every team and what they finished this game on.</summary>
     [Parameter, EditorRequired] public IReadOnlyList<(Team Team, int Score)> Rows { get; set; } = [];
 
-    /// <summary>The winner, or null for a tie or a game nobody scored in.</summary>
-    [Parameter] public Team? Winner { get; set; }
+    /// <summary>
+    /// Whoever won it: one team usually, both of them on a joint win, and none at all in a game
+    /// nobody scored in.
+    /// </summary>
+    [Parameter] public IReadOnlyList<Team> Winners { get; set; } = [];
 
     [Parameter] public string Kicker { get; set; } = "Final scores";
 
@@ -55,4 +58,12 @@
 
     /// <summary>Anything to offer beside the way home, such as playing it again.</summary>
     [Parameter] public RenderFragment? Actions { get; set; }
+
+    private string Headline =>
+        Winners.Count == 0 ? "No winner" : string.Join(" and ", Winners.Select(w => w.Name));
+
+    /// <summary>A joint win belongs to nobody, so it wears the trip's gold rather than one team's colour.</summary>
+    private string Colour => Winners is [var only] ? only.Color : "var(--gold)";
+
+    private bool Won(Team team) => Winners.Any(w => w.Id == team.Id);
 }

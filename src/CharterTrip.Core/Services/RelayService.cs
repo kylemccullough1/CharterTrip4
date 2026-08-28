@@ -5,7 +5,8 @@ namespace CharterTrip.Core.Services;
 /// <summary>
 /// The relay is four clocks on one gun. Somebody — anybody — starts the race and every team's
 /// clock starts together; each lead then stops their own from their own phone as their team
-/// comes in. The fastest takes the whole prize and nobody else scores.
+/// comes in. The fastest takes the whole prize and nobody else scores. Two clocks coming back
+/// identical share it between them rather than running the race again.
 ///
 /// A clock records the instant it started rather than counting, so four phones watching the
 /// same race all show the same time without anything being sent between them.
@@ -19,7 +20,6 @@ public static class RelayService
     {
         game.Phase = PartyGamePhase.Playing;
         game.Timers = teams.ToDictionary(t => t.Id, _ => new RelayTimer(), StringComparer.Ordinal);
-        game.TieBreakTeamIds.Clear();
     }
 
     /// <summary>
@@ -31,7 +31,7 @@ public static class RelayService
     {
         if (game.Phase != PartyGamePhase.Playing) return;
 
-        foreach (var team in InPlay(game, teams))
+        foreach (var team in teams)
         {
             var timer = Timer(game, team.Id);
             if (timer.Armed) timer.StartedAt = now;
@@ -62,21 +62,15 @@ public static class RelayService
         if (timer.Stopped && timer.StartedAt is not null) timer.ElapsedMs = null;
     }
 
-    /// <summary>Everyone still in this race: the whole field, or the run-off.</summary>
-    public static IReadOnlyList<Team> InPlay(RelayGame game, IEnumerable<Team> teams) =>
-        game.IsRunOff
-            ? teams.Where(t => game.TieBreakTeamIds.Contains(t.Id)).ToList()
-            : teams.ToList();
-
-    /// <summary>True before the gun — every clock in play still on the line.</summary>
+    /// <summary>True before the gun — every clock still on the line.</summary>
     public static bool NotYetRun(RelayGame game, IEnumerable<Team> teams)
     {
-        var field = InPlay(game, teams);
+        var field = teams.ToList();
         return field.Count > 0 && field.All(t => Timer(game, t.Id).Armed);
     }
 
     public static bool AnyRunning(RelayGame game, IEnumerable<Team> teams) =>
-        InPlay(game, teams).Any(t => Timer(game, t.Id).Running);
+        teams.Any(t => Timer(game, t.Id).Running);
 
     /// <summary>
     /// True once every team in this race has a finishing time. What the "end the race" button
@@ -84,18 +78,14 @@ public static class RelayService
     /// </summary>
     public static bool AllStopped(RelayGame game, IEnumerable<Team> teams)
     {
-        var field = InPlay(game, teams);
+        var field = teams.ToList();
         return field.Count > 0 && field.All(t => Timer(game, t.Id).Stopped);
     }
 
-    /// <summary>The fastest finisher. Null while nobody has finished, and on a dead heat.</summary>
-    public static string? WinningTeamId(RelayGame game)
-    {
-        var fastest = Fastest(game);
-        return fastest.Count == 1 ? fastest[0] : null;
-    }
-
-    /// <summary>Everyone sharing the quickest time — more than one means a run-off.</summary>
+    /// <summary>
+    /// Everyone sharing the quickest time: nobody while the race is still running, one team
+    /// normally, and more than one on a dead heat — which splits the prize rather than rerunning.
+    /// </summary>
     public static IReadOnlyList<string> Fastest(RelayGame game)
     {
         var finished = game.Timers.Where(kv => kv.Value.Stopped).ToList();
@@ -103,21 +93,6 @@ public static class RelayService
 
         var best = finished.Min(kv => kv.Value.ElapsedMs!.Value);
         return finished.Where(kv => kv.Value.ElapsedMs == best).Select(kv => kv.Key).ToList();
-    }
-
-    /// <summary>
-    /// Two clocks came back identical, so those teams run it again and nobody else does. The
-    /// weekend scoreboard has no room for a joint first.
-    /// </summary>
-    public static void StartRunOff(RelayGame game)
-    {
-        if (game.Phase != PartyGamePhase.Playing) return;
-
-        var tied = Fastest(game);
-        if (tied.Count < 2) return;
-
-        game.TieBreakTeamIds = tied.ToList();
-        game.Timers = tied.ToDictionary(id => id, _ => new RelayTimer(), StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -133,19 +108,30 @@ public static class RelayService
     }
 
     /// <summary>
-    /// End the race and pay the winner. Only the winner: the sheet gives a value for first
-    /// place and nothing for the rest, and inventing a sliding scale here would be inventing
+    /// End the race and pay the front. Only the front: the sheet gives a value for first place
+    /// and nothing for the rest, and inventing a sliding scale down the field would be inventing
     /// a rule nobody agreed to.
+    ///
+    /// A dead heat splits the prize rather than running it again. Each team's own share comes off
+    /// its own prize, so a short-handed team still gets the larger half of a two-way tie.
     /// </summary>
     public static void Finish(TripData trip, RelayGame game, DateTimeOffset now)
     {
         if (game.Phase != PartyGamePhase.Playing) return;
 
-        if (WinningTeamId(game) is { } winner)
+        var fastest = Fastest(game);
+
+        foreach (var teamId in fastest)
         {
-            var elapsed = game.Timers[winner].ElapsedMs ?? 0;
-            ScoreService.Award(
-                trip, GameId, winner, PointsForWinner(trip, game, winner), $"First to finish · {Clock(elapsed)}", now);
+            var share = PointsForWinner(trip, game, teamId) / fastest.Count;
+            if (share <= 0) continue;
+
+            var elapsed = game.Timers[teamId].ElapsedMs ?? 0;
+            var note = fastest.Count == 1
+                ? $"First to finish · {Clock(elapsed)}"
+                : $"Dead heat · {Clock(elapsed)}";
+
+            ScoreService.Award(trip, GameId, teamId, share, note, now);
         }
 
         game.Phase = PartyGamePhase.Finished;
@@ -155,7 +141,6 @@ public static class RelayService
     {
         game.Phase = PartyGamePhase.NotStarted;
         game.Timers.Clear();
-        game.TieBreakTeamIds.Clear();
 
         ScoreService.Clear(trip, GameId);
     }

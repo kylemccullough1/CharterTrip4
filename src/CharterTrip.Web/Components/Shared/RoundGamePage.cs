@@ -30,8 +30,6 @@ public abstract class RoundGamePage : TripAwareComponent
 
     protected Game? Definition => Trip.Games.FirstOrDefault(g => g.Id == GameId);
 
-    protected IReadOnlyList<Team> Active => RoundGameService.ActiveTeams(Trip, State);
-
     // ------------------------------------------------------------------ the result card
 
     /// <summary>Long enough to read a name and look up; short enough not to hold up the next round.</summary>
@@ -117,7 +115,7 @@ public abstract class RoundGamePage : TripAwareComponent
     protected Task BeginAsync() => MutateAsync(t => RoundGameService.Begin(Select(t)));
 
     protected Task SkipRoundAsync() =>
-        MutateAsync(t => RoundGameService.NextRound(t, Select(t), GameId));
+        MutateAsync(t => RoundGameService.NextRound(Select(t)));
 
     protected Task ResetAsync() =>
         MutateAsync(t => RoundGameService.Reset(t, Select(t), GameId));

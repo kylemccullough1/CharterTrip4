@@ -145,4 +145,39 @@ public class ScoreServiceTests
 
         Assert.Null(ScoreService.Leader(trip, "sketch"));
     }
+
+    [Fact]
+    public void One_clear_winner_is_one_leader()
+    {
+        var trip = Jake();
+        ScoreService.Award(trip, "sketch", "kyle", 20, "", T0);
+        ScoreService.Award(trip, "sketch", "em", 40, "", T0);
+
+        var leaders = ScoreService.Leaders(trip, "sketch");
+
+        Assert.Equal("em", Assert.Single(leaders).Id);
+    }
+
+    /// <summary>Where Leader gives up, Leaders still has both names to put on the screen.</summary>
+    [Fact]
+    public void A_shared_top_score_is_two_leaders()
+    {
+        var trip = Jake();
+        ScoreService.Award(trip, "sketch", "kyle", 20, "", T0);
+        ScoreService.Award(trip, "sketch", "em", 20, "", T0);
+        ScoreService.Award(trip, "sketch", "jou", 10, "", T0);
+
+        Assert.Equal(["em", "kyle"], ScoreService.Leaders(trip, "sketch").Select(t => t.Id).Order());
+    }
+
+    [Fact]
+    public void A_game_nobody_scored_in_has_no_leaders_at_all()
+    {
+        var trip = Jake();
+        Assert.Empty(ScoreService.Leaders(trip, "sketch"));
+
+        // Another game's points are not this game's.
+        ScoreService.Award(trip, "noodlecup", "kyle", 20, "", T0);
+        Assert.Empty(ScoreService.Leaders(trip, "sketch"));
+    }
 }

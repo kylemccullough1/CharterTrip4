@@ -29,7 +29,7 @@
                     <b>@State.SmallTeamPoints points</b> instead if the winning team is
                     @State.SmallTeamSize or fewer, for running the same legs a person short.
                 </p>
-                <p class="muted tiny">Two identical times go to a run-off, so this cannot finish in a tie.</p>
+                <p class="muted tiny">Two identical times share the prize between them.</p>
             </Structure>
             <Settings>
                 <div class="settings-row">
@@ -70,16 +70,6 @@
                 }
             </Detail>
         </GamePlayHead>
-
-        @* The same announcement the round games get, for the one moment this game has rounds:
-           two clocks came back identical and those teams are going again. *@
-        @if (State.IsRunOff)
-        {
-            <div class="round-splash" @key="@($"runoff-{Field.Count}")">
-                <span class="round-splash-kicker is-sudden">Run-off</span>
-                <span class="round-splash-sub">@string.Join(" v ", Field.Select(t => t.Name))</span>
-            </div>
-        }
 
         @if (NotYetRun)
         {
@@ -150,25 +140,28 @@
 
             @if (AllStopped)
             {
+                var fastest = RelayService.Fastest(State);
                 <div class="relay-finish">
-                    @if (RelayService.WinningTeamId(State) is { } winnerId)
+                    @if (fastest is [var winnerId])
                     {
                         var winner = TeamService.FindTeam(Trip, winnerId);
                         <p>
                             <b>@winner?.Name</b> took it in <b>@Clock(Timer(winnerId))</b> —
                             <b>@RelayService.PointsForWinner(Trip, State, winnerId) points</b>.
                         </p>
-                        <button class="btn btn-gold btn-lg" @onclick="FinishAsync">End the race</button>
                     }
                     else
                     {
+                        @* Named share by share rather than "x points each": a short-handed team is
+                           running for the larger prize, so its half of a dead heat is larger too. *@
                         <p>
-                            A dead heat on <b>@Clock(Timer(RelayService.Fastest(State)[0]))</b>.
-                            @string.Join(" and ", RelayService.Fastest(State).Select(id => TeamService.FindTeam(Trip, id)?.Name))
-                            run it again.
+                            A dead heat on <b>@Clock(Timer(fastest[0]))</b>. They split it —
+                            <b>@string.Join(", ", fastest.Select(id =>
+                                $"{TeamService.FindTeam(Trip, id)?.Name} {RelayService.PointsForWinner(Trip, State, id) / fastest.Count}"))</b>
+                            points.
                         </p>
-                        <button class="btn btn-gold btn-lg" @onclick="RunOffAsync">Set up the run-off</button>
                     }
+                    <button class="btn btn-gold btn-lg" @onclick="FinishAsync">End the race</button>
                 </div>
             }
         </SectionCard>
@@ -178,7 +171,7 @@
     else
     {
         <GameVictory Rows="ScoreService.Scoreboard(Trip, RelayService.GameId)"
-                     Winner="ScoreService.Leader(Trip, RelayService.GameId)"
+                     Winners="ScoreService.Leaders(Trip, RelayService.GameId)"
                      Kicker="Relay Race"
                      Subtitle="@FinishedSubtitle">
             <Actions>
@@ -204,7 +197,7 @@
     private Game? Game => Trip.Games.FirstOrDefault(g => g.Id == RelayService.GameId);
     private RelayGame State => Trip.Party.Relay;
 
-    private IReadOnlyList<Team> Field => RelayService.InPlay(State, Trip.Teams);
+    private IReadOnlyList<Team> Field => Trip.Teams;
 
     private RelayTimer Timer(string teamId) =>
         State.Timers.TryGetValue(teamId, out var t) ? t : new RelayTimer();
@@ -212,8 +205,9 @@
     private bool NotYetRun => RelayService.NotYetRun(State, Trip.Teams);
     private bool AllStopped => RelayService.AllStopped(State, Trip.Teams);
 
+    /// <summary>The winning time — the same one for everybody, when the front came in together.</summary>
     private string FinishedSubtitle =>
-        RelayService.WinningTeamId(State) is { } id && Timer(id) is { ElapsedMs: { } ms }
+        RelayService.Fastest(State) is [var id, ..] && Timer(id) is { ElapsedMs: { } ms }
             ? RelayService.Clock(ms)
             : "";
 
@@ -240,14 +234,6 @@
 
     private Task ResumeAsync(string teamId) =>
         MutateAsync(t => RelayService.ResumeTimer(t.Party.Relay, teamId));
-
-    private async Task RunOffAsync()
-    {
-        await MutateAsync(t => RelayService.StartRunOff(t.Party.Relay));
-
-        // The clocks are back on the line, so a lead holding a team that is out should be asked again.
-        if (_mine is { } mine && !State.TieBreakTeamIds.Contains(mine)) _mine = null;
-    }
 
     private async Task FinishAsync()
     {

@@ -825,8 +825,7 @@
         { "name": "Sid the Sloth", "imageUrl": "" },
         { "name": "Hyperpigmentation", "imageUrl": "" }
       ],
-      "usedCharacters": [],
-      "tieBreakTeamIds": []
+      "usedCharacters": []
     },
     "noodleCup": {
       "phase": "notStarted",
@@ -834,25 +833,23 @@
       "roundCount": 6,
       "round": 1,
       "characters": [],
-      "usedCharacters": [],
-      "tieBreakTeamIds": []
+      "usedCharacters": []
     },
     "beerRun": {
       "phase": "notStarted",
       "pointValue": 10,
       "roundCount": 4,
+      "takeToWin": 4,
       "round": 1,
       "characters": [],
-      "usedCharacters": [],
-      "tieBreakTeamIds": []
+      "usedCharacters": []
     },
     "relay": {
       "phase": "notStarted",
       "winnerPoints": 100,
       "smallTeamPoints": 120,
       "smallTeamSize": 5,
-      "timers": {},
-      "tieBreakTeamIds": []
+      "timers": {}
     }
   },
   "jeopardy": {

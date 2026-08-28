@@ -568,6 +568,67 @@ public class TripMigrationsTests
         Assert.Equal("Mine", Assert.Single(trip.Guide.Essentials).Group);
     }
 
+    // ------------------------------- v22/v23: the beer run is a race to four
+
+    [Fact]
+    public void V22_gives_the_beer_run_the_number_that_wins_a_round()
+    {
+        var trip = new TripData { SchemaVersion = 20 };
+
+        Assert.True(TripMigrations.Apply(trip));
+
+        Assert.Equal(4, trip.Party.BeerRun.TakeToWin);
+        Assert.Null(trip.Party.NoodleCup.TakeToWin);
+    }
+
+    /// <summary>
+    /// A file that already stopped at v21 — it took a stack and no number to win. v21 will not run
+    /// again, so v22 is what has to reach it.
+    /// </summary>
+    [Fact]
+    public void V22_reaches_a_file_that_already_took_v21()
+    {
+        var trip = new TripData { SchemaVersion = 21 };
+
+        Assert.True(TripMigrations.Apply(trip));
+
+        Assert.Equal(4, trip.Party.BeerRun.TakeToWin);
+    }
+
+    /// <summary>A number the host has already chosen is theirs, not the seed's.</summary>
+    [Fact]
+    public void V22_leaves_a_number_to_win_that_has_already_been_set()
+    {
+        var trip = new TripData { SchemaVersion = 21 };
+        trip.Party.BeerRun.TakeToWin = 3;
+
+        TripMigrations.Apply(trip);
+
+        Assert.Equal(3, trip.Party.BeerRun.TakeToWin);
+    }
+
+    /// <summary>
+    /// v23 carries no data of its own — it exists to restamp the file so the roundPool key v21
+    /// wrote is flushed rather than sitting there ignored. So it must still report a change.
+    /// </summary>
+    [Fact]
+    public void V23_restamps_a_file_that_still_carries_the_old_stack_key()
+    {
+        var trip = new TripData { SchemaVersion = 22 };
+
+        Assert.True(TripMigrations.Apply(trip));
+        Assert.Equal(TripMigrations.CurrentVersion, trip.SchemaVersion);
+    }
+
+    [Fact]
+    public void The_beer_run_migrations_run_twice_without_changing_anything()
+    {
+        var trip = new TripData { SchemaVersion = 21 };
+        TripMigrations.Apply(trip);
+
+        Assert.False(TripMigrations.Apply(trip));
+    }
+
     [Fact]
     public void V14_running_twice_changes_nothing_the_second_time()
     {

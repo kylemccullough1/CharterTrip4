@@ -2713,8 +2713,6 @@ pre.code {
 
 .game-start { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 0 34px; }
 
-/* a sudden-death round, or a run-off: the game refusing to end level */
-.is-sudden { color: var(--ruby); letter-spacing: .04em; }
 
 /* Police Sketch's cast, in the settings drawer. Laid out as cards rather than a list: fourteen
    of them down a single column is a lot of scrolling to reach the one you want to fix. */

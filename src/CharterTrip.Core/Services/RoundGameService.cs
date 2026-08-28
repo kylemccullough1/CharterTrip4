@@ -9,8 +9,9 @@ namespace CharterTrip.Core.Services;
 /// what each team carried off. Both land in the same place — points into the trip's score log,
 /// noted with the round they came from, and on to the next one.
 ///
-/// No game here can end level. The last round finishing on a shared top score sends exactly the
-/// teams who tied into sudden death, as many times as it takes.
+/// A game here is the rounds it was set up with and nothing more. Ending level is a joint win —
+/// the scoreboard has room for two names, and a tie-break round nobody asked for is worse than
+/// one on the wall.
 /// </summary>
 public static class RoundGameService
 {
@@ -24,7 +25,6 @@ public static class RoundGameService
         game.Round = 1;
         game.CurrentCharacter = null;
         game.UsedCharacters.Clear();
-        game.TieBreakTeamIds.Clear();
     }
 
     /// <summary>
@@ -46,13 +46,13 @@ public static class RoundGameService
     {
         if (game.Phase != PartyGamePhase.Playing) return;
 
-        var where = game.IsSuddenDeath ? "Sudden death" : $"Round {game.Round}";
+        var where = $"Round {game.Round}";
         var note = game.CurrentCharacter is { Length: > 0 } character
             ? $"{where} · {character}"
             : where;
 
         ScoreService.Award(trip, gameId, teamId, game.PointValue, note, now);
-        NextRound(trip, game, gameId);
+        NextRound(game);
     }
 
     /// <summary>
@@ -69,7 +69,7 @@ public static class RoundGameService
     {
         if (game.Phase != PartyGamePhase.Playing) return;
 
-        var where = game.IsSuddenDeath ? "Sudden death" : $"Round {game.Round}";
+        var where = $"Round {game.Round}";
 
         foreach (var (teamId, count) in counts)
         {
@@ -79,44 +79,25 @@ public static class RoundGameService
                 trip, gameId, teamId, count * game.PointValue, $"{where} · {count} {unit}", now);
         }
 
-        NextRound(trip, game, gameId);
+        NextRound(game);
     }
 
     /// <summary>
-    /// On to the next round — or, once the scheduled ones are done, to a winner. A shared top
-    /// score is not a result, so it becomes a sudden-death round between whoever is level.
-    ///
-    /// Sudden death is judged on the running total rather than on the round alone, which comes
-    /// to the same thing: the teams going into it are level by definition, so whatever separates
-    /// them there separates them overall.
+    /// On to the next round — or, once the scheduled ones are done, to the final scores. Whatever
+    /// the board says at that point is the result, a tie at the top included.
     /// </summary>
-    public static void NextRound(TripData trip, RoundGame game, string gameId)
+    public static void NextRound(RoundGame game)
     {
         if (game.Phase != PartyGamePhase.Playing) return;
 
         game.CurrentCharacter = null;
 
-        // An ordinary round with rounds still to play.
-        if (!game.IsSuddenDeath && game.Round < game.RoundCount)
+        if (game.Round < game.RoundCount)
         {
             game.Round++;
             return;
         }
 
-        var among = game.IsSuddenDeath
-            ? game.TieBreakTeamIds.ToList()
-            : trip.Teams.Select(t => t.Id).ToList();
-
-        var leaders = TiedLeaders(trip, gameId, among);
-
-        if (leaders.Count > 1)
-        {
-            game.TieBreakTeamIds = leaders;
-            game.Round++;
-            return;
-        }
-
-        game.TieBreakTeamIds.Clear();
         game.Phase = PartyGamePhase.Finished;
     }
 
@@ -130,18 +111,33 @@ public static class RoundGameService
         game.Round = 1;
         game.CurrentCharacter = null;
         game.UsedCharacters.Clear();
-        game.TieBreakTeamIds.Clear();
 
         ScoreService.Clear(trip, gameId);
     }
 
     /// <summary>
-    /// Whose turn it is to be scored: everybody, or just the teams left standing in sudden death.
+    /// How many there are to go round this round, all teams together.
+    ///
+    /// For a game with a number to win this is not a choice. To be sure one corner reaches the
+    /// number, the stack has to be more than every corner can hold one short of it — so at least
+    /// (win - 1) x teams + 1. For only one corner to reach it, every other corner has to be able
+    /// to stop one short — so at most win + (win - 1) x (teams - 1). Those are the same
+    /// expression. Thirteen, for four beers to win across four corners, and nothing else.
+    ///
+    /// A game with no number to win is one each instead, which is where the cups started: four
+    /// players, four cups, and the round is over when the last one is placed.
     /// </summary>
-    public static IReadOnlyList<Team> ActiveTeams(TripData trip, RoundGame game) =>
-        game.IsSuddenDeath
-            ? trip.Teams.Where(t => game.TieBreakTeamIds.Contains(t.Id)).ToList()
-            : trip.Teams;
+    public static int RoundPool(TripData trip, RoundGame game) =>
+        game.TakeToWin is { } win && win > 0
+            ? (win - 1) * trip.Teams.Count + 1
+            : trip.Teams.Count;
+
+    /// <summary>
+    /// The most one team can be credited with in a round: the number that wins it, or — for a game
+    /// with no such number — the whole stack, since nothing stops one team taking the lot.
+    /// </summary>
+    public static int MostOneTeamCanTake(TripData trip, RoundGame game) =>
+        game.TakeToWin ?? RoundPool(trip, game);
 
     /// <summary>Characters not yet drawn this game.</summary>
     public static IReadOnlyList<SketchCharacter> RemainingCharacters(RoundGame game) =>
@@ -153,17 +149,4 @@ public static class RoundGameService
         name is null
             ? null
             : game.Characters.FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
-
-    /// <summary>Everyone sharing the best score among <paramref name="among"/> — one name if somebody leads.</summary>
-    private static List<string> TiedLeaders(TripData trip, string gameId, IReadOnlyList<string> among)
-    {
-        if (among.Count == 0) return [];
-
-        var scores = among
-            .Select(id => (Id: id, Score: ScoreService.ScoreFor(trip, gameId, id)))
-            .ToList();
-
-        var best = scores.Max(s => s.Score);
-        return scores.Where(s => s.Score == best).Select(s => s.Id).ToList();
-    }
 }

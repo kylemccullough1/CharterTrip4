@@ -44,6 +44,16 @@ public sealed class RoundGame
 
     public int RoundCount { get; set; }
 
+    /// <summary>
+    /// How many one team has to carry off to take the round — four beers, and the round is theirs.
+    /// It is also the most a single team can be credited with, since the run stops the moment
+    /// somebody gets there, and it is what the stack in the middle is worked out from.
+    ///
+    /// Null for a game that has no such number: the cups run their stack out instead, and one team
+    /// could in principle take the lot. See <c>RoundGameService.RoundPool</c>.
+    /// </summary>
+    public int? TakeToWin { get; set; }
+
     /// <summary>1-based. Means nothing until Phase is Playing.</summary>
     public int Round { get; set; } = 1;
 
@@ -54,22 +64,12 @@ public sealed class RoundGame
     public List<string> UsedCharacters { get; set; } = [];
 
     public string? CurrentCharacter { get; set; }
-
-    /// <summary>
-    /// Who is still in it, when the last round ended level. Empty for an ordinary round.
-    ///
-    /// A weekend-long scoreboard cannot end a game "joint second", so a tie at the top sends
-    /// exactly the teams who tied into a sudden-death round and keeps doing it until somebody
-    /// is actually ahead. See <c>RoundGameService.NextRound</c>.
-    /// </summary>
-    public List<string> TieBreakTeamIds { get; set; } = [];
-
-    [JsonIgnore] public bool IsSuddenDeath => TieBreakTeamIds.Count > 0;
 }
 
 /// <summary>
 /// The relay is four clocks rather than rounds: one gun starts every team at once, each lead
-/// stops their own, and the fastest wins. Only the winner scores.
+/// stops their own, and the fastest wins. Nobody but the fastest scores, and two clocks coming
+/// back identical share the prize rather than running it again.
 /// </summary>
 public sealed class RelayGame
 {
@@ -85,11 +85,6 @@ public sealed class RelayGame
 
     /// <summary>Keyed by TeamId.</summary>
     public Dictionary<string, RelayTimer> Timers { get; set; } = [];
-
-    /// <summary>Who is in the run-off, when two clocks came back identical. Empty for an ordinary race.</summary>
-    public List<string> TieBreakTeamIds { get; set; } = [];
-
-    [JsonIgnore] public bool IsRunOff => TieBreakTeamIds.Count > 0;
 }
 
 /// <summary>

@@ -29,7 +29,6 @@
             <Structure>
                 <p><b>@State.PointValue points</b> to the first team to name the character.</p>
                 <p><b>@State.RoundCount rounds</b>, from a cast of @State.Characters.Count.</p>
-                <p class="muted tiny">Level at the end goes to sudden death, so this cannot finish in a tie.</p>
             </Structure>
             <Settings>
                 <div class="settings-row">
@@ -81,7 +80,7 @@
             <Detail>@State.PointValue points a round · a cast of @State.Characters.Count</Detail>
         </GamePlayHead>
 
-        <RoundSplash Game="State" Active="Active" />
+        <RoundSplash Game="State" />
 
         @if (ShowingResult)
         {
@@ -103,7 +102,7 @@
             <SectionCard Title="Who guessed it first?"
                          Subtitle="@($"Awards {State.PointValue} points and closes the round.")">
                 <div class="team-picks">
-                    @foreach (var team in Active)
+                    @foreach (var team in Trip.Teams)
                     {
                         var pick = team;
                         <button type="button" class="team-pick" style="--team:@team.Color"
@@ -156,7 +155,7 @@
     else
     {
         <GameVictory Rows="ScoreService.Scoreboard(Trip, RoundGameService.SketchId)"
-                     Winner="ScoreService.Leader(Trip, RoundGameService.SketchId)"
+                     Winners="ScoreService.Leaders(Trip, RoundGameService.SketchId)"
                      Kicker="Police Sketch">
             <Actions>
                 <button class="btn btn-ghost btn-lg" @onclick="ConfirmReset">Play again</button>
@@ -200,17 +199,13 @@
     {
         var points = State.PointValue;
         var character = State.CurrentCharacter;
-        var suddenDeath = State.IsSuddenDeath;
         var round = State.Round;
 
         await MutateAsync(t =>
             RoundGameService.AwardRoundWinner(
                 t, t.Party.Sketch, RoundGameService.SketchId, team.Id, DateTimeOffset.UtcNow));
 
-        _ = ShowResultAsync(
-            [new ScoreRow(team, points)],
-            suddenDeath ? "Sudden death" : $"Round {round}",
-            character);
+        _ = ShowResultAsync([new ScoreRow(team, points)], $"Round {round}", character);
     }
 
     private void ConfirmReset() => _confirm?.Show(

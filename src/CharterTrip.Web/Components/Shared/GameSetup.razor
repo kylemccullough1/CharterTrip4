@@ -116,7 +116,10 @@
     </ChildContent>
 </SectionCard>
 
-@if (CanEdit)
+@* Not while the card is being edited. Starting the game is the one thing on this screen that
+   cannot be taken back, and a host halfway through retyping the rules is not reaching for it —
+   so it stays out of the way until they press Done. *@
+@if (CanEdit && !_editing)
 {
     <div class="game-start">
         <button class="btn btn-gold btn-lg" @onclick="OnStart" disabled="@(!CanStart)">@StartLabel</button>

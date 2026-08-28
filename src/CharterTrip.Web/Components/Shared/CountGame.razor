@@ -22,7 +22,6 @@
             <Structure>
                 <p><b>@State.PointValue points</b> for every @One collected.</p>
                 <p><b>@State.RoundCount rounds</b>, one player per team at a time.</p>
-                <p class="muted tiny">Level at the end goes to sudden death, so this cannot finish in a tie.</p>
             </Structure>
             <Settings>
                 <div class="settings-row">
@@ -36,7 +35,33 @@
                         <input class="numfield" type="number" min="1" value="@State.RoundCount"
                                @onchange="e => SetRoundCountAsync(e.Value?.ToString())" />
                     </label>
+                    @if (State.TakeToWin is { } toWin)
+                    {
+                        <label class="field">
+                            <span>@Unit to win</span>
+                            <input class="numfield" type="number" min="1" value="@toWin"
+                                   @onchange="e => SetTakeToWinAsync(e.Value?.ToString())" />
+                        </label>
+                    }
                 </div>
+                <p class="muted tiny">
+                    @if (State.TakeToWin is { } win)
+                    {
+                        <text>
+                            <b>@PoolSize @Unit</b> in the stack — @win to win across
+                            @Trip.Teams.Count corners. That number is worked out, not chosen: any
+                            fewer and a round can run out with nobody on @win, any more and a
+                            second corner has to get there too.
+                        </text>
+                    }
+                    else
+                    {
+                        <text>
+                            <b>@PoolSize @Unit</b> in the stack, one each. The counters share it,
+                            so the round is over when the last @One is placed.
+                        </text>
+                    }
+                </p>
             </Settings>
         </GameSetup>
     }
@@ -46,7 +71,7 @@
             <Detail>@State.PointValue points a @One</Detail>
         </GamePlayHead>
 
-        <RoundSplash Game="State" Active="Active" />
+        <RoundSplash Game="State" />
 
         @if (ShowingResult)
         {
@@ -63,7 +88,7 @@
     else
     {
         <GameVictory Rows="ScoreService.Scoreboard(Trip, GameId)"
-                     Winner="ScoreService.Leader(Trip, GameId)"
+                     Winners="ScoreService.Leaders(Trip, GameId)"
                      Kicker="@Title">
             <Actions>
                 <button class="btn btn-ghost btn-lg" @onclick="ConfirmReset">Play again</button>
@@ -94,8 +119,11 @@
     /// <summary>"cups" reads as "points per cups" in a sentence, so the singular is worth having.</summary>
     private string One => Unit.TrimEnd('s');
 
+    /// <summary>What is in the stack. Worked out from the number to win, not stored.</summary>
+    private int PoolSize => RoundGameService.RoundPool(Trip, State);
+
     private async Task OnScoredAsync(IReadOnlyList<ScoreRow> rows) =>
-        await ShowResultAsync(rows, State.IsSuddenDeath ? "Sudden death" : $"Round {State.Round - 1}");
+        await ShowResultAsync(rows, $"Round {State.Round - 1}");
 
     private void ConfirmReset() => _confirm?.Show(
         $"This clears {Title}'s points and puts the game back to the rules card. Nothing else is touched.",
@@ -111,5 +139,14 @@
     private Task SetRoundCountAsync(string? raw) =>
         int.TryParse(raw, out var value) && value >= 1
             ? MutateAsync(t => SelectFor(t).RoundCount = value)
+            : Task.CompletedTask;
+
+    /// <summary>
+    /// Only offered by a game that already has a number to win, so this changes one rather than
+    /// inventing one — the cups have no such number and no such box.
+    /// </summary>
+    private Task SetTakeToWinAsync(string? raw) =>
+        int.TryParse(raw, out var value) && value >= 1
+            ? MutateAsync(t => SelectFor(t).TakeToWin = value)
             : Task.CompletedTask;
 }

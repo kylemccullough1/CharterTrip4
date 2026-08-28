@@ -13,7 +13,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 20;
+    public const int CurrentVersion = 23;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -35,6 +35,13 @@ public static class TripMigrations
         if (trip.SchemaVersion < 14) changed |= ToV14_GroupedEssentials(trip);
         if (trip.SchemaVersion < 19) changed |= ToV19_PartyGames(trip);
         if (trip.SchemaVersion < 20) changed |= ToV20_SketchCharactersHavePictures(trip);
+        if (trip.SchemaVersion < 22) changed |= ToV22_FourBeersTakesTheRound(trip);
+        if (trip.SchemaVersion < 23) changed |= ToV23_TheStackIsWorkedOut(trip);
+
+        // v21 let the host say how many beers were in a round. v23 took that back — the stack
+        // is worked out — so the step it ran has nothing left to do and the property it wrote is
+        // gone from the model. It keeps its number: the stamp records the shape of a file, and a
+        // file that stopped at 21 is a real shape somebody's copy may still be in.
 
         // v18 gave a carpool's ETA a day to go with the time. No step, same as the two
         // before it: the field defaults to empty and an older file simply has not said.
@@ -388,6 +395,40 @@ public static class TripMigrations
         trip.Party.Sketch.CurrentCharacter = null;
         return true;
     }
+
+    /// <summary>
+    /// The beer run is a race to a number rather than a share-out: four beers back to your corner
+    /// takes the round, and no corner can be credited with more than that because the run stops
+    /// the moment somebody gets there. Before this there was no such number, so the only way a
+    /// round could end was by running the stack out — the cups' rule, which was never this one's.
+    ///
+    /// The cups still get none: nothing wins their round early, it simply runs out.
+    /// </summary>
+    private static bool ToV22_FourBeersTakesTheRound(TripData trip)
+    {
+        if (trip.Party.BeerRun.TakeToWin is not null) return false;
+
+        trip.Party.BeerRun.TakeToWin = SeedLoader.Load().Party.BeerRun.TakeToWin;
+        return true;
+    }
+
+    /// <summary>
+    /// How many beers are in a round was never a free choice, and v21 offered it as one.
+    ///
+    /// To be sure a corner reaches four, the stack has to be more than every corner can hold on
+    /// three — at least 3 x teams + 1. For only one corner to reach four, every other corner has
+    /// to be able to stop on three — at most 4 + 3 x (teams - 1). Those are the same number:
+    /// thirteen, across four corners, and nothing else. So it is worked out rather than stored.
+    ///
+    /// A host who had set anything smaller had a round that could dead-end. Seven beers going
+    /// three, three and one leaves nobody on four and nothing left to give them.
+    ///
+    /// Nothing to convert — the property is gone from the model, so the key is ignored on read.
+    /// What this earns is the version bump, which flushes it out of the file rather than leaving
+    /// it there until somebody happens to make an edit. Same as v4.
+    /// </summary>
+    private static bool ToV23_TheStackIsWorkedOut(TripData trip) => true;
+
 
     private static bool ClearLegacy(ItineraryItem item)
     {

@@ -1,32 +1,25 @@
 @* A round announcing itself.
 
    Keyed on what round it is, so every round is a fresh element and the animation runs again
-   without anything having to schedule it or time it. The key carries whether this is sudden
-   death as well as the number, because round three and the first sudden-death round are both
-   "3" and they are not the same round. *@
+   without anything having to schedule it or time it. *@
 
 <div class="round-splash" @key="Key">
-    <span class="round-splash-kicker @(Game.IsSuddenDeath ? "is-sudden" : null)">@Kicker</span>
+    <span class="round-splash-kicker">@Kicker</span>
     <span class="round-splash-sub">@Sub</span>
 </div>
 
 @code {
     [Parameter, EditorRequired] public RoundGame Game { get; set; } = default!;
 
-    /// <summary>Who is still in it — named underneath, once it is not everybody.</summary>
-    [Parameter] public IReadOnlyList<Team> Active { get; set; } = [];
-
     private string Key => KeyFor(Game);
 
-    private string Kicker => Game.IsSuddenDeath ? "Sudden death" : $"Round {Game.Round}";
+    private string Kicker => $"Round {Game.Round}";
 
-    private string Sub => Game.IsSuddenDeath
-        ? string.Join(" v ", Active.Select(t => t.Name))
-        : $"of {Game.RoundCount}";
+    private string Sub => $"of {Game.RoundCount}";
 
     /// <summary>
     /// What makes this round a different round from the last one. Shared with the pages, which
     /// use it to work out when a round is new enough to be worth a noise.
     /// </summary>
-    public static string KeyFor(RoundGame game) => $"{(game.IsSuddenDeath ? "sd" : "r")}-{game.Round}";
+    public static string KeyFor(RoundGame game) => $"r-{game.Round}";
 }

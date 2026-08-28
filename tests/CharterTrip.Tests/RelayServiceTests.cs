@@ -155,26 +155,22 @@ public class RelayServiceTests
         Run(game, "kyle", 90);
         Run(game, "em", 95);
 
-        Assert.Equal("kyle", RelayService.WinningTeamId(game));
+        Assert.Equal("kyle", Assert.Single(RelayService.Fastest(game)));
     }
 
     [Fact]
-    public void Nobody_wins_an_unrun_race_or_a_dead_heat()
+    public void Nobody_is_in_front_of_a_race_that_has_not_been_run()
     {
         var trip = Jake();
         var game = Started(trip);
-        Assert.Null(RelayService.WinningTeamId(game));
 
-        Run(game, "kyle", 90);
-        Run(game, "em", 90);
-
-        Assert.Null(RelayService.WinningTeamId(game));
+        Assert.Empty(RelayService.Fastest(game));
     }
 
-    // ------------------------------------------------------------------ the run-off
+    // ------------------------------------------------------------------ a dead heat
 
     [Fact]
-    public void A_dead_heat_sends_exactly_those_teams_back_to_the_line()
+    public void A_dead_heat_splits_the_prize_between_exactly_those_teams()
     {
         var trip = Jake();
         var game = Started(trip);
@@ -184,65 +180,48 @@ public class RelayServiceTests
         Run(game, "kyle", 90);
         Run(game, "em", 90);        // level with kyle
 
-        RelayService.StartRunOff(game);
+        RelayService.Finish(trip, game, At(200));
 
-        Assert.True(game.IsRunOff);
-        Assert.Equal(["em", "kyle"], game.TieBreakTeamIds.Order());
-        Assert.Equal(["em", "kyle"], RelayService.InPlay(game, trip.Teams).Select(t => t.Id).Order());
-        Assert.True(RelayService.NotYetRun(game, trip.Teams));
+        Assert.Equal(PartyGamePhase.Finished, game.Phase);
+        Assert.Equal(2, trip.Scores.Count);
+        Assert.Equal(50, ScoreService.ScoreFor(trip, RelayService.GameId, "kyle"));
+        Assert.Equal(0, ScoreService.ScoreFor(trip, RelayService.GameId, "jou"));
+        Assert.All(trip.Scores, s => Assert.StartsWith("Dead heat · ", s.Note));
     }
 
+    /// <summary>A short-handed team is running for the bigger prize, so its half is bigger too.</summary>
     [Fact]
-    public void The_run_off_is_only_over_when_both_of_them_are_in()
+    public void A_short_handed_team_takes_the_bigger_half_of_a_dead_heat()
     {
         var trip = Jake();
         var game = Started(trip);
+
         Run(game, "jou", 100);
         Run(game, "ali", 110);
         Run(game, "kyle", 90);
-        Run(game, "em", 90);
-        RelayService.StartRunOff(game);
-        RelayService.StartAll(game, trip.Teams, T0);
-
-        Run(game, "kyle", 40);
-        Assert.False(RelayService.AllStopped(game, trip.Teams));
-
-        Run(game, "em", 45);
-        Assert.True(RelayService.AllStopped(game, trip.Teams));
-        Assert.Equal("kyle", RelayService.WinningTeamId(game));
-    }
-
-    [Fact]
-    public void Only_a_run_off_winner_is_paid_when_the_race_was_a_dead_heat()
-    {
-        var trip = Jake();
-        var game = Started(trip);
-        Run(game, "jou", 100);
-        Run(game, "ali", 110);
-        Run(game, "kyle", 90);
-        Run(game, "em", 90);
-        RelayService.StartRunOff(game);
-        RelayService.StartAll(game, trip.Teams, T0);
-        Run(game, "kyle", 40);
-        Run(game, "em", 45);
+        Run(game, "em", 90);        // five people, level with kyle
 
         RelayService.Finish(trip, game, At(200));
 
-        var entry = Assert.Single(trip.Scores);
-        Assert.Equal("kyle", entry.TeamId);
+        Assert.Equal(60, ScoreService.ScoreFor(trip, RelayService.GameId, "em"));
+        Assert.Equal(50, ScoreService.ScoreFor(trip, RelayService.GameId, "kyle"));
     }
 
+    /// <summary>Both names, since there is no single team to crown.</summary>
     [Fact]
-    public void A_run_off_is_not_set_up_when_somebody_actually_won()
+    public void A_dead_heat_leaves_two_leaders_and_no_leader()
     {
         var trip = Jake();
         var game = Started(trip);
         Run(game, "kyle", 90);
-        Run(game, "em", 95);
+        Run(game, "em", 90);
+        game.WinnerPoints = 100;
+        game.SmallTeamPoints = 100;     // both halves the same, so the top is genuinely shared
 
-        RelayService.StartRunOff(game);
+        RelayService.Finish(trip, game, At(200));
 
-        Assert.False(game.IsRunOff);
+        Assert.Equal(["em", "kyle"], ScoreService.Leaders(trip, RelayService.GameId).Select(t => t.Id).Order());
+        Assert.Null(ScoreService.Leader(trip, RelayService.GameId));
     }
 
     [Fact]
@@ -304,7 +283,6 @@ public class RelayServiceTests
 
         Assert.Equal(PartyGamePhase.NotStarted, game.Phase);
         Assert.Empty(game.Timers);
-        Assert.Empty(game.TieBreakTeamIds);
         Assert.Equal(0, ScoreService.ScoreFor(trip, RelayService.GameId, "kyle"));
         Assert.Equal(20, ScoreService.ScoreFor(trip, "sketch", "kyle"));
     }

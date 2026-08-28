@@ -61,7 +61,12 @@
         }
         else
         {
+            @* Two columns while there is room: the doors on the left, and the wall of
+               people who have already walked through them on the right. Stacked, the
+               two QR codes ate the screen and the arrivals wall — the thing everybody
+               standing in the hall is actually watching — got a forty-pixel sliver. *@
             <div class="ms-lobby">
+              <div class="ms-lobby-doors">
                 <div class="mys-doors">
                     <div class="mys-door">
                         <QrImage Content="@JoinUrl(Play.PartyCode)" Size="190" Alt="Join the party" />
@@ -85,6 +90,7 @@
                     <b>@Seated</b> of @Play.Cast.Count here
                     <span class="muted"> · @StartReason</span>
                 </p>
+              </div>
 
                 <div class="ms-grid ms-grid-scroll">
                     @foreach (var seat in Arrived)
@@ -216,13 +222,6 @@
         <section class="ms-head">
             <p class="ms-round">@MysteryPhases.Label(Phase)</p>
             <h1 class="ms-title-big">Talk it through</h1>
-            <p class="ms-lede">
-                Every card that has been found, lying in the room it was found in.
-                @if (TrailVisible)
-                {
-                    <span>The count on a room is how many people have read that card.</span>
-                }
-            </p>
         </section>
 
         @if (ScanShareService.AnyTampering(Trip))
@@ -339,7 +338,7 @@
                     }
                 </div>
 
-                <p class="ms-round">@(Outcome?.TownWon == true ? "The house wins" : "The Syndicate wins")</p>
+                <p class="ms-round">@(Outcome.TownWon ? "The house wins" : "The Syndicate wins")</p>
                 <h1 class="jeo-win-name">@RevealHeadline</h1>
 
                 <div class="ms-sides">
@@ -457,7 +456,16 @@
                                        laptop cannot do. Driving the frame to the URL the QR code
                                        holds is the same page arriving by the same route. *@
                                     <div class="sim-drive">
-                                        <button class="chip chip-xs" @onclick="() => Sims.Go(slot, SheetRoute)">sheet</button>
+                                        @* A power is spent from the Role tab and a vote from the Vote
+                                           tab, and neither is reachable in a 300px frame without a
+                                           lot of tapping. *@
+                                        <select class="sim-select" @onchange="e => OpenTab(slot, e)">
+                                            <option value="">open a tab…</option>
+                                            @foreach (var tab in new[] { "You", "Map", "Say", "Do", "Role", "Clues", "Vote", "Control" })
+                                            {
+                                                <option value="@tab">@tab</option>
+                                            }
+                                        </select>
 
                                         <select class="sim-select" @onchange="e => ScanClueAsync(slot, e)">
                                             <option value="">scan a clue…</option>
@@ -501,7 +509,12 @@
     private MysteryPlay Play => Game.Play;
     private MysteryBeats Beats => Story.Beats;
     private MysteryPhase Phase => Game.Phase;
-    private MysteryOutcome? Outcome => Play.Outcome;
+    /// <summary>
+    /// The ending, computed if nothing has written it down. See <c>OutcomeService.Current</c> — a
+    /// game that reached Reveal before the phase machine settled it used to headline the last
+    /// screen of the night with an ellipsis.
+    /// </summary>
+    private MysteryOutcome Outcome => OutcomeService.Current(Trip);
 
     /// <summary>Doors are open once both codes exist.</summary>
     private bool HasGame => Play.PartyCode is { Length: > 0 };
@@ -544,12 +557,9 @@
             .GroupBy(c => Story.Faction(c!.FactionId)?.Name ?? "On their own", c => c!)
             .OrderByDescending(g => g.Count());
 
-    private string RevealHeadline => Outcome switch
-    {
-        null => "…",
-        { TownWon: true } => Written(Beats.TownWin) ?? "They caught them.",
-        _ => Written(Beats.KillerWin) ?? "They got away with it."
-    };
+    private string RevealHeadline => Outcome.TownWon
+        ? Written(Beats.TownWin) ?? "They caught them."
+        : Written(Beats.KillerWin) ?? "They got away with it.";
 
     private static string? Written(string? value) => MysteryText.Written(value);
 
@@ -661,9 +671,6 @@
 
     private int PhonesWaiting => Sims.Slots.Count(s => Sims.PersonFor(s) is null);
 
-    /// <summary>Where a phone goes back to. A field because Razor cannot nest a string literal here.</summary>
-    private const string SheetRoute = "/m";
-
     private string FrameSrc(int slot) =>
         $"{Sims.RouteFor(slot)}{(Sims.RouteFor(slot).Contains('?') ? "&" : "?")}sim={slot}&r={Sims.NonceFor(slot)}";
 
@@ -719,6 +726,12 @@
             Sims.Go(slot, $"/m/clue/{state.Token}");
 
         return Task.CompletedTask;
+    }
+
+    private void OpenTab(int slot, ChangeEventArgs e)
+    {
+        var tab = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(tab)) Sims.Go(slot, $"/m?tab={tab}");
     }
 
     private Task ScanBadgeAsync(int slot, ChangeEventArgs e)

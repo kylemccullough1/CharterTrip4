@@ -21,11 +21,29 @@ public static class OutcomeService
     /// </summary>
     public static MysteryOutcome End(TripData trip, DateTimeOffset now)
     {
+        var outcome = Compute(trip, now);
+        trip.Mystery.Play.Outcome = outcome;
+        return outcome;
+    }
+
+    /// <summary>
+    /// The ending, whether or not anybody has written it down yet.
+    ///
+    /// Every screen reads here rather than at <c>Play.Outcome</c>. Two ways to arrive at the reveal
+    /// with nothing recorded: a game saved before the phase machine settled it, and the host jumping
+    /// straight to Reveal from the skip strip in a game that had already been there. Both used to
+    /// headline the last screen of the night with an ellipsis and name nobody as a winner.
+    /// </summary>
+    public static MysteryOutcome Current(TripData trip) =>
+        trip.Mystery.Play.Outcome ?? Compute(trip, trip.Mystery.Play.MurderAt ?? default);
+
+    private static MysteryOutcome Compute(TripData trip, DateTimeOffset now)
+    {
         var killers = trip.Mystery.Story.Killers.ToList();
         var convicted = trip.Mystery.Play.ConvictedCharacterIds.ToHashSet(StringComparer.Ordinal);
         var caught = killers.Count(k => convicted.Contains(k.Id));
 
-        var outcome = new MysteryOutcome
+        return new MysteryOutcome
         {
             KillersConvicted = caught,
 
@@ -34,9 +52,6 @@ public static class OutcomeService
             PersonalWinnerCharacterIds = PersonalWinners(trip).ToList(),
             EndedAt = now
         };
-
-        trip.Mystery.Play.Outcome = outcome;
-        return outcome;
     }
 
     /// <summary>
@@ -76,8 +91,7 @@ public static class OutcomeService
     /// </summary>
     public static IReadOnlyList<string> Winners(TripData trip)
     {
-        var outcome = trip.Mystery.Play.Outcome;
-        if (outcome is null) return [];
+        var outcome = Current(trip);
 
         var sides = outcome.TownWon
             ? new[] { "detective", "villager" }

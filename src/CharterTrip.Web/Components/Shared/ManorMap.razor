@@ -60,7 +60,7 @@
                     @* The card itself, lying in the room it was found in. The board used to stack
                        nine of these in a column, which threw away the one thing that makes them
                        argue: where they were in relation to each other and to the study. *@
-                    <p class="mm-card">@ScanShareService.PublicReading(Trip, clueId)</p>
+                    <p class="mm-card" style="--lines:@Lines(room.H)">@ScanShareService.PublicReading(Trip, clueId)</p>
                 }
 
                 @if (seen > 0)
@@ -75,7 +75,14 @@
 
     @if (ShowPins || ShowTrail)
     {
+        @* The key does the explaining, because it sits against the thing it is
+           explaining. A paragraph above the plan costs the plan a hundred pixels of
+           height and is read once. *@
         <p class="mm-key">
+            @if (ShowCards)
+            {
+                <span class="mm-key-item">Every card that has been found, lying in the room it was found in.</span>
+            }
             <span class="mm-key-item"><i class="mm-dot" aria-hidden="true"></i> a card nobody has found</span>
             <span class="mm-key-item"><i class="mm-dot is-found" aria-hidden="true"></i> found and read out</span>
 
@@ -115,6 +122,21 @@
     /// gate applies even if a caller passes ShowTrail when it should not.
     /// </summary>
     private int TrailCount(string zoneId) => ScanShareService.Trail(Trip, ClueIn(zoneId)).Count;
+
+    /// <summary>
+    /// How many lines of card this room can hold.
+    ///
+    /// The rooms are four different heights, so one clamp cannot fit them all: at four lines the
+    /// Grand Hall Extension cut a sentence off mid-word with no ellipsis, and at two the Study
+    /// wasted half its box. Derived from the room's own height, so it stays right if a room moves.
+    /// </summary>
+    private static int Lines(int height) => height switch
+    {
+        >= 100 => 4,
+        >= 80 => 3,
+        >= 66 => 2,
+        _ => 1
+    };
 
     /// <summary>Percentages of a 460x360 plan, so the whole map scales to whatever it is put in.</summary>
     private static string Box(int x, int y, int w, int h) =>

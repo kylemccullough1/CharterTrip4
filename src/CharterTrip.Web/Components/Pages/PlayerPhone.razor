@@ -221,7 +221,7 @@ else
                                standing in front of one; everything else is spent from this tab. *@
                             @if (!unlocked)
                             {
-                                <p class="muted tiny">Comes online at @MysteryPhases.Label(ability.Unlock).</p>
+                                <p class="muted tiny">Unlocks: @MysteryPhases.Label(ability.Unlock).</p>
                             }
                             else if (charges == 0)
                             {
@@ -352,6 +352,15 @@ else
     [SupplyParameterFromQuery(Name = "sim")] private int? Sim { get; set; }
 
     /// <summary>
+    /// Which tab to open on.
+    ///
+    /// For the testing strip, which drives a frame to a page the way a camera would. A power is
+    /// spent from the Role tab and a vote is cast from the Vote tab, and neither is reachable from
+    /// a laptop without either twenty-four taps or this.
+    /// </summary>
+    [SupplyParameterFromQuery(Name = "tab")] private string? OpenAt { get; set; }
+
+    /// <summary>
     /// Identity, from the sim strip if this frame is one, otherwise from the cookie.
     ///
     /// A simulated phone went through the same front door as a real one; it just kept the result
@@ -480,6 +489,12 @@ else
         if (Me is null) return;
 
         var moved = false;
+
+        if (firstRender && OpenAt is { Length: > 0 } asked && Tabs.Contains(asked))
+        {
+            _tab = asked;
+            moved = true;
+        }
 
         // A tab that has gone away — the vote closing, say — must not leave the page rendering
         // nothing at all.

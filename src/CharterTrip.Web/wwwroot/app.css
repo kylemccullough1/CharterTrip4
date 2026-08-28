@@ -4043,9 +4043,15 @@ pre.code {
   padding: clamp(14px, 2.4vh, 34px) clamp(14px, 3vw, 40px);
   box-sizing: border-box;
 
-  /* Windowed, so the nav and the page's own chrome are still above it. */
-  min-height: calc(100dvh - 150px);
+  /* Windowed, so the nav and the page's own chrome are still above it. A height
+     rather than a min-height: the whole point is that it does not grow, and the
+     lobby's wall of twenty-five faces was pushing the page a screen and a half
+     tall. What does not fit scrolls inside the grid. */
+  height: calc(100dvh - var(--ms-chrome, 170px));
+  overflow: hidden;
 }
+
+@media (max-width: 700px) { .ms-stage { --ms-chrome: 130px; } }
 
 /* Live, it is a television: the whole screen, and never a pixel more. Anything
    that does not fit scrolls inside itself rather than pushing the page taller —
@@ -4062,23 +4068,59 @@ pre.code {
 .ms-stage > .ms-split-map,
 .ms-stage > .ms-grid-scroll,
 .ms-stage > .ms-nominees,
-.ms-stage > .ms-reveal,
 .ms-stage > .ms-truth,
 .ms-stage > .ms-victors,
 .ms-stage > .ms-feed { flex: 1 1 auto; min-height: 0; }
 
+/* Deliberately not in that list: the reveal's prose is often empty, and an empty
+   block that grows pins the headline to the top of an otherwise blank screen. */
+.ms-stage > .ms-reveal { flex: 0 1 auto; overflow-y: auto; }
+
+/* Any wall of faces shrinks and scrolls rather than pushing the headline off the
+   top of the screen. Twenty-two voting tiles did exactly that. */
+.ms-stage > .ms-grid { flex: 1 1 auto; min-height: 0; overflow-y: auto; align-content: start; }
+
+/* Except the investigation's strip, which is the secondary thing on that screen:
+   it gives way to the floor plan rather than competing with it. */
+.ms-stage > .ms-grid-thumbs { flex: 0 1 auto; }
+
 .ms-grid-scroll { overflow-y: auto; align-content: start; padding-right: 2px; }
 
-/* The lobby is three stacked things, and only the guest wall grows. */
-.ms-lobby { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
-.ms-lobby > .ms-grid { flex: 1 1 auto; min-height: 0; }
+/* The doors on the left, the people who have come through them on the right.
+   Stacked, the two QR codes took four hundred pixels of a nine-hundred-pixel
+   screen and the arrivals wall — the thing everybody in the hall is watching —
+   got what was left. */
+.ms-lobby {
+  display: grid;
+  grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
+  gap: clamp(14px, 2.4vw, 34px);
+  align-items: stretch;
+  min-height: 0;
+}
+.ms-lobby > * { min-height: 0; }
+.ms-lobby-doors { display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+.ms-lobby .mys-doors { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+.ms-lobby .ms-count { text-align: center; }
+
+@media (max-width: 900px) {
+  .ms-lobby { grid-template-columns: minmax(0, 1fr); }
+}
 
 .ms-lede {
-  font-size: clamp(.9rem, 1.4vw, 1.2rem);
+  font-size: clamp(.85rem, 1.2vw, 1.05rem);
   color: var(--text-dim);
   max-width: 62ch;
-  margin: 6px auto 0;
-  line-height: 1.5;
+  margin: 4px auto 0;
+  line-height: 1.45;
+}
+
+/* Every pixel this header does not use is a pixel of floor plan, and the plan is
+   the thing the room is standing in front of arguing about. */
+.ms-screen .ms-alert {
+  padding: 7px 16px;
+  font-size: clamp(.85rem, 1.1vw, 1.05rem);
+  width: auto;
+  margin-inline: auto;
 }
 
 .ms-subhead {
@@ -4119,7 +4161,9 @@ pre.code {
    so on every card the name sat against the bottom of the oval. It is a card
    now: a ring, air, then the name. */
 .ms-grid {
-  grid-template-columns: repeat(auto-fill, minmax(clamp(116px, 11vw, 190px), 1fr));
+  /* Denser than it looks like it wants to be. Twenty-two faces is the point of
+     the wall, and three columns of very large tiles shows eight of them. */
+  grid-template-columns: repeat(auto-fill, minmax(clamp(108px, 8.5vw, 156px), 1fr));
   gap: clamp(6px, .9vw, 12px);
   min-width: 0;
 }
@@ -4143,15 +4187,21 @@ pre.code {
 /* Every one of these is a name somebody wrote, so none of them may be trusted to
    be short. Two long words wrap; one long word breaks rather than widening the
    grid column and dragging the whole row off the screen. */
+/* break-word rather than anywhere. "anywhere" also shrinks the element's
+   min-content width, which is how "Molly Henderson" came out as "Molly Henderso
+   / n" in a track that had room for the whole word. This breaks only a word that
+   genuinely cannot fit. */
 .ms-guest-name,
 .ms-guest-title,
 .ms-nominee-name {
   max-width: 100%;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   hyphens: auto;
 }
 
-.ms-guest-name { font-family: var(--display); font-size: clamp(.8rem, 1.05vw, 1.06rem); line-height: 1.2; }
+/* Small enough that a nine-letter surname fits a tile in a wall of twenty-one.
+   "Henderson" was breaking across two lines with a hyphenless "n" underneath. */
+.ms-guest-name { font-family: var(--display); font-size: clamp(.72rem, .92vw, 1rem); line-height: 1.22; }
 .ms-guest-title {
   font-size: clamp(.6rem, .78vw, .74rem);
   letter-spacing: .1em;
@@ -4186,6 +4236,11 @@ pre.code {
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  /* Explicit, because the rule this replaces set space-between for a row layout
+     and that survives into a column — which flung the portrait, the name and the
+     flag to three corners of a card stretched to the height of the stage. */
+  justify-content: center;
   gap: 8px;
   padding: clamp(11px, 1.3vw, 20px) clamp(9px, 1vw, 16px);
   border: 1px solid var(--line);
@@ -4222,8 +4277,12 @@ pre.code {
 .ms-bars {
   position: absolute;
   top: clamp(11px, 1.3vw, 20px);
-  left: 50%;
-  transform: translateX(-50%);
+
+  /* Centred with auto margins rather than a transform. ms-drop ends on
+     "transform: none" and runs with fill-mode both, so a translate here is wiped
+     the moment the animation settles — which is what put the bars beside the
+     face instead of over it. */
+  left: 0; right: 0; margin-inline: auto;
   width: clamp(46px, 5vw, 92px);
   height: clamp(46px, 5vw, 92px);
   border-radius: 50%;
@@ -4243,10 +4302,30 @@ pre.code {
 
 .ms-card-verdict.is-hidden { color: var(--text-faint); letter-spacing: .3em; }
 
+/* A turned card should not look like a face-down one. The portrait stays grey —
+   they are in custody either way — so the card itself carries the answer. */
+.ms-verdict .is-turned:has(.is-killer) {
+  border-color: var(--ruby);
+  background: linear-gradient(180deg, rgba(201,79,90,.16), var(--panel));
+}
+.ms-verdict .is-turned:has(.is-clean) { border-color: var(--line); }
+
 /* --- the ending -------------------------------------------------------------- */
 
 /* One person at a time. Keyed on the character in the markup, so each step gets
    its own entrance rather than the browser reusing the last card's DOM. */
+/* Cards the height of their content, and the block of them centred in whatever
+   is left. Stretching a four-card row to fill a television is four very tall
+   cards with a name floating in the middle of each. */
+/* Cards of a readable width, centred — not two cards stretched to half a
+   television each because auto-fit was handed 1fr columns. */
+.ms-screen .ms-nominees {
+  align-content: center;
+  justify-content: center;
+  grid-auto-rows: min-content;
+  grid-template-columns: repeat(auto-fit, minmax(0, clamp(150px, 15vw, 250px)));
+}
+
 .ms-truth {
   display: flex;
   flex-direction: column;
@@ -4327,6 +4406,7 @@ pre.code {
 .ms-sides {
   position: relative;
   display: grid;
+  align-items: start;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   width: 100%;
@@ -4357,6 +4437,12 @@ pre.code {
 /* A card in every room, so the dot is always there and only its colour is news.
    A dot that appeared on being found made unsearched rooms look empty, which is
    the opposite of what it should say. */
+/* Its own clip. The plan clips at its outer edge, but a four-line card in the
+   Grand Hall Extension — which is 60 of 360 units tall — spills into the room
+   below it, and a floor plan whose rooms leak into each other is worse than no
+   floor plan. */
+.mm-room { overflow: hidden; padding: 5px 7px; }
+
 .mm-dot {
   position: absolute; top: 6px; right: 6px;
   width: 9px; height: 9px; border-radius: 50%;
@@ -4373,7 +4459,10 @@ pre.code {
 
 /* Was a bare "1" in the corner of a room, which reads as a room number. */
 .mm-trail {
-  position: absolute; bottom: 5px; left: 50%;
+  /* top: auto matters. The first pass at this rule set only bottom, and the
+     earlier rule's top: 4px was still in force — so the pill stretched from the
+     top of the room to the bottom of it and swallowed the room's name. */
+  position: absolute; top: auto; bottom: 5px; left: 50%; right: auto;
   transform: translateX(-50%);
   padding: 1px 7px;
   border-radius: 999px;
@@ -4386,6 +4475,14 @@ pre.code {
 
 .mm-room.has-card { border-color: var(--gold-dim); background: rgba(212,175,55,.07); }
 
+/* Absolute is right when the room is empty and wrong the moment it holds a card:
+   the pill sat on top of the reading. In card mode it is the last line instead. */
+.mm-room.has-card .mm-trail {
+  position: static;
+  transform: none;
+  margin-top: 3px;
+}
+
 /* The card itself, lying in the room it was found in. */
 .mm-card {
   margin: 2px 0 0;
@@ -4395,7 +4492,7 @@ pre.code {
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: var(--lines, 3);
   max-width: 100%;
 }
 
@@ -4582,3 +4679,18 @@ pre.code {
 
 .mw-envelope { width: 100%; max-width: 46ch; margin-inline: auto; }
 .mw-photo { display: grid; place-items: center; }
+
+/* FocusOnNavigate moves focus to the page heading on every navigation, which is
+   right for anybody on a screen reader — but a heading is not interactive, and
+   the ring Chrome draws around it is a blue box around the title of the page.
+   Nothing is lost by dropping it: the heading carries tabindex="-1", so it was
+   never reachable by tabbing, and a screen reader still announces the focus.
+   (:focus-visible does not help here — Chrome matches it for this.) */
+h1:focus { outline: none; }
+
+/* An empty block must not claim the room's whole screen. The reveal's opening is
+   a headline plus whatever prose has been written, and before anybody writes any
+   it is a headline — which belongs in the middle of the screen, not pinned to the
+   top of one by an empty div below it. */
+.ms-screen .ms-reveal,
+.ms-screen .ms-idle { min-height: 0; }

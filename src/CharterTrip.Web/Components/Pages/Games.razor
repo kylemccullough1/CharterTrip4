@@ -1,6 +1,8 @@
 @page "/games"
 @page "/games/{GameId}"
 @inherits TripAwareComponent
+@using CharterTrip.Web.Services
+@inject ToastService Toasts
 
 <PageTitle>@(Game?.Name ?? "Games") · Charter Trip 2026</PageTitle>
 
@@ -38,6 +40,44 @@
                 </a>
             </div>
         </SectionCard>
+
+        @* One button for what used to be three, on three screens, one of which nobody knew was
+           there. It is here rather than on a game's own page because the thing it is for is
+           starting the whole weekend over — after a Friday rehearsal, or after a run-through that
+           got far enough to be worth clearing properly. *@
+        <SectionCard Title="Start over"
+                     Subtitle="Everything the games have recorded, cleared in one go.">
+            <div class="card reset-card">
+                @if (WhatWouldGo.Count == 0)
+                {
+                    <p class="muted">Nothing has been played yet. There is nothing to clear.</p>
+                }
+                else
+                {
+                    @* Said out loud before it is done. One press stands between this and a
+                       weekend of scores, and "are you sure?" is not the same as knowing. *@
+                    <ul class="rules">
+                        @foreach (var line in WhatWouldGo)
+                        {
+                            <li @key="line">@line</li>
+                        }
+                    </ul>
+                }
+
+                <p class="muted tiny">
+                    Written content is never touched — the Jeopardy board's clues and the murder
+                    mystery's characters, rooms and prose all survive this. Only a night of playing
+                    them goes.
+                </p>
+
+                <button class="btn btn-danger btn-sm" disabled="@(WhatWouldGo.Count == 0)"
+                        @onclick="ConfirmReset">
+                    Reset every game
+                </button>
+            </div>
+        </SectionCard>
+
+        <ConfirmDialog @ref="_confirm" />
     }
     else
     {
@@ -98,4 +138,32 @@
     private Game? Game => GameId is null
         ? null
         : Trip.Games.FirstOrDefault(g => string.Equals(g.Id, GameId, StringComparison.OrdinalIgnoreCase));
+
+    private ConfirmDialog? _confirm;
+
+    private IReadOnlyList<string> WhatWouldGo => GameReset.WhatWouldGo(Trip);
+
+    private void ConfirmReset() =>
+        _confirm?.Show(
+            "Reset every game? Jeopardy goes back to the title card, the murder mystery closes its "
+            + "doors, and the standings empty. Nothing anybody wrote is touched.",
+            ResetAsync, "Reset everything", "Start the weekend over");
+
+    /// <summary>
+    /// Announced as <see cref="TripArea.All"/>, not Games.
+    ///
+    /// This is three areas at once, and the screens that care about the other two are the ones in
+    /// other rooms — a board mid-trial has to hear that its game just went away, rather than
+    /// carrying on showing a trial that no longer exists.
+    /// </summary>
+    private async Task ResetAsync()
+    {
+        await Store.MutateAsync(t => GameReset.All(t, Random.Shared), TripArea.All);
+
+        // Worth forcing to disk. This is the one action on the site that cannot be undone by
+        // pressing it again, and reconstructing what it cleared is not possible at all.
+        await Store.FlushAsync();
+
+        Toasts.Show("Every game reset.", ToastKind.Good);
+    }
 }

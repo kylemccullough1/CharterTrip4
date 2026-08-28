@@ -4714,3 +4714,20 @@ h1:focus { outline: none; }
   text-transform: uppercase;
   color: #e8919a;
 }
+
+/* --- resetting the weekend ------------------------------------------------------
+   The one action on the site that cannot be undone by pressing it again, so the
+   card says what it would take before it takes it and looks like what it is.
+   -------------------------------------------------------------------------------- */
+.reset-card {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  border-color: rgba(201, 79, 90, .4);
+}
+.reset-card .rules { margin: 0; }
+
+/* With nothing to clear the button is off, and there is no site-wide disabled
+   style for .btn to inherit — so a dead red button looked exactly like a live
+   one, which on this particular button is the worst possible confusion. */
+.reset-card .btn:disabled { opacity: .4; cursor: default; }

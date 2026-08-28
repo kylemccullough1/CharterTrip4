@@ -1,0 +1,49 @@
+@using CharterTrip.Core.Models
+
+@* A handful of lines somebody might say, each editable, with room for more.
+
+   Removing a line clears it rather than deleting the row, so the list keeps its
+   shape while it is being written — a set of six blanks is a clearer prompt than
+   an empty box, and the placeholder convention already means "not written yet". *@
+
+<div class="se-list">
+    <span class="se-label">@Label</span>
+
+    <div class="se-value">
+        @for (var i = 0; i < Lines.Count; i++)
+        {
+            var index = i;
+            <div class="se-line" @key="index">
+                <EditableText Value="@Lines[index]" Multiline Rows="2"
+                              Placeholder="…"
+                              ValueChanged="v => SetAsync(index, v)" />
+            </div>
+        }
+
+        <button class="btn btn-xs btn-ghost" @onclick="AddAsync">Another line</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public IEnumerable<string>? Values { get; set; }
+    [Parameter] public EventCallback<List<string>> Changed { get; set; }
+
+    private List<string> Lines => (Values ?? []).ToList();
+
+    private Task SetAsync(int index, string value)
+    {
+        var lines = Lines;
+        if (index < 0 || index >= lines.Count) return Task.CompletedTask;
+
+        lines[index] = value;
+        return Changed.InvokeAsync(lines);
+    }
+
+    private Task AddAsync()
+    {
+        var lines = Lines;
+        lines.Add("........");
+        return Changed.InvokeAsync(lines);
+    }
+}

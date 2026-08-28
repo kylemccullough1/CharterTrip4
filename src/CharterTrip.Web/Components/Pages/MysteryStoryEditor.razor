@@ -1,0 +1,507 @@
+@page "/games/mystery/story"
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+@using CharterTrip.Infrastructure.Mystery
+@inherits TripAwareComponent
+
+<PageTitle>Writing the mystery · Charter Trip 2026</PageTitle>
+
+@* Where the story gets written.
+
+   The whole thing is EditableText spans, exactly like the Jeopardy board's clue editor. Every write
+   looks its record up by id inside the mutation rather than capturing it from the render, so an edit
+   still lands on the right character if somebody else changed the story underneath this page.
+
+   Structural things — who is a killer, who stands where — are dropdowns rather than free text,
+   because a typo in a zone id is a game that will not deal. Prose is free. *@
+
+<AdminOnly>
+<div class="page">
+
+    <SectionCard Title="@Story.Title" Subtitle="@GapSummary">
+        <Actions>
+            <a class="btn btn-sm" href="/games/mystery" target="_blank">The screen ↗</a>
+        </Actions>
+        <ChildContent>
+
+        @if (!Story.Seeded)
+        {
+            <div class="card">
+                <h3>Nothing written yet</h3>
+                <p class="muted">
+                    Braun Manor ships as structure without prose — everybody exists, stands
+                    somewhere and is something, and none of them has a word to say yet.
+                </p>
+                <button class="btn btn-gold" @onclick="SeedAsync">Bring in the story</button>
+            </div>
+        }
+        else
+        {
+            <nav class="chip-row se-nav">
+                @foreach (var section in Sections)
+                {
+                    <button class="chip @(_section == section ? "on" : "")"
+                            @key="section" @onclick="() => _section = section">@section</button>
+                }
+            </nav>
+
+            @switch (_section)
+            {
+                // ------------------------------------------------------------------ people
+                case "People":
+                    <p class="muted tiny se-hint">
+                        Room and faction are dropdowns because a typo in either is a game that will
+                        not run. Everything else is yours.
+                    </p>
+
+                    @foreach (var character in Story.Characters)
+                    {
+                        <details class="card se-person @(Gaps(character) > 0 ? "has-gaps" : "")" @key="character.Id">
+                            <summary>
+                                <b>@character.Name</b>
+                                <span class="muted tiny">@character.Job</span>
+                                @if (character.IsStaff) { <span class="mys-tag">staff</span> }
+                                @if (character.IsKiller) { <span class="mys-tag mys-killer">@character.GuiltSlot</span> }
+                                @if (Gaps(character) is var n && n > 0) { <span class="se-gap-count">@n to write</span> }
+                            </summary>
+
+                            <div class="se-fields">
+                                <Row Label="Name">
+                                    <EditableText Value="@character.Name"
+                                                  ValueChanged="v => EditCharacterAsync(character.Id, c => c.Name = v)" />
+                                </Row>
+                                <Row Label="Job">
+                                    <EditableText Value="@character.Job"
+                                                  ValueChanged="v => EditCharacterAsync(character.Id, c => c.Job = v)" />
+                                </Row>
+                                <Row Label="Age">
+                                    <EditableText Value="@(character.Age > 0 ? character.Age.ToString() : "")"
+                                                  Placeholder="—"
+                                                  ValueChanged="v => SetAgeAsync(character.Id, v)" />
+                                </Row>
+                                <Row Label="Sex">
+                                    <EditableText Value="@character.Sex"
+                                                  ValueChanged="v => EditCharacterAsync(character.Id, c => c.Sex = v)" />
+                                </Row>
+
+                                <Row Label="Room">
+                                    <select class="se-select" value="@character.ZoneId"
+                                            @onchange="e => EditCharacterAsync(character.Id, c => c.ZoneId = e.Value?.ToString() ?? c.ZoneId)">
+                                        @foreach (var zone in Story.Zones)
+                                        {
+                                            <option value="@zone.Id" selected="@(zone.Id == character.ZoneId)">@zone.Name</option>
+                                        }
+                                    </select>
+                                </Row>
+
+                                @if (!character.IsStaff)
+                                {
+                                    <Row Label="Faction">
+                                        <select class="se-select" value="@character.FactionId"
+                                                @onchange="e => EditCharacterAsync(character.Id, c => c.FactionId = e.Value?.ToString() ?? c.FactionId)">
+                                            @foreach (var faction in Story.Factions)
+                                            {
+                                                <option value="@faction.Id" selected="@(faction.Id == character.FactionId)">@faction.Name</option>
+                                            }
+                                        </select>
+                                    </Row>
+
+                                    <Row Label="Guilt">
+                                        <select class="se-select" value="@(character.GuiltSlot ?? "")"
+                                                @onchange="e => SetGuiltAsync(character.Id, e.Value?.ToString())">
+                                            <option value="">not a killer</option>
+                                            <option value="access" selected="@(character.GuiltSlot == "access")">access</option>
+                                            <option value="means" selected="@(character.GuiltSlot == "means")">means</option>
+                                            <option value="signature" selected="@(character.GuiltSlot == "signature")">signature</option>
+                                        </select>
+                                    </Row>
+
+                                    <Row Label="Looks guilty">
+                                        <label class="se-check">
+                                            <input type="checkbox" checked="@character.IsHerring"
+                                                   @onchange="e => EditCharacterAsync(character.Id, c => c.IsHerring = (bool)(e.Value ?? false))" />
+                                            <span class="muted tiny">written to read as guilty, and isn't</span>
+                                        </label>
+                                    </Row>
+                                }
+
+                                <Row Label="Backstory">
+                                    <EditableText Value="@character.Backstory" Multiline Rows="4"
+                                                  ValueChanged="v => EditCharacterAsync(character.Id, c => c.Backstory = v)" />
+                                </Row>
+                                <Row Label="Why they were invited">
+                                    <EditableText Value="@character.WhyInvited" Multiline Rows="3"
+                                                  ValueChanged="v => EditCharacterAsync(character.Id, c => c.WhyInvited = v)" />
+                                </Row>
+                                <Row Label="Why they dislike Braun">
+                                    <EditableText Value="@character.DislikesBraun" Multiline Rows="3"
+                                                  ValueChanged="v => EditCharacterAsync(character.Id, c => c.DislikesBraun = v)" />
+                                </Row>
+                                <Row Label="How they carry themselves">
+                                    <EditableText Value="@character.Voice" Multiline Rows="2"
+                                                  ValueChanged="v => EditCharacterAsync(character.Id, c => c.Voice = v)" />
+                                </Row>
+
+                                @if (!character.IsStaff)
+                                {
+                                    <Row Label="What they were doing">
+                                        <EditableText Value="@character.Observable" Multiline Rows="3"
+                                                      ValueChanged="v => EditCharacterAsync(character.Id, c => c.Observable = v)" />
+                                    </Row>
+                                    <Row Label="How others describe it">
+                                        <EditableText Value="@character.SeenAs" Multiline Rows="3"
+                                                      ValueChanged="v => EditCharacterAsync(character.Id, c => c.SeenAs = v)" />
+                                    </Row>
+                                    <Row Label="Their thing">
+                                        <EditableText Value="@character.SignatureItem"
+                                                      ValueChanged="v => EditCharacterAsync(character.Id, c => c.SignatureItem = v)" />
+                                    </Row>
+                                    <Row Label="Worked into a tampered clue">
+                                        <EditableText Value="@character.TamperInsert"
+                                                      ValueChanged="v => EditCharacterAsync(character.Id, c => c.TamperInsert = v)" />
+                                    </Row>
+                                }
+
+                                <h4 class="se-sub">Things to say</h4>
+
+                                <StringList Label="About their life" Values="character.Dialogue.Life"
+                                            Changed="lines => EditCharacterAsync(character.Id, c => c.Dialogue.Life = lines)" />
+                                <StringList Label="On the weather" Values="character.Dialogue.Weather"
+                                            Changed="lines => EditCharacterAsync(character.Id, c => c.Dialogue.Weather = lines)" />
+
+                                @foreach (var topic in character.Dialogue.Topics)
+                                {
+                                    <StringList Label="@topic.Prompt" Values="topic.Lines" @key="topic.Prompt"
+                                                Changed="lines => EditTopicAsync(character.Id, topic.Prompt, lines)" />
+                                }
+                            </div>
+                        </details>
+                    }
+                    break;
+
+                // ------------------------------------------------------------------- rooms
+                case "Rooms":
+                    @foreach (var zone in Story.Zones)
+                    {
+                        <div class="card se-row" @key="zone.Id">
+                            <Row Label="Name">
+                                <EditableText Value="@zone.Name"
+                                              ValueChanged="v => EditZoneAsync(zone.Id, z => z.Name = v)" />
+                            </Row>
+                            <Row Label="Where the card is hidden">
+                                <EditableText Value="@zone.ClueSpot" Multiline Rows="2"
+                                              ValueChanged="v => EditZoneAsync(zone.Id, z => z.ClueSpot = v)" />
+                            </Row>
+                            <Row Label="Notes">
+                                <EditableText Value="@zone.Notes" Multiline Rows="2"
+                                              ValueChanged="v => EditZoneAsync(zone.Id, z => z.Notes = v)" />
+                            </Row>
+                            <p class="muted tiny">
+                                @(zone.PlayersAllowed ? $"{Standing(zone.Id)} standing here" : "nobody stands here")
+                                · next to @string.Join(", ", zone.Adjacent.Select(a => Story.Zone(a)?.Name))
+                            </p>
+                        </div>
+                    }
+                    break;
+
+                // ------------------------------------------------------------------- clues
+                case "Clues":
+                    @foreach (var clue in Story.Clues)
+                    {
+                        <div class="card se-row" @key="clue.Id">
+                            <h4 class="se-sub">@(Story.Zone(clue.ZoneId)?.Name)</h4>
+                            <Row Label="What it is">
+                                <EditableText Value="@clue.Name"
+                                              ValueChanged="v => EditClueAsync(clue.Id, c => c.Name = v)" />
+                            </Row>
+                            <Row Label="What it says">
+                                <EditableText Value="@clue.Text" Multiline Rows="3"
+                                              ValueChanged="v => EditClueAsync(clue.Id, c => c.Text = v)" />
+                            </Row>
+                            <Row Label="Whose it is">
+                                <select class="se-select" value="@(clue.AboutCharacterId ?? "")"
+                                        @onchange="e => EditClueAsync(clue.Id, c => c.AboutCharacterId = Blank(e.Value?.ToString()))">
+                                    <option value="">nobody's — it belongs to the scene</option>
+                                    @foreach (var person in Story.Guests)
+                                    {
+                                        <option value="@person.Id" selected="@(person.Id == clue.AboutCharacterId)">@person.Name</option>
+                                    }
+                                </select>
+                            </Row>
+                        </div>
+                    }
+                    break;
+
+                // ---------------------------------------------------------------- factions
+                case "Factions":
+                    @foreach (var faction in Story.Factions)
+                    {
+                        <div class="card se-row" @key="faction.Id">
+                            <h4 class="se-sub">@faction.Name <span class="muted tiny">@Count(faction.Id) people</span></h4>
+                            <Row Label="What they are">
+                                <EditableText Value="@faction.Blurb" Multiline Rows="3"
+                                              ValueChanged="v => EditFactionAsync(faction.Id, f => f.Blurb = v)" />
+                            </Row>
+                            <Row Label="What they know">
+                                <EditableText Value="@faction.Knowledge" Multiline Rows="2"
+                                              ValueChanged="v => EditFactionAsync(faction.Id, f => f.Knowledge = v)" />
+                            </Row>
+                            <Row Label="How they win">
+                                <EditableText Value="@faction.WinCondition" Multiline Rows="2"
+                                              ValueChanged="v => EditFactionAsync(faction.Id, f => f.WinCondition = v)" />
+                            </Row>
+
+                            @foreach (var ability in faction.Abilities)
+                            {
+                                <div class="se-ability" @key="ability.Id">
+                                    <Row Label="@ability.Name">
+                                        <EditableText Value="@ability.Text" Multiline Rows="2"
+                                                      ValueChanged="v => EditAbilityAsync(faction.Id, ability.Id, a => a.Text = v)" />
+                                    </Row>
+                                    <p class="muted tiny">
+                                        @ability.Charges @(ability.Charges == 1 ? "use" : "uses")@(ability.Shared ? ", shared across the faction" : "")
+                                        · unlocks at @ability.Unlock
+                                    </p>
+
+                                    @foreach (var mode in ability.Modes)
+                                    {
+                                        <Row Label="@mode.Name" @key="mode.Id">
+                                            <EditableText Value="@mode.Text" Multiline Rows="2"
+                                                          ValueChanged="v => EditModeAsync(faction.Id, ability.Id, mode.Id, m => m.Text = v)" />
+                                        </Row>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    break;
+
+                // ------------------------------------------------------------------- beefs
+                case "History":
+                    <p class="muted tiny se-hint">
+                        Two people with history, fired when they scan each other. Nothing to do with
+                        the murder — this is so two guests who have never spoken have something to
+                        open with that is not the weather.
+                    </p>
+
+                    @foreach (var beef in Story.Beefs)
+                    {
+                        <div class="card se-row" @key="beef.Id">
+                            <h4 class="se-sub">
+                                @(Story.Character(beef.ACharacterId)?.Name) and @(Story.Character(beef.BCharacterId)?.Name)
+                            </h4>
+                            <Row Label="What it's about">
+                                <EditableText Value="@beef.Subject" Multiline Rows="2"
+                                              ValueChanged="v => EditBeefAsync(beef.Id, b => b.Subject = v)" />
+                            </Row>
+                            <Row Label="@($"{Story.Character(beef.ACharacterId)?.Name} says")">
+                                <EditableText Value="@beef.ASays" Multiline Rows="2"
+                                              ValueChanged="v => EditBeefAsync(beef.Id, b => b.ASays = v)" />
+                            </Row>
+                            <Row Label="@($"{Story.Character(beef.BCharacterId)?.Name} says")">
+                                <EditableText Value="@beef.BSays" Multiline Rows="2"
+                                              ValueChanged="v => EditBeefAsync(beef.Id, b => b.BSays = v)" />
+                            </Row>
+                        </div>
+                    }
+                    break;
+
+                // ------------------------------------------------------------------ slides
+                case "Briefing":
+                    @foreach (var slide in Story.Slides)
+                    {
+                        <div class="card se-row" @key="slide.Id">
+                            <Row Label="Title">
+                                <EditableText Value="@slide.Title"
+                                              ValueChanged="v => EditSlideAsync(slide.Id, s => s.Title = v)" />
+                            </Row>
+                            <Row Label="Braun says">
+                                <EditableText Value="@slide.BraunSays" Multiline Rows="2"
+                                              ValueChanged="v => EditSlideAsync(slide.Id, s => s.BraunSays = v)" />
+                            </Row>
+                            <StringList Label="On the screen" Values="slide.Bullets"
+                                        Changed="lines => EditSlideAsync(slide.Id, s => s.Bullets = lines)" />
+                        </div>
+                    }
+                    break;
+
+                // -------------------------------------------------------------- objectives
+                case "Objectives":
+                    @foreach (var objective in Story.Objectives)
+                    {
+                        <div class="card se-row" @key="objective.Id">
+                            <Row Label="@objective.Label">
+                                <EditableText Value="@objective.Text" Multiline Rows="2"
+                                              ValueChanged="v => EditObjectiveAsync(objective.Id, o => o.Text = v)" />
+                            </Row>
+                            <p class="muted tiny">
+                                @(objective.Phase is { } phase ? $"fires on its own at {phase}" : "sent by hand")
+                                · @(objective.Audience == MysteryAudience.Faction
+                                      ? Story.Faction(objective.FactionId ?? "")?.Name ?? "a faction"
+                                      : objective.Audience.ToString().ToLowerInvariant())
+                                @if (objective.Slots.Count > 0) { <span>· fills @string.Join(", ", objective.Slots)</span> }
+                            </p>
+                        </div>
+                    }
+                    break;
+
+                // ------------------------------------------------------------------- beats
+                case "Set pieces":
+                    <div class="card se-row">
+                        <Row Label="The premise"><EditableText Value="@Beats.Premise" Multiline Rows="3"
+                            ValueChanged="v => EditBeatsAsync(b => b.Premise = v)" /></Row>
+                        <Row Label="The invitation"><EditableText Value="@Beats.InvitationLetter" Multiline Rows="8"
+                            ValueChanged="v => EditBeatsAsync(b => b.InvitationLetter = v)" /></Row>
+                        <Row Label="The rules, on every phone"><EditableText Value="@Beats.HouseRules" Multiline Rows="6"
+                            ValueChanged="v => EditBeatsAsync(b => b.HouseRules = v)" /></Row>
+                        <Row Label="The murder"><EditableText Value="@Beats.MurderAnnouncement" Multiline Rows="3"
+                            ValueChanged="v => EditBeatsAsync(b => b.MurderAnnouncement = v)" /></Row>
+                        <Row Label="The study"><EditableText Value="@Beats.StudyScene" Multiline Rows="5"
+                            ValueChanged="v => EditBeatsAsync(b => b.StudyScene = v)" /></Row>
+                        <Row Label="Town wins"><EditableText Value="@Beats.TownWin" Multiline Rows="2"
+                            ValueChanged="v => EditBeatsAsync(b => b.TownWin = v)" /></Row>
+                        <Row Label="The Syndicate wins"><EditableText Value="@Beats.KillerWin" Multiline Rows="2"
+                            ValueChanged="v => EditBeatsAsync(b => b.KillerWin = v)" /></Row>
+
+                        <StringList Label="The reveal, paragraph by paragraph" Values="Beats.RevealParagraphs"
+                                    Changed="lines => EditBeatsAsync(b => b.RevealParagraphs = lines)" />
+
+                        <h4 class="se-sub">A tampered card</h4>
+                        <p class="muted tiny">
+                            <code>{insert}</code> becomes the framed character's belongings.
+                        </p>
+                        <Row Label="Worked in quietly"><EditableText Value="@Beats.TamperSubtle"
+                            ValueChanged="v => EditBeatsAsync(b => b.TamperSubtle = v)" /></Row>
+                        <Row Label="Left where nobody could miss it"><EditableText Value="@Beats.TamperBlatant"
+                            ValueChanged="v => EditBeatsAsync(b => b.TamperBlatant = v)" /></Row>
+                        <Row Label="Wiped instead"><EditableText Value="@Beats.TamperScrubbed"
+                            ValueChanged="v => EditBeatsAsync(b => b.TamperScrubbed = v)" /></Row>
+                    </div>
+                    break;
+            }
+        }
+
+        </ChildContent>
+    </SectionCard>
+
+</div>
+</AdminOnly>
+
+@code {
+    protected override TripArea Watching => TripArea.Mystery;
+
+    private static readonly string[] Sections =
+        ["People", "Rooms", "Clues", "Factions", "History", "Briefing", "Objectives", "Set pieces"];
+
+    private string _section = "People";
+
+    private MysteryStory Story => Trip.Mystery.Story;
+    private MysteryBeats Beats => Story.Beats;
+
+    /// <summary>
+    /// How much is left to write.
+    ///
+    /// The whole point of shipping structure without prose is that this number goes down and the
+    /// game runs the entire time. It is the to-do list.
+    /// </summary>
+    private string GapSummary
+    {
+        get
+        {
+            var total = Story.Characters.Sum(Gaps);
+            return total == 0
+                ? "Every character is written."
+                : $"{total} things still to write across {Story.Characters.Count(c => Gaps(c) > 0)} people.";
+        }
+    }
+
+    private static int Gaps(MysteryCharacter c)
+    {
+        var fields = new[] { c.Backstory, c.WhyInvited, c.DislikesBraun, c.Voice };
+        var lines = c.Dialogue.Life.Concat(c.Dialogue.Weather).Concat(c.Dialogue.Topics.SelectMany(t => t.Lines));
+
+        var count = fields.Count(MysteryText.IsPlaceholder) + lines.Count(MysteryText.IsPlaceholder);
+        if (c.Age == 0) count++;
+
+        if (!c.IsStaff)
+        {
+            count += new[] { c.Observable, c.SeenAs, c.SignatureItem, c.TamperInsert }
+                .Count(MysteryText.IsPlaceholder);
+        }
+
+        return count;
+    }
+
+    private int Standing(string zoneId) => Story.Guests.Count(c => c.ZoneId == zoneId);
+    private int Count(string factionId) => Story.Guests.Count(c => c.FactionId == factionId);
+
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
+
+    private Task SeedAsync() => MutateAsync(t => StoryLoader.SeedInto(t));
+
+    // Every write looks its record up by id inside the mutation rather than capturing it from the
+    // render, so an edit still lands on the right thing if the story changed underneath this page.
+
+    private Task EditCharacterAsync(string id, Action<MysteryCharacter> apply) => MutateAsync(t =>
+    {
+        if (t.Mystery.Story.Character(id) is { } c) apply(c);
+    });
+
+    private Task SetAgeAsync(string id, string? raw) =>
+        int.TryParse(raw, out var age) && age is > 0 and < 130
+            ? EditCharacterAsync(id, c => c.Age = age)
+            : Task.CompletedTask;
+
+    private Task SetGuiltAsync(string id, string? slot) =>
+        EditCharacterAsync(id, c => c.GuiltSlot = Blank(slot));
+
+    private Task EditTopicAsync(string characterId, string prompt, List<string> lines) =>
+        EditCharacterAsync(characterId, c =>
+        {
+            if (c.Dialogue.Topics.FirstOrDefault(t => t.Prompt == prompt) is { } topic) topic.Lines = lines;
+        });
+
+    private Task EditZoneAsync(string id, Action<MysteryZone> apply) => MutateAsync(t =>
+    {
+        if (t.Mystery.Story.Zone(id) is { } z) apply(z);
+    });
+
+    private Task EditClueAsync(string id, Action<MysteryClueCard> apply) => MutateAsync(t =>
+    {
+        if (t.Mystery.Story.Clue(id) is { } c) apply(c);
+    });
+
+    private Task EditFactionAsync(string id, Action<MysteryFaction> apply) => MutateAsync(t =>
+    {
+        if (t.Mystery.Story.Faction(id) is { } f) apply(f);
+    });
+
+    private Task EditAbilityAsync(string factionId, string abilityId, Action<MysteryAbility> apply) =>
+        EditFactionAsync(factionId, f =>
+        {
+            if (f.Abilities.FirstOrDefault(a => a.Id == abilityId) is { } ability) apply(ability);
+        });
+
+    private Task EditModeAsync(string factionId, string abilityId, string modeId, Action<MysteryAbilityMode> apply) =>
+        EditAbilityAsync(factionId, abilityId, a =>
+        {
+            if (a.Modes.FirstOrDefault(m => m.Id == modeId) is { } mode) apply(mode);
+        });
+
+    private Task EditBeefAsync(string id, Action<MysteryBeef> apply) => MutateAsync(t =>
+    {
+        if (t.Mystery.Story.Beefs.FirstOrDefault(b => b.Id == id) is { } beef) apply(beef);
+    });
+
+    private Task EditSlideAsync(string id, Action<MysterySlide> apply) => MutateAsync(t =>
+    {
+        if (t.Mystery.Story.Slides.FirstOrDefault(s => s.Id == id) is { } slide) apply(slide);
+    });
+
+    private Task EditObjectiveAsync(string id, Action<MysteryObjectiveTemplate> apply) => MutateAsync(t =>
+    {
+        if (t.Mystery.Story.Objectives.FirstOrDefault(o => o.Id == id) is { } objective) apply(objective);
+    });
+
+    private Task EditBeatsAsync(Action<MysteryBeats> apply) => MutateAsync(t => apply(t.Mystery.Story.Beats));
+}

@@ -3833,3 +3833,52 @@ pre.code {
 
   .ms-typing i, .ms-welcome, .mw-seal, .mw-paper, .ms-bars { animation: none; }
 }
+
+/* --- writing the story ----------------------------------------------------- */
+
+.se-nav { margin-bottom: 16px; }
+.se-hint { margin-bottom: 12px; }
+
+.se-person > summary {
+  cursor: pointer;
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+}
+.se-person[open] > summary { margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line-soft); }
+
+/* A person with nothing written yet is the thing you are looking for on this
+   page, so it is marked rather than left to be counted. */
+.se-person.has-gaps { border-left: 3px solid var(--gold-dim); }
+.se-gap-count { margin-left: auto; color: var(--gold-dim); font-size: .74rem; }
+
+.se-fields, .se-row { display: grid; gap: 10px; }
+
+.se-field, .se-list {
+  display: grid;
+  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.se-label { color: var(--gold-dim); font-size: .76rem; letter-spacing: .08em; text-transform: uppercase; padding-top: 5px; }
+.se-value { min-width: 0; }
+
+.se-list .se-value { display: grid; gap: 6px; justify-items: start; }
+.se-line { width: 100%; }
+
+.se-sub { font-family: var(--display); margin: 18px 0 6px; }
+.se-ability { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line-soft); display: grid; gap: 8px; }
+
+.se-select {
+  background: var(--ink-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: 6px 9px; font: inherit;
+}
+
+.se-check { display: flex; align-items: center; gap: 8px; }
+
+@media (max-width: 700px) {
+  /* One column on a phone: a 12rem label beside a text area leaves about nine
+     characters for the writing. */
+  .se-field, .se-list { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .se-label { padding-top: 0; }
+}

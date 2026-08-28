@@ -344,15 +344,6 @@
           "version": 1
         },
         {
-          "id": "item-f5",
-          "startMinutes": 1380,
-          "durationMinutes": 45,
-          "title": "Newlywed Game",
-          "notes": "Pairs answer questions about each other.",
-          "tag": "game",
-          "version": 1
-        },
-        {
           "id": "item-f6",
           "startMinutes": 1425,
           "durationMinutes": 45,
@@ -725,21 +716,6 @@
       ]
     },
     {
-      "id": "newlywed",
-      "name": "Newlywed Game",
-      "host": "Everyone",
-      "when": "Friday night",
-      "icon": "ring",
-      "blurb": "Pairs answer questions about each other. Match = points.",
-      "scoring": "newlywed",
-      "legs": [],
-      "rules": [
-        "Split into pairs. One partner writes their answer down while the other is out of earshot.",
-        "Bring the partner back, ask the same question out loud.",
-        "A match is worth points for their team. Add your own bonus for a truly unhinged answer."
-      ]
-    },
-    {
       "id": "sketch",
       "name": "Police Sketch",
       "host": "Em",
@@ -825,21 +801,6 @@
         "All outside. Each team leader runs a leg for a team that is not their own.",
         "Legs run back to back - finish yours before the next person starts.",
         "Points awarded by finishing position for each leg."
-      ]
-    },
-    {
-      "id": "superlatives",
-      "name": "Superlatives & Trophy",
-      "host": "Group vote",
-      "when": "Saturday, final tally",
-      "icon": "trophy",
-      "blurb": "Group vote at the end of the weekend. Winning team takes the trophy.",
-      "scoring": "superlatives",
-      "legs": [],
-      "rules": [
-        "Group vote on each superlative at the final tally.",
-        "Best Dressed is judged off the Murder Mystery outfits.",
-        "Winning team gets the trophy. Losing team gets shots / a shotgun."
       ]
     }
   ],

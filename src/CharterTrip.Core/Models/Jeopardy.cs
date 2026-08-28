@@ -43,6 +43,9 @@ public sealed class JeopardyFinal
     public int Value { get; set; } = 30;
     public string Clue { get; set; } = "";
     public string Response { get; set; } = "";
+
+    /// <summary>How long the room gets to confer and buzz once Final Jeopardy's buzzers open.</summary>
+    public int TimeLimitSeconds { get; set; } = 300;
 }
 
 /// <summary>
@@ -102,6 +105,9 @@ public sealed class JeopardyGame
 
     /// <summary>When the buzzers opened, so a buzz can be reported as a reaction time.</summary>
     public DateTimeOffset? BuzzOpenedAt { get; set; }
+
+    /// <summary>Final's timer ran out with nobody in — buzzers are shut until the host restarts it.</summary>
+    public bool FinalTimerExpired { get; set; }
 
     // Final Jeopardy used to collect a written answer per team and reveal them together, which
     // needed FinalAnswers / FinalCorrectTeamIds / FinalRevealed here. It is now played exactly

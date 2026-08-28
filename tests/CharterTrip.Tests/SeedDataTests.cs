@@ -2,6 +2,7 @@ using CharterTrip.Core.Models;
 using CharterTrip.Core.Services;
 using CharterTrip.Core.Words;
 using CharterTrip.Infrastructure.Seed;
+using CharterTrip.Web.Auth;
 
 namespace CharterTrip.Tests;
 
@@ -297,9 +298,47 @@ public class SeedDataTests
     [Fact]
     public void Games_are_populated()
     {
-        Assert.Equal(8, Seed.Games.Count);
+        Assert.Equal(6, Seed.Games.Count);
         Assert.All(Seed.Games, g => Assert.NotEmpty(g.Rules));
     }
+
+    /// <summary>
+    /// The menu names games by id and the ids live in the seed, so dropping a game leaves a menu
+    /// entry pointing at nothing — /games/{id} falls through to the page's "Unknown game" card
+    /// rather than failing anywhere a build would notice. Murder Mystery is the one entry with a
+    /// page of its own rather than a seeded game behind it.
+    /// </summary>
+    [Fact]
+    public void Every_game_in_the_menu_is_a_game_that_exists()
+    {
+        var known = Seed.Games.Select(g => g.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        known.Add("mystery");
+
+        var linked = GameSlugsInTheMenu();
+
+        Assert.NotEmpty(linked);
+        Assert.All(linked, slug => Assert.True(
+            known.Contains(slug),
+            $"The menu links to /games/{slug}, but no seeded game and no page answers to it."));
+    }
+
+    /// <summary>And the other way about: a game with no way into it is a game nobody plays.</summary>
+    [Fact]
+    public void Every_seeded_game_is_reachable_from_the_menu()
+    {
+        var linked = GameSlugsInTheMenu().ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        Assert.All(Seed.Games, g => Assert.True(
+            linked.Contains(g.Id), $"{g.Name} is in the seed but nowhere in the menu."));
+    }
+
+    private static List<string> GameSlugsInTheMenu() =>
+        NavTree.All
+            .Single(e => e.Label == "Games").Children!
+            .Select(c => c.Href)
+            .Where(h => h.StartsWith("/games/", StringComparison.OrdinalIgnoreCase))
+            .Select(h => h["/games/".Length..])
+            .ToList();
 
     [Fact]
     public void Nothing_has_a_blank_id()

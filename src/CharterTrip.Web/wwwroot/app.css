@@ -3882,3 +3882,49 @@ pre.code {
   .se-field, .se-list { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .se-label { padding-top: 0; }
 }
+
+/* --- the printed packets ---------------------------------------------------- */
+
+/* .pr-sheet is an auto-fill grid, so a heading dropped into it becomes a column
+   of its own and everything else shuffles around it. Headings and notes span. */
+.pr-sheet > .pr-h1,
+.pr-sheet > .pr-note,
+.pr-sheet > .pr-badges,
+.pr-sheet > .pr-solution { grid-column: 1 / -1; }
+
+.pr-doors {
+  grid-column: 1 / -1;
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+
+/* Explicit sizes rather than max-width: 100%. A QR is a grid item inside the
+   poster, and an implicit auto track sizes to the image's own 300px — so a
+   percentage cap is a percentage of the thing that is already too big. On paper
+   a known size is what you want anyway: these are cut out and stuck to doors. */
+.pr-poster img { width: 200px; height: auto; }
+.pr-clue img   { width: 110px; height: auto; }
+.pr-badge img  { width: 88px;  height: auto; }
+
+.pr-badges { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+
+.pr-badge {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  break-inside: avoid;
+}
+
+.pr-solution { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.pr-solution th, .pr-solution td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line-soft); }
+.pr-solution th { color: var(--gold-dim); font-size: .74rem; letter-spacing: .1em; text-transform: uppercase; }
+.pr-solution .is-killer { color: var(--ruby); }
+.pr-solution .is-herring { color: var(--gold-light); }
+
+@media print {
+  /* Every card whole on one page. A clue cut in half by a page break is a clue
+     nobody can hide. */
+  .pr-clue, .pr-poster, .pr-badge { break-inside: avoid; }
+  .pr-sheet { break-after: page; }
+  .no-print { display: none !important; }
+}

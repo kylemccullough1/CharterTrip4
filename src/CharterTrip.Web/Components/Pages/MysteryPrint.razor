@@ -1,0 +1,175 @@
+@page "/games/mystery/print"
+@layout BareLayout
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+@inherits TripAwareComponent
+@inject NavigationManager Nav
+
+<PageTitle>Printing the mystery · Charter Trip 2026</PageTitle>
+
+@* Everything that has to exist on paper.
+
+   This is also the fallback for the whole evening. One process owns the data file, and a restart
+   during the reveal is not survivable — so until there is a way to run this off a laptop on house
+   wifi, the printed packets are the only thing standing between a crash and no game.
+
+   Admin only, because two of the three sheets carry the solution. *@
+
+<AdminOnly>
+<div class="pr">
+
+    <div class="pr-bar no-print">
+        <div>
+            <b>@Story.Title</b>
+            <span class="muted tiny"> · @Clues.Count clue cards · @Badges.Count name tags</span>
+        </div>
+        <div class="row gap">
+            <a class="btn btn-sm btn-ghost" href="/games/mystery">Back</a>
+            <button class="btn btn-sm btn-gold" onclick="window.print()">Print</button>
+        </div>
+    </div>
+
+    @if (!HasGame)
+    {
+        <p class="muted">Create the game first — the codes and tokens on these sheets come from it.</p>
+    }
+    else
+    {
+        @* ---- the two doors ------------------------------------------------------------- *@
+        <section class="pr-sheet">
+            <h1 class="pr-h1">The door</h1>
+
+            <div class="pr-doors">
+            <div class="pr-poster">
+                <QrImage Content="@JoinUrl(Play.PartyCode)" Size="300" Alt="Join the party" />
+                <p class="pr-poster-code">@Play.PartyCode</p>
+                <p class="pr-poster-label">Murder at Braun Manor</p>
+                <p class="pr-poster-sub">Point your camera at this, or go to @JoinHost/join and type the code.</p>
+            </div>
+
+            <div class="pr-poster pr-poster-host">
+                <QrImage Content="@JoinUrl(Play.HostCode)" Size="220" Alt="Take a house part" />
+                <p class="pr-poster-code">@Play.HostCode</p>
+                <p class="pr-poster-label">The four of you</p>
+                <p class="pr-poster-sub">
+                    Braun, Leo, Chloe and Bertram. Safe to leave lying around only because the picker
+                    behind it refuses anybody who is not an organizer — but don't test that.
+                </p>
+            </div>
+            </div>
+        </section>
+
+        @* ---- the nine cards ------------------------------------------------------------ *@
+        <section class="pr-sheet">
+            <h1 class="pr-h1">The clue cards</h1>
+            <p class="pr-note no-print">
+                One per room. Cut them out, put each where its note says, and do it after the lights
+                go down — a guest who finds one during the party gets an empty page, but they will
+                also know where to run back to.
+            </p>
+
+            @foreach (var clue in Clues)
+            {
+                <article class="pr-clue" @key="clue.Id">
+                    <div class="pr-clue-head">
+                        <div>
+                            <p class="pr-zone">@(Story.Zone(clue.ZoneId)?.Name)</p>
+                            <p class="pr-name">@(Written(clue.Name) ?? "—")</p>
+                        </div>
+                        <QrImage Content="@ClueUrl(clue.Id)" Size="130" Alt="@($"Clue in {clue.ZoneId}")" />
+                    </div>
+
+                    <p class="pr-where"><b>Hide it:</b> @(Written(Story.Zone(clue.ZoneId)?.ClueSpot) ?? "—")</p>
+                    <p class="pr-token">@TokenFor(clue.Id)</p>
+                </article>
+            }
+        </section>
+
+        @* ---- the name tags -------------------------------------------------------------- *@
+        <section class="pr-sheet">
+            <h1 class="pr-h1">Name tags</h1>
+            <p class="pr-note no-print">
+                Everybody wears one. Scanning somebody else's is how you meet them, which is why the
+                code on it is not the one that signs them in — a photographed badge must not become
+                somebody's session.
+            </p>
+
+            <div class="pr-badges">
+                @foreach (var badge in Badges)
+                {
+                    var character = Story.Character(badge.CharacterId)!;
+                    <div class="pr-badge" @key="badge.CharacterId">
+                        <QrImage Content="@BadgeUrl(badge.BadgeToken)" Size="110" Alt="@character.Name" />
+                        <div>
+                            <p class="pr-badge-name">@character.Name</p>
+                            <p class="pr-badge-title">@character.Job</p>
+                            <p class="pr-badge-who">@(PersonFor(badge.PersonId) ?? "—")</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+
+        @* ---- the answer sheet ----------------------------------------------------------- *@
+        <section class="pr-sheet">
+            <h1 class="pr-h1">What actually happened</h1>
+            <p class="pr-note">
+                For the four of you. Do not leave this one on a table.
+            </p>
+
+            <table class="pr-solution">
+                <thead>
+                    <tr><th>Character</th><th>Room</th><th>Faction</th><th>Playing them</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var character in Story.Guests)
+                    {
+                        <tr class="@(character.IsKiller ? "is-killer" : character.IsHerring ? "is-herring" : "")"
+                            @key="character.Id">
+                            <td>
+                                @character.Name
+                                @if (character.IsKiller) { <b> — @character.GuiltSlot</b> }
+                                else if (character.IsHerring) { <span class="muted"> — looks guilty</span> }
+                            </td>
+                            <td>@(Story.Zone(character.ZoneId)?.Name)</td>
+                            <td>@(Story.Faction(character.FactionId)?.Name)</td>
+                            <td>@(PersonFor(Play.ForCharacter(character.Id)?.PersonId) ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+    }
+
+</div>
+</AdminOnly>
+
+@code {
+    protected override TripArea Watching => TripArea.Mystery;
+
+    private MysteryStory Story => Trip.Mystery.Story;
+    private MysteryPlay Play => Trip.Mystery.Play;
+
+    private bool HasGame => Play.PartyCode is { Length: > 0 };
+
+    private IReadOnlyList<MysteryClueCard> Clues => Story.Clues;
+
+    /// <summary>Everybody with a tag, staff included — they are in the room and get scanned too.</summary>
+    private IReadOnlyList<MysteryCastMember> Badges =>
+        Play.Cast.Where(c => Story.Character(c.CharacterId) is not null).ToList();
+
+    private string? TokenFor(string clueId) => Play.StateFor(clueId)?.Token;
+
+    private string? PersonFor(string? personId) =>
+        personId is null ? null : Trip.Roster.FirstOrDefault(p => p.Id == personId)?.Name;
+
+    private static string? Written(string? value) => MysteryText.Written(value);
+
+    private string JoinHost => new Uri(Nav.BaseUri).Authority;
+
+    private string JoinUrl(string code) => Nav.ToAbsoluteUri($"/join/{code}").ToString();
+    private string BadgeUrl(string token) => Nav.ToAbsoluteUri($"/m/meet/{token}").ToString();
+
+    private string ClueUrl(string clueId) =>
+        TokenFor(clueId) is { } token ? Nav.ToAbsoluteUri($"/m/clue/{token}").ToString() : "";
+}

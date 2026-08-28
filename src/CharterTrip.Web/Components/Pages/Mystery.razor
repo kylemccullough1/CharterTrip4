@@ -7,6 +7,8 @@
 @inject IClock Clock
 @inject NavigationManager Nav
 @inject IWebHostEnvironment Env
+@inject IJSRuntime JS
+@implements IAsyncDisposable
 
 <PageTitle>@Story.Title · Charter Trip 2026</PageTitle>
 
@@ -371,6 +373,71 @@
     {
         await MutateAsync(CastingService.Discard);
         await Store.FlushAsync();
+    }
+
+    // ------------------------------------------------------------------------------------------
+    //  Sound
+    // ------------------------------------------------------------------------------------------
+
+    private IJSObjectReference? _audio;
+    private MysteryPhase? _heard;
+
+    /// <summary>
+    /// The bed for a phase, or null for the phases that want silence.
+    ///
+    /// Named per phase rather than started and stopped at each transition, so a forgotten stop
+    /// cannot leave two pieces of music running for the rest of the night.
+    /// </summary>
+    private static string? BedFor(MysteryPhase phase) => phase switch
+    {
+        MysteryPhase.Welcome or MysteryPhase.Presentation => "manor",
+        MysteryPhase.StudyScene or MysteryPhase.Investigation => "heart",
+        MysteryPhase.Discussion1 or MysteryPhase.Discussion2 => "heart",
+        MysteryPhase.Trial1 or MysteryPhase.Trial2 or MysteryPhase.Trial3 => "trial",
+        _ => null
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                _audio = await JS.InvokeAsync<IJSObjectReference>("import", "./js/mystery-audio.js");
+
+                // Adopt the phase we are already in rather than treating it as a transition, so a
+                // screen opened at ten o'clock joins the soundtrack instead of replaying the murder
+                // at whoever just walked in.
+                _heard = Phase;
+                await _audio.InvokeVoidAsync("setBed", BedFor(Phase));
+            }
+            catch (JSDisconnectedException) { }
+
+            return;
+        }
+
+        if (_audio is null || _heard == Phase) return;
+
+        var entered = Phase;
+        _heard = entered;
+
+        try
+        {
+            // Cues follow the phase change, not the button, so every open screen hears the same
+            // thing at the same moment however the phase was advanced.
+            if (entered == MysteryPhase.Murder) await _audio.InvokeVoidAsync("murder");
+
+            await _audio.InvokeVoidAsync("setBed", BedFor(entered));
+        }
+        catch (JSDisconnectedException) { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_audio is null) return;
+
+        try { await _audio.InvokeVoidAsync("dispose"); } catch (JSDisconnectedException) { }
+        try { await _audio.DisposeAsync(); } catch (JSDisconnectedException) { }
     }
 
     // ------------------------------------------------------------------------------------------

@@ -1,0 +1,141 @@
+@page "/points"
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Services
+@inherits TripAwareComponent
+@inject IClock Clock
+
+<PageTitle>Points · Charter Trip 2026</PageTitle>
+
+@* The committee's thumb on the scale.
+
+   Every point on the weekend standings is one row in the trip's score log, whichever game put
+   it there. This page is that log, with a form to add a row and a button to take one away —
+   nothing more, because the standings are a sum and a sum has no other state to edit. Adding a
+   row for minus ten is how you dock a team; deleting the row is how you take that back. *@
+
+<div class="page page-points">
+    <section class="card">
+        <div class="section-head">
+            <div>
+                <h1 class="section-title">Points</h1>
+                <p class="section-sub muted">Every point on the board, and the means to change it.</p>
+            </div>
+            <a class="btn btn-ghost btn-sm" href="/">← Home</a>
+        </div>
+
+        @if (!CanEdit)
+        {
+            <p class="muted">The committee's sign-in edits the points.</p>
+        }
+        else
+        {
+            @* Standings, so the effect of a change is visible where it is made. *@
+            <div class="pts-standings">
+                @foreach (var (team, total) in Standings)
+                {
+                    <div class="pts-team">
+                        <span class="hb-dot" style="background: @team.Color"></span>
+                        <span class="pts-team-name">@team.Name</span>
+                        <b class="pts-team-total">@total</b>
+                    </div>
+                }
+            </div>
+
+            <form class="pts-add" @onsubmit="AddAsync">
+                <label class="field">
+                    <span>Team</span>
+                    <select class="textfield" @bind="_teamId">
+                        @foreach (var team in Trip.Teams)
+                        {
+                            <option value="@team.Id">@team.Name</option>
+                        }
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Points</span>
+                    <input class="numfield" type="number" @bind="_points" step="1" />
+                </label>
+                <label class="field pts-add-note">
+                    <span>For</span>
+                    <input class="textfield" type="text" @bind="_note" placeholder="Best costume, lost the van keys…" maxlength="120" />
+                </label>
+                <button class="btn btn-gold" type="submit" disabled="@(!CanAdd)">Add</button>
+            </form>
+            <p class="muted tiny">Negative points take some away.</p>
+
+            @if (Entries.Count == 0)
+            {
+                <p class="muted">Nobody has any points yet.</p>
+            }
+            else
+            {
+                <div class="pts-log">
+                    @foreach (var entry in Entries)
+                    {
+                        var team = Trip.Teams.FirstOrDefault(t => t.Id == entry.TeamId);
+                        <div class="pts-row" @key="entry.Id">
+                            <span class="hb-dot" style="background: @(team?.Color ?? "#666")"></span>
+                            <span class="pts-row-team">@(team?.Name ?? "—")</span>
+                            <span class="pts-row-pts @(entry.Points < 0 ? "is-neg" : "")">@(entry.Points > 0 ? "+" : "")@entry.Points</span>
+                            <span class="pts-row-note">
+                                <span class="pts-row-game">@GameName(entry.GameId)</span>
+                                @if (entry.Note is { Length: > 0 })
+                                {
+                                    <span> · @entry.Note</span>
+                                }
+                            </span>
+                            <span class="pts-row-when muted tiny">@entry.At.ToLocalTime().ToString("ddd h:mm tt")</span>
+                            <button class="mini-btn btn-danger-ghost" title="Delete this entry" @onclick="() => DeleteAsync(entry.Id)">✕</button>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </section>
+</div>
+
+@code {
+    /// <summary>The whole log, whichever game wrote it. Points land in Scores.</summary>
+    protected override TripArea Watching => TripArea.Scores;
+
+    /// <summary>The game id a committee adjustment is logged under. Not a game, so not in Trip.Games.</summary>
+    private const string Adjustment = "adjustment";
+
+    private string _teamId = "";
+    private int _points;
+    private string _note = "";
+
+    private IReadOnlyList<(Team Team, int Total)> Standings => TripSummary.Standings(Trip);
+
+    private IReadOnlyList<ScoreEntry> Entries =>
+        Trip.Scores.OrderByDescending(s => s.At).ToList();
+
+    private bool CanAdd => _points != 0 && Trip.Teams.Any(t => t.Id == _teamId);
+
+    private string GameName(string gameId) =>
+        gameId == Adjustment
+            ? "Adjustment"
+            : Trip.Games.FirstOrDefault(g => g.Id == gameId)?.Name ?? gameId;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _teamId = Trip.Teams.FirstOrDefault()?.Id ?? "";
+    }
+
+    private async Task AddAsync()
+    {
+        if (!CanAdd) return;
+
+        var teamId = _teamId;
+        var points = _points;
+        var note = _note.Trim();
+
+        await MutateAsync(t => ScoreService.Award(t, Adjustment, teamId, points, note, Clock.UtcNow));
+
+        _points = 0;
+        _note = "";
+    }
+
+    private Task DeleteAsync(string entryId) => MutateAsync(t => ScoreService.Undo(t, entryId));
+}

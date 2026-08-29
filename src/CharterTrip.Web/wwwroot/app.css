@@ -821,6 +821,14 @@ button.team-dot.is-pickable[aria-expanded="true"]::before {
 .swatch.is-taken:not(.is-on) { opacity: .34; }
 .swatch.is-taken:not(.is-on):hover { opacity: .75; }
 
+/* The colour wheel and the hex box, on their own row under the ten swatches. */
+.swatch-custom {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--line);
+}
+.swatch-hex { width: 82px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
 .swatch-backdrop { position: fixed; inset: 0; z-index: 20; }
 
 .team-people { padding: 8px; display: flex; flex-direction: column; gap: 5px; min-height: 60px; }
@@ -4999,8 +5007,12 @@ pre.code {
 
   /* The weather stands still: the house and a dark sky stay, the rain hangs, and the lightning
      — a flash by definition — goes altogether rather than becoming a slow one. */
-  .ms-storm-rain { animation: none; }
+  .ms-storm-rain { display: none; }
   .ms-storm-flash, .ms-storm-sheet, .ms-storm-bolt { animation: none; opacity: 0; }
+  .ms-lobby .ms-guest { animation: none; }
+  .page-murder .btn-gold::after { animation: none; }
+  .ms-drips i, .ms-drips i::after { animation: none; }
+  .ms-drips i::after { opacity: 0; }
 }
 
 /* --- writing the story ----------------------------------------------------- */
@@ -5126,7 +5138,7 @@ pre.code {
    so nothing on the wall has to know it is there — the bee's wall lays its pattern the same way.
    Live, the screen is its own stacking context, so -1 lands above its ink and below its content. */
 .ms-storm { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
-.ms-storm > i { position: absolute; inset: 0; display: block; }
+.ms-storm > i, .ms-storm > video { position: absolute; inset: 0; display: block; }
 
 .ms-storm-sky {
   background:
@@ -5141,84 +5153,77 @@ pre.code {
   background: linear-gradient(to bottom, rgba(10,12,16,.38), rgba(10,12,16,.14) 42%, rgba(10,12,16,.48));
 }
 
-/* The flash lights the sky and not the house — the manor is a layer above it, and a silhouette
-   that stays black against a sky gone white is what lightning looks like. Two beats a strike,
-   the second weaker; one flat step reads as a camera. Twice a cycle, unevenly spaced, and never
-   more than a few flashes in a second: the murder's strobe is the one thing here allowed to be
-   violent. */
+/* The flash lights the whole picture, which is what a flash does to a picture. Two beats a
+   strike, the second weaker; one flat step reads as a camera. When is decided in
+   mystery-audio.js, which puts is-strike or is-sheet on the storm for a couple of seconds and
+   plays the clap that goes with it — a flash on a CSS clock could never have had its thunder.
+   The murder's strobe is still the one thing here allowed to be violent. */
 .ms-storm-flash {
   background: radial-gradient(90% 75% at 50% 0%, rgba(214,226,255,.95), rgba(140,168,230,.45) 45%, transparent 80%);
   opacity: 0;
-  animation: ms-lightning 14s linear infinite;
 }
+.ms-storm.is-strike .ms-storm-flash { animation: ms-lightning 1.4s linear both; }
 @keyframes ms-lightning {
-  0%, 51.6% { opacity: 0; }
-  51.9% { opacity: .9; }
-  52.3% { opacity: .12; }
-  52.8% { opacity: .7; }
-  53.4% { opacity: .25; }
-  54.6%, 77.8% { opacity: 0; }
-  78.1% { opacity: .35; }
-  78.6% { opacity: 0; }
-  78.9% { opacity: .5; }
-  80%, 100% { opacity: 0; }
+  0%   { opacity: 0; }
+  3%   { opacity: .9; }
+  8%   { opacity: .12; }
+  14%  { opacity: .7; }
+  22%  { opacity: .25; }
+  38%, 100% { opacity: 0; }
 }
 
-/* Heat lightning from somewhere past the hill, on its own clock so the two never fall into
-   step. Fourteen and nine share nothing, so the pattern is two minutes long before it repeats. */
+/* Heat lightning from somewhere past the hill: the far strike, no bolt, and a clap that comes
+   a second later and quieter. */
 .ms-storm-sheet {
   background: radial-gradient(70% 60% at 18% 8%, rgba(170,190,240,.8), transparent 70%);
   opacity: 0;
-  animation: ms-sheet 9s linear infinite;
 }
+.ms-storm.is-sheet .ms-storm-sheet { animation: ms-sheet 1.8s linear both; }
 @keyframes ms-sheet {
-  0%, 30.6% { opacity: 0; }
-  30.9% { opacity: .22; }
-  31.4% { opacity: 0; }
-  31.7% { opacity: .14; }
-  32.4%, 65.6% { opacity: 0; }
-  65.9% { opacity: .18; }
-  66.6%, 100% { opacity: 0; }
+  0%   { opacity: 0; }
+  4%   { opacity: .22; }
+  11%  { opacity: 0; }
+  16%  { opacity: .14; }
+  30%  { opacity: 0; }
+  52%  { opacity: .18; }
+  66%, 100% { opacity: 0; }
 }
 
-/* The bolt rides the first strike of the cycle only. Off to one side of the house, because a
-   bolt through the tower every fourteen seconds is a cartoon — and off to the side of the title,
-   which is wider than the house on a television. It reaches the hill: one that stops in mid-air
-   looks cut off rather than far away. */
+/* The bolt rides the near strike. Off to one side of the house, because a bolt through the
+   tower every time is a cartoon — and off to the side of the title, which is wider than the
+   house on a television. It reaches the ground: one that stops in mid-air looks cut off rather
+   than far away. */
 .ms-storm-bolt {
   background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 600'><g fill='none' stroke-linecap='round' stroke-linejoin='round'><path d='M210 0L188 96L226 130L196 236L242 262L206 378L248 400L218 520L236 600' stroke='%23c8d8ff' stroke-width='14' opacity='.28'/><path d='M210 0L188 96L226 130L196 236L242 262L206 378L248 400L218 520L236 600' stroke='%23eef3ff' stroke-width='4'/><path d='M226 130L286 176L272 226M206 378L150 420L162 470' stroke='%23eef3ff' stroke-width='2.5' opacity='.8'/></g></svg>") no-repeat 86% 0 / auto 82vh;
   opacity: 0;
-  animation: ms-bolt 14s linear infinite;
 }
+.ms-storm.is-strike .ms-storm-bolt { animation: ms-bolt 1.4s linear both; }
 @keyframes ms-bolt {
-  0%, 51.7% { opacity: 0; }
-  51.9% { opacity: 1; }
-  52.4% { opacity: .3; }
-  52.8% { opacity: .9; }
-  53.6%, 100% { opacity: 0; }
+  0%   { opacity: 0; }
+  2%   { opacity: 1; }
+  7%   { opacity: .3; }
+  12%  { opacity: .9; }
+  24%, 100% { opacity: 0; }
 }
 
-/* The house, sat on the bottom edge whatever the screen's shape. Never narrower than 1200px:
-   scaled to a phone's width it is a smudge, and it may as well be the same house cropped. The
-   lit windows are the palette's gold; the attic is the brightest one, which is the study. */
+/* The house: a photograph, full-bleed, under the lightning. It is a small picture and a
+   television is a large screen, so it is darkened and very slightly softened — an upscaled
+   pixel reads as a mistake and a soft one reads as weather. The gradient sky beneath it is
+   only for the moment before it loads. */
 .ms-storm-manor {
-  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 420'><g fill='%2305070b'><path d='M0 420V376Q400 352 800 358T1600 350V420Z'/><path d='M150 380V296M150 330L108 282M108 282L92 250M150 306L190 258M190 258L182 222M190 258L222 240M150 350L118 322' fill='none' stroke='%2305070b' stroke-width='7' stroke-linecap='round'/><path d='M1450 372V290M1450 322L1408 272M1408 272L1396 240M1450 300L1492 250M1492 250L1484 214M1492 250L1524 232M1450 346L1486 316' fill='none' stroke='%2305070b' stroke-width='7' stroke-linecap='round'/><rect x='340' y='300' width='120' height='80'/><path d='M328 302L400 242L472 302Z'/><rect x='450' y='200' width='112' height='180'/><path d='M436 204L506 84L576 204Z'/><rect x='503' y='62' width='6' height='26'/><rect x='560' y='250' width='480' height='130'/><path d='M540 254L800 140L1060 254Z'/><rect x='700' y='150' width='22' height='90'/><rect x='900' y='156' width='22' height='84'/><rect x='1040' y='290' width='200' height='90'/><path d='M1028 294L1140 214L1252 294Z'/><rect x='1180' y='212' width='18' height='80'/><rect x='740' y='328' width='120' height='52'/><path d='M732 330L800 300L868 330Z'/></g><g fill='%23f0d98c'><rect x='787' y='196' width='26' height='32' opacity='.8'/><rect x='493' y='232' width='26' height='36' opacity='.55'/><rect x='493' y='300' width='26' height='36' opacity='.25'/><rect x='618' y='272' width='26' height='40' opacity='.5'/><rect x='690' y='272' width='26' height='40' opacity='.35'/><rect x='884' y='272' width='26' height='40' opacity='.5'/><rect x='956' y='272' width='26' height='40' opacity='.3'/><rect x='1080' y='310' width='24' height='36' opacity='.45'/><rect x='1176' y='310' width='24' height='36' opacity='.3'/><rect x='386' y='320' width='24' height='36' opacity='.4'/><rect x='784' y='340' width='32' height='40' opacity='.6'/></g></svg>") no-repeat 50% 100% / max(100%, 1200px) auto;
+  background: url('/img/manor.webp') no-repeat 50% 50% / cover;
+  filter: brightness(.72) saturate(.85) blur(.6px);
+  transform: scale(1.01);
 }
 
-/* Two sheets of rain at two speeds and two spacings, and it is the difference between them
-   that makes it fall — one sheet moving in step is a screensaver. Each tile's streaks lean at
-   the same slope the sheet drifts on, so the drops travel along their own length. The loop
-   moves each sheet a whole number of tiles, which is what makes the seam invisible. */
+/* The rain: footage shot on black, screened over the house so the black is not there and only
+   the drops are. Cover rather than contain, because rain has no edges. */
 .ms-storm-rain {
-  background-image:
-    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='96'><path d='M10 4l-4 24M30 40l-4 24M50 12l-4 24M22 70l-4 22M58 62l-4 24M40 84l-2 10' stroke='%23c3d1e6' stroke-opacity='.32' stroke-width='1' stroke-linecap='round'/></svg>"),
-    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='96' height='128'><path d='M20 6l-6 36M70 30l-6 36M44 80l-6 36M88 96l-5 30' stroke='%23d6e2f5' stroke-opacity='.4' stroke-width='1.4' stroke-linecap='round'/></svg>");
-  background-size: 64px 96px, 96px 128px;
-  background-repeat: repeat;
-  opacity: .85;
-  animation: ms-rain 1.1s linear infinite;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  mix-blend-mode: screen;
+  opacity: .75;
 }
-@keyframes ms-rain { to { background-position: -64px 384px, -96px 512px; } }
 
 /* Quieter behind the phases where the room is working rather than watching: the floor plan
    and the dock are the thing, and weather behind twenty-two voting tiles is noise. */
@@ -5228,6 +5233,197 @@ pre.code {
 .ms-screen[data-phase="Trial2"] .ms-storm,
 .ms-screen[data-phase="Discussion2"] .ms-storm,
 .ms-screen[data-phase="Trial3"] .ms-storm { opacity: .55; }
+
+/* --- blood ------------------------------------------------------------------- */
+
+/* The murder's page is red where the rest of the site is gold. Done by re-pointing the gold
+   variables inside .page-murder rather than restyling every rule that uses them: the code, the
+   portrait rings, the kickers, the welcome title and the winner's burst all take the new colour
+   without knowing they did. The two hard-coded golds in .btn-gold are the exceptions, below. */
+.page-murder {
+  --blood:       #b3111f;
+  --blood-light: #ff4d5a;
+  --blood-dark:  #4a0509;
+  --gold:        var(--blood);
+  --gold-light:  var(--blood-light);
+  --gold-dim:    #7a0d15;
+}
+
+/* Blood runs down. Three drips of uneven length and two beads hung off a thin edge, drawn once
+   as an SVG tile and repeated; the tile is wide and the drips are few, because a fringe of
+   little teeth is a comb and not blood. Sized by height, so the drips scale with what they
+   hang from, and the tile keeps its own proportions as it does. */
+.page-murder .btn-gold::after {
+  content: '';
+  position: absolute;
+  left: 3%; right: 3%;
+  top: 100%;
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='60' viewBox='0 0 240 60'><g fill='%23a5121f'><path d='M0 0h240v3H0z'/><path d='M22 0v42a8 8 0 0 0 16 0V0z'/><path d='M70 0v9a3 3 0 0 0 6 0V0z'/><path d='M110 0v22a5.5 5.5 0 0 0 11 0V0z'/><path d='M178 0v34a9 9 0 0 0 18 0V0z'/><path d='M215 0v13a3.5 3.5 0 0 0 7 0V0z'/></g><g fill='%23ff5a66' opacity='.32'><path d='M26 3v36a2 2 0 0 0 4 0V3z'/><path d='M113 3v18a1.5 1.5 0 0 0 3 0V3z'/><path d='M183 3v28a2.2 2.2 0 0 0 4.4 0V3z'/></g></svg>") repeat-x 0 0 / auto 100%;
+  pointer-events: none;
+}
+
+/* The title: a gradient through the letters, dark at the bottom where the blood collects, and
+   drips off the baseline. fit-content so the drips hang off the words rather than the block. */
+.page-murder .ms-title-big {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding-bottom: .04em;
+  /* Flat for the last fifth, so the feet of the letters are one colour — the colour the blood is. */
+  background: linear-gradient(180deg, #ff6b75 0%, #d4202e 40%, #7a0d16 68%, #5e0810 80%, #5e0810 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 10px rgba(120, 0, 12, .55));
+}
+
+/* Blood that moves. Each drip is one element told where and how by custom properties from the
+   markup: it wells up at the edge, runs down to its length, a drop lets go from the tip and
+   falls, and the run draws back up to start again. The periods are all different and the
+   offsets negative, so eight of them never fall into step and none is ever at its start when
+   the page opens. The title sits above the door in the stacking order so a drop that falls
+   off the name lands on the card rather than behind it. */
+/* The name, on the door. Sized to the stage rather than to the viewport alone: five words in
+   the display face at the heading's full size wrap to two lines on a laptop, and a two-line
+   name bleeds onto itself. */
+.page-murder .ms-title-big.is-bleeding { z-index: 2; font-size: min(3.4rem, 4vw); }
+/* The bottom of the letters is the last stop of the title's gradient, so that is what the
+   blood is. */
+.page-murder .ms-title-wrap .ms-drips { --blood-from: #5e0810; }
+
+/* A word of the title is its own box, so its drips can only hang off its letters — and they
+   hang from the baseline, not from the bottom of the line box, which is a descender's depth
+   lower and reads as a line under the word rather than the word. */
+.ms-word { display: inline-block; position: relative; }
+/* The space between words, as a margin: Razor collapses the whitespace between the spans. */
+.ms-word + .ms-word { margin-left: .28em; }
+
+/* The name and its blood. The layer is behind the heading, so the pool at the top of every drip
+   is hidden inside the letter it comes from and only the run shows; mystery-blood.js places them
+   in this box's coordinates, at the feet of the glyphs. */
+.ms-title-wrap { position: relative; width: fit-content; max-width: 100%; margin: 0 auto; }
+.ms-title-wrap .ms-title-big { position: relative; z-index: 1; margin: 0; }
+/* Doubled up to outrank .ms-drips, which puts a strip at the bottom of whatever it is in. */
+.ms-drips.ms-drips-layer { inset: 0; top: 0; height: auto; z-index: 0; }
+
+/* Blood is the colour of what it comes from. --blood-from is set where the drips hang — the
+   bottom of the title's gradient, the door's border — and every part of a drip is that colour
+   or a slightly darker one: the run darkens as it thins, the drop is darker still because it is
+   thicker, and nothing is lighter than its source. A highlight was the tell. */
+.ms-drips { position: absolute; left: 0; right: 0; top: 100%; height: 0; pointer-events: none; --blood-from: #6e0a12; }
+.ms-drips i {
+  position: absolute;
+  top: 0;
+  left: var(--x, 50%);
+  width: var(--w, 6px);
+  height: var(--l, 30px);
+  background: linear-gradient(180deg,
+    var(--blood-from) 0%,
+    color-mix(in srgb, var(--blood-from) 82%, #1a0103) 70%,
+    color-mix(in srgb, var(--blood-from) 68%, #1a0103) 100%);
+  border-radius: 0 0 var(--w, 6px) var(--w, 6px) / 0 0 calc(var(--w, 6px) * 1.4) calc(var(--w, 6px) * 1.4);
+  animation: ms-drip-run var(--t, 7s) var(--d, 0s) ease-in-out infinite;
+}
+/* The pool it runs from: wider than the run, uneven, the same colour, and mostly hidden inside
+   the letter — only its lower edge shows, where the blood has gathered before it goes. */
+.ms-drips i::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: calc(var(--w, 6px) * -.9);
+  width: calc(var(--w, 6px) * 2.4);
+  height: calc(var(--w, 6px) * 1.7);
+  margin-left: calc(var(--w, 6px) * -1.2);
+  border-radius: 42% 58% 55% 45% / 60% 60% 40% 40%;
+  background: var(--blood-from);
+  box-shadow:
+    calc(var(--w, 6px) * .7) calc(var(--w, 6px) * .25) 0 calc(var(--w, 6px) * -.5) var(--blood-from),
+    inset 0 calc(var(--w, 6px) * -.3) calc(var(--w, 6px) * .35) rgba(0, 0, 0, .28);
+}
+/* The drop. Grows at the tip while the run is at full length, lets go, falls, and is gone. */
+.ms-drips i::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--w, 6px) * -.7);
+  width: calc(var(--w, 6px) * 1.5);
+  height: calc(var(--w, 6px) * 1.9);
+  margin-left: calc(var(--w, 6px) * -.75);
+  border-radius: 50% 50% 55% 55% / 40% 40% 60% 60%;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--blood-from) 78%, #1a0103),
+    color-mix(in srgb, var(--blood-from) 60%, #1a0103));
+  opacity: 0;
+  animation: ms-drip-fall var(--t, 7s) var(--d, 0s) ease-in infinite;
+}
+@keyframes ms-drip-run {
+  0%   { height: calc(var(--l, 30px) * .25); }
+  55%  { height: var(--l, 30px); }
+  82%  { height: var(--l, 30px); }
+  100% { height: calc(var(--l, 30px) * .25); }
+}
+@keyframes ms-drip-fall {
+  0%, 52%   { transform: translateY(0) scale(.4); opacity: 0; }
+  60%       { transform: translateY(0) scale(1); opacity: 1; }
+  82%       { transform: translateY(var(--fall, 70px)) scale(.95); opacity: 1; }
+  88%, 100% { transform: translateY(calc(var(--fall, 70px) + 12px)) scale(.7); opacity: 0; }
+}
+
+/* The door bleeds from its bottom edge, which is drawn thicker and red so it has one to bleed
+   from. Its drips are shorter and fall less far, because the count is right underneath. */
+.page-murder .mys-door.is-bleeding {
+  position: relative;
+  border-bottom: 3px solid #6e0a12;
+  margin-bottom: 10px;
+}
+.page-murder .mys-door.is-bleeding .ms-drips { top: calc(100% - 1px); --fall: 38px; --blood-from: #6e0a12; }
+
+/* The buttons: the same gradient, the same drips, smaller. Room below for them to hang into —
+   a row of gold buttons that now bleed onto the row underneath is a mess rather than a theme. */
+.page-murder .btn-gold {
+  position: relative;
+  background: linear-gradient(180deg, #e0303e 0%, #a5121f 60%, #6e0a12 100%);
+  border-color: #c21a28;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.45);
+  box-shadow: 0 2px 10px rgba(120, 0, 12, .35);
+}
+.page-murder .btn-gold:hover {
+  background: linear-gradient(180deg, #ff5a66 0%, #c8202e 60%, #8a0f1a 100%);
+  border-color: var(--blood-light);
+  color: #fff;
+}
+.page-murder .btn-gold::after { height: 20px; left: 8px; right: 8px; }
+.page-murder .btn-lg::after { height: 26px; }
+.page-murder .row:has(> .btn-gold) { margin-bottom: 24px; }
+
+/* Everything else on the page that draws a line: red rather than grey. */
+.page-murder .btn-ghost { border-color: rgba(200, 32, 46, .38); color: #f0b6bb; }
+.page-murder .btn-ghost:hover { background: rgba(179, 17, 31, .16); border-color: var(--blood); color: #fff; }
+.page-murder .mys-door { border-color: rgba(200, 32, 46, .32); }
+.page-murder .ms-guest { border-color: rgba(200, 32, 46, .26); }
+.page-murder .ms-guest:hover { border-color: var(--blood); }
+.page-murder .ms-round { color: #e58a92; }
+.page-murder .ms-count b { color: var(--blood-light); }
+
+/* The one button on the television. Floats bottom-right on the door and on the wall alike,
+   above the stage and clear of the count, the actions and the testing strip. */
+.ms-mute {
+  position: fixed;
+  right: 18px; bottom: 18px;
+  z-index: 70;
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: rgba(10, 12, 16, .62);
+  border: 1px solid rgba(200, 32, 46, .5);
+  color: #f3d6d8;
+  font-size: 1.05rem; line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: border-color .15s, background .15s;
+}
+.ms-mute:hover { border-color: var(--blood-light); background: rgba(74, 5, 9, .7); }
 
 /* --- the camera, and the letter's button ------------------------------------ */
 
@@ -5403,6 +5599,16 @@ pre.code {
   justify-content: center;
 }
 .ms-lobby.is-waiting > .ms-grid { display: none; }
+
+/* Each tile lands as its phone joins — the bee's drop, on the bee's curve — so the wall fills
+   up rather than counting down. Keyed on the character in the markup, so a new arrival is a new
+   element and gets the entrance; a re-render of the twenty already there does not. */
+.ms-lobby .ms-guest { animation: ms-join-drop .5s cubic-bezier(.22,1.4,.36,1) both; }
+@keyframes ms-join-drop {
+  0%   { opacity: 0; transform: translateY(-22px) scale(.6); }
+  70%  { opacity: 1; transform: translateY(3px) scale(1.08); }
+  100% { opacity: 1; transform: none; }
+}
 
 .ms-lede {
   font-size: clamp(.85rem, 1.2vw, 1.05rem);
@@ -6055,3 +6261,44 @@ h1:focus { outline: none; }
    style for .btn to inherit — so a dead red button looked exactly like a live
    one, which on this particular button is the worst possible confusion. */
 .reset-card .btn:disabled { opacity: .4; cursor: default; }
+
+/* --- points ------------------------------------------------------------------ */
+
+/* The committee's log of every point. One row per entry, newest first, and a form above it. */
+.pts-standings {
+  display: flex; flex-wrap: wrap; gap: 8px 18px;
+  margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--line);
+}
+.pts-team { display: inline-flex; align-items: center; gap: 8px; font-size: .875rem; }
+.pts-team-name { color: var(--text-dim); }
+.pts-team-total { font-family: var(--display); color: var(--gold); }
+
+.pts-add {
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) 6rem minmax(0, 1fr) auto;
+  gap: 12px; align-items: end;
+  margin-bottom: 4px;
+}
+.pts-add .numfield { width: 100%; }
+@media (max-width: 720px) {
+  .pts-add { grid-template-columns: 1fr 6rem; }
+  .pts-add-note { grid-column: 1 / -1; }
+}
+
+.pts-log { display: flex; flex-direction: column; margin-top: 18px; border-top: 1px solid var(--line); }
+.pts-row {
+  display: grid;
+  grid-template-columns: 12px minmax(6rem, 10rem) 4rem minmax(0, 1fr) auto 24px;
+  gap: 10px; align-items: center;
+  padding: 9px 0; border-bottom: 1px solid var(--line);
+  font-size: .844rem;
+}
+.pts-row-pts { text-align: right; font-family: var(--display); color: var(--gold); }
+.pts-row-pts.is-neg { color: var(--ruby); }
+.pts-row-note { color: var(--text-dim); min-width: 0; overflow-wrap: anywhere; }
+.pts-row-game { color: var(--text); }
+.pts-row-when { white-space: nowrap; }
+@media (max-width: 720px) {
+  .pts-row { grid-template-columns: 12px minmax(0, 1fr) 4rem 24px; }
+  .pts-row-note, .pts-row-when { grid-column: 2 / -1; }
+}

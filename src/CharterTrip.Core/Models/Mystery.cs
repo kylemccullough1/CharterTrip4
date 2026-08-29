@@ -223,7 +223,7 @@ public static class MysteryPhases
 /// </summary>
 public sealed class MysteryStory
 {
-    public string Title { get; set; } = "Murder at Braun Manor";
+    public string Title { get; set; } = "Murder at the Braun Manor";
 
     /// <summary>False until the content has been copied in from the embedded seed.</summary>
     public bool Seeded { get; set; }

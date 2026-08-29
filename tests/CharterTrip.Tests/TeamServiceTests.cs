@@ -137,16 +137,30 @@ public class TeamServiceTests
         Assert.Equal("#b07cc6", TeamService.FindTeam(trip, "jou")!.Color);
     }
 
+    /// <summary>Off the palette is fine now — there is a colour wheel — as long as it is a colour.</summary>
+    [Theory]
+    [InlineData("#123456", "#123456")]
+    [InlineData("#ABC", "#aabbcc")]
+    [InlineData("  #7F00ff ", "#7f00ff")]
+    public void Recolouring_a_team_takes_any_hex_colour_in_the_one_spelling(string given, string stored)
+    {
+        var trip = Trip();
+
+        TeamService.RecolorTeam(trip, "jou", given);
+
+        Assert.Equal(stored, TeamService.FindTeam(trip, "jou")!.Color);
+    }
+
     /// <summary>
-    /// The leading team's colour is written into the site's stylesheet, so a colour that is not
-    /// one somebody picked off the palette must not reach the field at all.
+    /// The leading team's colour is written into the site's stylesheet, so anything that is not
+    /// plainly a hex colour must not reach the field at all.
     /// </summary>
     [Theory]
-    [InlineData("#123456")]                        // a colour, but not one of ours
     [InlineData("red")]
-    [InlineData("#c94f5a; background: url(evil)")] // a palette colour with a tail on it
+    [InlineData("#c94f5a; background: url(evil)")] // a colour with a tail on it
+    [InlineData("#12345")]
     [InlineData("")]
-    public void Recolouring_a_team_refuses_anything_off_the_palette(string given)
+    public void Recolouring_a_team_refuses_anything_that_is_not_a_colour(string given)
     {
         var trip = Trip();
         var before = TeamService.FindTeam(trip, "jou")!.Color;

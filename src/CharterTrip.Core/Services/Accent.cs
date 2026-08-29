@@ -48,6 +48,20 @@ public static class AccentPalette
     public static bool IsSwatch(string? color) => MatchSwatch(color) is not null;
 
     /// <summary>
+    /// A colour in the one spelling the site stores: lowercase, six digits, leading hash — or null
+    /// if it is not a hex colour at all. <c>#ABC</c> becomes <c>#aabbcc</c>. This is what a team
+    /// colour picked off a colour wheel is written down as, so two teams that chose the same
+    /// colour by different routes compare equal as text.
+    /// </summary>
+    public static string? Canonical(string? color)
+    {
+        if (Parse(color) is not { } accent) return null;
+
+        var parts = accent.Rgb.Split(", ").Select(int.Parse).ToArray();
+        return $"#{parts[0]:x2}{parts[1]:x2}{parts[2]:x2}";
+    }
+
+    /// <summary>
     /// The team to paint the site in, or null to leave it gold.
     ///
     /// Null while nobody has scored and while the top two are level: there is no leader to be, and

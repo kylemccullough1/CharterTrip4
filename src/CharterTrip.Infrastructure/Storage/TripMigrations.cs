@@ -15,7 +15,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 32;
+    public const int CurrentVersion = 33;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -48,6 +48,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 30) changed |= ToV30_OneJeopardyDoor(trip);
         if (trip.SchemaVersion < 31) changed |= ToV31_OneDoorPerGame(trip);
         if (trip.SchemaVersion < 32) changed |= ToV32_TheStoryIsWritten(trip);
+        if (trip.SchemaVersion < 33) changed |= ToV33_TheBraunManor(trip);
 
         // v19 carried the seed's hand-written word list across to a file that predated the
         // bee. No step any more: v20 deals the list instead of shipping one, so there is
@@ -915,6 +916,49 @@ public static class TripMigrations
 
         trip.Mystery.Story = StoryLoader.Load();
         return true;
+    }
+
+    /// <summary>
+    /// v33 puts the article in: "Murder at the Braun Manor".
+    ///
+    /// The same four places v28 wrote the name, plus the story's own title, which v28 predates.
+    /// Guarded on the exact old text, as v28 was, so a title somebody has since typed in the
+    /// story editor is left alone.
+    /// </summary>
+    private static bool ToV33_TheBraunManor(TripData trip)
+    {
+        const string old = "Murder at Braun Manor";
+        const string now = "Murder at the Braun Manor";
+
+        var changed = false;
+
+        if (trip.Mystery.Story.Title == old)
+        {
+            trip.Mystery.Story.Title = now;
+            changed = true;
+        }
+
+        foreach (var slide in trip.Slides.Where(s => s.Caption == old))
+        {
+            slide.Caption = now;
+            changed = true;
+        }
+
+        foreach (var item in trip.Itinerary
+                     .SelectMany(d => d.Items)
+                     .Where(i => i.Title.Contains(old, StringComparison.Ordinal)))
+        {
+            item.Title = item.Title.Replace(old, now, StringComparison.Ordinal);
+            changed = true;
+        }
+
+        foreach (var game in trip.Games.Where(g => g.Name.Contains(old, StringComparison.Ordinal)))
+        {
+            game.Name = game.Name.Replace(old, now, StringComparison.Ordinal);
+            changed = true;
+        }
+
+        return changed;
     }
 
     private static bool ToV29_StoryMode(TripData trip)

@@ -4,10 +4,17 @@
 // wrong on house wifi with no internet. One looping bed at a time, named by the phase, plus a
 // handful of one-shots layered over it.
 //
-// The one exception is the scream. Synthesised screams sound like a theremin, and the murder is
-// the single biggest moment of the night — so if wwwroot/audio/scream.mp3 exists it is used, and
-// if it does not the synth stands in. The build never depends on the recording existing, which
-// means somebody can record it on a phone the afternoon of the party and drop it in.
+// The recordings are the exception. The theme, the rain and the three thunderclaps in
+// wwwroot/audio are real, fetched the moment this module loads and played as buffers through the
+// same master gain as everything else, so one mute button covers the lot. Buffers rather than
+// <audio> elements because an element needs its own play permission on top of the context's,
+// and because this file already knew how: it is how the scream is loaded. That one is still
+// optional — if wwwroot/audio/scream.mp3 exists it is used, and if it does not the synth stands
+// in, so somebody can record it on a phone the afternoon of the party and drop it in.
+//
+// The weather is also here, because the thunder has to land on the flash. Lightning used to be
+// two CSS animations on their own clocks; now strike() decides when, puts a class on the storm
+// for the stylesheet to flash to, and plays the next clap in the cycle.
 
 let ctx = null;
 let master = null;
@@ -20,13 +27,27 @@ let disarm = null;     // removes the gesture listener waiting on that permissio
 let screamBuffer = null;
 let screamChecked = false;
 
+const THEME = '/audio/MurderMysteryMain.mp3';
+const RAIN = '/audio/rain-ambience.mp3';
+const CLAPS = ['/audio/thunder-1.mp3', '/audio/thunder-2.mp3', '/audio/thunder-3.mp3'];
+const ROUNDS = '/audio/thunder-3.mp3';   // looped under the rounds: thunder rolling through, every fourteen seconds
+const TRIAL = '/audio/trial.mp3';        // looped under the trials and the votes
+
+const files = new Map();   // url -> { bytes: Promise<ArrayBuffer|null>, buffer: AudioBuffer|null }
+
+let rain = null;           // { stop } while the ambience is running
+let rainWanted = false;    // asked for before the browser would let us make noise
+
+let storm = null;          // { el, timer } while the lightning is being scheduled
+let clapIndex = 0;         // which clap is next; 1, 2, 3, 1, …
+
 const GESTURES = ['pointerdown', 'keydown', 'touchstart'];
 
 function audio() {
     if (!ctx) {
         ctx = new (window.AudioContext || window.webkitAudioContext)();
         master = ctx.createGain();
-        master.gain.value = 0.5;
+        master.gain.value = muted ? 0 : 0.5;
         master.connect(ctx.destination);
     }
     return ctx;
@@ -97,8 +118,50 @@ function noise({ start = 0, dur = 1, peak = 0.3, type = 'lowpass', from = 4000, 
 
 // ---------------------------------------------------------------- one-shots
 
-/// Three layers, because one is a hiss and two is a door slamming.
-export function thunder() {
+/// Somebody came through the door. The bee's chime, because it is the same moment on the same
+/// kind of wall: small, because twenty-five of these go off and two may land together. Skipped
+/// rather than queued while the context is still locked — a note scheduled on a suspended
+/// context plays the moment somebody finally touches the screen, which is a chime for nobody.
+export function joined() {
+    if (audio().state !== 'running') return;
+    note({ freq: 880, dur: 0.06, type: 'triangle', peak: 0.16 });
+    note({ freq: 1318.5, start: 0.05, dur: 0.10, type: 'triangle', peak: 0.13 });
+}
+
+/// The next clap in the cycle, at a volume. The index moves whether or not anything is heard,
+/// so a wall nobody has touched yet still comes in on the right one.
+///
+/// Only a clap already decoded is played — the file is fetched at load and decoded on the first
+/// strike, so at worst the first flash of the night is the synth and every one after is the
+/// recording. A decode awaited here would land the sound seconds after the flash.
+function clap(peak) {
+    const url = CLAPS[clapIndex++ % CLAPS.length];
+    const c = audio();
+
+    const cached = files.get(url)?.buffer;
+    if (!cached) {
+        loadFile(url);
+        return false;
+    }
+
+    if (c.state !== 'running') return true;
+
+    const gain = c.createGain();
+    gain.gain.value = peak;
+    gain.connect(master);
+
+    const src = c.createBufferSource();
+    src.buffer = cached;
+    src.connect(gain);
+    src.start();
+    return true;
+}
+
+/// The recording if there is one; three layers of synth if there is not yet — because one layer
+/// is a hiss and two is a door slamming.
+export function thunder(peak = 0.95) {
+    if (clap(peak)) return;
+
     // The crack: bright, brief, and the thing that makes people jump.
     noise({ dur: 0.07, peak: 0.5, type: 'highpass', from: 3000, to: 6000, q: 0.5 });
 
@@ -229,6 +292,10 @@ export async function setBed(name) {
 }
 
 const START = {
+    /// The theme, looped. Starts the moment the bytes are decoded, which on a wall that has been
+    /// open since the doors opened is immediately: the fetch began when the module loaded.
+    main() { return loop(THEME, 0.85); },
+
     /// The house itself: two low sines beating slowly against each other.
     manor() {
         const c = audio();
@@ -248,25 +315,163 @@ const START = {
         return () => oscs.forEach(o => { try { o.stop(); } catch { /* already gone */ } });
     },
 
-    /// A slow heartbeat under the investigation. Two thuds, a long gap, again.
-    heart() {
-        const timer = setInterval(() => {
-            note({ freq: 54, dur: 0.22, type: 'sine', peak: 0.22 });
-            setTimeout(() => note({ freq: 48, dur: 0.26, type: 'sine', peak: 0.16 }), 260);
-        }, 1400);
+    /// The rounds — the study, the investigation and both discussions: the third clap on a loop,
+    /// so thunder rolls through the house every fourteen seconds while the room works.
+    rounds() { return loop(ROUNDS, 0.8); },
 
-        return () => clearInterval(timer);
-    },
-
-    /// The trial: a tick, slower than a clock, so it reads as patience rather than pressure.
-    trial() {
-        const timer = setInterval(() => {
-            noise({ dur: 0.05, peak: 0.12, type: 'highpass', from: 2200, to: 3000 });
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }
+    /// The trials, and the votes inside them: their own piece.
+    trial() { return loop(TRIAL, 0.85); }
 };
+
+// ---------------------------------------------------------------- the recordings
+
+/// The bytes now, the decode later. Fetching needs nothing; decoding needs a context, and making
+/// one before anybody has touched the page earns a console warning per tab. A decoded buffer is
+/// plain samples and outlives the context that made it, so dispose() keeps them.
+function fetchFile(url) {
+    let entry = files.get(url);
+    if (!entry) {
+        entry = {
+            bytes: fetch(url, { cache: 'force-cache' })
+                .then(r => r.ok ? r.arrayBuffer() : null)
+                .catch(() => null),
+            buffer: null
+        };
+        files.set(url, entry);
+    }
+    return entry;
+}
+
+async function loadFile(url) {
+    const entry = fetchFile(url);
+    if (entry.buffer) return entry.buffer;
+
+    const bytes = await entry.bytes;
+    if (!bytes) return null;
+
+    try {
+        // A copy, because decodeAudioData detaches the buffer it is given and a second context
+        // (after a dispose) would otherwise find nothing to decode.
+        entry.buffer = await audio().decodeAudioData(bytes.slice(0));
+    } catch {
+        entry.buffer = null;
+    }
+    return entry.buffer;
+}
+
+const loadTheme = () => loadFile(THEME);
+
+[THEME, RAIN, TRIAL, ...CLAPS].forEach(fetchFile);
+
+/// A recording on a loop at a level, started as soon as it is decoded and stoppable before then.
+function loop(url, level) {
+    let stopped = false;
+    let src = null;
+
+    (async () => {
+        const buffer = await loadFile(url);
+        if (stopped || !buffer) return;
+
+        const c = audio();
+        const gain = c.createGain();
+        gain.gain.value = level;
+        gain.connect(master);
+
+        src = c.createBufferSource();
+        src.buffer = buffer;
+        src.loop = true;
+        src.connect(gain);
+        src.start();
+    })();
+
+    return () => {
+        stopped = true;
+        if (src) { try { src.stop(); } catch { /* already gone */ } }
+    };
+}
+
+// ---------------------------------------------------------------- the weather
+
+/**
+ * Rain, under everything, for as long as the page is open. Not a bed: the beds change with the
+ * phase and this does not, and a phase that wanted silence from the music still has weather.
+ */
+export function setAmbience(on) {
+    rainWanted = on;
+
+    if (!on) { stopRain(); return; }
+    if (rain) return;
+
+    if (audio().state === 'suspended') { arm(); return; }
+    startRain();
+}
+
+function startRain() {
+    if (rain) return;
+    rain = { stop: loop(RAIN, 0.35) };
+}
+
+function stopRain() {
+    if (rain) { try { rain.stop(); } catch { /* nothing running */ } }
+    rain = null;
+}
+
+const STRIKE_GAP_MIN = 6000;
+const STRIKE_GAP_MAX = 16000;
+
+/**
+ * Lightning, sporadically, from here rather than from a CSS clock — so the thunder can go with
+ * it. Each strike puts a class on the storm for a couple of seconds; the stylesheet does the
+ * flashing. Near strikes take the bolt and a loud clap almost at once; far ones light the sheet
+ * past the hill, and the clap comes later and quieter, the way it does.
+ */
+export function startStorm() {
+    if (storm) return;
+
+    const el = document.querySelector('.ms-storm');
+    if (!el) return;
+
+    storm = { el, timer: null };
+
+    // Decoded now, not on first use: clap() only plays what is already decoded, so a clap met
+    // for the first time at its strike would be the synth. Decoding works on a context that is
+    // not yet allowed to make noise; only the playing waits on the gesture.
+    CLAPS.forEach(loadFile);
+
+    scheduleStrike();
+}
+
+function scheduleStrike() {
+    if (!storm) return;
+    const gap = STRIKE_GAP_MIN + Math.random() * (STRIKE_GAP_MAX - STRIKE_GAP_MIN);
+    storm.timer = setTimeout(strike, gap);
+}
+
+function strike() {
+    if (!storm) return;
+
+    const near = Math.random() < 0.6;
+    const cls = near ? 'is-strike' : 'is-sheet';
+    const el = storm.el;
+
+    // Off, reflow, on: the only way to restart a CSS animation that may still be running.
+    el.classList.remove('is-strike', 'is-sheet');
+    void el.offsetWidth;
+    el.classList.add(cls);
+    setTimeout(() => el.classList.remove(cls), 2400);
+
+    const delay = near ? 150 + Math.random() * 300 : 900 + Math.random() * 1100;
+    setTimeout(() => { if (storm) thunder(near ? 0.95 : 0.5); }, delay);
+
+    scheduleStrike();
+}
+
+function stopStorm() {
+    if (!storm) return;
+    clearTimeout(storm.timer);
+    storm.el.classList.remove('is-strike', 'is-sheet');
+    storm = null;
+}
 
 function stopBed() {
     if (bed?.stop) {
@@ -279,13 +484,13 @@ function arm() {
     if (disarm) return;
 
     const go = async () => {
+        // Read before disarming: disarmBed() clears `pending` too, and reading it afterwards is
+        // how the bed queued behind the gesture used to be dropped on the floor by the gesture.
+        const name = pending;
         disarmBed();
-        if (pending) {
-            const name = pending;
-            pending = null;
-            await unlock();
-            await setBed(name);
-        }
+        await unlock();
+        if (rainWanted) startRain();
+        if (name) await setBed(name);
     };
 
     GESTURES.forEach(g => window.addEventListener(g, go, { once: true, passive: true }));
@@ -298,6 +503,9 @@ export function disarmBed() {
 }
 
 export function dispose() {
+    stopStorm();
+    stopRain();
+    rainWanted = false;
     stopBed();
     disarmBed();
     if (ctx) { try { ctx.close(); } catch { /* already closed */ } }

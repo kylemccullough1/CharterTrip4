@@ -96,10 +96,13 @@ public static class TeamService
     /// </summary>
     public static void RecolorTeam(TripData trip, string teamId, string color)
     {
+        // Any hex colour, not only the palette's ten: the swatches are the quick picks and the
+        // colour wheel beside them is the rest. Still parsed, never trusted — the leading team's
+        // colour is written into the stylesheet, so nothing that is not plainly a colour gets in.
         var team = FindTeam(trip, teamId);
-        if (team is null || AccentPalette.MatchSwatch(color) is not { } swatch) return;
+        if (team is null || AccentPalette.Canonical(color) is not { } hex) return;
 
-        team.Color = swatch;
+        team.Color = hex;
     }
 
     public static RosterPerson? FindPerson(TripData trip, string personId) =>

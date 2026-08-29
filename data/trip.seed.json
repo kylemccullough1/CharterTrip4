@@ -259,7 +259,7 @@
     {
       "id": "slide-3",
       "kind": "deco",
-      "caption": "Murder at Braun Manor",
+      "caption": "Murder at the Braun Manor",
       "sub": "Saturday, 8:00 PM - dress the part",
       "hue": 2
     },
@@ -426,7 +426,7 @@
           "id": "item-s8",
           "startMinutes": 1200,
           "durationMinutes": 120,
-          "title": "Murder Mystery - Murder at Braun Manor",
+          "title": "Murder Mystery - Murder at the Braun Manor",
           "notes": "Gatsby dress code. Group photo. Best-dressed group wins points.",
           "tag": "game",
           "version": 1

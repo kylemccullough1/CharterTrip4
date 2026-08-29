@@ -861,10 +861,12 @@ public class TripMigrationsTests
         TripMigrations.Apply(trip);
 
         // Three places, all of them seen before the night: the deco slide, the itinerary row, and
-        // the games list. Missing one leaves the old name on somebody's phone.
-        Assert.Equal("Murder at Braun Manor", trip.Slides[0].Caption);
-        Assert.Equal("Murder Mystery - Murder at Braun Manor", trip.Itinerary[0].Items[0].Title);
-        Assert.Equal("Murder Mystery - Murder at Braun Manor", trip.Games[0].Name);
+        // the games list. Missing one leaves the old name on somebody's phone. Apply runs every
+        // step, so what lands is v33's wording of v28's rename.
+        Assert.Equal("Murder at the Braun Manor", trip.Slides[0].Caption);
+        Assert.Equal("Murder Mystery - Murder at the Braun Manor", trip.Itinerary[0].Items[0].Title);
+        Assert.Equal("Murder Mystery - Murder at the Braun Manor", trip.Games[0].Name);
+        Assert.Equal("Murder at the Braun Manor", trip.Mystery.Story.Title);
     }
 
     [Fact]

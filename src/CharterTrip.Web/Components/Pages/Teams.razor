@@ -73,6 +73,24 @@
                                                             aria-label="@(taken is not null ? $"{pick} — also {taken}" : pick)"
                                                             @onclick="() => RecolorAsync(team.Id, pick)"></button>
                                                 }
+
+                                                @* Any colour at all. The wheel is the browser's own, which
+                                                   is the best one on every phone; the box beside it takes a
+                                                   hex for anybody who has one. Both apply on change, and the
+                                                   picker closes the way it does for a swatch. *@
+                                                <div class="swatch-custom">
+                                                    <input type="color" class="color-input"
+                                                           value="@(AccentPalette.Canonical(team.Color) ?? "#d4af37")"
+                                                           title="Any colour"
+                                                           aria-label="@($"Pick any colour for {team.Name}")"
+                                                           @onchange="e => RecolorAsync(team.Id, e.Value?.ToString() ?? string.Empty)" />
+                                                    <input type="text" class="textfield sm swatch-hex"
+                                                           value="@team.Color" maxlength="7" spellcheck="false"
+                                                           placeholder="#rrggbb"
+                                                           aria-label="@($"Hex colour for {team.Name}")"
+                                                           @onchange="e => RecolorAsync(team.Id, e.Value?.ToString() ?? string.Empty)" />
+                                                    <span class="tiny muted">any</span>
+                                                </div>
                                             </div>
                                         }
                                     </div>
@@ -161,11 +179,11 @@
     }
 
     /// <summary>
-    /// Whether this is the colour the team is already wearing. Compared through the palette rather
-    /// than as text so a team seeded with a differently-spelled hex still lights up its own swatch.
+    /// Whether this is the colour the team is already wearing. Compared as colours rather than as
+    /// text so a team seeded with a differently-spelled hex still lights up its own swatch.
     /// </summary>
     private static bool IsWearing(Team team, string swatch) =>
-        AccentPalette.MatchSwatch(team.Color) == swatch;
+        AccentPalette.Canonical(team.Color) is { } worn && worn == AccentPalette.Canonical(swatch);
 
     /// <summary>
     /// The other team already wearing this colour, or null. Ten colours and four teams means

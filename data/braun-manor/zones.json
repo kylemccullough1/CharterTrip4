@@ -15,7 +15,7 @@
       "id": "entry",
       "name": "Entry",
       "players_allowed": true,
-      "notes": "........",
+      "notes": "The front door, the coat rail, and Bertram's post. The corridor to the study begins here — the one hallway everybody watches and nobody admits to using.",
       "adjacent": [
         "study",
         "family_room",
@@ -27,7 +27,7 @@
       "id": "family_room",
       "name": "Family Room",
       "players_allowed": true,
-      "notes": "........",
+      "notes": "Family photos on the high shelf and Braun's collection cabinets. The quiet back route to the study runs through here, past a tea tray that never arrived.",
       "adjacent": [
         "study",
         "entry",
@@ -40,7 +40,7 @@
       "id": "kitchen",
       "name": "Kitchen",
       "players_allowed": true,
-      "notes": "........",
+      "notes": "Leo's kingdom. Service traffic cuts through from the driveway, and the night's delivery paperwork piles up by the counter — signed by more hands than worked here.",
       "adjacent": [
         "family_room",
         "sitting_room",
@@ -64,7 +64,7 @@
       "id": "grand_hall",
       "name": "Grand Hall",
       "players_allowed": true,
-      "notes": "........",
+      "notes": "The stage, the bar, and the wreckage of the champagne tower. At 9:40 tonight, every guest in the house was standing here. That was the idea.",
       "adjacent": [
         "sitting_room",
         "extension_room"

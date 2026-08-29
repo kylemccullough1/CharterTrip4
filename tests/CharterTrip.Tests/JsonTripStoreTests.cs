@@ -307,4 +307,71 @@ public class JsonTripStoreTests
         Assert.Equal(39, granted.Count(won => !won));
         Assert.Single(fx.Store.Current.Superlatives);
     }
+
+    /// <summary>
+    /// Twenty-five phones arriving inside ninety seconds is a stream of mutations far faster than
+    /// the debounce, so almost every scheduled save is superseded before it runs. That is normal and
+    /// costs nothing — but the superseded task used to read <c>.Token</c> off a CancellationTokenSource
+    /// the next edit had already disposed, and <c>ObjectDisposedException</c> is not
+    /// <c>OperationCanceledException</c>, so it fell past the "superseded" branch and was logged as
+    /// "Debounced save failed." on a save that had lost nothing.
+    ///
+    /// Nothing was ever actually lost, which is what made it worth fixing rather than shrugging at:
+    /// an error in the log that does not mean an error teaches everybody to ignore the log on the
+    /// one night it matters.
+    /// </summary>
+    [Fact]
+    public async Task Edits_faster_than_the_debounce_do_not_report_failed_saves()
+    {
+        // Long enough that each edit supersedes the one before it. At the default 0 the task has
+        // usually finished before the next edit lands and the window never opens.
+        await using var fx = new StoreFixture(debounceMs: 50);
+
+        for (var i = 0; i < 250; i++)
+        {
+            var name = $"edit {i}";
+            await fx.Store.MutateAsync(t => t.Trip.Name = name, TripArea.Trip);
+        }
+
+        await fx.Store.FlushAsync();
+
+        // Let any task that is still holding a superseded token get to its catch block.
+        await Task.Delay(200);
+
+        Assert.Empty(fx.Log.Failures);
+
+        // And the point of the debounce still holds: the last edit is the one on disk.
+        Assert.Equal("edit 249", fx.Store.Current.Trip.Name);
+        var reloaded = await fx.RestartAsync();
+        Assert.Equal("edit 249", reloaded.Current.Trip.Name);
+    }
+
+
+    /// <summary>
+    /// The same storm, driven in parallel rather than in sequence.
+    ///
+    /// Twenty-one people tap their names inside about ninety seconds and every one of those taps is
+    /// its own request, so the debounce is rescheduled from many threads at once. That is the window
+    /// where a source can be disposed by a second thread between being published and being read —
+    /// and if the token is read on the far side of that, the throw lands on whoever called
+    /// MutateAsync rather than in a task nobody awaits, which turns a harmless superseded save into
+    /// a failed request.
+    /// </summary>
+    [Fact]
+    public async Task Concurrent_edits_neither_throw_nor_report_failed_saves()
+    {
+        await using var fx = new StoreFixture(debounceMs: 50);
+
+        await Task.WhenAll(Enumerable.Range(0, 16).Select(worker => Task.Run(async () =>
+        {
+            for (var i = 0; i < 40; i++)
+                await fx.Store.MutateAsync(t => t.Revision += 0, TripArea.Trip);
+        })));
+
+        await fx.Store.FlushAsync();
+        await Task.Delay(200);
+
+        Assert.Empty(fx.Log.Failures);
+    }
+
 }

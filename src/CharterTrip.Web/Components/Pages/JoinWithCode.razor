@@ -100,11 +100,27 @@ else if (_state == State.PickName)
 
     @if (People.Count == 0 && !CanTakeTheHostJob)
     {
+        @* The dead end everybody hits once, and it used to say the wrong thing.
+ 
+           The twenty-one guest parts and the four house parts are handed out through two different
+           gates: the guest list here excludes organizers entirely, and the house parts appear only
+           on a browser already signed in as one. So the last four people through this door — the
+           four running the evening — see an empty list, and "find Bertram" is no help at all when
+           you ARE Bertram and simply have not signed in yet. Say the thing they can act on. *@
         <p class="login-sub">
             @(_door == CodeKind.MysteryParty
-                ? "Everyone's been given a character already. If that's wrong, find Bertram."
+                ? "Every guest part has been taken."
                 : "Nobody is on a team yet — find whoever is running the trip.")
         </p>
+
+        @if (_door == CodeKind.MysteryParty)
+        {
+            <p class="login-sub">
+                If you are one of the four running the evening, the house parts are behind your own
+                sign-in rather than on this list — open your personal link, or
+                <a href="/login">sign in</a>, then come back to this code.
+            </p>
+        }
     }
     else
     {
@@ -474,7 +490,22 @@ else
                 _organiserId = Store.Current.Roster
                     .FirstOrDefault(p => p.Id == CurrentPersonId && p.Role == TripRole.Admin)?.Id;
 
-                _state = _organiserId is null ? State.PickHostName : State.PickPart;
+                if (_organiserId is null)
+                {
+                    _state = State.PickHostName;
+                    return;
+                }
+
+                // Into the URL rather than only into _state, because the next thing this organizer
+                // does is submit one of the npc-{id} forms — and that is another POST, on a page
+                // with no circuit, to a component that will be constructed from scratch. A field
+                // does not survive that: the rebuilt component would render the name picker again,
+                // the form being submitted would no longer exist, and Blazor would answer "Cannot
+                // submit the form 'npc-braun' because no form on the page currently has that name."
+                //
+                // ?who= is what carries it across, which is what ResolveAsync reads on the way back
+                // in and what ClaimStaffAsync falls back to. Nothing else ever set it.
+                Nav.NavigateTo(WithOrganiser(_organiserId));
                 return;
         }
     }
@@ -536,6 +567,16 @@ else
     /// <summary>Carries the sim slot through every hop, since it is standing in for a cookie.</summary>
     private static string Append(string path, int slot) =>
         path + (path.Contains('?') ? "&" : "?") + "sim=" + slot;
+
+    /// <summary>
+    /// This same door, carrying which organizer is choosing a house part. The sim slot rides along
+    /// so a simulated phone does not lose which frame it is halfway through the two-step.
+    /// </summary>
+    private string WithOrganiser(string personId)
+    {
+        var path = $"/join/{Uri.EscapeDataString(Code ?? "")}?who={Uri.EscapeDataString(personId)}";
+        return IsSim ? Append(path, Sim!.Value) : path;
+    }
 
 
 }

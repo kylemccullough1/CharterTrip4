@@ -1,4 +1,24 @@
-# Murder at Braun Manor — implementation plan
+# Murder at Braun Manor — implementation plan (HISTORICAL)
+
+> **This document describes a design that no longer exists. Do not build against it.**
+>
+> It plans the mystery as a *generator*: a seeded `Dealer` placing everybody and drawing three
+> killers, a `Compiler` writing every sentence from templates, an immutable `MysteryScript` loaded
+> from `rounds.json` / `story_beats.json` / `prompts.json` / `ghosts_npcs.json`, and a
+> `/games/mystery/screen` route. **None of that is in the tree.** Migration `ToV29_StoryMode`
+> deleted the generator — roughly 2,150 lines — and replaced it with one story written by hand,
+> living in `trip.json` and edited on the site. The old code is in git history at `90ba14d`.
+>
+> For what is actually there now, read [`../data/braun-manor/README.md`](../data/braun-manor/README.md)
+> and the models in `src/CharterTrip.Core/Models/Mystery.cs`. The eight content files it names are
+> real and current; almost everything else below is not.
+>
+> Kept because §2 is still the best account of *why* several things are the way they are — why a QR
+> code is only ever a URL (§2.4), why `MutateAsync` needed a returning overload (§2.5), which beats
+> deserve a flush (§2.6), and what running the app off a laptop on house wifi would actually take
+> (§2.7). Those four survived the rewrite. Treat the rest as an account of a road not taken.
+
+---
 
 How the content in `data/braun-manor/` becomes a running game inside this app.
 

@@ -3,1376 +3,1376 @@
     {
       "id": "wilhelm",
       "name": "Wilhelm Shepard",
-      "age": 0,
+      "age": 60,
       "sex": "M",
       "job": "Politician",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Senate-floor baritone that never quite turns off. Speaks in talking points, calls everyone 'my friend,' and dabs his palms with a handkerchief when questions get specific.",
+      "backstory": "Three-term politician whose war chest has quiet Syndicate money in it. He took their donations, delivered their zoning votes, and has spent two years praying nobody ever pulls that thread.",
+      "why_invited": "He invited himself, more or less. Braun's endorsement would lock up his re-election, and he has been circling the study all evening waiting for five minutes alone with the man.",
+      "dislikes_braun": "Braun has dodged endorsing him for months, and lately Braun's questions about campaign financing have felt less like small talk and more like a man comparing notes against a ledger.",
       "zone_id": "entry",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": true,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Constantly wipes his sweating palms with a monogrammed handkerchief — one embroidered, oddly, with a ring of tiny snails.",
+      "seen_as": "A glad-handing career politician who wants something from everyone in the room.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "Twenty-two years of public service, my friend, and I have never once lost touch with the common man. Ask my driver. Ask either of my drivers.",
+          "My father sold shoes. I tell that story in every speech, and every year the shoes get cheaper.",
+          "The maid can vouch for me, my friend. Imogen — she passed me in that corridor with a tea tray and we exchanged pleasantries. Ask her what time. She'll say she was called away right after, which I'm told is inconvenient for me, but I cannot help when a woman is summoned elsewhere."
         ],
         "weather": [
-          "........",
-          "........"
+          "A storm on election eve is good luck where I come from. A storm at a party, I make no promises.",
+          "That thunder is closer than it was an hour ago. Much like my opponents."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "I've been admiring the corridor by the study. Excellent craftsmanship. I was simply admiring it. For quite a while.",
+              "A house like this isn't bought, it's inherited or it's taken. I've always wondered which one this was."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "The reporter keeps writing while I talk. Nobody writes that much down unless they already have a theory.",
+              "That maid moves through this house like she hears everything. In my line of work, we hire people like her. Or we worry about them."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Campaigns run on donations, and donations run on gratitude. It's all perfectly documented somewhere, I'm sure.",
+              "I never discuss money at parties. It's the one place everyone can hear you."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A monogrammed silk handkerchief, 'W.S.', embroidered with a ring of tiny snails.",
+      "tamper_insert": "a sweat-damp silk handkerchief monogrammed W.S., stitched with tiny snails",
       "staff": null
     },
     {
       "id": "imogen",
       "name": "Imogen Durham",
-      "age": 0,
+      "age": 24,
       "sex": "F",
       "job": "Maid",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Quiet, precise, eyes-down politeness that occasionally slips into something much sharper. Answers questions with exactly as much as was asked and not a syllable more.",
+      "backstory": "Head maid at Braun Manor for six years, since she was eighteen. Knows every corridor, every squeaking stair, and lately, the weight of an envelope of cash someone left in her locker with a snail pressed into the wax.",
+      "why_invited": "She isn't a guest, she's working — pouring, clearing, and hearing every conversation in the house that people assume the help can't follow.",
+      "dislikes_braun": "Six years of loyalty and Mr. Braun still calls her 'the new girl.' The Syndicate's envelope asked only for harmless details about his schedule, and it paid three months' wages.",
       "zone_id": "family_room",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Moves silently and appears at your elbow without warning; keeps touching her apron pocket as if checking something is still there.",
+      "seen_as": "Invisible, efficient, and probably the only person who actually knows what goes on in this house.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "I've worked this house six years. You learn where every floorboard sings, and you learn to step around the ones that do.",
+          "My mother was in service, and her mother. We see everything and we say nothing. Usually.",
+          "I was carrying Mr. Braun his evening tea when I was sent the other way. The tray's still sitting where I left it, going cold. Mr. Shepard was pacing that corridor when I passed him — he was there, that much is true. Whether he was still there after I left, I couldn't tell you. Nobody could."
         ],
         "weather": [
-          "........",
-          "........"
+          "Storm coming means shutting forty-one windows. I've done thirty-eight.",
+          "Rain gets in under the study corridor door. I'm usually the one who catches it before he notices."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The family room cabinets haven't been dusted by anyone but me in six years. I'd know if a single thing in them moved. Something moved.",
+              "There are two ways to the study, and I could walk both blindfolded. So could anyone who's watched me do it."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "Guests think we don't listen. We're paid to stand in rooms while people say things. What do they imagine we do with our ears?",
+              "The chauffeur came through the kitchen tonight without saying a word to anyone. She always says a word. Always."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Wages in service are what they are. Sometimes people offer a bit extra for small favors. Sometimes you're tired enough to think about it.",
+              "Everyone in this house is worried about money except the man who has it. Was worried. Is. You know what I mean."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A ring of brass service keys on a worn leather fob — one key newly cut and shinier than the rest.",
+      "tamper_insert": "a maid's brass service key, freshly cut, on a snapped leather fob",
       "staff": null
     },
     {
       "id": "yousef",
       "name": "Yousef Mostafa",
-      "age": 0,
+      "age": 44,
       "sex": "M",
       "job": "Family Attorney",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Measured attorney's cadence, every sentence pre-drafted, with an unfortunate tendency to lose the thread entirely whenever Isla Perry crosses the room.",
+      "backstory": "The Braun family attorney for a decade — wills, trusts, the estate, and most recently the prenuptial agreement between James Braun and Isla Perry, which he drafted while quietly, hopelessly in love with the bride.",
+      "why_invited": "Family counsel attends family occasions. He also has three signature pages in his briefcase and one confession he's been rehearsing for two years.",
+      "dislikes_braun": "Braun has everything and appreciates none of it — the fortune he inherited, the fiancee he treats like a line item. Yousef drafted the prenup that will bind her to him, and he hates every clause of it.",
       "zone_id": "sitting_room",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Immaculate suit, briefcase never out of reach, and eyes that find Isla Perry within four seconds of entering any room.",
+      "seen_as": "The discreet family lawyer — the man who knows where every dollar and every secret is filed.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "I've served this family ten years. I know the estate better than the family does, which is precisely why they keep me and precisely why they shouldn't.",
+          "Law school teaches you that every arrangement is temporary. Marriages, partnerships, lives. You draft accordingly.",
+          "I was in the sitting room most of the evening, near the stairs. The painter had a clear line to me the entire time — she was at her easel in the family room facing the doorway. I'd rather not have been drawn, but I was in her sightline and I stayed in it. That is my whole account."
         ],
         "weather": [
-          "........",
-          "........"
+          "Storms make people sign things. Something about urgency. It's been a good night for my profession, historically.",
+          "I moved indoors the moment the wind picked up. Paper and rain are natural enemies."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "Every object in this house is inventoried in documents I maintain. If anything is missing tonight, I will know before the police do.",
+              "The sitting room stairs are roped off, and I have watched three people look at that rope like it was a suggestion."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "The brother, Harry, shouldn't be here. I handled the paperwork that removed him from the estate. He knows I know exactly what he lost.",
+              "Miss Perry changed her dress partway through the evening. I notice things about— I notice details. Professionally."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "A prenuptial agreement is not romantic, but neither is probate. Mr. Braun wanted one signed before the wedding. Wanted. Wants. Forgive me.",
+              "People assume attorneys are rich. We are adjacent to rich, which is the most dangerous financial position there is."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A slim leather briefcase with a combination lock, holding an unsigned prenuptial agreement.",
+      "tamper_insert": "a page of prenuptial boilerplate initialed Y.M., torn at the corner",
       "staff": null
     },
     {
       "id": "santiago",
       "name": "Santiago Costa",
-      "age": 0,
+      "age": 63,
       "sex": "M",
       "job": "College Professor",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Lecturing professor who cannot say anything in fewer than three clauses; drops provenance dates the way other people drop names, and handles objects he was not invited to touch.",
+      "backstory": "A college professor of art history with a sideline appraising private collections — some for museums, some for buyers who prefer no receipts. He's been cataloguing Braun's rarities all evening, and his notes include prices.",
+      "why_invited": "Braun asked him months ago to evaluate the collection for insurance. Santiago accepted, then took a second, quieter commission to evaluate it for someone else entirely.",
+      "dislikes_braun": "Braun owns a Quattrocento panel he keeps in a hallway. A hallway. Men like Braun collect beauty the way gravel collects rain — by accident, and without deserving it.",
       "zone_id": "extension_room",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Wears cotton gloves he keeps 'for handling,' and can be found examining objects with a jeweler's loupe when he thinks no one is watching.",
+      "seen_as": "A fussy academic who is either the most knowledgeable man in the room or the most acquisitive, possibly both.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "Thirty years teaching undergraduates the difference between value and price. Most of them only ever learn the second one.",
+          "I have handled objects that belong in national museums. Several of them are in this house, sharing a shelf with a decorative goose.",
+          "I spent the evening in the west wing extension, and I will say — reluctantly, and only because it is true — that Cairo Iwobi was in that room for most of it. He can confirm I was cataloguing crates and nothing worse. I take no pleasure in owing that man an alibi. None whatsoever."
         ],
         "weather": [
-          "........",
-          "........"
+          "Humidity like tonight's warps panel paintings. Someone should tell Braun. Someone should have told Braun.",
+          "The storm is a Romantic cliche, of course. Turner would have loved it. Braun probably owns a Turner and uses it to hide a safe."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The collection cabinets in the family room hold at least one piece with, let us say, an imaginative provenance. I said nothing. It wasn't the moment.",
+              "The extension room is full of crates that were not on any inventory I was shown. Import stamps. Interesting ones."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "The socialite left the study corridor just as I was heading to the extension. Flushed, moving fast. I remember thinking: she has seen a price tag she didn't like.",
+              "The bootlegger guards those crates of his like they're reliquaries. A man only guards a crate like that when the manifest is fiction."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Academia pays in prestige, which my landlord unaccountably refuses to accept. So yes, I appraise privately. Everyone has a sideline.",
+              "The margin on a quiet sale of a beautiful object is extraordinary. I'm told. By colleagues. Whom I judge."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A jeweler's loupe on a frayed academic's lanyard, and a notebook of catalogue entries with prices.",
+      "tamper_insert": "a torn notebook page listing Braun's antiques with prices, one entry circled: 'leaves tonight?'",
       "staff": null
     },
     {
       "id": "molly",
       "name": "Molly Henderson",
-      "age": 0,
+      "age": 33,
       "sex": "F",
       "job": "Newspaper Reporter",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Rapid-fire newsroom clip, always mid-question, with a habit of repeating your own words back to you slowly while she writes them down.",
+      "backstory": "Investigative reporter who has spent eighteen months mapping the Midnight Syndicate — shell companies, dock manifests, and a snail insignia that keeps surfacing in the margins of documents nobody will explain.",
+      "why_invited": "Braun's office called her editor personally. He wanted a journalist in the house tonight, and she is increasingly certain he intended to hand her the story of her career.",
+      "dislikes_braun": "He's been dangling the Syndicate story for weeks — 'soon, Miss Henderson, when it's safe' — while her editor threatens to kill the piece. Rich men treat the truth like it's theirs to schedule.",
       "zone_id": "kitchen",
       "faction_id": "detective",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "A reporter's notebook lives in her left hand; she writes while maintaining eye contact, which unsettles absolutely everyone.",
+      "seen_as": "The press — charming for exactly as long as you're useful, and always working.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "Eighteen months on one story. My editor says obsession isn't a research method. My editor has never been right about anything.",
+          "I was in the kitchen half the night interviewing the cooks. You want to know a house, ask the people who feed it.",
+          "I've been threatened twice this year in writing. You frame the first one. The second one you take seriously."
         ],
         "weather": [
-          "........",
-          "........"
+          "Storm's good for me. Nobody leaves early, and cornered people talk.",
+          "I had a source once who'd only meet in the rain. Said thunder ruins recordings. He wasn't wrong."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The delivery paperwork by the kitchen service counter doesn't match the crates I counted coming in. That's not gossip, that's arithmetic.",
+              "Every room in this house is beautiful, and every room has a second door. Make of that what you like."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "There's a snail insignia I keep finding in Syndicate documents. Tonight I have seen that snail three times before dessert. I'm not saying. I'm just saying.",
+              "Who signs for the deliveries at a house like this? Not the chef. Not the butler. Follow the signatures."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Journalism pays in bylines and heartburn. If I wanted money I'd have gone into the crime I write about.",
+              "The Syndicate moves more liquor money through this county than the banks do. Someone in this room is on that payroll. Statistically, several someones."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A shorthand-filled reporter's notebook, its inside cover sketched with the same small snail, over and over.",
+      "tamper_insert": "a reporter's notebook page of shorthand, the margin doodled with tiny snails",
       "staff": null
     },
     {
       "id": "nishimoto",
       "name": "Dr. Aiko Nishimoto",
-      "age": 0,
+      "age": 49,
       "sex": "F",
       "job": "Family Doctor",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Clinical bedside calm, unhurried and faintly amused, delivering everything — diagnoses, condolences, lies — in the same reassuring register.",
+      "backstory": "The Braun family physician for eight years. Trained in the Caribbean, and never actually passed her U.S. boards — a defect in her paperwork that the Midnight Syndicate discovered, documented, and has been holding over her ever since.",
+      "why_invited": "She's the family doctor; she attends everything. Earlier tonight she drew Mr. Braun's blood in the study — routine pre-wedding labs, she said, and her hands did not shake even slightly.",
+      "dislikes_braun": "Braun made her do his bloodwork at his own engagement party, because his time matters and hers doesn't. Eight years of house calls and he still introduces her as 'the help that went to medical school.'",
       "zone_id": "kitchen",
       "faction_id": "killer",
       "guilt_slot": "means",
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "A doctor's leather bag never leaves her side, and she has the steadiest hands at the party — she poured the shaking butler's coffee for him without spilling a drop.",
+      "seen_as": "The unflappable family doctor — the person everyone trusts implicitly and no one has ever actually checked up on.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "Eight years as this family's physician. I know their hearts better than they do. Clinically speaking.",
+          "I trained abroad. Island medicine teaches you resourcefulness — what the textbooks call 'means,' we called Tuesday.",
+          "I was on my way to my car with tonight's blood samples when everything happened. The lab run was scheduled for morning. Was."
         ],
         "weather": [
-          "........",
-          "........"
+          "Storms fill my waiting room. Falls, palpitations, nerves. The body knows when pressure is dropping.",
+          "I don't mind thunder. In my line of work, it's the quiet rooms you learn to dread."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The kitchen keeps a better stocked first-aid shelf than most clinics I've worked in. I stocked it myself. I know exactly what's on it, and what isn't anymore.",
+              "The study has terrible light for medical work. I told James that this evening while I drew his blood. He laughed. He had a good laugh."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "Half the people here have asked me for something tonight — a headache tablet, a diagnosis, a discreet opinion. The banker asked me the strangest questions about plants this spring. Ask her about that.",
+              "The detective looks at me like I'm a chart he can't read. Occupational habit, I imagine. His, not mine. Mine is worse."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Doctors of the wealthy are paid handsomely and owned entirely. There is always a bill that isn't money.",
+              "Certain organizations collect people the way Braun collects antiques. Once you're on the shelf, you stay useful or you get dusted. I stay useful."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A worn leather medical bag with a small brass latch, one vial slot inside conspicuously empty.",
+      "tamper_insert": "a glass medical vial, unlabeled and empty, smelling faintly of bitter herbs",
       "staff": null
     },
     {
       "id": "isla",
       "name": "Isla Perry",
-      "age": 0,
+      "age": 31,
       "sex": "F",
       "job": "Braun's Fiancée",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Finishing-school polish over a fast, flinty core; sweet until crossed, then suddenly itemizing everything you've ever done wrong in chronological order.",
+      "backstory": "Braun's fiancee, engaged eight months, wedding in six weeks. Came from nothing, curated herself into everything, and three days ago was handed a prenup that values her contribution to the marriage at a number with insultingly few zeroes.",
+      "why_invited": "She's the hostess. Tonight was meant to be her coronation — until Sutton Brady toppled the champagne tower, ruined her dress, and reminded everyone that Braun had a life before her.",
+      "dislikes_braun": "The prenup. He let his lawyer slide it across the table like a dinner check, three days before their engagement party. Whatever she felt for James, that document put a price on it, and the price was low.",
       "zone_id": "sitting_room",
       "faction_id": "inheritance",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Changed dresses partway through the evening — the second gown is beautiful and visibly not the one from the invitations; she keeps smoothing it flat.",
+      "seen_as": "The gold-digger or the love of Braun's life, depending on which end of the room you're standing in.",
       "rival_character_id": "harry",
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "I grew up with nothing, and I promise you nothing is not romantic. I made myself into someone. James simply had good taste.",
+          "I was upstairs in the primary suite half the night. When your dress is destroyed in front of two hundred people, you go fix it. Alone. That's called dignity.",
+          "Six weeks to the wedding. Everything ordered, everything monogrammed. You don't cancel a life you've already engraved."
         ],
         "weather": [
-          "........",
-          "........"
+          "It was supposed to be a garden toast at midnight. The storm took that too. Tonight has been a series of small thefts.",
+          "I like storms, actually. They're the only thing in this house louder than the gossip."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "I've redecorated three rooms so far. The study is next — was next. James never let anyone touch the study.",
+              "The upstairs is roped off tonight, which everyone treats as a curiosity. It's roped off because guests steal soap. Yes. Soap."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "The jazz singer destroyed a five-foot champagne tower getting to a microphone nobody offered her. Ask yourself what kind of person needs a stage that badly.",
+              "Martha Kim told me something about Sutton and James tonight that rearranged my entire evening. Ask Martha. I'm done repeating it."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Everyone thinks I'm marrying money. Fine. Nobody asks whether money is also marrying me — my taste, my work, my patience. That has a price too.",
+              "A prenup three days before your engagement party. Draw whatever conclusion you like; I've drawn mine and it's in ink."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "An engagement ring with a diamond the size of a grape, which she turns around her finger when she's thinking.",
+      "tamper_insert": "a champagne-stained evening glove in the fiancee's signature color",
       "staff": null
     },
     {
       "id": "emilia",
       "name": "Emilia Cruz",
-      "age": 0,
+      "age": 34,
       "sex": "F",
       "job": "Famous Actress",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Projects to the back row at all times; laughs theatrically, quotes her own past roles, and treats every two-person conversation as a scene she is carrying.",
+      "backstory": "A famous actress two years past her last famous role. Braun pulled his financing from the picture that was going to be her comeback, the production collapsed, and her name has been shrinking on posters ever since.",
+      "why_invited": "Braun books celebrities the way he books florists. She came because being seen at Braun Manor is still being seen — and because a woman with nothing left to lose finds parties like this full of opportunity.",
+      "dislikes_braun": "He killed her comeback with one phone call and then invited her to his engagement party like a centerpiece. He turned her career into an anecdote, and tonight he wanted the anecdote in the room.",
       "zone_id": "sitting_room",
       "faction_id": "jester",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Keeps positioning herself in doorways and against mantelpieces — anywhere with a frame — and checks who's watching before she reacts to anything.",
+      "seen_as": "A fading star hungry for a spotlight, any spotlight, and not particular about what's shining it.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "I was in the powder room warming up to perform when that woman took my microphone. My microphone, my slot, my key. I do not forget a stolen key.",
+          "Two years since my last picture. In this business, two years is a lifetime and a lifetime is a comeback. I intend to have one. Tonight, if necessary.",
+          "I've died on screen eleven times. Poison twice, drowning once, misadventure with a chandelier. I'm extremely qualified for this evening."
         ],
         "weather": [
-          "........",
-          "........"
+          "A storm is just weather that understands drama. Finally, something at this party with timing.",
+          "Lightning is very flattering light, actually. Not everyone can say that."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "This house is a set, darling. Beautiful, over-dressed, and everyone in it is acting. I'm simply better at it.",
+              "The sitting room stairs are pure Norma Desmond. If anyone needs me, I'll be descending them slowly."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "Hugo is here, which is brave, given that everyone knows his company went under the moment Braun's money did. Broke directors make excellent villains. I've worked with several.",
+              "The jazz singer and our late host have history — you can tell, because she performs at him even when he isn't in the room. Especially then."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Money is the least interesting thing about a person and the most interesting thing about a motive. Write that down, someone.",
+              "Would I kill for a role? Darling, I've done dinner theater in Fresno. There's nothing left to threaten me with."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A vintage cigarette holder she doesn't smoke from — 'it's a prop, darling, everything is.'",
+      "tamper_insert": "a lipstick-marked vintage cigarette holder, the kind the actress carries",
       "staff": null
     },
     {
       "id": "giuliana",
       "name": "Giuliana Andolpho",
-      "age": 0,
+      "age": 47,
       "sex": "F",
       "job": "Socialite",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Warm continental purr, cheek-kisses on arrival, and a way of steering any conversation toward her foundation's next gala within ninety seconds.",
+      "backstory": "The season's essential socialite, whose charity galas raise remarkable sums that survive remarkably little auditing. The Midnight Syndicate washes money through her events; in exchange, she never worries about the bill for anything. PRIVATE — WHAT YOU KNOW ABOUT HIM: Remington Whitley is police, and he has been circling you for a year — since the night you had a card left in his kitchen to make a point about a dog. You know exactly why he's in this house and you know he can't prove a thing. He does NOT know that you know. Watch where he steers the room tonight, and remember: a man with a grudge that personal is a man who can be led. PRIVATE — WHAT YOU KNOW ABOUT HIM: Remington Whitley is police, and he has been circling you for a year — since the night you had a card left in his kitchen to make a point about a dog. You know exactly why he's in this house and you know he can't prove a thing. He does NOT know that you know. Watch where he steers the room tonight, and remember: a man with a grudge that personal is a man who can be led.",
+      "why_invited": "No party at this level happens without her, and she made sure of it. She also had one quiet errand to run tonight — a delivery of an envelope to the study corridor that she badly wishes she could un-run.",
+      "dislikes_braun": "Braun asked her, twice this month, delicate questions about her foundation's donor list, wearing the smile of a man who already knows the answers. She has been at war with that smile ever since.",
       "zone_id": "grand_hall",
       "faction_id": "minion",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Was seen leaving the study corridor early in the evening, flushed and walking fast — and she has been over-explaining her whereabouts to anyone who'll listen ever since.",
+      "seen_as": "Society's favorite hostess — beloved, connected, and financed by absolutely no visible means.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "I have thrown eleven galas this year and cried at nine of them. The other two were for causes I actually cared about.",
+          "I know everyone in this room, darling. Where they summer, what they owe, and who they owe it to. Especially that last one.",
+          "I got turned around near the study corridor earlier looking for the powder room. This house eats people. That is my entire statement on the matter."
         ],
         "weather": [
-          "........",
-          "........"
+          "A storm means everyone stays, and staying means talking. Terrible night to have a secret, isn't it?",
+          "I planned a garden party once and it rained. We raised forty thousand dollars in a tent. Weather is only ever a staging problem."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The grand hall was built for exactly this — two hundred people and one disaster. The champagne tower was the disaster. Well. The first one.",
+              "Whoever stacks five feet of champagne glasses next to a stage deserves what happened. I said so before it fell. Witnesses exist."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "Sutton and I are old friends. When she took that microphone, I applauded. Loyalty, darling — some of us still practice it.",
+              "The professor was creeping toward the west wing with his little eyeglass when I passed him. Appraising, he calls it. Shopping, I call it."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "My foundation's books balance beautifully. I know because I paid a great deal to the people who balance them.",
+              "Never ask a hostess where the money comes from. It comes from generosity. Generosity has always preferred the dark."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A silver flask shaped like a snail shell — 'a gift from an admirer' — from which she never actually drinks.",
+      "tamper_insert": "a silver flask shaped like a snail shell, engraved but not monogrammed",
       "staff": null
     },
     {
       "id": "sutton",
       "name": "Sutton Brady",
-      "age": 0,
+      "age": 36,
       "sex": "F",
       "job": "Jazz Singer",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Smoky lounge-singer drawl, unbothered on the surface, with a torch-song ache underneath that flares whenever James Braun's name comes up.",
+      "backstory": "A jazz singer who was Braun's lover for three years, before Isla, and never entirely stopped. The Syndicate owns the clubs she sings in and has owned a piece of her since the first booking — tonight they asked her for one small favor: be unforgettable at exactly the right moment.",
+      "why_invited": "Braun booked her to sing at his own engagement party, which is either cruelty or nostalgia, and with James it was never possible to tell the difference. She came to show him what he gave up.",
+      "dislikes_braun": "He replaced her with a woman he needs a contract to trust, and then hired her to soundtrack it. She believes — has to believe — that he was still in love with her. The invitation was proof. The prenup gossip was proof. Everything is proof.",
       "zone_id": "grand_hall",
       "faction_id": "minion",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Wears a pair of small gold lapel pins shaped like snails, and commandeered the stage mid-evening — grabbing the microphone from Emilia Cruz and taking down the champagne tower in the process.",
+      "seen_as": "The ex who never left — magnetic on stage, reckless off it, and clearly not done with the host.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "I sang in this house before she ever set foot in it. Some rooms remember. The grand hall remembers.",
+          "Three years with James. You don't get over a man like that; you just learn to sing about him in a different key.",
+          "Yes, I took the microphone. It was my stage before it was hers, and at 9:40 tonight I needed everyone in that hall looking at me. Call it instinct."
         ],
         "weather": [
-          "........",
-          "........"
+          "Storms are good for my register. Thunder covers the cracks in a voice. And in an evening.",
+          "It rained the night James and I met. I've liked bad weather ever since. Sentimental of me."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The acoustics in the grand hall are the best in the county. You can hear a pin drop. Or a tower of champagne glasses. Acoustics don't judge.",
+              "I know which floorboards creak between here and the study. Old houses tell on everyone eventually. Even me."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "The actress thinks I stole her moment. Honey, there was no moment until I made one. That's the difference between us.",
+              "The fiancee changed her dress and her face tonight, in that order. One of those was because of me. Maybe both."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Club singers don't retire, we just get quieter rooms. The people who book my rooms — you don't say no to them. You say 'what key.'",
+              "James never paid me for tonight, you know. Said it would be crass. He was going to owe me. Now look."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A pair of gold snail lapel pins, worn like medals, origin never explained.",
+      "tamper_insert": "a tiny gold lapel pin shaped like a snail, its clasp bent",
       "staff": null
     },
     {
       "id": "martha",
       "name": "Martha Kim",
-      "age": 0,
+      "age": 26,
       "sex": "F",
       "job": "Detective in Training",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Earnest academy-textbook diction — recites procedure like scripture, takes notes on everything, and gets visibly excited when anything resembles a real case.",
+      "backstory": "A detective-in-training three months from her shield, unofficially shadowing Remington Whitley, who did not agree to be shadowed. She has memorized every guest list, floor plan, and rumor in this house, on principle.",
+      "why_invited": "Officially, a guest. Actually, she found out Remington would be here and inferred — correctly — that a working detective at a party means the party is work.",
+      "dislikes_braun": "Braun once had her escorted off his property for 'loitering' when she was canvassing the neighborhood on a case. Rich men treat public servants like trespassers right up until they need one.",
       "zone_id": "grand_hall",
       "faction_id": "detective",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Takes notes on a small pad in careful block letters, and has been discreetly timing people's absences all evening — she'll tell you, if asked, that she does this at every party.",
+      "seen_as": "The overeager rookie — either adorable or exhausting, depending on whether she's currently interrogating you.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "Three months from my shield. Tonight is not how I wanted my first real case to start, but I keep my notes in ink for a reason.",
+          "I was in the grand hall all evening, mingling. Mingling is just canvassing with canapes.",
+          "I passed something along to Miss Perry earlier — about the singer and Mr. Braun. It was relevant. Information wants to reach the right people. That's practically the job."
         ],
         "weather": [
-          "........",
-          "........"
+          "The storm matters. Ground's wet, so anyone who went outside after nine brought it back in on their shoes. Check the shoes.",
+          "Thunder at 9:38, 9:52, 10:15. I wrote it down. You'd be surprised what lines up with thunder."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "Two interior routes to the study, one window route from the lawn, one side path from the driveway. Four ways in. I mapped it during cocktails. For fun. It was for fun at the time.",
+              "The champagne tower fell at 9:40. Everyone ran toward the noise. Procedure says: always ask who ran away from it."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "Detective Whitley pretends I'm not shadowing him, which I respect, because acknowledging me would make it official and then he'd have to sign paperwork.",
+              "The chauffeur was gone from the driveway between roughly 9:35 and 9:50. I know because I checked the valet stand twice. Twice is procedure."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "A trainee's stipend is character-building, which is what they call it when it doesn't cover rent.",
+              "Follow the money, they teach us. In this house, the money goes in more directions than the hallways do."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A pristine training-academy notepad with a timeline of the evening already half-drawn in it.",
+      "tamper_insert": "a page of block-letter notes timing guests' movements, torn from a training notepad",
       "staff": null
     },
     {
       "id": "hugo",
       "name": "Hugo Hahn",
-      "age": 0,
+      "age": 57,
       "sex": "M",
       "job": "Movie Director",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Booming director's bark gone slightly hollow — still frames every sentence like he's pitching it, still says 'picture this,' still pretends the phone calls he keeps taking are good news.",
+      "backstory": "A once-great movie director whose production company collapsed the week Braun pulled his financing. He is broke in the way that has stages, and he has quietly reached the stage where the people offering him money don't use banks.",
+      "why_invited": "Braun kept inviting him after the collapse — 'no hard feelings' — which is what victors say. Hugo came because staying home would confirm everything, and because desperate men go where money gathers.",
+      "dislikes_braun": "One phone call from Braun and thirty years of work went to auction. Braun called it 'a portfolio decision.' Hugo has directed better villains, but never a colder one.",
       "zone_id": "entry",
       "faction_id": "jester",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Keeps stepping into the entry hall to take hushed phone calls, and returns from each one looking slightly worse.",
+      "seen_as": "A great director in freefall — charming, loud, and one bad week from doing something stupid.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "Thirty-one pictures. Two of them mattered, which is two more than most people get. Picture this: a third.",
+          "I was in the entry half the night on calls with my 'team.' My team is one accountant and he's crying.",
+          "You know what a director actually does? Makes people believe a lie in a lit room. It's a transferable skill. I'm finding that out."
         ],
         "weather": [
-          "........",
-          "........"
+          "I'd have killed for this storm on my last picture. We rented rain. Rain! It cost forty grand and looked like soup.",
+          "Thunder on cue all night. Whoever's directing this evening has a bigger budget than I ever did."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "This entry hall is a perfect establishing shot. Wide, symmetrical, one corridor leading somewhere you're not supposed to go. I'd open on it.",
+              "Every guest entered through the front tonight. Almost every guest. I notice blocking. It's the job."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "Solomon Roka did not come through the front door. I was standing in the entry and I'd have seen him. Men who use side doors have side businesses.",
+              "Emilia blames me for the picture collapsing. I blame Braun. Braun blamed the market. Somewhere in that triangle is an honest man, and it isn't the market."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Am I broke? I'm a director. I've been broke on paper my whole career. It's the off-paper broke that's new.",
+              "The people offering to refinance me lately don't have letterhead. When this is over, ask me how that meeting went. Actually, don't."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A dead cell phone he keeps checking anyway, and a director's viewfinder on a chain around his neck.",
+      "tamper_insert": "a director's viewfinder on a broken chain, lens cracked",
       "staff": null
     },
     {
       "id": "sharkeisha",
       "name": "Sharkeisha Noh",
-      "age": 0,
+      "age": 29,
       "sex": "F",
       "job": "Famous Painter",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Dry, unimpressed artist's deadpan; narrates the room like she's composing it, and delivers devastating observations in the tone of someone mixing paint.",
+      "backstory": "A famous painter whose gallery shows sell out in hours. Braun 'invited' her tonight and then informed her she'd be painting the event — working, at a party, like a hired string quartet with opinions.",
+      "why_invited": "To paint the engagement gala for the Braun collection. She said yes before he mentioned it wasn't a request, and she has spent the evening at her easel in the family room, seeing everything.",
+      "dislikes_braun": "He collects artists the way he collects their art — signed, framed, and hung where guests can admire his taste. She came as a guest and got repositioned as staff. She notices composition. She noticed that.",
       "zone_id": "family_room",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Set up an easel with a view of the room and has been sketching guests all night; her charcoal studies are unnervingly accurate.",
+      "seen_as": "The artist in residence — silent, watchful, and definitely putting you in the painting whether you like it or not.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "I paint people the way they actually stand, which is why half my subjects hate their portraits and all of them pay.",
+          "I was at my easel in the family room most of the night. Best seat in the house. Painters and bartenders — we see everything.",
+          "I was at my easel in the family room all night, facing the sitting room doorway. Which means I watched Yousef Mostafa stand near those stairs for hours, checking his watch and not going anywhere. I have him in three sketches. Timestamped, if charcoal counts."
         ],
         "weather": [
-          "........",
-          "........"
+          "Storm light is the best light. Everything goes silver and guilty.",
+          "I sketched the lightning over the lawn around half nine. Caught a figure out there in one of them. Probably nothing. Probably."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The family room photos on that high shelf — someone's turned one face-down. Recently. There's no dust shadow. I notice negative space for a living.",
+              "This house is composed like a trap. Every beautiful room funnels you past that one corridor you're not supposed to look down."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "The jazz singer wears two gold snails on her lapel. I sketched them before I knew why they bothered me. They still bother me.",
+              "I was studying the crowd before painting when the mic thing happened. Sutton didn't glance at the falling tower even once. Performers always check their damage. She didn't need to. She'd budgeted for it."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "My last canvas sold for more than my mother's house. I still can't tell if that's a triumph or an indictment.",
+              "Braun hasn't paid me for tonight yet. I was going to raise it with him at midnight. So add me to the list of people he owed. It's a long list."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A charcoal-smudged sketchbook of tonight's guests, several faces circled.",
+      "tamper_insert": "a charcoal study of the study corridor, torn from a sketchbook, one figure smudged out",
       "staff": null
     },
     {
       "id": "cairo",
       "name": "Cairo Iwobi",
-      "age": 0,
+      "age": 45,
       "sex": "M",
       "job": "Neighboring Millionaire",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Relaxed new-money swagger, first-name-basis with everyone within minutes, forever comparing this manor unfavorably to his own slightly smaller one next door.",
+      "backstory": "The neighboring millionaire — self-made in logistics, which he'll mention — whose property line, it turned out, had been quietly digesting three acres of Braun's land for a decade until an assessment made him give it back.",
+      "why_invited": "Neighbors of a certain net worth invite each other out of mutually assured politeness. He came for the wine, stayed for Priya Patel, and spent a suspicious amount of the evening in the west wing with her.",
+      "dislikes_braun": "The assessment. Braun could have let three acres slide between gentlemen; instead he sent surveyors, then lawyers, then a fruit basket. The fruit basket was the part Cairo can't forgive.",
       "zone_id": "grand_hall",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Keeps reappearing from the direction of the grand hall extension looking pleased with himself, usually a polite thirty seconds after Priya Patel does.",
+      "seen_as": "The fun-money neighbor — harmless, flirtatious, and unbothered by anything except the word 'assessment.'",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "I built my money in shipping and logistics. You want something moved quietly? Not me, but I know the type on sight, is my point.",
+          "I spent a good part of the evening in the west wing extension. Privately. With company. A gentleman stops the story there.",
+          "I spent the back half of the evening in the west wing extension with Priya Patel — from before the tower fell until well after. A gentleman stops the story there, except to say we were interrupted twice: once by a woman with a silver flask she did not want us looking at, and the whole time by Santiago Costa fussing over the crates in the corner. Ask either of them. I'd rather you asked Priya."
         ],
         "weather": [
-          "........",
-          "........"
+          "My grounds drain better than his, for the record. His lawn will be a swamp by midnight. Small victories.",
+          "A storm like this, nobody's driving home. Which means whoever did what they did tonight planned on staying for it. Cold, when you think about it."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The extension room is the only honest room in this house — crates, a bar, and no portraits watching you. Naturally I gravitated.",
+              "Those crates out west aren't Braun's. Import stamps, no house inventory tags. I move freight for a living. That's freight that doesn't want to be freight."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "Giuliana walked in on Priya and me in the extension earlier — flustered, in a hurry, and holding something silver she very much did not want us to see. She left faster than she came.",
+              "The bootlegger checks on those crates the way I check on my daughter. More, actually."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "New money, old money — it all spends. The difference is old money hires people so the fingerprints come off.",
+              "I gave those acres back with interest and a smile. The smile cost me more than the acres."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A house key to his own manor on a gold fob, which he jingles when making a point.",
+      "tamper_insert": "a gold key fob stamped with the neighboring estate's crest",
       "staff": null
     },
     {
       "id": "priya",
       "name": "Priya Patel",
-      "age": 0,
+      "age": 28,
       "sex": "F",
       "job": "Golf Pro",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Easy country-club charm with a competitor's edge; talks in golf metaphors, laughs off hard questions, and goes very quiet whenever her father comes up.",
+      "backstory": "A rising golf pro with a clean swing and a complicated bloodline — her father was Midnight Syndicate, years ago, before he got out. She has spent her whole career being one tabloid headline away from being his daughter first and an athlete second.",
+      "why_invited": "Braun sponsors the club championship and collects promising people. She came for the networking and found Cairo Iwobi instead, which was better networking.",
+      "dislikes_braun": "At a dinner last spring, Braun introduced her to a senator as 'the Syndicate girl who golfs.' He apologized with a case of wine. She kept the wine and the grudge in equal condition.",
       "zone_id": "extension_room",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": true,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Was conspicuously absent with Cairo Iwobi in the extension room during the key stretch of the evening, and answers questions about her father with a practiced, too-smooth deflection.",
+      "seen_as": "The charming athlete with the dangerous last name — probably innocent, definitely tired of proving it.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "I've won four tournaments this season. The headline on three of them still mentioned my father. You learn to play through.",
+          "I was in the west wing extension for a stretch of the evening. With Cairo. We were not discussing golf, and that's all the detail anyone's getting.",
+          "I was in the west wing extension with Cairo Iwobi through the whole stretch everyone keeps asking about — before the champagne went over, and after. We were interrupted once, by Giuliana, holding a little silver flask like it was stolen. Cairo saw it too. Go and check, I'll wait."
         ],
         "weather": [
-          "........",
-          "........"
+          "Wind like this adds two clubs. Storm reading is half my job — you learn to feel when something's about to break.",
+          "The rain hit the extension windows around ten. I remember because it covered the sound of someone moving crates next door. Or I thought it did."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The extension is the most private room in the house, which I can confirm professionally, having tested it.",
+              "There's a storage door out west that was bolted at eight and unbolted at ten. I notice lines. Sight lines, fairway lines, bolt lines."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "Giuliana burst in on us in the extension, holding a little silver flask shaped like — this will sound insane — a snail. She hid it so fast I almost doubted myself. Almost.",
+              "People keep looking at me tonight like the name Patel is evidence. My father sold that life for a driving range. Look at someone who's still buying."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Tour winnings are good; sponsorships are better; a clean reputation is the whole portfolio. Which is why tonight is a problem for me specifically.",
+              "The Syndicate offered my father a way back in every year for a decade. He said no every year. Some people at this party never got asked to say no. Think about why."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A worn golf glove tucked in her clutch — 'for luck' — with her father's initials inked inside the cuff.",
+      "tamper_insert": "a worn golf glove, initials inked inside the cuff that don't match the owner's",
       "staff": null
     },
     {
       "id": "solomon",
       "name": "Solomon Roka",
-      "age": 0,
+      "age": 55,
       "sex": "M",
       "job": "Bootleg King",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Gravel-and-honey salesman's warmth, always mid-toast, pressing a glass into your hand before you've said hello — and going polite and flat the moment anyone mentions manifests.",
+      "backstory": "The Bootleg King — importer of spirits that skip certain paperwork, distributor for rooms that don't ask. The Midnight Syndicate runs its liquor through him, and Braun's ledger had his routes in it, dated and priced. He knew, because the Syndicate told him, and then told him what tonight required.",
+      "why_invited": "He supplied the party's bar — crates of it, staged in the west wing — and invited himself along with the delivery. He spent the front half of the evening in the foyer pouring samples and being magnificent, which is called an alibi.",
+      "dislikes_braun": "Braun drank his imports for five years and then started writing them down. A customer becoming a witness is the oldest heartbreak in Solomon's business, and it only ever ends one way.",
       "zone_id": "extension_room",
       "faction_id": "killer",
       "guilt_slot": "signature",
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Came in through the side, not the front — and guards the bar crates in the extension room with a geniality that gets less genial the closer you stand to them.",
+      "seen_as": "Everyone's favorite bad influence — the man with the good bottles, the better stories, and no visible supply chain.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "Forty years moving bottles across borders that disagree with me. Every scar has a vintage.",
+          "I was in the foyer half the night pouring my imports for anyone with a glass. Ask around — fifty witnesses, all of them a little happier for it.",
+          "My father sold liquor out of a rowboat. I sell it out of freighters. The paperwork is the only part of the business that ever changed, and I never cared for paperwork."
         ],
         "weather": [
-          "........",
-          "........"
+          "Storm's good for business. Nobody counts their drinks in weather like this, and nobody counts the crates either.",
+          "Smell that rain? Petrichor, they call it. Covers almost any other smell in a house. Almost."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "My crates are staged in the west extension, and I'll thank the curious to admire them from a distance. Breakage, you understand. I'm very concerned about breakage.",
+              "Big house, one bar that matters. Mine. Even Braun's private study got a bottle of the good stuff tonight. A peace offering, you could say."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "The reporter's been counting my crates all week like they're going to confess. Paper doesn't drink, Miss Henderson. Paper burns.",
+              "The doctor jokes that my brandy is poison. Medical people, no romance in them. It's not poison, madam, it's heritage — with a kick."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Margins in my trade are beautiful because the taxes are theoretical. The overhead is loyalty. Loyalty's gotten expensive lately.",
+              "Braun owed me nothing and I owed Braun nothing, and that's exactly how I like my dead men. Poor choice of words. Pour you another?"
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A bottle of his own private label — Roka Reserve, a smoked plum brandy with a distinctive burnt-sweet nose.",
+      "tamper_insert": "a cork stamped ROKA RESERVE, still damp, smelling of smoked plum",
       "staff": null
     },
     {
       "id": "remington",
       "name": "Remington Whitley",
-      "age": 0,
+      "age": 51,
       "sex": "M",
       "job": "Police Detective",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Clipped, economical cop cadence — answers in facts, asks in wedges, and lets silences do most of his interrogating.",
+      "backstory": "A twenty-five-year police detective who has chased the Midnight Syndicate his entire career and watched every case die in a drawer. Six months ago, James Braun approached him privately: Braun had a ledger, and he was almost ready to hand it over. PRIVATE — YOUR VENDETTA: One year ago you came home to find your dog dead on your kitchen floor, and a cream-coloured calling card on the counter. No message, just a small snail pressed into the wax. You knew what it meant and you knew who sends cards like that: Giuliana Andolpho. You have never been able to prove it and you have never stopped wanting to. SECONDARY OBJECTIVE: if Giuliana Andolpho is convicted at any trial tonight, you claim your vendetta — worth points in the wider game regardless of how the night ends. This does not replace your job. You still win or lose with the investigators, and she is not one of the three hands, so every vote you spend on her is a vote the town needed elsewhere. That is the price. Decide whether you'll pay it. PRIVATE — YOUR VENDETTA: One year ago you came home to find your dog dead on your kitchen floor, and a cream-coloured calling card on the counter. No message, just a small snail pressed into the wax. You knew what it meant and you knew who sends cards like that: Giuliana Andolpho. You have never been able to prove it and you have never stopped wanting to. SECONDARY OBJECTIVE: if Giuliana Andolpho is convicted at any trial tonight, you claim your vendetta — worth points in the wider game regardless of how the night ends. This does not replace your job. You still win or lose with the investigators, and she is not one of the three hands, so every vote you spend on her is a vote the town needed elsewhere. That is the price. Decide whether you'll pay it.",
+      "why_invited": "Braun invited him as insurance. The handoff was set for midnight tonight — the ledger, the names, the whole snail-stamped network. Remington spent the evening outside, watching the house, because he doesn't believe in 'almost ready.'",
+      "dislikes_braun": "Braun sat on that ledger for six months, playing it like a hand of cards — protecting his investments, timing his exit, letting the Syndicate operate while he negotiated his own safety. Men died in those six months. Remington keeps the list.",
       "zone_id": "lawn",
       "faction_id": "detective",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Spent most of the evening on the lawn and around the cars 'getting air,' and has a habit of writing in a weatherproof notebook without looking down at it.",
+      "seen_as": "The cop at the party — nobody's sure if he's off duty, and he has done nothing whatsoever to clarify.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "Twenty-five years on the job. Nineteen of them chasing one organization. You don't retire from a case like that. It retires you.",
+          "I was outside most of the night. Lawn, driveway, the cars. Air. A man my age needs a lot of air.",
+          "Braun and I had an appointment at midnight. That's all I'll say. The appointment is now evidence."
         ],
         "weather": [
-          "........",
-          "........"
+          "Rain kills footprints and softens ground. Whoever moved outside tonight knew that or got lucky. I don't believe in lucky.",
+          "I've done stakeouts in worse. In weather like this you watch the windows, because that's where the light tells the truth."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The study windows face the lawn. From the far garden bed you can see Braun's desk lamp. It went out at 9:47. I wrote it down at 9:47.",
+              "Four ways to that study. Two halls, one window, one side path. I had eyes on exactly one of them. That's the failure I'll be living with."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "The chauffeur left her post at the valet stand mid-evening. Short-answered me when I made small talk, then walked toward the side of the house. People walk away from small talk when the talk is small. Mine wasn't.",
+              "The doctor won't meet my eye tonight. Medical people either look right at you or not at all. She's usually the first kind."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "A detective's pension is a joke the city tells for thirty years. I'm not in this for money. That makes me rare in this room, and I know it.",
+              "The Syndicate's money ends up in liquor, real estate, charity galas, and campaigns. I've said that in four courtrooms. Tonight I'm standing inside all four."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A weatherproof stakeout notebook with a rubber band around it, pages warped by tonight's rain.",
+      "tamper_insert": "a rain-warped page of stakeout notes in a policeman's shorthand",
       "staff": null
     },
     {
       "id": "carla",
       "name": "Carla Lucciano",
-      "age": 0,
+      "age": 38,
       "sex": "F",
       "job": "Chauffeur",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Flat, watchful economy of words — service-industry politeness worn thin, with sudden dry humor and a habit of answering questions with slightly wrong questions.",
+      "backstory": "Braun's chauffeur for four years — and the Midnight Syndicate's for eleven. She was placed in this house, the way the Syndicate places people: patiently. She knows every route, every door, every schedule, and tonight she used all three.",
+      "why_invited": "Staff. She ran the valet stand, directed the cars, and controlled the one stretch of ground nobody watches: the side path that wraps from the driveway to the study wall.",
+      "dislikes_braun": "Four years of 'the car, Carla' and not one full sentence besides. Being furniture was the job — the Syndicate's whole point — but somewhere in year two, being invisible stopped being tactical and started being personal.",
       "zone_id": "driveway",
       "faction_id": "killer",
       "guilt_slot": "access",
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Was away from the valet stand between roughly 9:35 and 9:50; she keeps her driving gloves on indoors and went short and impatient with anyone who made small talk near the cars.",
+      "seen_as": "Part of the house — competent, unreadable, and the person who knows exactly who arrived when, and how.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "Four years driving this family. You learn a house from the outside in. The outside is more honest.",
+          "I was at the valet stand most of the night. Most of it. Cars don't park themselves and guests don't stop arriving. Ask anyone. Ask them what time, though, and watch them guess.",
+          "Before this I drove for other people. The kind you don't put on a resume. Everyone's driven for somebody."
         ],
         "weather": [
-          "........",
-          "........"
+          "Rain means twenty umbrella runs and ruined gravel. The side path holds footprints in weather like this. So I raked it. That's called doing my job.",
+          "Storm rolled in right on schedule. Some things tonight ran very on schedule."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The side path wraps from the driveway to the study side of the house. Staff use it. Deliveries use it. It's not a secret, it's just never watched.",
+              "I hold keys to every door on this property. That's not suspicious, that's the job description. Read the job description before you look at me like that."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "The trainee detective checked the valet stand twice tonight like I wouldn't notice. I notice everything on my driveway. It's my driveway.",
+              "I escorted a late arrival around the side earlier — party business, staff business. Guests who reek of brandy don't go through the front. House rule. Braun's own rule, if you want the irony."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Driver's wages are what they are. The benefits package is knowing everyone's schedule. Some employers value that more than others.",
+              "Eleven years I've been paid by people who plan in decades. Braun paid me for four of them. Guess whose money arrived first."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A master key ring for the house and cars, worn on her belt — including a study passkey she signed out tonight and quietly returned.",
+      "tamper_insert": "a driver's leather glove, sized small, smelling faintly of smoked plum brandy",
       "staff": null
     },
     {
       "id": "harry",
       "name": "Harry Braun",
-      "age": 0,
+      "age": 52,
       "sex": "M",
       "job": "Braun's Estranged Brother",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Bitter aristocratic drawl running on fumes and cigarettes — the accent of money delivered by a man who no longer has any, every sentence a toast to his own ruin.",
+      "backstory": "James Braun's older, estranged brother — written out of the family estate nine years ago after 'the incident with the trust,' which he maintains was a misunderstanding involving only slightly forged signatures. He has been circling the family fortune ever since like weather.",
+      "why_invited": "Nobody is sure he was. The invitation he showed at the door looks real from a distance, which is also a fair description of Harry.",
+      "dislikes_braun": "James got the house, the money, the name — and then got to play the wounded party when Harry took what any starving man takes. Nine years of Christmas cards with no checks in them. The engagement was the last insult: a new heir incoming, and Harry's claim dissolving in champagne.",
       "zone_id": "entry",
       "faction_id": "inheritance",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Chain-smoked outside near the entry for long stretches of the evening, and pats his breast pocket compulsively — there's a folded document in there he keeps touching and not showing anyone.",
+      "seen_as": "The disgraced brother — charming at fifty paces, radioactive at five, and very obviously here for the will.",
       "rival_character_id": "isla",
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "I'm the elder Braun, in case the resemblance escaped you. Older by three years and poorer by nine.",
+          "I stepped out to smoke by the entry more times than I can count tonight. The house makes my chest tight. Always has. Even before it wasn't mine.",
+          "The incident with the trust was a misunderstanding between me, a pen, and my brother's lawyers. Two of the three refused to be reasonable."
         ],
         "weather": [
-          "........",
-          "........"
+          "A storm at a Braun party. Grandfather would have called it the family showing up.",
+          "I smoked through the worst of the rain under the portico. Alone. Which is both my alibi and my biography."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "I grew up in this house. That corridor to the study? I used to hide in it. I know which floorboard doesn't creak. I resent that you're now wondering about that.",
+              "Everything in the family room cabinets used to be half mine. I've counted. Tonight I recounted."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "The chauffeur walked a late guest around the side of the house earlier — some fellow absolutely marinated in brandy fumes. The rest of us waited at the front like livestock while she did it. I remember thinking: since when does this house have a brandy entrance?",
+              "The fiancee looks at me like I'm the threat to the estate. Madam, I'm the tradition."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "I have the family crest, the family stories, and the family nose. The family money went to my brother, along with the family's sense of humor.",
+              "There's a document in my pocket that certain lawyers will find very interesting tomorrow. Tonight it's just paper. Tomorrow, we'll see."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A silver cigarette case with the Braun family crest, which he was pointedly not allowed to keep and kept anyway.",
+      "tamper_insert": "a crested silver cigarette case, the Braun family arms worn nearly smooth",
       "staff": null
     },
     {
       "id": "florence",
       "name": "Florence Li",
-      "age": 0,
+      "age": 41,
       "sex": "F",
       "job": "Investment Banker",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Precise banker's diction that warms only on two subjects — compound interest and botany — and turns witheringly polite when asked about anyone's 'foundation.'",
+      "backstory": "An investment banker with an immaculate reputation and a greenhouse obsession — a serious amateur herbalist who corresponds with botanical archives about historic medicinal plants. She has declined exactly one major client in her career: Giuliana Andolpho's foundation.",
+      "why_invited": "She manages a slice of Braun's portfolio — the boring, legal slice, she likes to specify. She spent much of the evening in the gardens, because plants don't ask her to launder anything.",
+      "dislikes_braun": "Braun kept nudging her, all year, to take on 'a friend's foundation' whose books she'd already privately reviewed and privately incinerated. He didn't like being told no by staff, and he made sure she felt like staff.",
       "zone_id": "lawn",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Spent long stretches alone in the gardens even as the storm built, and can identify any plant on the grounds on sight — a talent that got much less charming around ten o'clock.",
+      "seen_as": "The straightest arrow at the party — which, tonight, everyone suddenly finds suspicious in itself.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "I manage money by day and grow foxglove by night, and I'm aware of exactly how that sentence sounds this evening.",
+          "I was in the gardens and greenhouse for much of the party. Storms are the best time to check the beds. That was true yesterday and it will be true again tomorrow.",
+          "I was in the gardens for most of the party, and the trainer can confirm it — Da'Quan Wilson, out by the cars, doing whatever that was in the rain. We spoke twice. He warned me about the wet gravel on the side path, which I thought was fussing at the time and think about differently now."
         ],
         "weather": [
-          "........",
-          "........"
+          "This rain will flatten the far garden bed by morning. Along with anything anyone left in it.",
+          "You can smell a storm change a garden. Tonight the garden smelled like rain, turned earth, and — briefly, near the study wall — like plum brandy. I file things. That one's filed."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The grounds are the best-kept part of this estate, and the lawn under the study windows is the only patch nobody tends. Interesting place for the grass to be freshly flattened.",
+              "The greenhouse has a lock. The lock has been broken for a month. I reported it. To Braun. Who did nothing. I'd like that on the record."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "Giuliana's foundation approached my desk twice. Both times the numbers were fiction with a letterhead. I declined. She has never forgiven me for having a calculator.",
+              "I saw the chauffeur hurrying back along the side of the house toward the valet stand, mid-evening, in the rain, without an umbrella. Staff never forget umbrellas. It's practically the uniform."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Clean money is slower than dirty money. That's the entire industry in one sentence, and it's why I sleep well and dine badly.",
+              "Half this room has asked me to make something awkward disappear into a portfolio. I keep a list of who. Tonight the list feels less like gossip and more like a lead."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A pocket botanical field guide, annotated in her tiny handwriting, ribbon-marked at the toxicology section.",
+      "tamper_insert": "a pocket field guide to medicinal plants, ribbon-marked at the poisons chapter",
       "staff": null
     },
     {
       "id": "daquan",
       "name": "Da'Quan Wilson",
-      "age": 0,
+      "age": 30,
       "sex": "M",
       "job": "Personal Trainer",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "High-energy motivational-coach patter — counts things in reps, calls everyone 'champ,' and narrates his own alibi like a workout video.",
+      "backstory": "Personal trainer to the county's rich and inflexible, including — disastrously — James Braun, who ignored the wedding fitness plan so completely that Da'Quan's 'Braun Body by June' marketing campaign has become a local joke.",
+      "why_invited": "Braun invited him as a gesture, the way you invite the trainer you've been standing up for months. Da'Quan came intending to have one professional conversation about the campaign, and never got it.",
+      "dislikes_braun": "Braun agreed to be the face of his program, skipped nine sessions out of twelve, and then joked about it at the club. In fitness, your client's body is your billboard. Braun turned his billboard into an apology.",
       "zone_id": "driveway",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": true,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Did stretching circuits out by the cars for stretches of the evening 'to stay loose,' and repeatedly tried to corner Braun for 'five minutes, champ, just five' — witnesses noticed, because he announced it.",
+      "seen_as": "The intense trainer with the public grudge — too loud to be sneaky, which is either his defense or his cover.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "I train twelve of the twenty richest people in this county. Eleven of them show up. We were all here tonight to celebrate number twelve.",
+          "I was out by the cars doing my evening mobility circuit. Rain or shine, champ. The body doesn't know it's at a party.",
+          "I was out by the cars all evening, champ, and I wasn't alone out there — the banker was in the gardens the whole time. Florence Li. We talked twice. I told her someone ought to rake that side path before somebody rolled an ankle, and she told me the beds were flooding. Two people, one storm, zero opportunity."
         ],
         "weather": [
-          "........",
-          "........"
+          "Trained in worse. Rain is just the sky adding resistance.",
+          "Wet gravel is an ankle risk. I told the chauffeur someone should rake that side path. Found out later somebody already had. Mid-party. Who rakes mid-party?"
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "This house has four staircases and an elevator. An elevator! No wonder the man skipped leg day for a decade.",
+              "The driveway's the only place at this party with room to move. Me and the cars and the chauffeur. Except the chauffeur kept not being there."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "From out by the cars I saw the politician pacing that front corridor window like a treadmill. Man logged two miles in front of the study, easy. That's cardio with a motive.",
+              "The bootlegger keeps handing me drinks like it's a bit. Champ, my body is a temple. His body is a distillery. We are not the same."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "The Braun campaign was going to take my program national. Now 'Braun Body' means something very different and my trademark lawyer isn't answering.",
+              "Everybody thinks trainers are broke. I do fine. I did better before my best client made me a punchline. That's a motive for a lawsuit, champ, not a murder. Know the difference."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A branded resistance band — 'BRAUN BODY BY JUNE' printed down the side — that he wears like a sash.",
+      "tamper_insert": "a snapped resistance band printed BRAUN BODY BY JUNE",
       "staff": null
     },
     {
       "id": "braun",
       "name": "James Braun",
-      "age": 0,
+      "age": 58,
       "sex": "M",
       "job": "Master of Braun Manor",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Rich, unhurried host's baritone — magnanimous on the surface, with a collector's chill underneath, and a fondness for toasts that go on one sentence too long.",
+      "backstory": "James Braun: master of Braun Manor, third of his name, expander of an inherited fortune into shipping, property, and quiet leverage. For a year he has been compiling a ledger on the Midnight Syndicate — partly justice, mostly exit strategy — and tonight he planned to trade it for a clean conscience at midnight.",
+      "why_invited": "It's his house, his engagement, his stage. He gathered everyone who loves him, owes him, or fears him into one building, on the theory that those are the only three kinds of people worth knowing.",
+      "dislikes_braun": "Even James has complaints about James: he knows he has played both sides too long — drinking the Syndicate's liquor, banking their neighbors, and cataloguing it all for leverage. Tonight was supposed to be the night he finally picked a side.",
       "zone_id": "study",
       "faction_id": "",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Withdrew to his study mid-party, as he always does — 'the host must count the silver' — carrying a single glass and expecting a delivery.",
+      "seen_as": "The most generous man in the county, by the people he owns; a patient predator, by the people he doesn't.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "Welcome, welcome. Everything you see tonight I either inherited, earned, or acquired — and a gentleman never labels which.",
+          "I make one rule for myself at every party: an hour in the study, alone, at nine. A man who cannot leave his own party is its prisoner, not its host.",
+          "I'm told I collect things. Art, land, people, information. I prefer the word 'curate.' Curators get museums; collectors get audited."
         ],
         "weather": [
-          "........",
-          "........"
+          "A storm for my engagement — the ancestors approve. Or object. With this family, the thunder reads the same either way.",
+          "Don't fear the weather. This house has stood through ninety years of storms and three of my marriages' worth of lightning."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The study is mine alone — the one room in this house where every object is exactly where I left it. I find that a man needs one such room, and only one.",
+              "Every door in this house locks, and I hold every key. Well. Nearly every key. One learns humility from one's staff."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "Everyone here tonight is either family, future family, or unfinished business. The seating chart does not distinguish, and neither do I.",
+              "Solomon sent a bottle up to the study for me — a peace offering, the note said. Peace, from Solomon Roka. I intend to drink it slowly and believe it not at all."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Money is only frozen leverage. The trick is knowing when to let it thaw, and on whom.",
+              "I've kept a private ledger this past year — my accounting of certain neighbors. After midnight tonight, it becomes someone else's problem. I've never been so happy to give something away."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A crystal nightcap glass, monogrammed J.B., that no staff member is permitted to wash but him.",
+      "tamper_insert": "a monogrammed crystal glass, J.B., with a ring of residue at the bottom",
       "staff": "host"
     },
     {
       "id": "leo",
       "name": "Leo Raphael",
-      "age": 0,
-      "sex": "........",
+      "age": 46,
+      "sex": "M",
       "job": "French Chef",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Volcanic French kitchen-brigade energy — tender about food, murderous about timing, and constitutionally incapable of whispering.",
+      "backstory": "Braun Manor's French chef for seven years, poached from a two-star kitchen in Lyon with a salary he describes as 'an apology in advance.' The kitchen is his sovereign territory, and tonight it was full of strangers.",
+      "why_invited": "He's staff — the general of tonight's twelve-course service, which was proceeding magnificently until the household began producing corpses instead of compliments.",
+      "dislikes_braun": "Braun salts finished dishes at the table, in front of guests, every single time. Seven years. Leo has forgiven larger crimes committed by better men.",
       "zone_id": "kitchen",
       "faction_id": "",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Never leaves the kitchen except to glare at the service counter paperwork, and can account for every knife in the house by heart — he counted them, loudly, at half past ten.",
+      "seen_as": "The tyrant of the kitchen — terrifying, incorruptible, and weirdly the most trustworthy person in the building.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "Seven years I cook for this house. Twelve courses tonight. Twelve! And they will remember the evening for everything except the food. C'est la vie, c'est la mort.",
+          "In Lyon I survived two Michelin inspections and one grease fire. This party is worse than all three.",
+          "The kitchen is mine. Whoever passes through it, I see. Tonight, too many people passed through it. I have a list. It is a menu of suspects."
         ],
         "weather": [
-          "........",
-          "........"
+          "The storm, it drops the pressure, the souffles they suffer, and nobody weeps for them but me.",
+          "Rain is good for one thing: nobody leaves before dessert. Tonight, hah, nobody leaves at all."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "My service counter had delivery papers tonight that I did not order against. Crates of alcohol, signed by who? Not me. In my kitchen, papers I did not sign are lies.",
+              "The kitchen connects to the family room, the sitting room, the driveway. It is a — how do you say — a roundabout. Everyone passes. Tonight everyone passed twice."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "The doctor, she came through my kitchen with her little bag and did not stop to taste the consomme. Seven years, she always tastes. Tonight, no appetite. Interesting, non?",
+              "The reporter interviewed my cooks for one hour about deliveries. My cooks! Ask the chef! The chef knows where every bottle in this house is. Except, tonight, one."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "They pay me a fortune and it is still not enough, because they also pay me in interruptions.",
+              "Good ingredients cost the truth. The bar for tonight? I did not source it. It arrived. Things that 'arrive' are somebody's business, and not an honest one."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A carbon-steel chef's knife he sharpens nightly and refers to, without irony, as 'my colleague.'",
+      "tamper_insert": "a kitchen tasting spoon, licked clean, from the chef's private roll",
       "staff": "facilitator"
     },
     {
       "id": "chloe",
       "name": "Chloe Zimmerman",
-      "age": 0,
-      "sex": "........",
+      "age": 35,
+      "sex": "F",
       "job": "Fashion Designer",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Breathless fashion-atelier chatter, air-kisses and pin-sharp observations — reads a room by its hemlines and remembers every outfit like testimony.",
+      "backstory": "Braun's personal fashion designer, hired to dress the household and tonight's wedding party. She fitted every principal guest this month, which means she has been alone in a room with half the suspects and measured all of them.",
+      "why_invited": "Working staff tonight — running last looks, emergency stitches, and the champagne-soaked crisis of Isla's ruined gown, which she repaired into a triumph in under forty minutes.",
+      "dislikes_braun": "Braun negotiated her wedding commission down twice and called couture 'upholstery for people.' She smiled through it. Designers always smile through it; it's why they remember everything.",
       "zone_id": "grand_hall",
       "faction_id": "",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Carries a pincushion cuff on her wrist and openly appraises every garment in the room; she can tell you who changed clothes tonight, and when, without checking notes.",
+      "seen_as": "The stylist who knows where all the bodies are buttoned.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "I dressed eleven people in this room, so believe me when I say: I know everyone's measurements and half their secrets. They come out in fittings. Both.",
+          "Isla's gown was my masterpiece and that champagne tower martyred it. I rebuilt her second look in forty minutes flat. In the grand hall coat room. With witnesses. Excellent ones.",
+          "Fashion is armor, darling. Tonight I watched several people arrive in armor and one person arrive in camouflage. I'm still deciding which one."
         ],
         "weather": [
-          "........",
-          "........"
+          "Humidity is the enemy of silk and the friend of frizz. Half my evening was triage.",
+          "Storm splatter tells stories — hems tell you who went outside. I've counted four wet hems tonight and only three admitted owners."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "The grand hall lighting is criminally unflattering, which at least made everyone equally honest.",
+              "The coat room saw more traffic tonight than the bar. People kept 'checking their coats' who arrived without coats."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "The chauffeur's gloves. Driving gloves, indoors, all night. I design gloves, darling — nobody keeps them on at a party unless the hands are saying something the mouth won't.",
+              "The singer's little gold snail pins are custom work — expensive custom. Not from any atelier I know, and I know all of them. Somebody commissions those. Somebody with a jeweler and a theme."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "Couture margins are a rumor. I do this for love and for access, and tonight access got very interesting.",
+              "The wedding commission was going to make my year. So yes, I wanted the groom alive, thank you, I had invoices pending."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A pincushion cuff bristling with pins, and a measuring tape she snaps like punctuation.",
+      "tamper_insert": "a tailor's pin with a black glass head, the kind from the designer's cuff",
       "staff": "facilitator"
     },
     {
       "id": "bertram",
       "name": "Bertram Ault",
-      "age": 0,
-      "sex": "........",
+      "age": 67,
+      "sex": "M",
       "job": "Estate Butler",
-      "voice": "........",
-      "backstory": "........",
-      "why_invited": "........",
-      "dislikes_braun": "........",
+      "voice": "Glacial butler's formality, forty years deep — speaks in announcements, disapproves in millimeters, and deploys 'sir' and 'madam' like sentencing.",
+      "backstory": "Estate butler to the Braun family for four decades — served James's father, raised James's standards, and privately considers himself the last load-bearing wall of the household. Nothing enters or leaves this house without, in theory, crossing his ledger.",
+      "why_invited": "He runs the household; tonight he ran the door, the service, and the increasingly futile effort to maintain standards while guests trampled the rope lines and someone murdered his employer.",
+      "dislikes_braun": "Master James let standards slip his father would have died over — side-door deliveries, unvetted vendors, liquor arriving without house seals. Bertram filed his objections. Master James filed them further.",
       "zone_id": "grand_hall",
       "faction_id": "",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "........",
-      "seen_as": "........",
+      "observable": "Hands trembling slightly since the body was found — the doctor poured his coffee for him — but his memory for the evening's comings and goings remains terrifyingly exact.",
+      "seen_as": "The institution — the one person who has always been here, knows how everything is done, and says nothing until it counts.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "........",
-          "........",
-          "........"
+          "Forty years of service to this family, sir. I buried the old master and I had hoped, sincerely, to be buried before the young one.",
+          "I stood the door tonight. Every invited guest passed me at the front. I say 'every invited guest' with precision, sir. Precision is the job.",
+          "My hands are not what they were this morning. My memory, I assure you, is exactly what it was."
         ],
         "weather": [
-          "........",
-          "........"
+          "The staff shut forty-one windows against the storm, madam. Forty. One window in the west wing was reopened after shutting. I have made a note.",
+          "A storm is no excuse for a lapse in service. Nor, I find, for a lapse in anything else."
         ],
         "topics": [
           {
             "prompt": "The house",
             "lines": [
-              "........",
-              "........"
+              "This house receives deliveries at the kitchen and the side path, both against my ledger. Tonight's bar shipment appears in no ledger of mine. I consider that a scandal independent of the murder.",
+              "The rope on the sitting room stairs is a courtesy, madam, not a suggestion. I have re-hung it three times this evening."
             ]
           },
           {
             "prompt": "The other guests",
             "lines": [
-              "........",
-              "........"
+              "Mr. Harry Braun presented an invitation at the door. I admitted him because the card stock was correct. The card stock, sir, is the only correct thing about that gentleman.",
+              "A bottle went up to the study during the evening — a 'gift,' carried by staff, not by me. In forty years, the master's nightcap has passed through no hands but mine. Tonight it did. I shall regret that longer than you can imagine."
             ]
           },
           {
             "prompt": "Money and work",
             "lines": [
-              "........",
-              "........"
+              "One does not discuss wages, sir. One discusses arrangements. Mine have been satisfactory for forty years, which is more than the household books can say for this past one.",
+              "Money has been arriving in this house lately by routes I do not recognize, in quantities I am not shown. A butler notices the plumbing, sir, even when he is not invited to inspect the water."
             ]
           }
         ]
       },
-      "signature_item": "........",
-      "tamper_insert": "........",
+      "signature_item": "A leather-bound household ledger and a pocket watch he consults before answering any question about time.",
+      "tamper_insert": "a page from the household ledger, one delivery entry crossed out in fresh ink",
       "staff": "facilitator"
     }
   ]

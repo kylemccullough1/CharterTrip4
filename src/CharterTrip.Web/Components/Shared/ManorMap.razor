@@ -7,10 +7,16 @@
    keeps the labels as real text that inherits the site's type and theming. (Razor also reserves
    <text> as its own escape tag, so SVG labels fight the compiler.)
 
-   The layout is faithful to the adjacency in zones.json — the study touches only the Entry and the
-   Family Room, which is exactly why the access killer had to be standing near one of them, and the
-   Driveway and Lawn are outside the front door. Somebody reading this to work out who could have
-   reached the body needs it to be true, not just tidy.
+   The layout is the real Braun Manor. Coordinates are measured off the floor plan at its own
+   1296x946, so any one of them can be checked against the picture rather than taken on trust, and
+   it stays faithful to the adjacency in zones.json because the house is — the kitchen's north wall
+   is the service door onto the drive, the study touches only the Entry and the Family Room, and the
+   west wing dead-ends past the Grand Hall Extension. Somebody reading this to work out who could
+   have reached the body needs it to be true, not just tidy.
+
+   The rooms nobody may enter are drawn too, dashed and dim. Bath 1 and Bedroom 1 are the pair that
+   earn their place: they sit between the Sitting Room and the study and are the reason the study has
+   only two ways in.
 
    Four modes, one component: labels only before the murder, evidence dots during the investigation,
    the scan trail once the detectives need it, and the cards themselves laid into their rooms when
@@ -21,10 +27,16 @@
     <div class="mm">
 
         @* Roped off for the night, and drawn so people stop asking. *@
-        <div class="mm-room is-shut" style="@Box(300, 14, 146, 86)">
-            <span class="mm-name">West wing</span>
-            <span class="mm-sub">wet paint</span>
-        </div>
+        @foreach (var shut in Closed)
+        {
+            <div class="mm-room is-shut" style="@Box(shut.Where)" @key="shut.Name">
+                <span class="mm-name"><span class="mm-wide">@shut.Name</span><span class="mm-narrow">@(shut.Short ?? shut.Name)</span></span>
+                @if (shut.Sub is { } sub)
+                {
+                    <span class="mm-sub">@sub</span>
+                }
+            </div>
+        }
 
         @foreach (var room in Rooms)
         {
@@ -35,14 +47,27 @@
             var hasClue = clueId.Length > 0;
             var found = ShowPins && hasClue && ScanShareService.IsFound(Trip, clueId);
             var seen = ShowTrail && hasClue ? TrailCount(room.Id) : 0;
+            var here = room.Id == Highlight;
 
-            <div class="mm-room @(room.Id == Highlight ? "is-you" : "") @(zone.PlayersAllowed ? "" : "is-scene") @(found ? "has-card" : "")"
-                 style="@Box(room.X, room.Y, room.W, room.H)"
+            @* The outdoors wraps the house, so the Lawn and the Drive are each several shapes. The
+               rest of the room is drawn first and drawn bare — one name, one dot and one card per
+               zone, on the part with room for them. *@
+            @foreach (var annex in room.Parts.Skip(1))
+            {
+                <div class="mm-room is-annex @(here ? "is-you" : "") @(found ? "has-card" : "")"
+                     style="@Box(annex)"
+                     @key="annex"></div>
+            }
+
+            <div class="mm-room @(here ? "is-you" : "") @(zone.PlayersAllowed ? "" : "is-scene") @(found ? "has-card" : "")"
+                 style="@Box(room.Parts[0])"
                  @key="room.Id">
 
-                <span class="mm-name">@zone.Name</span>
+                @* Two names, one shown. See Room.Short — the house is the real one now, and half its
+                   rooms are too narrow to hold their full name in a hand. *@
+                <span class="mm-name"><span class="mm-wide">@zone.Name</span><span class="mm-narrow">@(room.Short ?? zone.Name)</span></span>
 
-                @if (room.Id == Highlight && !ShowCards)
+                @if (here && !ShowCards)
                 {
                     <span class="mm-sub">you were here</span>
                 }
@@ -60,7 +85,7 @@
                     @* The card itself, lying in the room it was found in. The board used to stack
                        nine of these in a column, which threw away the one thing that makes them
                        argue: where they were in relation to each other and to the study. *@
-                    <p class="mm-card" style="--lines:@Lines(room.H)">@ScanShareService.PublicReading(Trip, clueId)</p>
+                    <p class="mm-card" style="--lines:@Lines(room.Parts[0].H)">@ScanShareService.PublicReading(Trip, clueId)</p>
                 }
 
                 @if (seen > 0)
@@ -126,37 +151,92 @@
     /// <summary>
     /// How many lines of card this room can hold.
     ///
-    /// The rooms are four different heights, so one clamp cannot fit them all: at four lines the
-    /// Grand Hall Extension cut a sentence off mid-word with no ellipsis, and at two the Study
-    /// wasted half its box. Derived from the room's own height, so it stays right if a room moves.
+    /// The rooms are four different heights, so one clamp cannot fit them all: too generous and the
+    /// Entry cuts a sentence off mid-word with no ellipsis, too mean and the Kitchen wastes half its
+    /// box. Derived from the room's own height, so it stays right if a room moves.
+    ///
+    /// The Lawn is the exception that proves it worth deriving: it is the shortest box on the plan
+    /// and also the widest, so one line there holds a whole sentence.
     /// </summary>
     private static int Lines(int height) => height switch
     {
-        >= 100 => 4,
-        >= 80 => 3,
-        >= 66 => 2,
-        _ => 1
+        >= 200 => 4,   // the Kitchen
+        >= 170 => 3,   // the Grand Hall and its extension, the Sitting Room, the Drive
+        >= 130 => 2,   // the Family Room, the study, the Entry
+        _ => 1         // the Lawn, which is a band rather than a box
     };
 
-    /// <summary>Percentages of a 460x360 plan, so the whole map scales to whatever it is put in.</summary>
-    private static string Box(int x, int y, int w, int h) =>
-        $"left:{Pc(x, 460)}%;top:{Pc(y, 360)}%;width:{Pc(w, 460)}%;height:{Pc(h, 360)}%";
+    /// <summary>
+    /// Percentages of the 1296x946 floor plan, so the whole map scales to whatever it is put in and
+    /// every number above can be checked against the plan it was measured from.
+    /// </summary>
+    private static string Box(Rect r) =>
+        $"left:{Pc(r.X, 1296)}%;top:{Pc(r.Y, 946)}%;width:{Pc(r.W, 1296)}%;height:{Pc(r.H, 946)}%";
 
     private static string Pc(int value, int of) =>
         (value * 100.0 / of).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
 
-    private sealed record Room(string Id, int X, int Y, int W, int H);
+    private sealed record Rect(int X, int Y, int W, int H);
+
+    /// <summary>
+    /// A zone and the shape or shapes it occupies. The first part is the one that carries the name,
+    /// the evidence dot and the card, so it should be the roomiest — the outdoor zones wrap the
+    /// house and would otherwise try to label a corridor.
+    ///
+    /// <c>Short</c> is the name to use when the plan is in a hand. The real house is not the tidy
+    /// grid this used to draw: the Sitting Room is 9% of the plan's width, which is thirty pixels on
+    /// a 360px phone, and "Sitting Room &amp; Stairs" does not go in thirty pixels at any size anyone
+    /// could read. Floor plans have always labelled tersely for exactly this reason. Null means the
+    /// zone's own name is short enough already.
+    /// </summary>
+    private sealed record Room(string Id, string? Short, params Rect[] Parts);
+
+    private sealed record Shut(string Name, string? Short, string? Sub, Rect Where);
 
     private static readonly Room[] Rooms =
     [
-        new("study",          150,  14, 140,  86),
-        new("entry",          150, 108, 140,  70),
-        new("family_room",     14, 108, 128,  70),
-        new("kitchen",         14, 186, 128,  70),
-        new("sitting_room",   150, 186, 140,  70),
-        new("grand_hall",     300, 108, 146, 100),
-        new("extension_room", 300, 216, 146,  60),
-        new("driveway",        14, 264, 128,  82),
-        new("lawn",           150, 264, 140,  82)
+        // Indoors, north to south. Neighbours share an edge exactly, because a one-pixel gutter
+        // between two rooms reads as a wall that isn't there.
+        new("extension_room", "Extension",  new Rect(283, 381, 167, 180)),
+        new("grand_hall",     null,         new Rect(450, 381, 318, 180)),
+        new("sitting_room",   "Sitting",    new Rect(768, 378, 122, 183)),
+        new("kitchen",        null,         new Rect(890, 345, 185, 220)),
+        new("family_room",    "Family",     new Rect(910, 565, 205, 136)),
+        new("study",          "Study",      new Rect(910, 701, 113, 137)),
+        new("entry",          null,         new Rect(1023, 701,  92, 137)),
+
+        // The drive is the apron the cars stand on, plus the asphalt that carries on around the
+        // north and down the east side. That last leg is what puts it against the Entry and the
+        // Kitchen's service door, which is the adjacency zones.json claims and the one the access
+        // killer walked.
+        new("driveway", "Drive",
+            new Rect(460, 186, 430, 190),
+            new Rect(890, 186, 398, 159),
+            new Rect(1115, 345, 173, 507)),
+
+        // The lawn wraps the west and the south. The south band runs the full width of the house on
+        // purpose: the study's windows look onto it, which is where Whitley lay in the wet with his
+        // notebook and where the far garden bed hides his card.
+        new("lawn", "Lawn",
+            new Rect(120, 852, 1168, 86),
+            new Rect(8, 46, 112, 806))
+    ];
+
+    /// <summary>
+    /// Roped off, and drawn anyway. Four boxes rather than the plan's ten rooms — enough for the
+    /// house to have the right shape without ten dashed labels competing with nine real ones on a
+    /// phone.
+    ///
+    /// Bath 1 and Bedroom 1 are one block rather than two. Drawn apart, the bath is 70 units tall —
+    /// seventeen pixels on a phone, which will not hold a line of text, never mind two. As one
+    /// block it is also the thing worth seeing: something solid between the Sitting Room and the
+    /// study, which is why the study has only two ways in.
+    /// </summary>
+    private static readonly Shut[] Closed =
+    [
+        new("West wing", "W. wing", "wet paint", new Rect(127, 46, 321, 334)),
+        new("Bedroom 4", "Bed 4", null, new Rect(470, 102, 145, 78)),
+        new("Bedroom 2", "Bed 2", null, new Rect(127, 381, 156, 180)),
+        new("Bath 1 · Bedroom 1", "Bath · Bed", null, new Rect(790, 563, 120, 210))
     ];
 }

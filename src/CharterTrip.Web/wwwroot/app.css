@@ -4871,7 +4871,7 @@ pre.code {
      the right edge. The map is the one thing here that has to stay whole. */
   width: 100%;
   max-width: min(100%, calc(100vw - 2.5rem));
-  aspect-ratio: 460 / 360;
+  aspect-ratio: 1296 / 946;   /* the floor plan's own size, so the room boxes are measured numbers */
   background: var(--ink-2);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -4899,13 +4899,25 @@ pre.code {
 
 .mm-room.is-shut { border-style: dashed; opacity: .4; background: none; }
 
+/* A zone drawn as more than one shape — the lawn wraps the west and south of the house, the drive
+   wraps the north and east. The labelled part carries the name, the dot and the card; this is the
+   rest of the same room, and has nothing to lay out. */
+.mm-room.is-annex { padding: 0; }
+
 .mm-name {
-  font-size: clamp(.52rem, 1.5vw, .82rem);
+  /* The floor is what a phone gets, and it is low because the plan is the real house: nine rooms
+     and four roped ones in a hand's width, the Entry only 7% of it. At .52rem every narrow room
+     broke its name mid-word — "Ent / ry", "Sittin / g". At .44 only the Entry does, and only on a
+     360px screen. The ceiling is unchanged, so the television is untouched. */
+  font-size: clamp(.44rem, 1.5vw, .82rem);
   line-height: 1.15;
   overflow-wrap: anywhere;
   max-width: 100%;
 }
 .mm-sub { font-size: clamp(.44rem, 1.2vw, .68rem); color: var(--text-faint); }
+
+/* The wide name is the default; the phone swaps it below. */
+.mm-narrow { display: none; }
 
 .mm-pin {
   position: absolute; top: 5px; right: 5px;
@@ -5609,10 +5621,32 @@ pre.code {
    A dot that appeared on being found made unsearched rooms look empty, which is
    the opposite of what it should say. */
 /* Its own clip. The plan clips at its outer edge, but a four-line card in the
-   Grand Hall Extension — which is 60 of 360 units tall — spills into the room
+   Grand Hall Extension — which is 180 of 946 units tall — spills into the room
    below it, and a floor plan whose rooms leak into each other is worse than no
    floor plan. */
 .mm-room { overflow: hidden; padding: 5px 7px; }
+
+/* The plan is the real house, which means nine rooms and five roped ones inside a
+   hand's width, and the study is 8% of it. Fourteen pixels of side padding is a
+   third of that room's label space — "Grand Hall Extension" and "Sitting Room &
+   Stairs" both lose letters to it. On a phone the padding goes and the name gets
+   the box; the television has width to spare and keeps the air. */
+@media (max-width: 640px) {
+  .mm-room { padding: 4px 2px; }
+
+  /* The plan is the real house now, and the real house has narrow rooms: the Sitting Room is 9% of
+     its width, which is thirty pixels on a 360px phone. "Sitting Room & Stairs" does not go in
+     thirty pixels at a size anybody could read, so in a hand the rooms take the short names a paper
+     floor plan would have given them. The television keeps the full ones. */
+  .mm-wide { display: none; }
+  .mm-narrow { display: inline; }
+}
+
+/* The roped rooms are there so the house has the right shape, not to be read closely, and they are
+   the boxes with the least room in them — "Bedroom 4" is 145 x 78 units, which is two lines of text
+   in nineteen pixels on a 360px phone, and the only label on the plan that actually overflowed.
+   Quieter suits what they are and fixes it in the same stroke. */
+.mm-room.is-shut .mm-name { font-size: clamp(.36rem, 1.2vw, .66rem); }
 
 .mm-dot {
   position: absolute; top: 6px; right: 6px;

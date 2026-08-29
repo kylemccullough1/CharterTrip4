@@ -82,17 +82,18 @@
                            arrivals count sits under this — every line here is a line of that. *@
                         <p class="muted tiny">
                             Point a camera at it, or go to <b>@JoinHost/join</b> and type it.
-                            The house parts are behind it too, for the committee.
                         </p>
                     </div>
                 </div>
 
-                @* The same sentence the host's console shows, because two screens counting the same
-                   room in different words is how you end up believing the wrong one. "4 house parts
-                   still going" was this line, and it named nobody. *@
+                @* The count, and nothing after it. The host's console carries the "waiting on…"
+                   sentence, beside the button it is blocking, which is the one place somebody can
+                   act on it. Here it read "0 of 25 here · Waiting on James Braun, Leo Raphael,
+                   Chloe Zimmerman and Bertram Ault, and 21 guests are not here yet" — the same
+                   fact the count already gave, plus a list of names the hall cannot do anything
+                   about, on the screen with the least room for either. *@
                 <p class="ms-count">
                     <b>@Seated</b> of @Play.Cast.Count here
-                    <span class="muted"> · @StartReason</span>
                 </p>
               </div>
 
@@ -108,10 +109,30 @@
                 </div>
             </div>
 
-            @* Setup, printing and teardown — none of it is the evening itself. *@
+            @* Setup, printing and teardown — none of it is the evening itself.
+
+               Game Mode leads, the way it does on the Jeopardy board and the bee's wall. Like both
+               of those it is a lobby button and goes when the evening starts — by then the wall has
+               put itself into Game Mode anyway, on the phase change. *@
             @if (CanHost)
             {
                 <div class="row gap wrap center ms-lobby-actions">
+                    <GameModeButton Game="mystery" />
+
+                    @* The other door, which the wall could not point at before.
+
+                       Twenty-one guests come through the code beside this; the four house parts do
+                       not, because the guest list is the roster minus the organizers and the parts
+                       are refused to anybody who is not one. So the count sticks at 21 of 25 and
+                       the screen never said why. The number in the label is the why, and the link
+                       is the fix: it lands on the four-part picker with no code to type. *@
+                    @if (HousePartsLeft > 0 && MePersonId is { Length: > 0 })
+                    {
+                        <a class="btn btn-ghost btn-sm" href="@HousePartUrl" target="_blank">
+                            Take a house part (@HousePartsLeft left)
+                        </a>
+                    }
+
                     <a class="btn btn-ghost btn-sm" href="/games/mystery/story">Edit the story</a>
                     <a class="btn btn-ghost btn-sm" href="/games/mystery/print" target="_blank">Print sheets ↗</a>
                     <a class="btn btn-ghost btn-sm" href="/m">Your phone ↗</a>
@@ -391,8 +412,25 @@
                 Door="@((t, r) => CastingService.SeatNextGuest(t, t.Mystery.Play.PartyCode, r))"
                 Destinations="@PhoneStops">
         <Chips>
+            @* Becoming one of the house parts, the way the bee and the board both do it: a real
+               second tab rather than a frame in the rail.
+
+               A frame cannot do this and is not meant to. It carries a sim slot rather than a
+               person, and CanTakeTheHostJob is deliberately `!IsSim && …` — a frame shares this
+               laptop's cookie, so a sim phone that could take a house part would be every test
+               phone holding the guilty list. The way through is the same one the bee's "Host
+               phone ↗" and the board's "Host sheet ↗" use: open a tab that carries your own
+               sign-in. This is that tab, pointed at the four-part picker. *@
+            @if (HousePartsLeft > 0 && MePersonId is { Length: > 0 })
+            {
+                <a class="chip" href="@HousePartUrl" target="_blank" rel="noopener">🎭 Take a house part ↗</a>
+            }
+
+            <a class="chip" href="/m" target="_blank" rel="noopener">📱 Your console ↗</a>
+
             <button class="chip" @onclick="EverybodyVotesAsync">⚡ Everybody votes</button>
             <button class="chip" @onclick="SplitTheVoteAsync">⚡ Split the vote four ways</button>
+            <button class="chip" @onclick="SeatTheHousePartsAsync">⚡ Seat the house parts</button>
             <button class="chip" @onclick="MeetEverybodyAsync">⚡ Everybody mingles</button>
             <button class="chip" @onclick="FindEveryClueAsync">⚡ Find every clue</button>
             <button class="chip" @onclick="TamperOneAsync">⚡ Somebody tampers</button>
@@ -404,6 +442,10 @@
 
 @code {
     protected override TripArea Watching => TripArea.Mystery;
+
+    /// <summary>The phase this screen last rendered, for spotting the evening starting. See
+    /// <c>OnAfterRenderAsync</c> for why it is not shared with the audio's <c>_heard</c>.</summary>
+    private MysteryPhase _seen;
 
     private MysteryState Game => Trip.Mystery;
     private MysteryStory Story => Game.Story;
@@ -424,9 +466,6 @@
     private bool Live => MysteryPhases.AtOrAfter(Phase, MysteryPhase.Welcome);
 
     private int Seated => Play.Cast.Count(c => c.PersonId is not null);
-
-    /// <summary>Who the evening is still waiting on, in the words the host's console uses.</summary>
-    private string StartReason => CastingService.CanStart(Trip).Reason;
 
     private IEnumerable<MysteryCastMember> Arrived =>
         Play.Cast.Where(c => c.PersonId is not null).OrderBy(c => c.JoinedAt);
@@ -463,6 +502,19 @@
         : Written(Beats.KillerWin) ?? "They got away with it.";
 
     private static string? Written(string? value) => MysteryText.Written(value);
+
+    /// <summary>Braun and the facilitators nobody has picked up yet.</summary>
+    private int HousePartsLeft => CastingService.UnclaimedStaffParts(Trip).Count;
+
+    /// <summary>
+    /// Straight to the part picker, skipping the code and the name picker.
+    ///
+    /// <c>?who=</c> is the same carrier the door already uses between its own two steps, so this is
+    /// the existing route rather than a new one. All it saves is typing: ClaimStaffPart re-checks
+    /// the roster role server-side, so a guest who copies this link out of the page source still
+    /// gets nothing.
+    /// </summary>
+    private string HousePartUrl => $"/join/{Play.PartyCode}?who={Uri.EscapeDataString(MePersonId!)}";
 
     private string JoinHost => new Uri(Nav.BaseUri).Authority;
 
@@ -517,6 +569,14 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        // Snapshotted and written back before anything below can block. A refused or suspended
+        // AudioContext does not fail, it waits — and bookkeeping left on the far side of that wait
+        // would leave the wall comparing against a phase it rendered ten minutes ago. The bee's
+        // wall keeps its own phase field for the same reason, and this is why it is not _heard:
+        // that one only moves when the audio module loaded.
+        var wasPhase = _seen;
+        _seen = Phase;
+
         if (firstRender)
         {
             try
@@ -533,6 +593,16 @@
 
             return;
         }
+
+        // The evening just started, and it can only have started somewhere else — the button is on
+        // Braun's phone. This is the moment the page stops being something somebody opened and
+        // becomes the television, which is what the note at the top of this file has always said it
+        // should do. GameModeScope handles the chrome and the browser's opinion about full screen;
+        // nothing here waits on either.
+        //
+        // On the transition only, never on load: a committee laptop opened mid-evening to check
+        // something is not a television, and taking its display would be a nasty surprise.
+        if (!MysteryPhases.AtOrAfter(wasPhase, MysteryPhase.Welcome) && Live) GameMode.Enter("mystery");
 
         if (_audio is null || _heard == Phase) return;
 
@@ -650,6 +720,30 @@
 
         for (var i = 0; i < t.Mystery.Story.Clues.Count; i++)
             ScanShareService.RecordClueScan(t, finders[i % finders.Count], t.Mystery.Story.Clues[i].Id, Clock.UtcNow);
+    });
+
+    /// <summary>
+    /// Put the four organizers into Braun and the three facilitators.
+    ///
+    /// The rail's own door seats guests, and only guests — <c>SeatNextGuest</c> draws from the
+    /// roster minus the organizers, because on the night the house parts are taken through a
+    /// different gate: a browser already signed in as an organizer, never a simulated one. That
+    /// rule is worth keeping exactly as it is (a sim frame shares this laptop's cookie, so
+    /// loosening it would hand every test phone the guilty list) — but it left the rail able to
+    /// reach only twenty-one of twenty-five, and <c>CanStart</c> waits on all four house parts, so
+    /// a game could never actually be started from here.
+    ///
+    /// Goes through ClaimStaffPart like the real door does, so it cannot produce a seating the
+    /// evening could not have reached on its own — including its organizer-only check, which is why
+    /// this pairs each part with a real admin from the roster rather than inventing one.
+    /// </summary>
+    private Task SeatTheHousePartsAsync() => MutateAsync(t =>
+    {
+        var organisers = CastingService.Organizers(t);
+        var parts = CastingService.UnclaimedStaffParts(t);
+
+        foreach (var (part, organiser) in parts.Zip(organisers.Where(o => t.Mystery.Play.ForPerson(o.Id) is null)))
+            CastingService.ClaimStaffPart(t, organiser.Id, part.Id);
     });
 
     private Task MeetEverybodyAsync() => MutateAsync(t =>

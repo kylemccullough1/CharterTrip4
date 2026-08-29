@@ -1,6 +1,7 @@
 using System.Text.Json;
 using CharterTrip.Core.Models;
 using CharterTrip.Core.Words;
+using CharterTrip.Infrastructure.Mystery;
 using CharterTrip.Infrastructure.Storage;
 
 namespace CharterTrip.Tests;
@@ -941,4 +942,91 @@ public class TripMigrationsTests
         Assert.All(trip.Roster, p => Assert.Equal(tokens[p.Id], p.JoinToken));
         Assert.Equal(TripMigrations.CurrentVersion, trip.SchemaVersion);
     }
+
+    // ---- v32: the story is written ------------------------------------------------------------
+
+    /// <summary>
+    /// A trip that seeded the unwritten story gets the written one. StoryLoader.SeedInto cannot do
+    /// this — it is guarded on Seeded, and rightly so — which is the whole reason for a step.
+    /// </summary>
+    [Fact]
+    public void V32_writes_the_story_into_a_trip_that_seeded_the_unwritten_one()
+    {
+        var trip = new TripData { SchemaVersion = 31 };
+        trip.Mystery.Story = new MysteryStory
+        {
+            Seeded = true,
+            Characters = [new MysteryCharacter { Id = "wilhelm", Name = "Wilhelm Shepard", Backstory = "........" }]
+        };
+
+        Assert.True(TripMigrations.Apply(trip));
+        Assert.Equal(TripMigrations.CurrentVersion, trip.SchemaVersion);
+
+        var wilhelm = trip.Mystery.Story.Character("wilhelm");
+        Assert.NotNull(wilhelm);
+        Assert.False(MysteryText.IsPlaceholder(wilhelm!.Backstory));
+        Assert.Equal(25, trip.Mystery.Story.Characters.Count);
+    }
+
+    /// <summary>
+    /// The argument for replacing the story wholesale rather than filling its gaps: the written
+    /// copy is the same cast under the same ids, and Play refers to all of it by id alone. An
+    /// evening already underway keeps its cast, its tokens, its scans and its votes, and gains only
+    /// the words. If this ever fails, the replace has become destructive and needs to become a
+    /// merge.
+    /// </summary>
+    [Fact]
+    public void V32_leaves_an_evening_already_underway_alone()
+    {
+        var trip = new TripData { SchemaVersion = 31 };
+        trip.Mystery.Phase = MysteryPhase.Investigation;
+        trip.Mystery.Story = new MysteryStory { Seeded = true };
+        trip.Mystery.Play.PartyCode = "MANOR";
+        trip.Mystery.Play.Cast.Add(new MysteryCastMember
+        {
+            CharacterId = "carla",
+            PersonId = "p-7",
+            BadgeToken = "badge-abcdef"
+        });
+        trip.Mystery.Play.ClueStates.Add(new MysteryClueState { ClueId = "clue-lawn", Token = "clue-tok-123" });
+
+        TripMigrations.Apply(trip);
+
+        Assert.Equal(MysteryPhase.Investigation, trip.Mystery.Phase);
+        Assert.Equal("MANOR", trip.Mystery.Play.PartyCode);
+        Assert.Equal("badge-abcdef", Assert.Single(trip.Mystery.Play.Cast).BadgeToken);
+        Assert.Equal("clue-tok-123", Assert.Single(trip.Mystery.Play.ClueStates).Token);
+
+        // And the ids the play state points at are all still there to point at.
+        Assert.NotNull(trip.Mystery.Story.Character("carla"));
+        Assert.NotNull(trip.Mystery.Story.Clue("clue-lawn"));
+    }
+
+    /// <summary>
+    /// A trip that has never seeded is left empty. StoryLoader.SeedInto brings the written copy the
+    /// first time somebody creates an evening; writing a story into a trip that asked for none
+    /// would be a game nobody started.
+    /// </summary>
+    [Fact]
+    public void V32_does_not_start_a_story_nobody_asked_for()
+    {
+        var trip = new TripData { SchemaVersion = 31 };
+
+        TripMigrations.Apply(trip);
+
+        Assert.False(trip.Mystery.Story.Seeded);
+        Assert.Empty(trip.Mystery.Story.Characters);
+    }
+
+    [Fact]
+    public void V32_running_twice_changes_nothing_the_second_time()
+    {
+        var trip = new TripData { SchemaVersion = 31 };
+        trip.Mystery.Story = new MysteryStory { Seeded = true };
+
+        TripMigrations.Apply(trip);
+
+        Assert.False(TripMigrations.Apply(trip));
+    }
+
 }

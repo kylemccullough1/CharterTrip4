@@ -1,6 +1,7 @@
 ﻿using CharterTrip.Core.Models;
 using CharterTrip.Core.Services;
 using CharterTrip.Core.Words;
+using CharterTrip.Infrastructure.Mystery;
 using CharterTrip.Infrastructure.Seed;
 
 namespace CharterTrip.Infrastructure.Storage;
@@ -14,7 +15,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 31;
+    public const int CurrentVersion = 32;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -46,6 +47,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 29) changed |= ToV29_StoryMode(trip);
         if (trip.SchemaVersion < 30) changed |= ToV30_OneJeopardyDoor(trip);
         if (trip.SchemaVersion < 31) changed |= ToV31_OneDoorPerGame(trip);
+        if (trip.SchemaVersion < 32) changed |= ToV32_TheStoryIsWritten(trip);
 
         // v19 carried the seed's hand-written word list across to a file that predated the
         // bee. No step any more: v20 deals the list instead of shipping one, so there is
@@ -870,6 +872,49 @@ public static class TripMigrations
         // The mystery's door is only opened when somebody creates the evening — an empty party
         // code means no game, and OpenDoors would deal a cast for one nobody asked for.
         return changed;
+    }
+
+    /// <summary>
+    /// The Braun Manor story stops being a row of dots and becomes prose.
+    ///
+    /// The mystery has always shipped as structure without writing: everybody existed, stood
+    /// somewhere and was something, and every sentence a player would actually read was
+    /// <c>"........"</c>. That was deliberate — it let the evening run from day one and made
+    /// <c>MysteryText.IsPlaceholder</c> the writing to-do list. The writing is now done, and the
+    /// eight files under <c>data/braun-manor/</c> hold it.
+    ///
+    /// <para>
+    /// <c>StoryLoader.SeedInto</c> cannot deliver it. That is guarded on
+    /// <c>MysteryStory.Seeded</c> so that deleting the last character in the editor does not quietly
+    /// restore twenty-five of them on the next page load — which is right, and which also means a
+    /// trip that seeded the unwritten copy would keep it forever. Hence a numbered step.
+    /// </para>
+    ///
+    /// <para>
+    /// It replaces the story wholesale, which reads destructive and is not. The written files are
+    /// the same twenty-five characters, nine rooms, nine cards, six factions and forty-two beefs
+    /// under the same ids, standing in the same rooms, in the same factions, holding the same guilt
+    /// slots; the only field that changes shape is <c>Age</c>, which was zero. <c>Mystery.Play</c>
+    /// refers to all of it by id and by id alone — the cast, the badge tokens, the clue tokens, the
+    /// scans, the meetings, the votes and the ability uses — so an evening already underway keeps
+    /// every bit of itself and simply gains the words. Nothing here touches <c>Play</c>.
+    /// </para>
+    ///
+    /// <para>
+    /// The cost, stated plainly: prose typed into <c>/games/mystery/story</c> before this ships is
+    /// discarded. That is the accepted trade — the alternative, filling only the fields still
+    /// showing dots, keeps stale edits that the written copy supersedes.
+    /// </para>
+    /// </summary>
+    private static bool ToV32_TheStoryIsWritten(TripData trip)
+    {
+        // A trip that has never seeded takes the written copy from StoryLoader.SeedInto the first
+        // time somebody creates an evening. There is nothing here to bring forward, and writing a
+        // story into a trip that asked for none would be a game nobody started.
+        if (!trip.Mystery.Story.Seeded) return false;
+
+        trip.Mystery.Story = StoryLoader.Load();
+        return true;
     }
 
     private static bool ToV29_StoryMode(TripData trip)

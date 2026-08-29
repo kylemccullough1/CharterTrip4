@@ -4,9 +4,8 @@ Eight JSON files. They are the **starting point** for one specific evening, not 
 `StoryLoader` copies them into `trip.json` the first time a game is created, and from then on the
 story is edited on the site at `/games/mystery/story` like everything else on this trip.
 
-So an edit here only reaches a trip that has never seeded one. To pick up a change on a trip that
-already has a story, edit it on the site — or discard and reseed, which is safe, because discarding
-clears the evening and never the story.
+So an edit here only reaches a trip that has never seeded one. See *Changing it after a trip has
+one* below for what to do when it already has.
 
 | File | Holds |
 |---|---|
@@ -24,36 +23,58 @@ them.
 
 ---
 
-## The prose is not written yet
+## The prose is written
 
-**Every unwritten string is a row of dots.** That is the convention, and one predicate —
-`MysteryText.IsPlaceholder` — reads it everywhere: the editor draws the field as a blank to fill in,
-the Content gaps panel counts what is left, a player-facing screen leaves the line out rather than
-showing dots to the room, and
+Every string in these eight files is now written — the voices, the backstories, the grudges, the
+nine cards, the six faction briefings, the deck Braun walks the room through, and the letter, the
+announcement and the ending in `beats.json`. `MysteryStoryTests.The_shipped_story_is_written` walks
+all of it and fails on anything that slips back.
+
+**The convention that got it here still stands: an unwritten string is a row of dots.** One
+predicate — `MysteryText.IsPlaceholder` — reads it everywhere, and it is what a field added to the
+model tomorrow will arrive as: the editor draws the field as a blank to fill in, the Content gaps
+panel counts what is left, a player-facing screen leaves the line out rather than showing dots to
+the room, and
 
 ```bash
 grep -c '"\.\+"' data/braun-manor/*.json
 ```
 
-says how much is outstanding.
+says how much is outstanding. It should print zero on every line.
 
-What is **already real**, because the game cannot run coherently without it:
+Two of these strings carry a hole for the game to fill, and they are load-bearing rather than
+decorative:
 
-- every character's id, name and job
-- which room each of the 21 stands in
-- the faction layout, and which three are the killers
-- which clue card sits in which room
-- who has history with whom
-- what the phase machine can ask of people, and when
+- `beats.json`'s `tamper_subtle` and `tamper_blatant` each carry `{insert}`, which
+  `ScanShareService.Compose` replaces with the framed guest's belongings. A frame written without
+  one makes the killers' Plant and the jester's self-framing do nothing at all, silently.
+- `objectives.json`'s `go-*` entries carry `{target}` and `{zone}`, declared in `slots` and
+  substituted by `ObjectiveBus`. A slot with no brace loses its target; a brace with no slot ships a
+  brace to somebody's phone.
 
-All of it is changeable in the editor. It is real here so that the evening plays from day one and
-the writing can happen against something that works.
+Both are asserted in `MysteryStoryTests`.
+
+---
+
+## Changing it after a trip has one
+
+These files are the **starting point**, not a live data source, so an edit here only reaches a trip
+that has never seeded a story. `StoryLoader.SeedInto` is guarded on `MysteryStory.Seeded`.
+
+To change a story a trip already has: edit it on the site at `/games/mystery/story`, which is what
+the editor is for. Discarding the evening does not help — that clears the play and never the story.
+
+Rewriting the files and expecting deployed trips to pick it up needs a numbered step in
+`TripMigrations`, the way `ToV32_TheStoryIsWritten` delivered this writing. That one replaced the
+story wholesale, which was safe only because the ids did not change and `Mystery.Play` refers to
+everything by id: the cast, the badge tokens, the clue tokens, the scans and the votes all survived.
+A rewrite that renames or removes an id cannot do that and needs to reckon with `Play` itself.
 
 ---
 
 ## The structure, and what it is protecting
 
-Nine of the tests in `MysteryStoryTests` assert facts about this content rather than about code.
+Most of the tests in `MysteryStoryTests` assert facts about this content rather than about code.
 They are worth reading before changing anything structural, but three are load-bearing:
 
 **Three killers, one per guilt slot — access, means, signature — in three different rooms.** Two

@@ -306,6 +306,26 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
     private void ScheduleFlush()
     {
         var cts = new CancellationTokenSource();
+
+        // Read the token before this source is published, and never inside the task.
+        //
+        // Inside the task it is a race the game loses often: the next edit along swaps this source
+        // out and disposes it, and CancellationTokenSource.Token throws ObjectDisposedException
+        // once disposed. That is not OperationCanceledException, so it fell straight past the
+        // "superseded" branch below and was logged as "Debounced save failed." on a save that had
+        // been correctly superseded and had lost nothing. Twenty-five phones arriving inside ninety
+        // seconds hit that window repeatedly.
+        //
+        // Before the Exchange rather than after it, which matters just as much: after, another
+        // thread can already have taken this source and disposed it, and the throw would land on
+        // whoever called MutateAsync instead of in a task nobody is awaiting. Until the Exchange
+        // publishes it, nothing else can see it.
+        //
+        // The captured token stays safe to use afterwards: CancelAndDispose cancels before it
+        // disposes, and Task.Delay short-circuits on an already-cancelled token rather than
+        // registering a callback against the dead source.
+        var token = cts.Token;
+
         var previous = Interlocked.Exchange(ref _debounce, cts);
         CancelAndDispose(previous);
 
@@ -313,7 +333,7 @@ public sealed class JsonTripStore : ITripStore, IAsyncDisposable
         {
             try
             {
-                await Task.Delay(_options.DebounceMilliseconds, cts.Token).ConfigureAwait(false);
+                await Task.Delay(_options.DebounceMilliseconds, token).ConfigureAwait(false);
                 await WriteToDiskAsync(CancellationToken.None).ConfigureAwait(false);
             }
             catch (OperationCanceledException)

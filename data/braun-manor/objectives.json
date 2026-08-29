@@ -3,7 +3,7 @@
     {
       "id": "mingle-three",
       "label": "Meet three people",
-      "text": "........",
+      "text": "Introduce yourself to at least three guests you don't know. Trade names, trade stories, scan their badges — everything you learn now is evidence later, you just don't know it yet.",
       "phase": "mingling",
       "audience": "everyone",
       "faction_id": null,
@@ -12,7 +12,7 @@
     {
       "id": "to-the-study",
       "label": "Everyone to the study",
-      "text": "........",
+      "text": "Something has happened. Everyone make your way to the study corridor — now. Stay together, touch nothing, and take a good look at who arrives last.",
       "phase": "murder",
       "audience": "everyone",
       "faction_id": null,
@@ -21,7 +21,7 @@
     {
       "id": "investigate",
       "label": "Follow what you saw",
-      "text": "........",
+      "text": "Spread out through the house. Follow what you saw, find the clue cards hidden in each room, and scan everything. The rooms know more than the guests are telling.",
       "phase": "investigation",
       "audience": "everyone",
       "faction_id": null,
@@ -30,7 +30,7 @@
     {
       "id": "jester-frame",
       "label": "Point it at yourself",
-      "text": "........",
+      "text": "The room is looking for a killer. Make sure some of what they find points at you. Visit clue spots, be seen somewhere incriminating, and start building the case against yourself.",
       "phase": "investigation",
       "audience": "faction",
       "faction_id": "jester",
@@ -39,7 +39,7 @@
     {
       "id": "killer-cover",
       "label": "Get your story straight",
-      "text": "........",
+      "text": "The three of you need one airtight story. Find your partners now, agree on where you each were at 9:40, and never be caught updating it. The first contradiction hangs all three of you.",
       "phase": "investigation",
       "audience": "faction",
       "faction_id": "killer",
@@ -48,7 +48,7 @@
     {
       "id": "gather-for-trial",
       "label": "Back to the main room",
-      "text": "........",
+      "text": "Time's up. Everyone back to the main room — the first trial is called. Bring your evidence, bring your suspicions, and be ready to say where you were when the tower fell.",
       "phase": "trial1",
       "audience": "everyone",
       "faction_id": null,
@@ -57,7 +57,7 @@
     {
       "id": "tamper-hunt",
       "label": "Which card was touched?",
-      "text": "........",
+      "text": "Someone has been at the evidence. Compare the clue cards you've each scanned, decide which one smells wrong, and consider spending Forensics on it. Find the tampered card and you find the Syndicate's fingerprints.",
       "phase": "discussion1",
       "audience": "faction",
       "faction_id": "detective",
@@ -66,7 +66,7 @@
     {
       "id": "loyalty",
       "label": "Cover for one of yours",
-      "text": "........",
+      "text": "The detectives are closing in and your Loyalty charge is ready. Decide now: Shield one of the hands, or hang a Decoy on an innocent. Once the Hard Question is asked, it's too late to choose.",
       "phase": "discussion1",
       "audience": "faction",
       "faction_id": "minion",
@@ -75,7 +75,7 @@
     {
       "id": "dig-dirt",
       "label": "Family secrets",
-      "text": "........",
+      "text": "Family Secrets is ready. Pick your target — your rival, or whoever the room might convict instead of you — and pull their motive into the light. The estate goes to the last claimant standing.",
       "phase": "discussion1",
       "audience": "faction",
       "faction_id": "inheritance",
@@ -84,7 +84,7 @@
     {
       "id": "second-trial",
       "label": "Back to the main room",
-      "text": "........",
+      "text": "Back to the main room — the second trial is called. The first verdict changed the board; say so out loud. Who benefited from it? Who went quiet? Vote like the night depends on it, because it does.",
       "phase": "trial2",
       "audience": "everyone",
       "faction_id": null,
@@ -93,7 +93,7 @@
     {
       "id": "last-loyalty",
       "label": "Last chance",
-      "text": "........",
+      "text": "This is the Syndicate's last hour. If your Loyalty charge is unspent, it dies worthless after this — Shield a hand or burn an innocent with a Decoy, but do it now.",
       "phase": "discussion2",
       "audience": "faction",
       "faction_id": "minion",
@@ -102,7 +102,7 @@
     {
       "id": "hard-question",
       "label": "Find the killer",
-      "text": "........",
+      "text": "One question left, one trial left. Confer with your fellow investigators, pick the one guest whose answer decides everything, and ask the Hard Question. Then trust what it tells you — unless you have a reason not to.",
       "phase": "discussion2",
       "audience": "faction",
       "faction_id": "detective",
@@ -111,7 +111,7 @@
     {
       "id": "final-trial",
       "label": "Back to the main room",
-      "text": "........",
+      "text": "The final trial is called. Everyone to the main room. Whatever is still hidden stays hidden after tonight — so say the thing you've been sitting on, cast your vote, and live with it.",
       "phase": "trial3",
       "audience": "everyone",
       "faction_id": null,
@@ -120,7 +120,7 @@
     {
       "id": "go-question",
       "label": "Question someone",
-      "text": "Find {target}. ........",
+      "text": "Find {target}. Ask them where they were when the champagne tower fell — and don't accept the first answer. Make them be specific, then check it against someone else.",
       "phase": null,
       "audience": "characters",
       "faction_id": null,
@@ -131,7 +131,7 @@
     {
       "id": "go-search",
       "label": "Search a room",
-      "text": "Nobody has looked properly in {zone}. ........",
+      "text": "Nobody has looked properly in {zone}. Go now, find where a card might be hiding, and scan what you find. Come back with something or don't come back smug.",
       "phase": null,
       "audience": "characters",
       "faction_id": null,
@@ -142,7 +142,7 @@
     {
       "id": "go-compare",
       "label": "Compare notes",
-      "text": "Find {target}. ........",
+      "text": "Find {target}. Put your phones side by side and compare what you've each scanned — between the two of you, one contradiction is sitting there waiting to be noticed.",
       "phase": null,
       "audience": "characters",
       "faction_id": null,

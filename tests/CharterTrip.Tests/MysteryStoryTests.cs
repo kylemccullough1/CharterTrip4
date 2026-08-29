@@ -209,15 +209,151 @@ public class MysteryStoryTests
                     $"{faction.Id}.{ability.Id} unlocks in {ability.Unlock}, before anybody has a role.");
     }
 
-    // ---- the prose is not written yet, and says so --------------------------------------------
+    // ---- the prose ----------------------------------------------------------------------------
 
+    /// <summary>
+    /// The story used to ship as structure without prose, and a test here asserted exactly that:
+    /// every guest's backstory was a row of dots, and the comment said if it ever failed it meant
+    /// somebody had started writing, which was the point. Somebody did. This is the same test with
+    /// the sign flipped, widened to every field a player can actually read.
+    ///
+    /// It is worth keeping rather than deleting. <c>MysteryText.IsPlaceholder</c> is still how an
+    /// unwritten field looks, a field added to the model later still arrives as dots, and a
+    /// surface that omits a line rather than showing dots to the room will do it silently. This is
+    /// what notices.
+    /// </summary>
     [Fact]
-    public void The_shipped_story_is_structure_without_prose()
+    public void The_shipped_story_is_written()
     {
-        // Deliberate: the game runs from day one and the Content gaps panel is the writing to-do
-        // list. If this ever fails it means somebody started writing, which is the point.
-        Assert.All(Story.Guests, c => Assert.True(MysteryText.IsPlaceholder(c.Backstory)));
-        Assert.All(Story.Guests, c => Assert.True(MysteryText.IsPlaceholder(c.DislikesBraun)));
+        foreach (var c in Story.Characters)
+        {
+            Written($"{c.Id}.voice", c.Voice);
+            Written($"{c.Id}.backstory", c.Backstory);
+            Written($"{c.Id}.whyInvited", c.WhyInvited);
+            Written($"{c.Id}.dislikesBraun", c.DislikesBraun);
+
+            // The staff are in the room but not in the game — nobody scans them, nobody plants on
+            // them, so the four fields that exist to be found do not apply. MysteryStoryEditor.Gaps
+            // scopes them the same way.
+            if (c.Staff is null)
+            {
+                Written($"{c.Id}.observable", c.Observable);
+                Written($"{c.Id}.seenAs", c.SeenAs);
+                Written($"{c.Id}.signatureItem", c.SignatureItem);
+                Written($"{c.Id}.tamperInsert", c.TamperInsert);
+            }
+
+            Assert.All(c.Dialogue.Life, l => Written($"{c.Id}.life", l));
+            Assert.All(c.Dialogue.Weather, l => Written($"{c.Id}.weather", l));
+
+            foreach (var topic in c.Dialogue.Topics)
+            {
+                Written($"{c.Id}.topic", topic.Prompt);
+                Assert.NotEmpty(topic.Lines);
+                Assert.All(topic.Lines, l => Written($"{c.Id}.{topic.Prompt}", l));
+            }
+        }
+
+        foreach (var z in Story.Zones)
+        {
+            Written($"{z.Id}.notes", z.Notes);
+            Written($"{z.Id}.clueSpot", z.ClueSpot);
+        }
+
+        foreach (var clue in Story.Clues)
+        {
+            Written($"{clue.Id}.name", clue.Name);
+            Written($"{clue.Id}.text", clue.Text);
+        }
+
+        foreach (var f in Story.Factions)
+        {
+            Written($"{f.Id}.blurb", f.Blurb);
+            Written($"{f.Id}.knowledge", f.Knowledge);
+            Written($"{f.Id}.winCondition", f.WinCondition);
+
+            foreach (var a in f.Abilities)
+            {
+                Written($"{f.Id}.{a.Id}.text", a.Text);
+                Assert.All(a.Modes, m => Written($"{f.Id}.{a.Id}.{m.Id}", m.Text));
+            }
+        }
+
+        foreach (var b in Story.Beefs)
+        {
+            Written($"{b.Id}.subject", b.Subject);
+            Written($"{b.Id}.aSays", b.ASays);
+            Written($"{b.Id}.bSays", b.BSays);
+        }
+
+        foreach (var slide in Story.Slides)
+        {
+            Written($"{slide.Id}.title", slide.Title);
+            Written($"{slide.Id}.braunSays", slide.BraunSays);
+            Assert.NotEmpty(slide.Bullets);
+            Assert.All(slide.Bullets, b => Written($"{slide.Id}.bullet", b));
+        }
+
+        Assert.All(Story.Objectives, o => Written($"{o.Id}.text", o.Text));
+
+        var beats = Story.Beats;
+        Written("beats.premise", beats.Premise);
+        Written("beats.invitationLetter", beats.InvitationLetter);
+        Written("beats.murderAnnouncement", beats.MurderAnnouncement);
+        Written("beats.studyScene", beats.StudyScene);
+        Written("beats.houseRules", beats.HouseRules);
+        Written("beats.townWin", beats.TownWin);
+        Written("beats.killerWin", beats.KillerWin);
+        Written("beats.tamperScrubbed", beats.TamperScrubbed);
+
+        Assert.NotEmpty(beats.RevealParagraphs);
+        Assert.All(beats.RevealParagraphs, p => Written("beats.reveal", p));
+    }
+
+    private static void Written(string what, string? value) =>
+        Assert.False(MysteryText.IsPlaceholder(value), $"{what} is still unwritten.");
+
+    /// <summary>
+    /// The one field the writing changed structurally rather than textually. The editor will not
+    /// accept an age outside this range, so the content should not carry one either.
+    /// </summary>
+    [Fact]
+    public void Everybody_has_an_age_the_editor_would_accept() =>
+        Assert.All(Story.Characters, c =>
+            Assert.True(c.Age is > 0 and < 130, $"{c.Id} is {c.Age}."));
+
+    /// <summary>
+    /// The two frames a tampered clue is rewritten through, and the hole the guest's belongings go
+    /// in. <c>ScanShareService.Compose</c> substitutes <c>{insert}</c> and, finding no brace,
+    /// returns the card untouched — so a frame written without one makes the killers' Plant and the
+    /// jester's self-framing do nothing at all, with no error anywhere to say so.
+    /// </summary>
+    [Fact]
+    public void A_tamper_frame_has_somewhere_to_put_the_belongings()
+    {
+        Assert.Contains("{insert}", Story.Beats.TamperSubtle, StringComparison.Ordinal);
+        Assert.Contains("{insert}", Story.Beats.TamperBlatant, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <c>ObjectiveBus</c> fills an objective by replacing <c>{slot}</c> for each name in
+    /// <c>Slots</c>. A slot with no brace to fill is an instruction that silently loses its target;
+    /// a brace with no slot behind it is a brace on somebody's phone.
+    /// </summary>
+    [Fact]
+    public void Every_objective_slot_matches_a_hole_in_its_text()
+    {
+        foreach (var o in Story.Objectives)
+        {
+            foreach (var slot in o.Slots)
+                Assert.Contains("{" + slot + "}", o.Text, StringComparison.Ordinal);
+
+            var holes = System.Text.RegularExpressions.Regex.Matches(o.Text, @"\{(\w+)\}")
+                .Select(m => m.Groups[1].Value);
+
+            foreach (var hole in holes)
+                Assert.Contains(hole, o.Slots);
+        }
     }
 
     [Fact]

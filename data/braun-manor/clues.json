@@ -3,64 +3,64 @@
     {
       "id": "clue-study",
       "zone_id": "study",
-      "name": "........",
-      "text": "........",
+      "name": "The Host's Last Glass",
+      "text": "The chair is overturned and the desk lamp is cold. One crystal glass, monogrammed J.B., lies on its side — a ring of fine brandy at the bottom, smoked plum with a bitter, herbal edge underneath that no good bottle should have. The ledger drawer has been forced and stands empty. And the bottle the glass was poured from is nowhere in this room. Someone brought it. Someone took it away again.",
       "about_character_id": null
     },
     {
       "id": "clue-entry",
       "zone_id": "entry",
-      "name": "........",
-      "text": "........",
+      "name": "The Sweating Statesman",
+      "text": "Found on the console table by the study corridor: a sweat-damp silk handkerchief, monogrammed W.S., embroidered with a ring of tiny snails. Three separate guests report Wilhelm Shepard pacing this corridor for most of the evening, waiting for a private word with Braun he swears he never got. A man who waited that long, that close, that sweaty — either the most patient man at the party, or the most obvious.",
       "about_character_id": "wilhelm"
     },
     {
       "id": "clue-family_room",
       "zone_id": "family_room",
-      "name": "........",
-      "text": "........",
+      "name": "The Cold Tea Tray",
+      "text": "Braun's evening tea sits abandoned on a side table, stone cold, halfway along the quiet route to the study. Imogen Durham was carrying it to him when she was ordered away to clean up the champagne wreckage — clearing the one servant off the corridor at exactly the wrong moment. Tucked under the tray cloth: a heavy cream envelope, empty now, its broken wax seal pressed with the shape of a small snail.",
       "about_character_id": "imogen"
     },
     {
       "id": "clue-kitchen",
       "zone_id": "kitchen",
-      "name": "........",
-      "text": "........",
+      "name": "The Vial on the Service Counter",
+      "text": "Among the delivery paperwork on the service counter: pages in Molly Henderson's shorthand. Crate counts that don't match tonight's bar manifest, and a question underlined twice — 'who signs for the deliveries?' But it's what's behind the paperwork that matters. Wedged against the wall where the service traffic passes: a small glass vial, unlabeled, empty, its rim still tacky. It smells of bitter herbs and — faintly, underneath — of smoked plum. Something was opened in this kitchen tonight, and poured into something else.",
       "about_character_id": "molly"
     },
     {
       "id": "clue-sitting_room",
       "zone_id": "sitting_room",
-      "name": "........",
-      "text": "........",
+      "name": "Terms and Conditions",
+      "text": "Wedged in the stairwell closet: a draft codicil in Yousef Mostafa's careful hand. James Braun was rewriting his will before the wedding — trimming his brother out for good, tying Isla's share to the prenup she hadn't signed. In the margins, in smaller, less careful writing, the family attorney has drafted something else entirely: three versions of a sentence that begins 'Isla, before you sign anything—' and finishes none of them.",
       "about_character_id": "yousef"
     },
     {
       "id": "clue-grand_hall",
       "zone_id": "grand_hall",
-      "name": "........",
-      "text": "........",
+      "name": "The Snail in the Wreckage",
+      "text": "Pulled from the champagne tower wreckage: a silver flask shaped like a snail shell — Giuliana Andolpho's, the one she calls 'a gift from an admirer' and never drinks from. Two guests separately place Giuliana leaving the study corridor early in the evening, flushed and fast — right around the time a cream calling card appeared on Braun's console announcing a 'gift' to be delivered to the study at nine. Somebody made sure the host would open his door tonight.",
       "about_character_id": "giuliana"
     },
     {
       "id": "clue-extension_room",
       "zone_id": "extension_room",
-      "name": "........",
-      "text": "........",
+      "name": "The Appraiser's List",
+      "text": "Slipped behind the bar crates: a page from Santiago Costa's catalogue notebook. Braun's rarities, itemized and priced, one entry circled with the note 'leaves tonight?' But it's the last line that matters — a crate number, RR-11, jotted in the professor's hand. It matches the stamps on Solomon Roka's bar crates stacked three feet from where you're standing. One of those crates went out one bottle light this evening, and the professor was counting.",
       "about_character_id": "santiago"
     },
     {
       "id": "clue-driveway",
       "zone_id": "driveway",
-      "name": "........",
-      "text": "........",
+      "name": "The Raked Path",
+      "text": "The side path — the one that wraps from the driveway to the study side of the house — has been freshly raked. Mid-party, in the rain. The service door at its end is unbolted. And the valet stand's key log reads, in neat staff initials: STUDY PASSKEY — OUT 9:33 — RETURNED 9:56 — C.L. Carla Lucciano was away from her stand for those same minutes, and the path she is paid to maintain has been wiped like a countertop.",
       "about_character_id": "carla"
     },
     {
       "id": "clue-lawn",
       "zone_id": "lawn",
-      "name": "........",
-      "text": "........",
+      "name": "The Stakeout Log",
+      "text": "Under the far garden bed's stones, wrapped in oilcloth: Remington Whitley's rain-warped notebook. He wasn't at this party as a guest — he was watching the house for Braun, waiting for a midnight handoff. His log: '9:40 — stage grab, tower down, hall floods.' '9:41 — figure on side path toward house. Small build. Carrying.' '9:47 — study lamp out.' '9:54 — figure returns. Still carrying.' The detective saw the whole thing happen. He just didn't know it yet.",
       "about_character_id": "remington"
     }
   ]

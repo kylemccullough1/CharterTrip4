@@ -147,4 +147,65 @@ public class CanStartTests
         Assert.True(ready);
         Assert.Contains("25", reason);
     }
+
+    /// <summary>
+    /// The two doors have to add up, and it is easy to believe they do not.
+    ///
+    /// Twenty-five seats are filled from two disjoint pools that never overlap: the guest picker
+    /// draws from the roster minus the organizers, and the four house parts are refused to anybody
+    /// who is not one. Seating everybody the guest door will seat therefore stops at twenty-one and
+    /// leaves a game that cannot start — which is correct, and reads exactly like a bug from the
+    /// room. This pins the arithmetic so a roster edit that breaks it fails here rather than on the
+    /// night.
+    /// </summary>
+    [Fact]
+    public void The_guest_door_and_the_house_parts_together_fill_every_seat()
+    {
+        var trip = SeedLoader.Load();
+        StoryLoader.SeedInto(trip);
+        CastingService.OpenDoors(trip, new Random(1));
+
+        // Everybody the guest door will take. Organizers are not in this list at all.
+        foreach (var person in CastingService.Unclaimed(trip).ToList())
+            CastingService.ClaimCharacter(trip, person.Id, new Random(2));
+
+        Assert.Equal(0, CastingService.SeatsLeft(trip));
+        Assert.Equal(21, trip.Mystery.Play.Cast.Count(c => c.PersonId is not null));
+
+        // Twenty-one of twenty-five, and still not startable: the four house parts are untouched.
+        Assert.Equal(4, CastingService.UnclaimedStaffParts(trip).Count);
+        Assert.False(CastingService.CanStart(trip).Ready);
+
+        // There is exactly one organizer for each of them, which is the coupling that has to hold.
+        var organizers = CastingService.Organizers(trip);
+        Assert.Equal(4, organizers.Count);
+
+        foreach (var (person, part) in organizers.Select(p => p.Id)
+                     .Zip(CastingService.UnclaimedStaffParts(trip).Select(c => c.Id).ToList()))
+        {
+            Assert.True(CastingService.ClaimStaffPart(trip, person, part));
+        }
+
+        Assert.True(CastingService.CanStart(trip).Ready);
+        Assert.Equal(25, trip.Mystery.Play.Cast.Count(c => c.PersonId is not null));
+    }
+
+    /// <summary>
+    /// A guest cannot take a house part, whatever they type. This is the only thing standing between
+    /// the party code and the guilty list, so it is worth a test of its own.
+    /// </summary>
+    [Fact]
+    public void A_guest_cannot_take_a_house_part()
+    {
+        var trip = SeedLoader.Load();
+        StoryLoader.SeedInto(trip);
+        CastingService.OpenDoors(trip, new Random(1));
+
+        var guest = trip.Roster.First(p => p.Role != TripRole.Admin);
+        var part = CastingService.UnclaimedStaffParts(trip)[0];
+
+        Assert.False(CastingService.ClaimStaffPart(trip, guest.Id, part.Id));
+        Assert.Equal(4, CastingService.UnclaimedStaffParts(trip).Count);
+    }
+
 }

@@ -24,6 +24,18 @@
    Once the evening starts it takes the whole screen, because at that point it is a television. *@
 <div class="page page-murder ms-screen @(Live ? "is-live" : "")" data-phase="@Phase">
 
+@* The weather. Braun Manor on its hill, rain, and lightning now and then — pinned to the
+   viewport under everything else, so the door and the television get the same night. It is
+   markup rather than a pseudo-element because it takes five layers, and an element has two. *@
+<div class="ms-storm" aria-hidden="true">
+    <i class="ms-storm-sky"></i>
+    <i class="ms-storm-sheet"></i>
+    <i class="ms-storm-flash"></i>
+    <i class="ms-storm-bolt"></i>
+    <i class="ms-storm-manor"></i>
+    <i class="ms-storm-rain"></i>
+</div>
+
 @* One screen tall, always, and never more than one screen tall. Every phase used to size to its
    own content, so the lobby had a wall of white space under it and the investigation ran off the
    bottom — the two failures look nothing alike and have the same cause. The testing strip is

@@ -198,6 +198,24 @@ public static class CastingService
     // ------------------------------------------------------------------------------------------
 
     /// <summary>Braun and the facilitators nobody has picked up yet.</summary>
+    /// <summary>
+    /// The house parts this organizer may take: the ones nobody holds, plus the one they already
+    /// hold. The second is the way back in — a host who lost their cookie mid-evening was offered
+    /// "all four are taken", because the part they needed was the one they were holding.
+    /// </summary>
+    public static IReadOnlyList<MysteryCharacter> StaffPartsAvailableTo(TripData trip, string personId)
+    {
+        var mine = trip.Mystery.Play.Cast
+            .Where(c => c.PersonId == personId)
+            .Select(c => trip.Mystery.Story.Character(c.CharacterId))
+            .Where(c => c is { IsStaff: true })
+            .Select(c => c!);
+
+        return trip.Mystery.Story.StaffParts
+            .Where(c => UnclaimedStaffParts(trip).Contains(c) || mine.Contains(c))
+            .ToList();
+    }
+
     public static IReadOnlyList<MysteryCharacter> UnclaimedStaffParts(TripData trip)
     {
         var taken = trip.Mystery.Play.Cast

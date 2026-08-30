@@ -21,8 +21,29 @@
 {
     <div class="mp-empty">
         <h1 class="mp-title">You're not in this one yet</h1>
-        <p class="muted">Scan the code on the screen, or go to <b>@JoinHost/join</b> and type it.</p>
-        <a class="btn btn-gold btn-sm" href="/join">Join in</a>
+
+        @if (CanEdit && !IsSimPhone && Trip.Mystery.Play.PartyCode is { Length: > 0 } code)
+        {
+            @* The committee's way back in. A lost cookie used to be the end of the host's night:
+               the committee login knows no person, and the part picker hid the part they held.
+               This lands on "which of you", and the picker offers their own part back. *@
+            <p class="muted">
+                You're signed in as the committee, not as a person. Pick which of you this is and
+                take your house part back — the one you were holding is still yours.
+            </p>
+            <a class="btn btn-gold btn-sm" href="@($"/join/{Uri.EscapeDataString(code)}?pick=host")">Take your house part</a>
+        }
+        else
+        {
+            <p class="muted">Scan the code on the screen, or go to <b>@JoinHost/join</b> and type it.</p>
+            <a class="btn btn-gold btn-sm" href="/join">Join in</a>
+            @if (!IsSimPhone)
+            {
+                <p class="muted tiny">
+                    One of the four running the evening? <a href="/login?returnUrl=%2Fm">Sign in as the committee</a> first, then come back here.
+                </p>
+            }
+        }
     </div>
 }
 else if (Phase == MysteryPhase.Reveal && Me is { IsStaff: false })

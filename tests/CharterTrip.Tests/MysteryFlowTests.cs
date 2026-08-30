@@ -494,6 +494,34 @@ public class MysteryFlowTests
         Assert.False(CastingService.NumberTheClues(trip));
     }
 
+    /// <summary>
+    /// A host who lost their cookie gets their own part offered back: the picker lists what is
+    /// unclaimed plus what they already hold, and claiming it again is a no-op that signs them in.
+    /// </summary>
+    [Fact]
+    public void An_organizer_can_take_their_own_house_part_back()
+    {
+        var trip = In(MysteryPhase.Investigation);
+        trip.Roster.Add(new RosterPerson { Id = "org-1", Name = "Kyle", Role = TripRole.Admin });
+        trip.Roster.Add(new RosterPerson { Id = "org-2", Name = "Sam", Role = TripRole.Admin });
+        var organizer = CastingService.Organizers(trip)[0];
+
+        Assert.True(CastingService.ClaimStaffPart(trip, organizer.Id, "braun"));
+        Assert.DoesNotContain(CastingService.UnclaimedStaffParts(trip), c => c.Id == "braun");
+
+        var offered = CastingService.StaffPartsAvailableTo(trip, organizer.Id);
+        Assert.Contains(offered, c => c.Id == "braun");
+        Assert.Equal(4, offered.Count);
+
+        Assert.True(CastingService.ClaimStaffPart(trip, organizer.Id, "braun"));
+        Assert.Equal(organizer.Id, trip.Mystery.Play.ForCharacter("braun")!.PersonId);
+
+        // Somebody else's part is not on offer, and cannot be taken.
+        var other = CastingService.Organizers(trip)[1];
+        Assert.DoesNotContain(CastingService.StaffPartsAvailableTo(trip, other.Id), c => c.Id == "braun");
+        Assert.False(CastingService.ClaimStaffPart(trip, other.Id, "braun"));
+    }
+
     [Fact]
     public void Entering_a_phase_stamps_it_and_re_entering_does_not()
     {

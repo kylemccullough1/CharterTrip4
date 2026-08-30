@@ -75,11 +75,13 @@ else if (_state == State.PickPart)
         <div class="join-roles">
             @foreach (var part in StaffParts)
             {
+                var mine = Store.Current.Mystery.Play.ForCharacter(part.Id)?.PersonId is { } holder && holder == OrganiserId;
+
                 <form method="post" @formname="@($"npc-{part.Id}")" @onsubmit="() => ClaimStaffAsync(part.Id)">
                     <AntiforgeryToken />
                     <button type="submit" class="join-role">
                         <span class="join-role-name">@part.Name</span>
-                        <span class="join-role-title">@part.Job</span>
+                        <span class="join-role-title">@part.Job@(mine ? " · yours — tap to get back in" : "")</span>
                     </button>
                 </form>
             }
@@ -304,7 +306,14 @@ else
 
     private IReadOnlyList<RosterPerson> Organizers => CastingService.Organizers(Store.Current);
 
-    private IReadOnlyList<MysteryCharacter> StaffParts => CastingService.UnclaimedStaffParts(Store.Current);
+    /// <summary>Which organizer is choosing, from either step of the two-step.</summary>
+    private string? OrganiserId => _organiserId ?? WhoQuery;
+
+    /// <summary>The parts on offer: unclaimed, plus the one this organizer already holds — the way back in.</summary>
+    private IReadOnlyList<MysteryCharacter> StaffParts =>
+        OrganiserId is { Length: > 0 } who
+            ? CastingService.StaffPartsAvailableTo(Store.Current, who)
+            : CastingService.UnclaimedStaffParts(Store.Current);
 
     /// <summary>Whoever is already signed in, if anybody.</summary>
     private string? CurrentPersonId =>

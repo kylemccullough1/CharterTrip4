@@ -4757,8 +4757,9 @@ pre.code {
 
 /* Strobing white at party brightness is a real accessibility problem, not a
    checkbox — the reduced-motion branch below replaces it with one soft fade. */
-/* White, with the clap; a flicker as it dies; nothing while the scream and the fall land. The
-   audio module's murder() is timed to the same numbers: clap at 0, scream at .9s, thud at 2.3s. */
+/* White, with the clap; a flicker as it dies; nothing while the glass and the fall land. The
+   audio module's murder() is timed to the same numbers: clap at 0, glass at 1.4s, thud at 2.1s.
+   After that the screen is the house and the rain, and stays so until the investigation. */
 .ms-flash {
   position: fixed; inset: 0; z-index: 90;
   background: #fff; opacity: 0;
@@ -4771,27 +4772,6 @@ pre.code {
   23%, 30% { opacity: 0; }
   31%, 36% { opacity: .75; }
   37%, 100%{ opacity: 0; }
-}
-
-/* The words arrive after the sound: three and a half seconds of dark and rain, then the butler. */
-.ms-murder {
-  text-align: center; padding: 8vh 5vw;
-  display: flex; flex-direction: column; align-items: center; gap: 14px;
-  animation: ms-truth-in .8s 3.4s ease-out both;
-}
-.ms-murder-who { color: var(--text-faint); }
-.ms-murder-line {
-  font-family: var(--display);
-  font-size: clamp(1.25rem, 2.6vw, 2.1rem);
-  line-height: 1.4;
-  color: var(--ruby);
-  max-width: 44ch; margin: 0 auto;
-  padding: clamp(18px, 3vh, 32px) clamp(20px, 3vw, 40px);
-  border: 1px solid rgba(201,79,90,.4);
-  border-radius: var(--radius);
-  background: rgba(10,12,16,.72);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 }
 
 .ms-study.card {
@@ -6669,3 +6649,41 @@ h1:focus { outline: none; }
 /* The board as a guest sees it: rank, colour, name — no bar, no number. Three columns rather
    than five, or the grid would leave two empty tracks beside every name. */
 .hb-rows.is-ranks { grid-template-columns: 18px 10px 1fr; }
+
+/* --- a phone on the wall, for the briefing --------------------------------------- */
+
+/* The role slides show the screen a player will hold, drawn with the phone's own classes inside
+   a phone-shaped frame, scaled down to sit beside the words. Zoom rather than transform so the
+   frame's layout box shrinks with it. */
+.pf { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; }
+.pf-phone {
+  width: min(100%, 330px);
+  max-height: min(74vh, 660px);
+  overflow: hidden;
+  border-radius: 28px;
+  border: 6px solid #1c1f27;
+  box-shadow: 0 0 0 1px var(--line), 0 24px 60px rgba(0,0,0,.55);
+  background: var(--ink);
+  position: relative;
+}
+.pf-notch { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 84px; height: 10px; border-radius: 999px; background: #1c1f27; z-index: 2; }
+.pf-mp { zoom: .66; padding: 32px 14px 20px; gap: 10px; display: flex; flex-direction: column; }
+.pf-mp .mp-head { padding-bottom: 8px; }
+.pf-mp .mp-card { padding: 12px 14px; gap: 6px; }
+.pf-mp .mp-tamper-option { padding: 10px 12px; gap: 6px; }
+.pf-mp .mp-tabs { display: flex; flex-wrap: nowrap; gap: 5px; overflow: hidden; }
+.pf-mp .mp-tab { flex: 0 0 auto; }
+.pf-mp .mp-body { gap: 10px; }
+.pf-blurb { margin: 0; font-size: .92rem; line-height: 1.45; color: var(--text-dim); }
+.pf-select {
+  display: block; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--panel); color: var(--text-faint); font-size: .9rem;
+}
+.pf-clue-title { font-size: 1.25rem; margin: 0 0 4px; }
+.pf-clue-text { font-size: .9rem !important; color: var(--text-dim); }
+.pf-clue { padding: 0; }
+.pf-caption { margin: 0; text-align: center; color: var(--text-faint); font-size: clamp(.7rem, .95vw, .85rem); display: flex; flex-direction: column; gap: 3px; }
+.pf-when b { color: var(--gold-light); font-weight: 600; }
+
+/* The slide's two columns give the figure the room; a phone is tall rather than wide. */
+.ms-slide.has-figure:has(.pf) { grid-template-columns: minmax(28ch, 1.4fr) minmax(0, 1fr); align-items: start; }

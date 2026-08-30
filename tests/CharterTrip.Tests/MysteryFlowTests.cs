@@ -2,6 +2,7 @@ using System.Text;
 using CharterTrip.Core.Abstractions;
 using CharterTrip.Core.Models;
 using CharterTrip.Core.Mystery;
+using CharterTrip.Core.Services;
 using CharterTrip.Infrastructure.Mystery;
 using CharterTrip.Infrastructure.Storage;
 
@@ -409,6 +410,82 @@ public class MysteryFlowTests
     //  The clock
     // ------------------------------------------------------------------------------------------
 
+    /// <summary>
+    /// The study's card is the first clue and it is handed to everybody playing the moment the
+    /// evening reaches the study — recorded as a scan, so it sits on the Clues tab like any other
+    /// card. The four running the evening get nothing; they are not playing.
+    /// </summary>
+    [Fact]
+    public void Reaching_the_study_hands_every_guest_the_studys_card()
+    {
+        var trip = In(MysteryPhase.Murder);
+        var clueId = PhaseService.StudyClueId(trip)!;
+
+        Assert.True(PhaseService.GoToPhase(trip, MysteryPhase.StudyScene, At(1)));
+
+        Assert.All(trip.Mystery.Story.Guests, g => Assert.True(ScanShareService.HasScanned(trip, g.Id, clueId)));
+        Assert.All(trip.Mystery.Story.StaffParts, s => Assert.False(ScanShareService.HasScanned(trip, s.Id, clueId)));
+
+        // Idempotent: walking back in does not scan it twice.
+        var scans = trip.Mystery.Play.ClueScans.Count;
+        PhaseService.GoToPhase(trip, MysteryPhase.Murder, At(2));
+        PhaseService.GoToPhase(trip, MysteryPhase.StudyScene, At(3));
+        Assert.Equal(scans, trip.Mystery.Play.ClueScans.Count);
+    }
+
+    /// <summary>
+    /// "Everyone to the study" goes to the twenty-one playing and to none of the four running
+    /// it — the butler is reading the announcement off his own phone at that moment, and an
+    /// instruction to go to the study on top of it is noise.
+    /// </summary>
+    [Fact]
+    public void The_call_to_the_study_reaches_guests_and_not_the_house()
+    {
+        var trip = In(MysteryPhase.Introductions);
+        foreach (var seat in trip.Mystery.Play.Cast) seat.JoinedAt ??= At(0);
+
+        PhaseService.GoToPhase(trip, MysteryPhase.Murder, At(1));
+
+        Assert.All(trip.Mystery.Story.Guests,
+            g => Assert.Contains(ObjectiveBus.Inbox(trip, g.Id), o => o.TemplateId == "to-the-study"));
+        Assert.All(trip.Mystery.Story.StaffParts,
+            s => Assert.DoesNotContain(ObjectiveBus.Inbox(trip, s.Id), o => o.TemplateId == "to-the-study"));
+
+        // One at a time: the oldest not yet done is the one being asked.
+        var wilhelm = "wilhelm";
+        ObjectiveBus.SendFreeText(trip, "Later", MysteryPhase.Murder, At(2), "host", MysteryAudience.Guests);
+        Assert.Equal("to-the-study", ObjectiveBus.Current(trip, wilhelm)!.TemplateId);
+        ObjectiveBus.Complete(trip, wilhelm, ObjectiveBus.Current(trip, wilhelm)!.Id);
+        Assert.Equal("Later", ObjectiveBus.Current(trip, wilhelm)!.Text);
+    }
+
+    /// <summary>
+    /// The nine cards are 1 to 9 in story order; typing the number at /join opens the card's page.
+    /// </summary>
+    [Fact]
+    public void The_clue_cards_are_numbered_and_the_number_is_a_join_code()
+    {
+        var trip = In(MysteryPhase.Investigation);
+        var clues = trip.Mystery.Story.Clues;
+
+        for (var i = 0; i < clues.Count; i++)
+            Assert.Equal((i + 1).ToString(), trip.Mystery.Play.StateFor(clues[i].Id)!.Token);
+
+        var match = JoinCodes.Resolve(trip, " 1 ");
+        Assert.Equal(CodeKind.Clue, match.Kind);
+        Assert.Equal("1", match.ClueToken);
+        Assert.Same(clues[0], ScanShareService.ClueForToken(trip, "1"));
+
+        Assert.Equal(CodeKind.Unknown, JoinCodes.Resolve(trip, "10").Kind);
+        Assert.Equal(CodeKind.MysteryParty, JoinCodes.Resolve(trip, trip.Mystery.Play.PartyCode).Kind);
+
+        // A game that opened its doors under the old tokens gets the numbers on the way up.
+        trip.Mystery.Play.ClueStates[0].Token = "XKQ7VW3TNA";
+        Assert.True(CastingService.NumberTheClues(trip));
+        Assert.Equal("1", trip.Mystery.Play.ClueStates[0].Token);
+        Assert.False(CastingService.NumberTheClues(trip));
+    }
+
     [Fact]
     public void Entering_a_phase_stamps_it_and_re_entering_does_not()
     {
@@ -445,7 +522,8 @@ public class MysteryFlowTests
         });
 
         Assert.True(TripMigrations.Apply(seeded));
-        Assert.Equal(35, seeded.SchemaVersion);
+        Assert.Equal(TripMigrations.CurrentVersion, seeded.SchemaVersion);
+        Assert.Contains(seeded.Mystery.Story.Slides, s => s.Figure == "role:killer");
         Assert.Contains("murdered", seeded.Mystery.Story.Character("wilhelm")!.Questions[0].Prompt);
         Assert.False(MysteryText.IsPlaceholder(seeded.Mystery.Story.Character("carla")!.Epilogue));
 

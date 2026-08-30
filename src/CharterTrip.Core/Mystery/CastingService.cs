@@ -67,10 +67,42 @@ public static class CastingService
         foreach (var clue in trip.Mystery.Story.Clues)
         {
             if (play.StateFor(clue.Id) is not null) continue;
-            play.ClueStates.Add(new MysteryClueState { ClueId = clue.Id, Token = NewToken() });
+            play.ClueStates.Add(new MysteryClueState { ClueId = clue.Id });
         }
 
         play.ClueStates.RemoveAll(s => trip.Mystery.Story.Clue(s.ClueId) is null);
+        NumberTheClues(trip);
+    }
+
+    /// <summary>
+    /// The nine cards are 1 to 9, in the story's order, and that is the whole of their code: the
+    /// QR carries <c>/m/clue/1</c>, and typing "1" at /join opens the same page.
+    ///
+    /// They used to be unguessable tokens, on the argument that walking to the room is the
+    /// mechanic and a guessable code lets somebody read every card from the sofa. That is still
+    /// true, and the number is the trade: a code short enough to type when a camera will not
+    /// focus in a dark corridor, printed under the QR. Idempotent, so it can be re-run over a
+    /// game that already has states.
+    /// </summary>
+    public static bool NumberTheClues(TripData trip)
+    {
+        var changed = false;
+        var n = 0;
+
+        foreach (var clue in trip.Mystery.Story.Clues)
+        {
+            n++;
+            var state = trip.Mystery.Play.StateFor(clue.Id);
+            if (state is null) continue;
+
+            var token = n.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            if (state.Token == token) continue;
+
+            state.Token = token;
+            changed = true;
+        }
+
+        return changed;
     }
 
     /// <summary>

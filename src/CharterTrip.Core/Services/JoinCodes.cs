@@ -36,10 +36,16 @@ public enum CodeKind
     /// who you are. Tapping your own name off the list is the rest of it, and it is also how you
     /// join the bee — being in the row and being signed in are one act.
     /// </summary>
-    BeeParty
+    BeeParty,
+
+    /// <summary>
+    /// One of the murder mystery's nine clue cards, by the number printed under its QR. Opens the
+    /// same page the QR does; signs nobody in.
+    /// </summary>
+    Clue
 }
 
-public readonly record struct CodeMatch(CodeKind Kind, string? PersonId = null, string? TeamId = null)
+public readonly record struct CodeMatch(CodeKind Kind, string? PersonId = null, string? TeamId = null, string? ClueToken = null)
 {
     public static readonly CodeMatch None = new(CodeKind.Unknown);
     public bool Found => Kind != CodeKind.Unknown;
@@ -138,6 +144,11 @@ public static class JoinCodes
         // a browser signed in as an organizer, so both the second code and the ordering rule that
         // protected it have gone.
         if (Matches(trip.Mystery.Play.PartyCode, cleaned)) return new CodeMatch(CodeKind.MysteryParty);
+
+        // A clue's number. One digit cannot collide with a four-character door or a ten-character
+        // token, so the order here is only for reading.
+        var clue = trip.Mystery.Play.ClueStates.FirstOrDefault(s => Matches(s.Token, cleaned));
+        if (clue is not null) return new CodeMatch(CodeKind.Clue, ClueToken: clue.Token);
         if (SpellingBeeService.IsGuestCode(trip, cleaned)) return new CodeMatch(CodeKind.BeeParty);
 
         if (JeopardyService.IsPartyCode(trip, cleaned)) return new CodeMatch(CodeKind.BuzzerParty);

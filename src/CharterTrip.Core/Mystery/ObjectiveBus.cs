@@ -156,9 +156,17 @@ public static class ObjectiveBus
             .Where(c => trip.Mystery.Play.ForCharacter(c.Id)?.JoinedAt is not null)
             .ToList();
 
-    /// <summary>The ones they have not ticked off. What the tab badges.</summary>
+    /// <summary>The ones they have not ticked off, newest first.</summary>
     public static IReadOnlyList<MysteryObjectiveIssue> Outstanding(TripData trip, string characterId) =>
         Inbox(trip, characterId).Where(o => !o.CompletedBy.Contains(characterId)).ToList();
+
+    /// <summary>
+    /// The one thing being asked of this person right now: the oldest they have not done.
+    /// Objectives are shown one at a time — four instructions on a phone is no instruction — so
+    /// the next one only appears once this one is ticked off.
+    /// </summary>
+    public static MysteryObjectiveIssue? Current(TripData trip, string characterId) =>
+        Outstanding(trip, characterId).LastOrDefault();
 
     public static bool Complete(TripData trip, string characterId, string objectiveId)
     {
@@ -189,6 +197,7 @@ public static class ObjectiveBus
         objective.Audience switch
         {
             MysteryAudience.Everyone => WasInTheRoom(objective, character, seat),
+            MysteryAudience.Guests => !character.IsStaff && WasInTheRoom(objective, character, seat),
             MysteryAudience.Characters => objective.CharacterIds.Contains(character.Id),
             MysteryAudience.Faction => rolesRevealed && objective.FactionId == character.FactionId,
             _ => false

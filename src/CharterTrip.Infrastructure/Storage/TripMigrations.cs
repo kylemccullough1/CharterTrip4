@@ -1,4 +1,5 @@
 ﻿using CharterTrip.Core.Models;
+using CharterTrip.Core.Mystery;
 using CharterTrip.Core.Services;
 using CharterTrip.Core.Words;
 using CharterTrip.Infrastructure.Mystery;
@@ -15,7 +16,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 35;
+    public const int CurrentVersion = 36;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -51,6 +52,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 33) changed |= ToV33_TheBraunManor(trip);
         if (trip.SchemaVersion < 34) changed |= ToV34_TheEveningIsShorter(trip);
         if (trip.SchemaVersion < 35) changed |= ToV35_NoChampagneTower(trip);
+        if (trip.SchemaVersion < 36) changed |= ToV36_TheRolesAreBriefed(trip);
 
         // v19 carried the seed's hand-written word list across to a file that predated the
         // bee. No step any more: v20 deals the list instead of shipping one, so there is
@@ -1012,6 +1014,23 @@ public static class TripMigrations
         if (!trip.Mystery.Story.Seeded) return changed;
 
         trip.Mystery.Story = StoryLoader.Load();
+        return true;
+    }
+
+    /// <summary>
+    /// v36 reloads the story once more: the briefing now walks every role with a picture of its
+    /// phone, the study's card is the first clue, and the butler finds the body. Same guard as
+    /// v35 — a trip that climbed to 35 on an intermediate build gets the finished writing.
+    /// </summary>
+    private static bool ToV36_TheRolesAreBriefed(TripData trip)
+    {
+        if (!trip.Mystery.Story.Seeded) return false;
+
+        trip.Mystery.Story = StoryLoader.Load();
+
+        // The clue cards are numbered 1 to 9 now rather than carrying a random token; a game that
+        // already opened its doors gets the numbers so its print sheet and /join agree.
+        CastingService.NumberTheClues(trip);
         return true;
     }
 

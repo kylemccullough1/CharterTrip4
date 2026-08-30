@@ -213,7 +213,7 @@
         {
             @* On a card, because a wall of bullets on a storm is a wall of bullets on a storm.
                A slide with a figure — the map — gets two columns, the words beside it. *@
-            <section class="ms-slide card @(slide.Figure is { Length: > 0 } ? "has-figure" : "")">
+            <section class="ms-slide card @(HasFigure(slide) ? "has-figure" : "")">
                 <div class="ms-slide-words">
                     <p class="ms-round">@(Play.SlideIndex + 1) of @Story.Slides.Count</p>
                     <h1 class="ms-slide-title">@slide.Title</h1>
@@ -226,7 +226,15 @@
                     </ul>
                 </div>
 
-                @if (slide.Figure == "map")
+                @if (slide.Figure is { } fig && fig.StartsWith("role:", StringComparison.Ordinal))
+                {
+                    @* The phone this role will hold, so the room sees the screen before it is asked
+                       to use it. *@
+                    <div class="ms-slide-figure">
+                        <RoleFigure Trip="Trip" FactionId="@fig["role:".Length..]" />
+                    </div>
+                }
+                else if (slide.Figure == "map")
                 {
                     @* The house as the phone will show it, with every card's spot marked. Before
                        the murder the pins are the grey "nobody has found this" kind, which is
@@ -282,26 +290,17 @@
 
     // --------------------------------------------------------------------------- the murder
     case MysteryPhase.Murder:
-        @* White, a clap of thunder, a man screaming, a body hitting the floor — and only then the
-           words. The flash is the stylesheet's and the sound is the audio module's, timed to the
-           same numbers; the announcement is delayed in CSS so it arrives after both. The butler
-           reads it; it is on the screen so the room can follow him. *@
+        @* White, a clap of thunder, a glass breaking, a body hitting the floor — and then nothing
+           but the house and the rain. The flash is the stylesheet's and the sound is the audio
+           module's, timed to the same numbers. No words: the butler screams, from wherever he is
+           standing, and reads the announcement off his own phone. The screen stays empty until
+           the investigation. *@
         <div class="ms-flash" aria-hidden="true"></div>
-        <section class="ms-murder">
-            <p class="ms-round ms-murder-who">@(Butler?.Name ?? "The butler")</p>
-            <h1 class="ms-murder-line">@(Written(Beats.MurderAnnouncement) ?? "…")</h1>
-        </section>
         break;
 
     case MysteryPhase.StudyScene:
-        @* The scene, on a card, the moment Braun puts the evening here. Nobody reads it out: it
-           is the study's own clue, the first one, and the same words are on the card in the room. *@
-        <section class="ms-head">
-            <p class="ms-round">The study</p>
-        </section>
-        <article class="ms-study card">
-            <p class="ms-study-text">@(Written(Beats.StudyScene) ?? "…")</p>
-        </article>
+        @* Still nothing. The study's card has just landed on every guest's phone — that is the
+           first clue, and it is theirs to read, not the wall's. *@
         break;
 
     // -------------------------------------------------------------------- the investigation
@@ -602,6 +601,10 @@
 
     private MysterySlide? Slide => PhaseService.CurrentSlide(Trip);
 
+    /// <summary>Whether this slide's figure is one the wall knows how to draw. The others get the width back.</summary>
+    private static bool HasFigure(MysterySlide slide) =>
+        slide.Figure == "map" || slide.Figure?.StartsWith("role:", StringComparison.Ordinal) == true;
+
     private IReadOnlyList<MysteryCharacter> IntroOrder => PhaseService.IntroOrder(Trip);
     private MysteryCharacter? CurrentIntro => PhaseService.CurrentIntro(Trip);
 
@@ -612,12 +615,6 @@
         1 => people[0].Name,
         _ => string.Join(", ", people.Take(people.Count - 1).Select(p => p.Name)) + " and " + people[^1].Name
     };
-    /// <summary>The facilitator playing the butler, who reads the murder and the study out loud.</summary>
-    private MysteryCharacter? Butler =>
-        Story.Characters.FirstOrDefault(c =>
-            c.Staff == MysteryStaffRole.Facilitator
-            && c.Job.Contains("butler", StringComparison.OrdinalIgnoreCase));
-
     private string RevealHeadline => Outcome.TownWon
         ? Written(Beats.TownWin) ?? "They caught them."
         : Written(Beats.KillerWin) ?? "They got away with it.";

@@ -357,6 +357,15 @@ else
             return;
         }
 
+        if (match.Kind == CodeKind.Clue)
+        {
+            // A card's number, typed because the camera would not focus. The card's own page does
+            // the rest — including asking for a sign-in if this phone has none.
+            var page = $"/m/clue/{Uri.EscapeDataString(match.ClueToken ?? "")}";
+            Nav.NavigateTo(IsSim ? Append(page, Sim!.Value) : page);
+            return;
+        }
+
         if (match.Kind != CodeKind.Person) return;
 
         await SignInAndGo(

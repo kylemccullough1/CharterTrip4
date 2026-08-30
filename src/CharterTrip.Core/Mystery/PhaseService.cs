@@ -48,6 +48,13 @@ public static class PhaseService
                 mystery.Play.MurderAt ??= now;
                 break;
 
+            case MysteryPhase.StudyScene:
+                // The study's card is the first clue, and it is handed to everybody: the room is
+                // standing at the door when the butler finishes, and the card is the scene itself.
+                // Recorded as a scan, so it sits on the Clues tab like any other card.
+                GiveTheStudyCard(trip, now);
+                break;
+
             case MysteryPhase.Trial1:
             case MysteryPhase.Trial2:
             case MysteryPhase.Trial3:
@@ -66,6 +73,21 @@ public static class PhaseService
 
         ObjectiveBus.PublishForPhase(trip, phase, now);
         return true;
+    }
+
+    /// <summary>The card in the one room nobody may enter, given to every guest at once.</summary>
+    public static string? StudyClueId(TripData trip)
+    {
+        var story = trip.Mystery.Story;
+        return story.Clues.FirstOrDefault(c => story.Zone(c.ZoneId) is { PlayersAllowed: false })?.Id;
+    }
+
+    private static void GiveTheStudyCard(TripData trip, DateTimeOffset now)
+    {
+        if (StudyClueId(trip) is not { } clueId) return;
+
+        foreach (var guest in trip.Mystery.Story.Guests)
+            ScanShareService.RecordClueScan(trip, guest.Id, clueId, now);
     }
 
     /// <summary>The next phase along, or false at the end.</summary>

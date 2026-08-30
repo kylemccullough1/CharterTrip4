@@ -87,6 +87,11 @@
                moves the evening past it. *@
             <section class="mp-card sc-act sc-line">
                 <h3 class="mp-card-title">@(IsButler ? "Say this" : $"{Butler?.Name ?? "The butler"} says")</h3>
+                <p class="muted tiny">
+                    @(IsButler
+                        ? "Scream first — you have just found him. Then, when the room is looking at you, read this."
+                        : "The butler screams, then reads this. When he has finished, move the evening to the study: the study's card lands on every guest's phone.")
+                </p>
                 <p class="sc-say">@sayLine</p>
             </section>
         }

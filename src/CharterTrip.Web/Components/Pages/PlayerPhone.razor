@@ -90,9 +90,9 @@ else
             {
                 <button class="mp-tab @(_tab == tab ? "on" : "")" @key="tab" @onclick="() => _tab = tab">
                     @tab
-                    @if (tab == "Do" && Outstanding.Count > 0)
+                    @if (tab == "Do" && CurrentObjective is not null)
                     {
-                        <span class="mp-badge">@Outstanding.Count</span>
+                        <span class="mp-badge">1</span>
                     }
                 </button>
             }
@@ -245,21 +245,42 @@ else
 
             // ------------------------------------------------------------------- what to do
             case "Do":
-                @if (Inbox.Count == 0)
+                @* One thing at a time. Four instructions stacked on a phone is no instruction;
+                   the oldest one not yet done is the one being asked, and the next appears when
+                   it is ticked off. *@
+                @if (CurrentObjective is { } current)
+                {
+                    <section class="mp-card mp-objective" @key="current.Id">
+                        <p>@current.Text</p>
+                        <button class="btn btn-xs btn-gold" @onclick="() => ToggleObjectiveAsync(current.Id, false)">
+                            Done
+                        </button>
+                    </section>
+
+                    @if (Outstanding.Count > 1)
+                    {
+                        <p class="muted tiny">@(Outstanding.Count - 1) more after this one.</p>
+                    }
+                }
+                else
                 {
                     <p class="mp-empty-note">Nothing being asked of you right now.</p>
                 }
 
-                @foreach (var objective in Inbox)
+                @if (Done.Count > 0)
                 {
-                    var done = objective.CompletedBy.Contains(Me.Id);
-                    <section class="mp-card mp-objective @(done ? "is-done" : "")" @key="objective.Id">
-                        <p>@objective.Text</p>
-                        <button class="btn btn-xs @(done ? "btn-ghost" : "btn-gold")"
-                                @onclick="() => ToggleObjectiveAsync(objective.Id, done)">
-                            @(done ? "Not done after all" : "Done")
-                        </button>
-                    </section>
+                    <details class="mp-rules">
+                        <summary>Done</summary>
+                        @foreach (var objective in Done)
+                        {
+                            <section class="mp-card mp-objective is-done" @key="objective.Id">
+                                <p>@objective.Text</p>
+                                <button class="btn btn-xs btn-ghost" @onclick="() => ToggleObjectiveAsync(objective.Id, true)">
+                                    Not done after all
+                                </button>
+                            </section>
+                        }
+                    </details>
                 }
                 break;
 
@@ -296,14 +317,13 @@ else
                     @foreach (var ability in Abilities)
                     {
                         var charges = AbilityService.ChargesRemaining(Trip, Me.Id, ability);
-                        var unlocked = AbilityService.IsUnlocked(Trip, ability);
                         var onCards = OnCards(ability);
                         var uses = InteractionService.ResultsFor(Trip, Me.Id).Where(u => u.AbilityId == ability.Id).ToList();
 
                         <section class="mp-card mp-ability" @key="ability.Id">
                             <h3 class="mp-card-title">
                                 @ability.Name
-                                <span class="mp-charges">@(unlocked ? $"{charges} left" : "not yet")</span>
+                                <span class="mp-charges">@charges left</span>
                             </h3>
                             <Field Label="" Value="@Written(ability.Text)" />
 
@@ -316,11 +336,7 @@ else
                                to be a paragraph of text with nothing to press, so the only way to
                                use one was to tell a facilitator and hope. Cards are still spent by
                                standing in front of one; everything else is spent from this tab. *@
-                            @if (!unlocked)
-                            {
-                                <p class="muted tiny">Unlocks: @MysteryPhases.Label(ability.Unlock).</p>
-                            }
-                            else if (charges == 0)
+                            @if (charges == 0)
                             {
                                 <p class="muted tiny">All used up.</p>
                             }
@@ -571,8 +587,15 @@ else
     private MysteryFaction? Faction =>
         Me is null || !RolesRevealed ? null : Story.Faction(Me.FactionId);
 
+    /// <summary>
+    /// The powers that are live now, and only those. A power shown as "not yet" was a question
+    /// on every phone that had one — so the tab shows nothing until the phase that turns it on,
+    /// and the briefing is where everybody hears what is coming.
+    /// </summary>
     private IReadOnlyList<MysteryAbility> Abilities =>
-        Me is null || !RolesRevealed ? [] : AbilityService.AbilitiesFor(Trip, Me.Id);
+        Me is null || !RolesRevealed
+            ? []
+            : AbilityService.AbilitiesFor(Trip, Me.Id).Where(a => AbilityService.IsUnlocked(Trip, a)).ToList();
 
     private IReadOnlyList<MysteryCharacter> Allies =>
         Me is null ? [] : KnowledgeService.AlliesFor(Trip, Me.Id);
@@ -592,6 +615,13 @@ else
 
     private IReadOnlyList<MysteryObjectiveIssue> Outstanding =>
         Me is null ? [] : ObjectiveBus.Outstanding(Trip, Me.Id);
+
+    /// <summary>The one being asked right now: the oldest not yet done.</summary>
+    private MysteryObjectiveIssue? CurrentObjective =>
+        Me is null ? null : ObjectiveBus.Current(Trip, Me.Id);
+
+    private IReadOnlyList<MysteryObjectiveIssue> Done =>
+        Me is null ? [] : Inbox.Where(o => o.CompletedBy.Contains(Me.Id)).ToList();
 
     private IReadOnlyList<MysteryClueCard> MyClues =>
         Me is null
@@ -655,8 +685,11 @@ else
     //  Following the evening
     // ------------------------------------------------------------------------------------------
 
-    /// <summary>The newest objective this phone has already put in front of somebody.</summary>
+    /// <summary>The objective this phone last put in front of somebody.</summary>
     private string? _seenObjective;
+
+    /// <summary>How many cards this phone had at the last render, so a card arriving can be shown.</summary>
+    private int _seenClues = -1;
     private bool _settled;
 
     /// <summary>Which ballot this phone has already jumped to, so it only jumps once per stage.</summary>
@@ -690,7 +723,8 @@ else
         }
 
         moved |= FollowTheBallot();
-        moved |= PopTheNewestObjective(firstRender);
+        moved |= FollowTheCard();
+        moved |= PopTheCurrentObjective();
 
         if (moved) StateHasChanged();
     }
@@ -720,26 +754,45 @@ else
     }
 
     /// <summary>
-    /// Put a newly arrived objective in front of somebody rather than under a badge.
+    /// A card landing on this phone without a scan — the study's, handed to everybody at once —
+    /// opens the Clues tab, so the first clue of the night is read rather than found later
+    /// behind a tab that just appeared. The first pass only records the count.
+    /// </summary>
+    private bool FollowTheCard()
+    {
+        var count = MyClues.Count;
+        var had = _seenClues;
+        _seenClues = count;
+
+        if (had < 0 || count <= had) return false;
+        if (Phase != MysteryPhase.StudyScene || !Tabs.Contains("Clues") || _tab == "Clues") return false;
+
+        _tab = "Clues";
+        return true;
+    }
+
+    /// <summary>
+    /// Put the objective being asked in front of somebody rather than under a badge — and the
+    /// next one, the moment this one is done. One at a time: the queue behind it stays behind it.
     ///
     /// The first pass only records where the queue was, so a phone opened at ten o'clock does not
     /// open on an instruction from half past eight.
     /// </summary>
-    private bool PopTheNewestObjective(bool firstRender)
+    private bool PopTheCurrentObjective()
     {
-        var newest = Outstanding.FirstOrDefault();
+        var current = CurrentObjective;
 
         if (!_settled)
         {
             _settled = true;
-            _seenObjective = newest?.Id;
+            _seenObjective = current?.Id;
             return false;
         }
 
-        if (newest is null || newest.Id == _seenObjective || _popped is not null) return false;
+        if (current is null || current.Id == _seenObjective || _popped is not null) return false;
 
-        _seenObjective = newest.Id;
-        _popped = newest;
+        _seenObjective = current.Id;
+        _popped = current;
         return true;
     }
 

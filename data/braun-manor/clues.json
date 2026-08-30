@@ -4,7 +4,7 @@
       "id": "clue-study",
       "zone_id": "study",
       "name": "The Host's Last Glass",
-      "text": "The chair is overturned and the desk lamp is cold. One crystal glass, monogrammed J.B., lies on its side — a ring of fine brandy at the bottom, smoked plum with a bitter, herbal edge underneath that no good bottle should have. The ledger drawer has been forced and stands empty. And the bottle the glass was poured from is nowhere in this room. Someone brought it. Someone took it away again.",
+      "text": "The chair is overturned and the desk lamp is cold. One crystal glass, monogrammed J.B., lies in pieces on the floor beside him — a last ring of fine brandy in the largest shard, smoked plum with a bitter, herbal edge underneath that no good bottle should have. It went out of his hand at 9:47, and the butler found him at 9:50. The ledger drawer has been forced and stands empty. And the bottle the glass was poured from is nowhere in this room. Someone brought it. Someone took it away again.",
       "about_character_id": null
     },
     {
@@ -36,6 +36,13 @@
       "about_character_id": "yousef"
     },
     {
+      "id": "clue-driveway",
+      "zone_id": "driveway",
+      "name": "The Raked Path",
+      "text": "The side path — the one that wraps from the driveway to the study side of the house — has been freshly raked. Mid-party, in the rain. The service door at its end is unbolted. And the valet stand's key log reads, in neat staff initials: STUDY PASSKEY — OUT 9:33 — RETURNED 9:56 — C.L. Carla Lucciano was away from her stand for those same minutes, and the path she is paid to maintain has been wiped like a countertop.",
+      "about_character_id": "carla"
+    },
+    {
       "id": "clue-grand_hall",
       "zone_id": "grand_hall",
       "name": "The Snail in the Wreckage",
@@ -50,17 +57,10 @@
       "about_character_id": "santiago"
     },
     {
-      "id": "clue-driveway",
-      "zone_id": "driveway",
-      "name": "The Raked Path",
-      "text": "The side path — the one that wraps from the driveway to the study side of the house — has been freshly raked. Mid-party, in the rain. The service door at its end is unbolted. And the valet stand's key log reads, in neat staff initials: STUDY PASSKEY — OUT 9:33 — RETURNED 9:56 — C.L. Carla Lucciano was away from her stand for those same minutes, and the path she is paid to maintain has been wiped like a countertop.",
-      "about_character_id": "carla"
-    },
-    {
       "id": "clue-lawn",
       "zone_id": "lawn",
       "name": "The Stakeout Log",
-      "text": "Under the far garden bed's stones, wrapped in oilcloth: Remington Whitley's rain-warped notebook. He wasn't at this party as a guest — he was watching the house for Braun, waiting for a midnight handoff. His log: '9:40 — singer takes the stage. Hall floods.' '9:41 — figure on side path toward house. Small build. Carrying.' '9:47 — a scream from the study. Something heavy hits the floor. Lamp out.' '9:54 — figure returns. Still carrying.' The detective saw the whole thing happen. He just didn't know it yet.",
+      "text": "Under the far garden bed's stones, wrapped in oilcloth: Remington Whitley's rain-warped notebook. He wasn't at this party as a guest — he was watching the house for Braun, waiting for a midnight handoff. His log: '9:40 — singer takes the stage. Hall floods.' '9:41 — figure on side path toward house. Small build. Carrying.' '9:47 — glass breaks in the study. Something heavy hits the floor. Lamp out.' '9:50 — the butler screams.' '9:54 — figure returns on the side path. Still carrying.' The detective saw the whole thing happen. He just didn't know it yet.",
       "about_character_id": "remington"
     }
   ]

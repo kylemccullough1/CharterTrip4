@@ -60,7 +60,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "In the corridor outside the study, my friend, where I had been for some time waiting on a word with James. The maid passed me with his tea tray — ask her. When the scream came I was still standing there, and I did not run toward it. My knees would not allow it, and a man in my position does not run toward trouble."
+          "answer": "In the corridor outside the study, my friend, where I had been for some time waiting on a word with James. The maid passed me with his tea tray — ask her. When the glass went in the study I was still standing there, and when the butler screamed I did not run toward it. My knees would not allow it, and a man in my position does not run toward trouble."
         },
         {
           "id": "q2",
@@ -212,7 +212,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "In the sitting room, near the foot of the stairs, where I had been for most of the evening. The painter had me in her sightline from the family room the whole time — she has me in three sketches, I'm told. I heard the scream. I stayed where I was. I am not a man who runs toward a noise."
+          "answer": "In the sitting room, near the foot of the stairs, where I had been for most of the evening. The painter had me in her sightline from the family room the whole time — she has me in three sketches, I'm told. I heard the butler scream. I stayed where I was. I am not a man who runs toward a noise."
         },
         {
           "id": "q2",
@@ -288,7 +288,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "In the west wing extension, cataloguing crates I had not been invited to catalogue. Cairo Iwobi was in that room the whole time, with company, and I take no pleasure in owing that man an alibi. The scream reached us faintly. I assumed it was the storm."
+          "answer": "In the west wing extension, cataloguing crates I had not been invited to catalogue. Cairo Iwobi was in that room the whole time, with company, and I take no pleasure in owing that man an alibi. The crash reached us faintly, and I assumed it was the storm. The butler's scream did not sound like the storm."
         },
         {
           "id": "q2",
@@ -364,7 +364,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "In the kitchen, interviewing the cooks, which is where you learn a house. I heard the scream and I wrote down the time — 9:47 — and then I went to see who ran toward it and who didn't. The second list is shorter."
+          "answer": "In the kitchen, interviewing the cooks, which is where you learn a house. I heard something shatter and I wrote down the time — 9:47. When the butler screamed at ten to ten I went to see who ran toward it and who didn't. The second list is shorter."
         },
         {
           "id": "q2",
@@ -440,7 +440,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "On my way out to my car with tonight's blood samples. I had drawn James's earlier, in that study with its terrible light. I was on the driveway when I heard the scream. The chauffeur wasn't at her stand — I remember, because I'd wanted her to open the gate for me.",
+          "answer": "On my way out to my car with tonight's blood samples. I had drawn James's earlier, in that study with its terrible light. I was on the driveway when the butler screamed. The chauffeur wasn't at her stand — I remember, because I'd wanted her to open the gate for me.",
           "cover_answer": "On my way out to my car with tonight's blood samples, and I was not the only one on that side of the house. {target} was on the side path when I reached the drive. I assumed, at the time, that they wanted some air. I no longer assume that."
         },
         {
@@ -518,7 +518,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "Upstairs in the primary suite, changing into the second gown. That was planned — a hostess has two looks — and I was alone, which is called dignity. I heard the scream and took it for the storm. I came down when I was ready to be looked at."
+          "answer": "Upstairs in the primary suite, changing into the second gown. That was planned — a hostess has two looks — and I was alone, which is called dignity. I heard glass break somewhere below and took it for a dropped tray. The butler's scream is what brought me down, as I was."
         },
         {
           "id": "q2",
@@ -594,7 +594,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "In the powder room off the sitting room, warming up. I was to sing at a quarter to ten — my slot — and that woman took the stage before I could. I heard the scream from behind a locked door with my lipstick half on.",
+          "answer": "In the powder room off the sitting room, warming up. I was to sing at a quarter to ten — my slot — and that woman took the stage before I could. I heard the butler scream from behind a locked door with my lipstick half on.",
           "cover_answer": "Nobody can put me in the powder room, because I wasn't there. I'll tell you plainly: I was somewhere I had no business being at a quarter to ten — down a corridor with a rope across it. Write that down."
         },
         {
@@ -672,7 +672,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "In the grand hall, applauding. Sutton and I are old friends — when she took the microphone I was the first pair of hands going. I was still there when the scream came; I thought it was part of the storm. Plenty of people can put me in that room. I made sure of it."
+          "answer": "In the grand hall, applauding. Sutton and I are old friends — when she took the microphone I was the first pair of hands going. I was still there when the butler screamed. Plenty of people can put me in that room. I made sure of it."
         },
         {
           "id": "q2",
@@ -719,7 +719,7 @@
           {
             "prompt": "The house",
             "lines": [
-              "The acoustics in the grand hall are the best in the county. You can hear a pin drop. Or a scream from the far end of the house. Acoustics don't judge.",
+              "The acoustics in the grand hall are the best in the county. You can hear a pin drop. Or a glass breaking at the far end of the house. Acoustics don't judge.",
               "I know which floorboards creak between here and the study. Old houses tell on everyone eventually. Even me."
             ]
           },
@@ -741,14 +741,14 @@
       },
       "signature_item": "A pair of gold snail lapel pins, worn like medals, origin never explained.",
       "tamper_insert": "a tiny gold lapel pin shaped like a snail, its clasp bent",
-      "epilogue": "Sutton Brady loved James Braun once, and she sang for the Syndicate before that, and when the two ran into each other she chose the one that still paid. Her job tonight was the stage: at twenty to ten she took a microphone that was not hers and held every eye in the house for a quarter of an hour, so that nobody was watching the side path. She finished the song after the scream. Professionals finish the song.",
+      "epilogue": "Sutton Brady loved James Braun once, and she sang for the Syndicate before that, and when the two ran into each other she chose the one that still paid. Her job tonight was the stage: at twenty to ten she took a microphone that was not hers and held every eye in the house for a quarter of an hour, so that nobody was watching the side path. She finished the song after the butler screamed. Professionals finish the song.",
       "staff": null,
       "questions": [
         {
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "On the stage in the grand hall, with the microphone. I took it at twenty to ten because it was my stage before it was hers, and I felt like it. Everyone in that hall was looking at me when the scream came, and I finished the song. That's what a professional does."
+          "answer": "On the stage in the grand hall, with the microphone. I took it at twenty to ten because it was my stage before it was hers, and I felt like it. Everyone in that hall was looking at me when the butler screamed, and I finished the song. That's what a professional does."
         },
         {
           "id": "q2",
@@ -796,7 +796,7 @@
             "prompt": "The house",
             "lines": [
               "Two interior routes to the study, one window route from the lawn, one side path from the driveway. Four ways in. I mapped it during cocktails. For fun. It was for fun at the time.",
-              "The scream came at 9:47. Everyone ran toward the noise. Procedure says: always ask who ran away from it."
+              "The glass went at 9:47 and the butler screamed at 9:50. Everyone ran toward the noise. Procedure says: always ask who ran away from it."
             ]
           },
           {
@@ -824,7 +824,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "Grand hall, north side, timing absences on my pad, which I do at every party. 9:40, the singer took the stage. 9:47, the scream. Everyone ran toward it. Procedure says ask who ran away from it, so I did. The list is short and I keep it in ink."
+          "answer": "Grand hall, north side, timing absences on my pad, which I do at every party. 9:40, the singer took the stage. 9:47, glass breaking at the back of the house. 9:50, the butler's scream. Everyone ran toward it. Procedure says ask who ran away from it, so I did. The list is short and I keep it in ink."
         },
         {
           "id": "q2",
@@ -900,8 +900,8 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "The entry hall, on a call with my team — my team is one accountant, and he was crying. I was standing in the doorway with a dead phone when I heard the scream from the back of the house. I stayed in the doorway. I've never been a man who runs toward a noise.",
-          "cover_answer": "Not in the entry, whatever I told you before. I was one corridor off the hall, in the dark, where I wasn't supposed to be, when the scream came. I'm telling you that myself. Make of it what you like."
+          "answer": "The entry hall, on a call with my team — my team is one accountant, and he was crying. I was standing in the doorway with a dead phone when the butler screamed at the back of the house. I stayed in the doorway. I've never been a man who runs toward a noise.",
+          "cover_answer": "Not in the entry, whatever I told you before. I was one corridor off the hall, in the dark, where I wasn't supposed to be, when the butler screamed. I'm telling you that myself. Make of it what you like."
         },
         {
           "id": "q2",
@@ -957,7 +957,7 @@
             "prompt": "The other guests",
             "lines": [
               "The jazz singer wears two gold snails on her lapel. I sketched them before I knew why they bothered me. They still bother me.",
-              "I was studying the crowd when the singer took the stage. When the scream came, Sutton didn't flinch even once. Performers always check the room. She didn't need to. She'd budgeted for it."
+              "I was studying the crowd when the singer took the stage. When the butler screamed, Sutton didn't flinch even once. Performers always check the room. She didn't need to. She'd budgeted for it."
             ]
           },
           {
@@ -978,13 +978,13 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "At my easel in the family room, facing the sitting-room doorway, where I'd been all night. I heard the scream, I looked up, I kept drawing. Painters see everything, and I have the lawyer at the foot of those stairs in three sketches, checking his watch."
+          "answer": "At my easel in the family room, facing the sitting-room doorway, where I'd been all night. I heard the glass go, I looked up, I kept drawing. When the butler screamed I still had charcoal in my hand. Painters see everything, and I have the lawyer at the foot of those stairs in three sketches, checking his watch."
         },
         {
           "id": "q2",
           "importance": "important",
           "prompt": "What did you notice about the singer tonight?",
-          "answer": "When the scream came, she didn't flinch. Not once. Performers always break when something goes wrong in the room — it's reflex — and Sutton kept singing. I sketched her face in the two seconds after, and it's the calmest face in the book."
+          "answer": "When the butler screamed, she didn't flinch. Not once. Performers always break when something goes wrong in the room — it's reflex — and Sutton kept singing. I sketched her face in the two seconds after, and it's the calmest face in the book."
         },
         {
           "id": "q3",
@@ -1015,7 +1015,7 @@
         "life": [
           "I built my money in shipping and logistics. You want something moved quietly? Not me, but I know the type on sight, is my point.",
           "I spent a good part of the evening in the west wing extension. Privately. With company. A gentleman stops the story there.",
-          "I spent the back half of the evening in the west wing extension with Priya Patel — from before the scream until well after. A gentleman stops the story there, except to say we were interrupted twice: once by a woman with a silver flask she did not want us looking at, and the whole time by Santiago Costa fussing over the crates in the corner. Ask either of them. I'd rather you asked Priya."
+          "I spent the back half of the evening in the west wing extension with Priya Patel — from before the butler screamed until well after. A gentleman stops the story there, except to say we were interrupted twice: once by a woman with a silver flask she did not want us looking at, and the whole time by Santiago Costa fussing over the crates in the corner. Ask either of them. I'd rather you asked Priya."
         ],
         "weather": [
           "My grounds drain better than his, for the record. His lawn will be a swamp by midnight. Small victories.",
@@ -1054,7 +1054,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "The west wing extension, with Priya Patel, from well before the scream until well after. A gentleman stops the story there — except to say the professor was fussing over crates in the corner the whole time, and a woman with a silver flask burst in on us and left faster than she came. Ask any of them. I'd rather you asked Priya."
+          "answer": "The west wing extension, with Priya Patel, from well before the butler screamed until well after. A gentleman stops the story there — except to say the professor was fussing over crates in the corner the whole time, and a woman with a silver flask burst in on us and left faster than she came. Ask any of them. I'd rather you asked Priya."
         },
         {
           "id": "q2",
@@ -1091,7 +1091,7 @@
         "life": [
           "I've won four tournaments this season. The headline on three of them still mentioned my father. You learn to play through.",
           "I was in the west wing extension for a stretch of the evening. With Cairo. We were not discussing golf, and that's all the detail anyone's getting.",
-          "I was in the west wing extension with Cairo Iwobi through the whole stretch everyone keeps asking about — before the scream, and after. We were interrupted once, by Giuliana, holding a little silver flask like it was stolen. Cairo saw it too. Go and check, I'll wait."
+          "I was in the west wing extension with Cairo Iwobi through the whole stretch everyone keeps asking about — before the butler screamed, and after. We were interrupted once, by Giuliana, holding a little silver flask like it was stolen. Cairo saw it too. Go and check, I'll wait."
         ],
         "weather": [
           "Wind like this adds two clubs. Storm reading is half my job — you learn to feel when something's about to break.",
@@ -1130,7 +1130,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "In the west wing extension with Cairo Iwobi, through the whole stretch — before the scream and after. We were not discussing golf. We were interrupted once, by Giuliana, holding a little silver flask like it was stolen. Cairo saw it too. Go and check. I'll wait."
+          "answer": "In the west wing extension with Cairo Iwobi, through the whole stretch — before the butler screamed and after. We were not discussing golf. We were interrupted once, by Giuliana, holding a little silver flask like it was stolen. Cairo saw it too. Go and check. I'll wait."
         },
         {
           "id": "q2",
@@ -1206,7 +1206,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "The foyer, pouring my imports for anyone who'd hold a glass out. Fifty witnesses, all of them a little happier for it. I heard the scream and I thought it was the storm. I kept pouring. A man doesn't put a bottle down for weather.",
+          "answer": "The foyer, pouring my imports for anyone who'd hold a glass out. Fifty witnesses, all of them a little happier for it. I heard glass break and I thought it was a waiter. I kept pouring. The butler's scream is what stopped me.",
           "cover_answer": "The foyer, pouring, same as I said — but you're asking the wrong man about the wrong room. {target} took a glass off me at half past nine and walked it toward the study corridor. Never came back for the second. I notice who comes back for the second."
         },
         {
@@ -1284,13 +1284,13 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "Outside. The far garden bed, under the study windows, getting air — a man my age needs a lot of air. I heard the scream at 9:47 and I wrote it down. I write everything down. Some of it I understand later."
+          "answer": "Outside. The far garden bed, under the study windows, getting air — a man my age needs a lot of air. I heard glass break at 9:47 and the butler scream at 9:50, and I wrote both down. I write everything down. Some of it I understand later."
         },
         {
           "id": "q2",
           "importance": "important",
           "prompt": "What's in the notebook you keep writing in without looking?",
-          "answer": "Times. The singer took the stage at 9:40 and the hall filled. A figure on the side path at 9:41, small build, carrying something. The scream at 9:47, and the study lamp out right after. The same figure coming back at 9:54, still carrying. Four ways into that study and I had eyes on one. That's the failure I'll be living with."
+          "answer": "Times. The singer took the stage at 9:40 and the hall filled. A figure on the side path at 9:41, small build, carrying something. Glass breaking in the study at 9:47, and the lamp out right after. The butler's scream at 9:50. The same figure coming back at 9:54, still carrying. Four ways into that study and I had eyes on one. That's the failure I'll be living with."
         },
         {
           "id": "q3",
@@ -1360,7 +1360,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "Walking a late guest round the side of the house. He reeked of brandy, and guests who reek don't go through the front — Braun's own rule. Then I raked the path, because the rain had it like soup. I heard the scream from out there and took it for the storm. I was back at the stand before anyone missed me, apart from the trainee, who counts.",
+          "answer": "Walking a late guest round the side of the house. He reeked of brandy, and guests who reek don't go through the front — Braun's own rule. Then I raked the path, because the rain had it like soup. I heard the butler scream from out there. I was back at the stand before anyone missed me, apart from the trainee, who counts.",
           "cover_answer": "Walking a late guest round the side, and I wasn't the only one on that path. {target} came down it toward the study door while I was raking, quick, head down, and told me to mind my own business when I asked. So I did. Now I'm telling you."
         },
         {
@@ -1438,7 +1438,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "Outside the entry with a cigarette, where I spent most of the evening — the house makes my chest tight, always has, even before it wasn't mine. I heard the scream. I lit another one. Nobody in that house wanted the elder Braun rushing in to help."
+          "answer": "Outside the entry with a cigarette, where I spent most of the evening — the house makes my chest tight, always has, even before it wasn't mine. I heard the butler scream. I lit another one. Nobody in that house wanted the elder Braun rushing in to help."
         },
         {
           "id": "q2",
@@ -1514,7 +1514,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "The gardens, checking the beds — storms are the best time for it. Da'Quan Wilson was out by the cars and we spoke twice. He warned me about the wet gravel on the side path, which I thought was fussing at the time. I heard the scream from the lawn. I think about the gravel differently now."
+          "answer": "The gardens, checking the beds — storms are the best time for it. Da'Quan Wilson was out by the cars and we spoke twice. He warned me about the wet gravel on the side path, which I thought was fussing at the time. I heard the butler scream from the lawn. I think about the gravel differently now."
         },
         {
           "id": "q2",
@@ -1590,7 +1590,7 @@
           "id": "alibi",
           "importance": "alibi",
           "prompt": "Where were you when Braun was murdered?",
-          "answer": "Out by the cars, doing my evening mobility work, rain or shine. And I wasn't alone — Florence Li was in the gardens the whole stretch, and we talked twice. I heard the scream from the driveway. Two people, one storm, no opportunity."
+          "answer": "Out by the cars, doing my evening mobility work, rain or shine. And I wasn't alone — Florence Li was in the gardens the whole stretch, and we talked twice. I heard the butler scream from the driveway. Two people, one storm, no opportunity."
         },
         {
           "id": "q2",
@@ -1791,7 +1791,7 @@
       "faction_id": "",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Your hands have been trembling slightly since the body was found — the doctor poured your coffee for you — but your memory for the evening's comings and goings remains terrifyingly exact.",
+      "observable": "Your hands have been trembling since you opened the study door at ten to ten and found him — the doctor poured your coffee for you — but your memory for the evening's comings and goings remains terrifyingly exact.",
       "seen_as": "The institution — the one person who has always been here, knows how everything is done, and says nothing until it counts.",
       "rival_character_id": null,
       "dialogue": {

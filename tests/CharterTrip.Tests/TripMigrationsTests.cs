@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using CharterTrip.Core.Models;
 using CharterTrip.Core.Words;
 using CharterTrip.Infrastructure.Mystery;
@@ -997,7 +997,9 @@ public class TripMigrationsTests
         Assert.Equal(MysteryPhase.Investigation, trip.Mystery.Phase);
         Assert.Equal("MANOR", trip.Mystery.Play.PartyCode);
         Assert.Equal("badge-abcdef", Assert.Single(trip.Mystery.Play.Cast).BadgeToken);
-        Assert.Equal("clue-tok-123", Assert.Single(trip.Mystery.Play.ClueStates).Token);
+        // The one thing the ladder does change: the clue card takes its number (clue-lawn is the
+        // ninth card), because the number is its code now — v36.
+        Assert.Equal("9", Assert.Single(trip.Mystery.Play.ClueStates).Token);
 
         // And the ids the play state points at are all still there to point at.
         Assert.NotNull(trip.Mystery.Story.Character("carla"));

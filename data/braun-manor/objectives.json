@@ -23,7 +23,7 @@
       "label": "Everyone to the study",
       "text": "Something has happened. Everyone make your way to the study — now. Stay together, and touch nothing.",
       "phase": "murder",
-      "audience": "everyone",
+      "audience": "guests",
       "faction_id": null,
       "slots": []
     },

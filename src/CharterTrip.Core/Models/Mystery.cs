@@ -765,10 +765,9 @@ public sealed class MysteryClueState
     public string ClueId { get; set; } = "";
 
     /// <summary>
-    /// What goes in the QR, at <c>/m/clue/{token}</c>.
-    ///
-    /// Unguessable on purpose. Nine sequential ids would let somebody read every clue from the sofa,
-    /// and walking to the room is the entire mechanic.
+    /// What goes in the QR, at <c>/m/clue/{token}</c>: the card's number, 1 to 9, which is also
+    /// what somebody types at /join when the camera will not focus. See
+    /// <c>CastingService.NumberTheClues</c> for the trade against an unguessable token.
     /// </summary>
     public string Token { get; set; } = "";
 
@@ -886,6 +885,9 @@ public enum MysteryAudience
 {
     Everyone,
     Faction,
+
+    /// <summary>The twenty-one playing, and none of the four running it.</summary>
+    Guests,
 
     /// <summary>Named individuals, chosen by whoever sent it.</summary>
     Characters

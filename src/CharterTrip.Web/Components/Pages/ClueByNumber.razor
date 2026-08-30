@@ -1,0 +1,44 @@
+@page "/{Number:int}"
+@layout BareLayout
+@using CharterTrip.Core.Models
+@inherits TripAwareComponent
+@inject NavigationManager Nav
+
+@* The short way to a card: /1 is card 1, /9 is card 9.
+
+   Typing a digit at /join went through the front door's static-SSR redirect and, on a phone that
+   was already signed in, came out asking for a sign-in again. This is the route the number under
+   each QR actually names, and it does one thing: hand the phone to the card's own page, which
+   records the scan and offers whatever the holder can do to it. *@
+
+@if (_missing)
+{
+    <div class="mp mp-empty">
+        <h1 class="mp-title">There's no card @Number</h1>
+        <p class="muted">The cards are numbered 1 to @Trip.Mystery.Play.ClueStates.Count.</p>
+        <a class="btn btn-ghost btn-sm" href="/m">Back to your phone</a>
+    </div>
+}
+
+@code {
+    protected override TripArea Watching => TripArea.Mystery;
+
+    [Parameter] public int Number { get; set; }
+
+    private bool _missing;
+
+    protected override void OnParametersSet()
+    {
+        var token = Number.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var state = Trip.Mystery.Play.ClueStates.FirstOrDefault(s => s.Token == token);
+
+        if (state is null)
+        {
+            _missing = true;
+            return;
+        }
+
+        var page = $"/m/clue/{Uri.EscapeDataString(state.Token)}";
+        Nav.NavigateTo(IsSimPhone ? $"{page}?sim={Sim}" : page, replace: true);
+    }
+}

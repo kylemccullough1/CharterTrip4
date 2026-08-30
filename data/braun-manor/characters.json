@@ -17,6 +17,7 @@
       "observable": "You constantly wipe your sweating palms with a monogrammed handkerchief — one embroidered, oddly, with a ring of tiny snails.",
       "seen_as": "A glad-handing career politician who wants something from everyone in the room.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "Twenty-two years of public service, my friend, and I have never once lost touch with the common man. Ask my driver. Ask either of my drivers.",
@@ -93,6 +94,7 @@
       "observable": "You move silently and appear at people's elbows without warning, and you keep touching your apron pocket as if checking something is still there.",
       "seen_as": "Invisible, efficient, and probably the only person who actually knows what goes on in this house.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "I've worked this house six years. You learn where every floorboard sings, and you learn to step around the ones that do.",
@@ -169,6 +171,7 @@
       "observable": "Immaculate suit, briefcase never out of reach, and your eyes find Isla Perry within four seconds of entering any room.",
       "seen_as": "The discreet family lawyer — the man who knows where every dollar and every secret is filed.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "I've served this family ten years. I know the estate better than the family does, which is precisely why they keep me and precisely why they shouldn't.",
@@ -245,6 +248,7 @@
       "observable": "You wear cotton gloves you keep 'for handling,' and you can be found examining objects with a jeweler's loupe when you think no one is watching.",
       "seen_as": "A fussy academic who is either the most knowledgeable man in the room or the most acquisitive, possibly both.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "Thirty years teaching undergraduates the difference between value and price. Most of them only ever learn the second one.",
@@ -321,6 +325,9 @@
       "observable": "A reporter's notebook lives in your left hand; you write while maintaining eye contact, which unsettles absolutely everyone.",
       "seen_as": "The press — charming for exactly as long as you're useful, and always working.",
       "rival_character_id": null,
+      "ability_ids": [
+        "tamper_check"
+      ],
       "dialogue": {
         "life": [
           "Eighteen months on one story. My editor says obsession isn't a research method. My editor has never been right about anything.",
@@ -397,6 +404,7 @@
       "observable": "Your doctor's leather bag never leaves your side, and you have the steadiest hands at the party — you poured the shaking butler's coffee for him without spilling a drop.",
       "seen_as": "The unflappable family doctor — the person everyone trusts implicitly and no one has ever actually checked up on.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "Eight years as this family's physician. I know their hearts better than they do. Clinically speaking.",
@@ -475,6 +483,7 @@
       "observable": "You changed dresses partway through the evening — the second gown is beautiful and visibly not the one from the invitations, and you keep smoothing it flat.",
       "seen_as": "The gold-digger or the love of Braun's life, depending on which end of the room you're standing in.",
       "rival_character_id": "harry",
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "I grew up with nothing, and I promise you nothing is not romantic. I made myself into someone. James simply had good taste.",
@@ -551,6 +560,7 @@
       "observable": "You keep positioning yourself in doorways and against mantelpieces — anywhere with a frame — and you check who's watching before you react to anything.",
       "seen_as": "A fading star hungry for a spotlight, any spotlight, and not particular about what's shining it.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "I was in the powder room warming up to perform when that woman took my microphone. My microphone, my slot, my key. I do not forget a stolen key.",
@@ -629,6 +639,7 @@
       "observable": "You were seen leaving the study corridor early in the evening, flushed and walking fast — and you have been over-explaining your whereabouts to anyone who'll listen ever since.",
       "seen_as": "Society's favorite hostess — beloved, connected, and financed by absolutely no visible means.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "I have thrown eleven galas this year and cried at nine of them. The other two were for causes I actually cared about.",
@@ -705,6 +716,7 @@
       "observable": "You wear a pair of small gold lapel pins shaped like snails, and you commandeered the stage mid-evening — taking the microphone from Emilia Cruz before her slot and holding the whole hall for a quarter of an hour.",
       "seen_as": "The ex who never left — magnetic on stage, reckless off it, and clearly not done with the host.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "I sang in this house before she ever set foot in it. Some rooms remember. The grand hall remembers.",
@@ -781,6 +793,9 @@
       "observable": "You take notes on a small pad in careful block letters, and you have been discreetly timing people's absences all evening — you'll tell anyone who asks that you do this at every party.",
       "seen_as": "The overeager rookie — either adorable or exhausting, depending on whether she's currently interrogating you.",
       "rival_character_id": null,
+      "ability_ids": [
+        "tamper_check"
+      ],
       "dialogue": {
         "life": [
           "Three months from my shield. Tonight is not how I wanted my first real case to start, but I keep my notes in ink for a reason.",
@@ -857,6 +872,7 @@
       "observable": "You keep stepping into the entry hall to take hushed phone calls, and you return from each one looking slightly worse.",
       "seen_as": "A great director in freefall — charming, loud, and one bad week from doing something stupid.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "Thirty-one movies. Two of them mattered, which is two more than most people get. I'm still pitching a third.",
@@ -935,6 +951,7 @@
       "observable": "You set up an easel with a view of the room and have been sketching guests all night; your charcoal studies are unnervingly accurate.",
       "seen_as": "The artist in residence — silent, watchful, and definitely putting you in the painting whether you like it or not.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "I paint people the way they actually stand, which is why half my subjects hate their portraits and all of them pay.",
@@ -1011,6 +1028,7 @@
       "observable": "You keep reappearing from the direction of the grand hall extension looking pleased with yourself, usually a polite thirty seconds after Priya Patel does.",
       "seen_as": "The fun-money neighbor — harmless, flirtatious, and unbothered by anything except the word 'assessment.'",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "I built my money in shipping and logistics. You want something moved quietly? Not me, but I know the type on sight, is my point.",
@@ -1087,6 +1105,7 @@
       "observable": "You were conspicuously absent with Cairo Iwobi in the extension room during the key stretch of the evening, and you answer questions about your father with a practiced, too-smooth deflection.",
       "seen_as": "The charming athlete with the dangerous last name — probably innocent, definitely tired of proving it.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "I've won four tournaments this season. The headline on three of them still mentioned my father. You learn to play through.",
@@ -1163,6 +1182,7 @@
       "observable": "You came in through the side, not the front — and you guard the bar crates in the extension room with a geniality that gets less genial the closer anyone stands to them.",
       "seen_as": "Everyone's favorite bad influence — the man with the good bottles, the better stories, and no visible supply chain.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "Forty years moving bottles across borders that disagree with me. Every scar has a vintage.",
@@ -1241,6 +1261,9 @@
       "observable": "You spent most of the evening on the lawn and around the cars 'getting air,' and you have a habit of writing in a weatherproof notebook without looking down at it.",
       "seen_as": "The cop at the party — nobody's sure if he's off duty, and he has done nothing whatsoever to clarify.",
       "rival_character_id": null,
+      "ability_ids": [
+        "killer_check"
+      ],
       "dialogue": {
         "life": [
           "Twenty-five years on the job. Nineteen of them chasing one organization. You don't retire from a case like that. It retires you.",
@@ -1317,6 +1340,7 @@
       "observable": "You were away from the valet stand between roughly 9:35 and 9:50; you keep your driving gloves on indoors and went short and impatient with anyone who made small talk near the cars.",
       "seen_as": "Part of the house — competent, unreadable, and the person who knows exactly who arrived when, and how.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "Four years driving this family. You learn a house from the outside in. The outside is more honest.",
@@ -1395,6 +1419,7 @@
       "observable": "You chain-smoked outside near the entry for long stretches of the evening, and you pat your breast pocket compulsively — there's a folded document in there you keep touching and not showing anyone.",
       "seen_as": "The disgraced brother — charming at fifty paces, radioactive at five, and very obviously here for the will.",
       "rival_character_id": "isla",
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "I'm the elder Braun, in case the resemblance escaped you. Older by three years and poorer by nine.",
@@ -1471,6 +1496,7 @@
       "observable": "You spent long stretches alone in the gardens even as the storm built, and you can identify any plant on the grounds on sight — a talent that got much less charming around ten o'clock.",
       "seen_as": "The straightest arrow at the party — which, tonight, everyone suddenly finds suspicious in itself.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "I manage money by day and grow foxglove by night, and I'm aware of exactly how that sentence sounds this evening.",
@@ -1547,6 +1573,7 @@
       "observable": "You did stretching circuits out by the cars for stretches of the evening 'to stay loose,' and repeatedly tried to corner Braun for 'five minutes, champ, just five' — witnesses noticed, because you announced it.",
       "seen_as": "The intense trainer with the public grudge — too loud to be sneaky, which is either his defense or his cover.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "I train twelve of the twenty richest people in this county. Eleven of them show up. We were all here tonight to celebrate number twelve.",
@@ -1623,6 +1650,7 @@
       "observable": "You withdrew to your study mid-party, as you always do — 'the host must count the silver' — carrying a single glass and expecting a delivery.",
       "seen_as": "The most generous man in the county, by the people he owns; a patient predator, by the people he doesn't.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "Welcome, welcome. Everything you see tonight I either inherited, earned, or acquired — and a gentleman never labels which.",
@@ -1680,6 +1708,7 @@
       "observable": "You never leave the kitchen except to glare at the service counter paperwork, and you can account for every knife in the house by heart — you counted them, loudly, at half past ten.",
       "seen_as": "The tyrant of the kitchen — terrifying, incorruptible, and weirdly the most trustworthy person in the building.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "Seven years I cook for this house. Twelve courses tonight. Twelve! And they will remember the evening for everything except the food. C'est la vie, c'est la mort.",
@@ -1737,6 +1766,7 @@
       "observable": "You carry a pincushion cuff on your wrist and openly appraise every garment in the room; you can tell anyone who changed clothes tonight, and when, without checking notes.",
       "seen_as": "The stylist who knows where all the bodies are buttoned.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "I dressed eleven people in this room, so believe me when I say: I know everyone's measurements and half their secrets. They come out in fittings. Both.",
@@ -1794,6 +1824,7 @@
       "observable": "Your hands have been trembling since you opened the study door at ten to ten and found him — the doctor poured your coffee for you — but your memory for the evening's comings and goings remains terrifyingly exact.",
       "seen_as": "The institution — the one person who has always been here, knows how everything is done, and says nothing until it counts.",
       "rival_character_id": null,
+      "ability_ids": [],
       "dialogue": {
         "life": [
           "Forty years of service to this family, sir. I buried the old master and I had hoped, sincerely, to be buried before the young one.",

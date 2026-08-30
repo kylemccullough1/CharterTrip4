@@ -355,6 +355,13 @@ public sealed class MysteryCharacter
     /// <summary>The other claimant, for the two inheritance players.</summary>
     public string? RivalCharacterId { get; set; }
 
+    /// <summary>
+    /// Which of the faction's abilities this character holds, when it is not all of them. Empty
+    /// means every ability the faction lists. The investigators are the case: three of them, and
+    /// each carries one tool — two with Forensics, one with the Hard Question.
+    /// </summary>
+    public List<string> AbilityIds { get; set; } = [];
+
     // --- their material -----------------------------------------------------------------------
 
     public MysteryDialogue Dialogue { get; set; } = new();

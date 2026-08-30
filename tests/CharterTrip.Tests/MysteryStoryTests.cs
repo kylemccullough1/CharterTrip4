@@ -249,9 +249,9 @@ public class MysteryStoryTests
                 Assert.Contains(ability.Target, new[] { "character", "clue", "none" });
     }
 
-    /// <summary>The blame is one shared charge with nothing to choose, and it comes after the first trial.</summary>
+    /// <summary>The blame is one shared charge with nothing to choose, live from the study like everything else.</summary>
     [Fact]
-    public void The_minions_blame_is_modeless_shared_and_unlocks_at_the_deliberation()
+    public void The_minions_blame_is_modeless_shared_and_live_from_the_study()
     {
         var blame = Assert.Single(Story.Faction("minion")!.Abilities);
 
@@ -260,7 +260,38 @@ public class MysteryStoryTests
         Assert.True(blame.Shared);
         Assert.Equal(1, blame.Charges);
         Assert.Equal("none", blame.Target);
-        Assert.Equal(MysteryPhase.Discussion2, blame.Unlock);
+        Assert.Equal(MysteryPhase.StudyScene, blame.Unlock);
+    }
+
+    /// <summary>Every power is live from the moment roles drop, and stays live: nothing waits for a later phase.</summary>
+    [Fact]
+    public void Every_power_is_live_from_the_study()
+    {
+        foreach (var faction in Story.Factions)
+            foreach (var ability in faction.Abilities)
+                Assert.Equal(MysteryPhase.StudyScene, ability.Unlock);
+    }
+
+    /// <summary>
+    /// Three investigators, one tool each: two carry Forensics and one carries the Hard Question.
+    /// The desperate get one card to work on, not two.
+    /// </summary>
+    [Fact]
+    public void The_investigators_hold_one_tool_each_and_the_desperate_get_one_card()
+    {
+        var trip = new TripData();
+        StoryLoader.SeedInto(trip);
+
+        var tools = Story.Guests.Where(c => c.FactionId == "detective")
+            .Select(c => Assert.Single(AbilityService.AbilitiesFor(trip, c.Id)).Id)
+            .OrderBy(id => id)
+            .ToList();
+
+        Assert.Equal(["killer_check", "tamper_check", "tamper_check"], tools);
+        Assert.DoesNotContain(Story.Faction("detective")!.Abilities, a => a.Id == "sync");
+
+        var frame = Assert.Single(Story.Faction("jester")!.Abilities);
+        Assert.Equal(1, frame.Charges);
     }
 
     [Fact]

@@ -72,7 +72,7 @@
                     </div>
 
                     <p class="pr-where"><b>Hide it:</b> @(Written(Story.Zone(clue.ZoneId)?.ClueSpot) ?? "—")</p>
-                    <p class="pr-token">Card @TokenFor(clue.Id) — or type <b>@TokenFor(clue.Id)</b> at <b>@JoinHost/join</b></p>
+                    <p class="pr-token">Card @TokenFor(clue.Id) — or go to <b>@JoinHost/@TokenFor(clue.Id)</b></p>
                 </article>
             }
         </section>

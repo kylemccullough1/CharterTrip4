@@ -13,13 +13,20 @@ namespace CharterTrip.Core.Mystery;
 /// </summary>
 public static class AbilityService
 {
-    /// <summary>Everything this character could ever do. Empty for staff and for villagers.</summary>
+    /// <summary>
+    /// Everything this character could ever do. Empty for staff and for villagers. A character
+    /// that names their own <see cref="MysteryCharacter.AbilityIds"/> holds only those of the
+    /// faction's abilities; the rest hold all of them.
+    /// </summary>
     public static IReadOnlyList<MysteryAbility> AbilitiesFor(TripData trip, string characterId)
     {
         var character = trip.Mystery.Story.Character(characterId);
         if (character is null || character.IsStaff) return [];
 
-        return trip.Mystery.Story.Faction(character.FactionId)?.Abilities ?? [];
+        var all = trip.Mystery.Story.Faction(character.FactionId)?.Abilities ?? [];
+        if (character.AbilityIds.Count == 0) return all;
+
+        return all.Where(a => character.AbilityIds.Contains(a.Id)).ToList();
     }
 
     /// <summary>

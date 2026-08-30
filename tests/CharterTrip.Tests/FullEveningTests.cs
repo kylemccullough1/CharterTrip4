@@ -185,8 +185,7 @@ public class FullEveningTests
                     ScanShareService.Tamper(t, clues[0], "subtle", jester.Id, jester.Id, At(minute + 1));
 
             foreach (var detective in story.Guests.Where(c => c.FactionId == "detective"))
-                AbilityService.TryFire(t, detective.Id, "sync", At(minute + 2),
-                    targetCharacterId: guests[0], result: "testimony");
+                AbilityService.TryFire(t, detective.Id, "tamper_check", At(minute + 2), targetClueId: clues[0]);
         }, TripArea.Mystery);
     }
 

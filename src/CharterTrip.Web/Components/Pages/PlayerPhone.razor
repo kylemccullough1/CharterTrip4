@@ -135,6 +135,10 @@ else
             // ---------------------------------------------------------------------- the house
             case "Map":
                 <ManorMap Trip="Trip" Highlight="@MapHighlight" Viewer="@Me.Id" ShowPins="@RolesRevealed" ShowTrail="@TrailVisible" />
+                @if (RolesRevealed)
+                {
+                    @CardBox
+                }
                 break;
 
             // ------------------------------------------------------------ what you were told
@@ -429,6 +433,8 @@ else
 
             // ------------------------------------------------------------------------- clues
             case "Clues":
+                @CardBox
+
                 @if (MyClues.Count == 0)
                 {
                     <p class="mp-empty-note">You haven't found anything. Nine cards are hidden in this house.</p>
@@ -498,10 +504,50 @@ else
     protected override TripArea Watching => TripArea.Mystery;
 
     private string _tab = "You";
+    private string _cardCode = "";
+    private string? _cardError;
     private string _target = "";
     private string _targetClue = "";
     private string? _fired;
     private bool _showCode;
+
+    /// <summary>
+    /// Found a card, camera won't focus: type its number here. Goes to the card's own page, which
+    /// is the one place a scan is recorded — so this is a scan in every way that matters, made by
+    /// whoever is signed in on this phone.
+    /// </summary>
+    private RenderFragment CardBox => @<section class="mp-card mp-cardbox">
+        <h3 class="mp-card-title">Found a card?</h3>
+        <form class="mp-cardbox-row" @onsubmit="OpenCardAsync" @onsubmit:preventDefault="true">
+            <input class="mp-cardbox-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2"
+                   placeholder="№" aria-label="Card number" @bind="_cardCode" @bind:event="oninput" />
+            <button class="btn btn-gold btn-sm" type="submit" disabled="@string.IsNullOrWhiteSpace(_cardCode)">Open it</button>
+        </form>
+        <p class="muted tiny">Type the number printed under the card's code. It counts exactly like scanning it.</p>
+        @if (_cardError is { } cardError)
+        {
+            <p class="mp-cardbox-error">@cardError</p>
+        }
+    </section>;
+
+    private Task OpenCardAsync()
+    {
+        var typed = new string((_cardCode ?? "").Where(char.IsDigit).ToArray());
+        var state = Trip.Mystery.Play.ClueStates.FirstOrDefault(s => s.Token == typed);
+
+        if (typed.Length == 0 || state is null)
+        {
+            _cardError = typed.Length == 0
+                ? "Type the card's number."
+                : $"There's no card {typed}. They're numbered 1 to {Trip.Mystery.Play.ClueStates.Count}.";
+            return Task.CompletedTask;
+        }
+
+        _cardError = null;
+        var page = $"/m/clue/{Uri.EscapeDataString(state.Token)}";
+        Nav.NavigateTo(IsSimPhone ? $"{page}?sim={Sim}" : page);
+        return Task.CompletedTask;
+    }
 
     /// <summary>What goes in the code on this phone: the same URL the printed badge carries.</summary>
     private string? BadgeUrl =>

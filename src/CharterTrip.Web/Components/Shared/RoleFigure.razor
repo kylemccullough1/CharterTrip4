@@ -115,18 +115,18 @@
         <p class="pf-caption">
             @if (OnCards)
             {
-                <span>On the card itself — scan any clue card, and this is under it. From @Phase(CardAbility!.Unlock).</span>
+                <span>On the card itself — scan any clue card, and this is under it, @Phase(CardAbility!.Unlock).</span>
             }
             else if (faction.Abilities.Count > 0)
             {
                 @foreach (var ability in faction.Abilities)
                 {
-                    <span class="pf-when" @key="ability.Id"><b>@ability.Name</b> · Role tab · from @Phase(ability.Unlock)</span>
+                    <span class="pf-when" @key="ability.Id"><b>@ability.Name</b> · Role tab · @Phase(ability.Unlock)</span>
                 }
             }
             else
             {
-                <span>Your Role tab, from the study.</span>
+                <span>Your Role tab, from the study on.</span>
             }
         </p>
     </div>
@@ -154,11 +154,11 @@
         return end > 0 ? written[..(end + 1)] : written;
     }
 
-    private static string Phase(MysteryPhase phase) => MysteryPhases.Label(phase).ToLowerInvariant() switch
+    private static string Phase(MysteryPhase phase) => phase switch
     {
-        "the study" => "the study",
-        "investigation" => "the investigation",
-        "deliberation" => "the deliberation after the first trial",
-        var other => other
+        MysteryPhase.StudyScene => "any time after the murder",
+        MysteryPhase.Investigation => "from the investigation on",
+        MysteryPhase.Discussion2 => "from the deliberation after the first trial",
+        var other => "from " + MysteryPhases.Label(other).ToLowerInvariant()
     };
 }

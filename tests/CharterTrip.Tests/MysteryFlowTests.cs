@@ -325,12 +325,17 @@ public class MysteryFlowTests
         var trip = In(MysteryPhase.Discussion2);
         AbilityService.TryFire(trip, "giuliana", "loyalty", At(0));
 
-        Assert.Equal("killer", AbilityService.TryFire(trip, "molly", "killer_check", At(1), targetCharacterId: "solomon")!.Result);
-        Assert.Equal("clean", AbilityService.TryFire(trip, "martha", "killer_check", At(1), targetCharacterId: "wilhelm")!.Result);
+        // Remington carries the Hard Question; Molly and Martha carry Forensics and cannot ask it.
         Assert.Equal("killer", AbilityService.TryFire(trip, "remington", "killer_check", At(1), targetCharacterId: "giuliana")!.Result);
+        Assert.Null(AbilityService.TryFire(trip, "molly", "killer_check", At(1), targetCharacterId: "solomon"));
+        Assert.Null(AbilityService.TryFire(trip, "martha", "killer_check", At(1), targetCharacterId: "wilhelm"));
+
+        var second = new TripData(); StoryLoader.SeedInto(second); CastingService.OpenDoors(second, new Random(1));
+        second.Mystery.Phase = MysteryPhase.StudyScene;
+        Assert.Equal("clean", AbilityService.TryFire(second, "remington", "killer_check", At(1), targetCharacterId: "wilhelm")!.Result);
 
         // Spent and answered, so it shows up beside the conversations.
-        Assert.Single(InteractionService.ResultsFor(trip, "molly"));
+        Assert.Single(InteractionService.ResultsFor(trip, "remington"));
         Assert.Equal("KILLER", AbilityService.ResultLabel("killer"));
     }
 
@@ -339,9 +344,9 @@ public class MysteryFlowTests
     {
         var trip = In(MysteryPhase.Discussion2);
 
-        Assert.Null(AbilityService.TryFire(trip, "molly", "killer_check", At(1)));
+        Assert.Null(AbilityService.TryFire(trip, "remington", "killer_check", At(1)));
         Assert.Null(AbilityService.TryFire(trip, "molly", "tamper_check", At(1)));
-        Assert.Equal(1, AbilityService.ChargesRemaining(trip, "molly", AbilityService.AbilitiesFor(trip, "molly").First(a => a.Id == "killer_check")));
+        Assert.Equal(1, AbilityService.ChargesRemaining(trip, "molly", AbilityService.AbilitiesFor(trip, "molly").First(a => a.Id == "tamper_check")));
     }
 
     [Fact]
@@ -356,7 +361,10 @@ public class MysteryFlowTests
 
         Assert.Equal("untouched", AbilityService.TryFire(trip, "molly", "tamper_check", At(1), targetClueId: clues[0].Id)!.Result);
         Assert.Equal("planted", AbilityService.TryFire(trip, "martha", "tamper_check", At(1), targetClueId: clues[1].Id)!.Result);
-        Assert.Equal("scrubbed", AbilityService.TryFire(trip, "remington", "tamper_check", At(1), targetClueId: clues[2].Id)!.Result);
+
+        // Remington carries the Hard Question, not Forensics.
+        Assert.Null(AbilityService.TryFire(trip, "remington", "tamper_check", At(1), targetClueId: clues[2].Id));
+        Assert.Equal("scrubbed", AbilityService.ResultFor(trip, "tamper_check", null, clues[2].Id));
         Assert.Equal("planted", AbilityService.ResultFor(trip, "tamper_check", null, clues[3].Id));
     }
 
@@ -549,7 +557,7 @@ public class MysteryFlowTests
         Assert.True(TripMigrations.Apply(seeded));
         Assert.Equal(TripMigrations.CurrentVersion, seeded.SchemaVersion);
         Assert.Empty(seeded.Mystery.Story.Faction("minion")!.Abilities[0].Modes);
-        Assert.Equal(MysteryPhase.Discussion2, seeded.Mystery.Story.Faction("minion")!.Abilities[0].Unlock);
+        Assert.Equal(MysteryPhase.StudyScene, seeded.Mystery.Story.Faction("minion")!.Abilities[0].Unlock);
         Assert.Contains(seeded.Mystery.Story.Slides, s => s.Figure == "map");
 
         var never = new TripData { SchemaVersion = 33 };

@@ -16,7 +16,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 36;
+    public const int CurrentVersion = 37;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -53,6 +53,7 @@ public static class TripMigrations
         if (trip.SchemaVersion < 34) changed |= ToV34_TheEveningIsShorter(trip);
         if (trip.SchemaVersion < 35) changed |= ToV35_NoChampagneTower(trip);
         if (trip.SchemaVersion < 36) changed |= ToV36_TheRolesAreBriefed(trip);
+        if (trip.SchemaVersion < 37) changed |= ToV37_TheCardsAreNumbered(trip);
 
         // v19 carried the seed's hand-written word list across to a file that predated the
         // bee. No step any more: v20 deals the list instead of shipping one, so there is
@@ -1027,12 +1028,17 @@ public static class TripMigrations
         if (!trip.Mystery.Story.Seeded) return false;
 
         trip.Mystery.Story = StoryLoader.Load();
-
-        // The clue cards are numbered 1 to 9 now rather than carrying a random token; a game that
-        // already opened its doors gets the numbers so its print sheet and /join agree.
-        CastingService.NumberTheClues(trip);
         return true;
     }
+
+    /// <summary>
+    /// v37 numbers the clue cards 1 to 9 in story order, in place of the random token each used to
+    /// carry: the number is the card's code now, and /1 opens card 1. Its own step rather than a
+    /// line in v36, because a file that climbed to 36 on a build before the numbering existed
+    /// would otherwise keep its old tokens and a print sheet that matched nothing.
+    /// </summary>
+    private static bool ToV37_TheCardsAreNumbered(TripData trip) =>
+        CastingService.NumberTheClues(trip);
 
     private static bool ToV29_StoryMode(TripData trip)
     {

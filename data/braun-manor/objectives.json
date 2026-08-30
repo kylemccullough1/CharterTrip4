@@ -39,7 +39,7 @@
     {
       "id": "killer-tamper-how",
       "label": "The Syndicate's hand",
-      "text": "The three of you share one touch on the evidence tonight, and it's live now. Stand at any clue card, pick who your story points at, and Plant something of theirs or Scrub the card. The moment it fires, all three of your alibis change to put that person near the study — so decide together, and decide who.",
+      "text": "The three of you share one touch on the evidence tonight, and it's live from now on. Stand at any clue card, pick who your story points at, and Plant something of theirs or Scrub the card. The moment it fires, all three of your alibis change to put that person near the study — so decide together, and decide who.",
       "phase": "investigation",
       "audience": "faction",
       "faction_id": "killer",
@@ -57,7 +57,7 @@
     {
       "id": "jester-tamper-how",
       "label": "Point it at yourself",
-      "text": "The room is looking for a killer. Make sure what they find points at you. Stand at a clue card and Incriminate Yourself — Subtle or Blatant, twice tonight — and from then on your own answers start confessing. Be seen somewhere you shouldn't be.",
+      "text": "The room is looking for a killer. Make sure what they find points at you. Stand at one clue card — you get one — and Incriminate Yourself, Subtle or Blatant, and from then on your own answers start confessing. Be seen somewhere you shouldn't be.",
       "phase": "investigation",
       "audience": "faction",
       "faction_id": "jester",
@@ -84,8 +84,8 @@
     {
       "id": "tamper-hunt",
       "label": "Which card was touched?",
-      "text": "Forensics is ready. Compare the clue cards you've each scanned, decide which one smells wrong, and spend it on that card. Find the tampered card and you find the Syndicate's fingerprints.",
-      "phase": "discussion2",
+      "text": "Forensics is live for two of you. Compare the clue cards you've each scanned, decide which one smells wrong, and spend it on that card. Find the tampered card and you find the Syndicate's fingerprints.",
+      "phase": "investigation",
       "audience": "faction",
       "faction_id": "detective",
       "slots": []
@@ -93,8 +93,8 @@
     {
       "id": "hard-question",
       "label": "Find the killer",
-      "text": "The Hard Question is ready. Confer with your fellow investigators, pick the one guest whose answer decides everything, and ask it. Then trust what it tells you — unless you have a reason not to.",
-      "phase": "discussion2",
+      "text": "The Hard Question is live for one of you. Confer with your fellow investigators, pick the one guest whose answer decides everything, and ask it. Then trust what it tells you — unless you have a reason not to.",
+      "phase": "investigation",
       "audience": "faction",
       "faction_id": "detective",
       "slots": []
@@ -102,8 +102,8 @@
     {
       "id": "take-the-blame",
       "label": "Take the blame",
-      "text": "Between the two of you, one may Take the Blame tonight. Do it and, if convicted, your card reads KILLER and the room counts you as one of the hands. Hold it for the final deliberation if you'd rather — it dies unspent at the last verdict.",
-      "phase": "discussion2",
+      "text": "Between the two of you, one may Take the Blame tonight, whenever you choose. Do it and, if convicted, your card reads KILLER and the room counts you as one of the hands. Hold it as long as you like — it dies unspent at the last verdict.",
+      "phase": "investigation",
       "audience": "faction",
       "faction_id": "minion",
       "slots": []
@@ -111,8 +111,8 @@
     {
       "id": "dig-dirt",
       "label": "Family secrets",
-      "text": "Family Secrets is ready. Pick your target — your rival, or whoever the room might convict instead of you — and pull their motive into the light. The estate goes to the last claimant standing.",
-      "phase": "discussion2",
+      "text": "Family Secrets is live, whenever you want it. Pick your target — your rival, or whoever the room might convict instead of you — and pull their motive into the light. The estate goes to the last claimant standing.",
+      "phase": "investigation",
       "audience": "faction",
       "faction_id": "inheritance",
       "slots": []

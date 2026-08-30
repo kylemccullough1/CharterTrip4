@@ -30,7 +30,7 @@
       "bullets": [
         "Not everyone here is a simple guest — some of you belong to something larger, and it's on your Role tab from the moment the house needs you to know.",
         "Your faction tells you what you know, who you can trust, and what winning means for you tonight. Each one is explained next — so everybody knows what everybody else might be.",
-        "Powers appear on your phone only when they come live. If you don't see one yet, it isn't yours yet."
+        "Every power comes live the moment the house reaches the study, and stays live to the end. If you don't see one on your phone, it isn't yours."
       ],
       "braun_says": "Every party has its little societies — the loyal, the desperate, the ones taking notes. Tonight, yours comes with instructions. Check your role in private. Then lie about it in public, as is traditional.",
       "figure": "factions",
@@ -41,7 +41,7 @@
       "title": "The Syndicate Hand",
       "bullets": [
         "Three of you, one murder. You know each other, and you know how it was done — get one story straight before anyone asks.",
-        "One shared power, from the investigation. Stand at any clue card, scan it, and choose who your story points at. Then choose one of two. Plant: that guest's belongings are written into the card, half-hidden in the scene, for everyone who scans it after you. Scrub: the card is wiped — anyone scanning it after you finds only a disturbed scene and the certainty that someone got there first.",
+        "One shared power, any time after the murder. Stand at any clue card, scan it, and choose who your story points at. Then choose one of two. Plant: that guest's belongings are written into the card, half-hidden in the scene, for everyone who scans it after you. Scrub: the card is wiped — anyone scanning it after you finds only a disturbed scene and the certainty that someone got there first.",
         "Plant frames somebody; Scrub destroys evidence, but announces there was some. Either way, whoever scanned the card before you keeps the original, and all three of your answers change to put that guest near the study. The card shows you what it would say before you commit. You win if at least two of you are still free after the final trial."
       ],
       "braun_says": "Some of my guests have done something terrible, together, and are about to be very good at lying about it. I mention this only so the rest of you know what you're up against.",
@@ -53,7 +53,7 @@
       "title": "Syndicate Associates",
       "bullets": [
         "Two of you. You know all three of the Syndicate's hands; nobody else at this party knows you.",
-        "One shared power, from the deliberation after the first trial: on your Role tab, Take the Blame. If the room then convicts you, your card reads KILLER and counts as one — a hand walks free in your place.",
+        "One shared power, any time after the murder: on your Role tab, Take the Blame. If the room then convicts you, your card reads KILLER and counts as one — a hand walks free in your place.",
         "You win with the Syndicate."
       ],
       "braun_says": "Every criminal enterprise has its associates — the ones who made the noise and carried the messages. They protect the hands. The hands, I'm told, do not always return the favour.",
@@ -64,9 +64,9 @@
       "id": "role-detective",
       "title": "The Investigators",
       "bullets": [
-        "Three of you, and you can trust each other completely.",
-        "Phone Sync, twice, from the study: on your Role tab, choose a guest — your phone and theirs swap everything you've each scanned.",
-        "Forensics and the Hard Question, once each, from the deliberation after the first trial: choose a card you've scanned to learn whether it was touched, or choose a guest to learn KILLER or NOT A KILLER. The answers land under Interactions."
+        "Three of you, and you can trust each other completely. Each of you carries one tool, and your Role tab says which.",
+        "Forensics — two of you have it, once each: choose a card you've scanned and learn whether it was untouched, planted, or scrubbed.",
+        "The Hard Question — one of you has it, once: choose a guest and learn KILLER or NOT A KILLER. Both are live from the study on; the answers land under Interactions, and the three of you decide together when to spend them."
       ],
       "braun_says": "There are people here who are paid to notice things. Three of them, by my count. They have more tools than the rest of you — and every innocent they hang is a gift to the guilty.",
       "figure": "role:detective",
@@ -77,7 +77,7 @@
       "title": "The Desperate",
       "bullets": [
         "You work alone, and you want the room to convict you. Infamy is the only thing this evening gives away free.",
-        "Incriminate Yourself, twice, from the investigation: stand at a clue card, scan it, and choose Subtle or Blatant — your own belongings appear in the card, and your answers start confessing.",
+        "Incriminate Yourself, once, any time after the murder: stand at one clue card, scan it, and choose Subtle or Blatant — your own belongings appear in that card, and your answers start confessing.",
         "You win if the room sends you down at any trial."
       ],
       "braun_says": "And one or two of you — I won't say who — would rather be famous than free. Do bear that in mind when somebody is confessing a little too readily.",
@@ -89,7 +89,7 @@
       "title": "The Braun Claim",
       "bullets": [
         "Two of you, rivals for everything James leaves behind. You know exactly who the other is.",
-        "Family Secrets, once, from the deliberation after the first trial: on your Role tab, choose a guest — you receive what a third party says about them behind their back. Ammunition, not proof; make it sound like proof.",
+        "Family Secrets, once, any time after the murder: on your Role tab, choose a guest — you receive what a third party says about them behind their back. Ammunition, not proof; make it sound like proof.",
         "You win if your rival is convicted at a trial and you never are."
       ],
       "braun_says": "Then there is the small matter of my estate, and the two people with a legal path to it. An estate divides much more cleanly by one. They have both done the arithmetic.",

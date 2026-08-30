@@ -6687,3 +6687,16 @@ h1:focus { outline: none; }
 
 /* The slide's two columns give the figure the room; a phone is tall rather than wide. */
 .ms-slide.has-figure:has(.pf) { grid-template-columns: minmax(28ch, 1.4fr) minmax(0, 1fr); align-items: start; }
+
+/* --- typing a card's number on the phone ------------------------------------------ */
+
+.mp-cardbox { border-color: var(--gold-dim); }
+.mp-cardbox-row { display: flex; gap: 8px; align-items: stretch; margin: 0; }
+.mp-cardbox-input {
+  flex: 0 0 5.2rem; min-width: 0;
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--panel-2); color: var(--text);
+  font-family: var(--display); font-size: 1.35rem; text-align: center; letter-spacing: .05em;
+}
+.mp-cardbox-input:focus { outline: none; border-color: var(--gold); }
+.mp-cardbox-error { margin: 0; color: #f0b6bb; font-size: .85rem; }

@@ -38,25 +38,28 @@
                 </p>
             </div>
 
-            @* The standings are the committee's to read: half of what is on this board comes
-               out of games that have not been played in front of anybody yet, and a guest
-               seeing a running total invites questions nobody wants to answer mid-weekend. *@
-            @if (CanEdit)
-            {
+            @* Everybody sees the order; only the committee sees the numbers. Half of what is on
+               this board comes out of games that have not been played in front of anybody yet,
+               and a guest seeing a running total invites questions nobody wants to answer
+               mid-weekend — but who is ahead of whom is exactly the thing worth arguing about
+               in the van. *@
             <div class="hero-board">
                 <div class="hero-board-head">
                     <span class="hb-label">@(AnyScores ? "Current standings" : "Standings — no points yet")</span>
-                    <span class="row gap">
-                        @* Where the committee puts a thumb on the scale: a point for the best
-                           costume, ten off for the team that lost the van keys. *@
-                        <a class="btn btn-ghost btn-xs" href="/points">Edit points</a>
-                        @if (AnyScores)
-                        {
-                            <button class="btn btn-ghost btn-xs" @onclick="ConfirmResetPoints">Reset points</button>
-                        }
-                    </span>
+                    @if (CanEdit)
+                    {
+                        <span class="row gap">
+                            @* Where the committee puts a thumb on the scale: a point for the best
+                               costume, ten off for the team that lost the van keys. *@
+                            <a class="btn btn-ghost btn-xs" href="/points">Edit points</a>
+                            @if (AnyScores)
+                            {
+                                <button class="btn btn-ghost btn-xs" @onclick="ConfirmResetPoints">Reset points</button>
+                            }
+                        </span>
+                    }
                 </div>
-                <div class="hb-rows">
+                <div class="hb-rows @(CanEdit ? "" : "is-ranks")">
                     @{ var top = Standings.Count > 0 ? Math.Max(1, Standings[0].Total) : 1; }
                     @for (var i = 0; i < Standings.Count; i++)
                     {
@@ -66,12 +69,15 @@
                             <span class="hb-rank">@(i + 1)</span>
                             <span class="hb-dot" style="background: @row.Team.Color"></span>
                             <span class="hb-name">@row.Team.Name</span>
-                            <span class="hb-bar"><i style="width: @pct%; background: @row.Team.Color"></i></span>
-                            <span class="hb-pts">@row.Total</span>
+                            @if (CanEdit)
+                            {
+                                <span class="hb-bar"><i style="width: @pct%; background: @row.Team.Color"></i></span>
+                                <span class="hb-pts">@row.Total</span>
+                            }
                         </div>
                     }
                 </div>
-                @if (AnyScores)
+                @if (AnyScores && CanEdit)
                 {
                     <p class="hb-foot muted">
                         <b>@Standings[0].Team.Name</b> leads by
@@ -79,7 +85,6 @@
                     </p>
                 }
             </div>
-            }
 
             <div class="hero-cd">
                 <b>@_countdown.Headline</b><span>@_countdown.Detail</span>

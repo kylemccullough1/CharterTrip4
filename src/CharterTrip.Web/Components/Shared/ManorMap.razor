@@ -18,10 +18,15 @@
    earn their place: they sit between the Sitting Room and the study and are the reason the study has
    only two ways in.
 
-   Four modes, one component: labels only before the murder, evidence dots during the investigation,
-   the scan trail once the detectives need it, and the cards themselves laid into their rooms when
-   the room is talking it through. One component rather than four, so the gate that hides where
-   people walked lives in exactly one place and cannot half-open. *@
+   Three modes, one component: labels only before the murder, evidence dots during the
+   investigation, and the scan trail once the detectives need it. One component rather than three,
+   so the gate that hides where people walked lives in exactly one place and cannot half-open. The
+   found cards used to be laid into their rooms on the television during the deliberations; they
+   are not any more — what a card says is only on the phones of the people who walked to it.
+
+   Whose map it is matters. On a phone the dots are that person's: a card they have read, or one
+   they have not — never "somebody found this", which told the whole house what the whole house
+   had found. The television passes no viewer and gets no dots at all. *@
 
 <div class="mm-wrap @(Big ? "is-big" : "")">
     <div class="mm">
@@ -29,7 +34,7 @@
         @* Roped off for the night, and drawn so people stop asking. *@
         @foreach (var shut in Closed)
         {
-            <div class="mm-room is-shut" style="@Box(shut.Where)" @key="shut.Name">
+            <div class="mm-room is-shut @(Narrow(shut.Where) ? "is-narrow" : "")" style="@Box(shut.Where)" @key="shut.Name">
                 <span class="mm-name"><span class="mm-wide">@shut.Name</span><span class="mm-narrow">@(shut.Short ?? shut.Name)</span></span>
                 @if (shut.Sub is { } sub)
                 {
@@ -45,9 +50,10 @@
 
             var clueId = ClueIn(room.Id);
             var hasClue = clueId.Length > 0;
-            var found = ShowPins && hasClue && ScanShareService.IsFound(Trip, clueId);
+            var found = ShowPins && hasClue && Found(clueId);
             var seen = ShowTrail && hasClue ? TrailCount(room.Id) : 0;
             var here = room.Id == Highlight;
+            var narrow = Narrow(room.Parts[0]);
 
             @* The outdoors wraps the house, so the Lawn and the Drive are each several shapes. The
                rest of the room is drawn first and drawn bare — one name, one dot and one card per
@@ -59,15 +65,17 @@
                      @key="annex"></div>
             }
 
-            <div class="mm-room @(here ? "is-you" : "") @(zone.PlayersAllowed ? "" : "is-scene") @(found ? "has-card" : "")"
+            <div class="mm-room @(here ? "is-you" : "") @(zone.PlayersAllowed ? "" : "is-scene") @(found ? "has-card" : "") @(narrow ? "is-narrow" : "")"
                  style="@Box(room.Parts[0])"
                  @key="room.Id">
 
-                @* Two names, one shown. See Room.Short — the house is the real one now, and half its
-                   rooms are too narrow to hold their full name in a hand. *@
+                @* Two names, one shown. See Room.Short — the house is the real one, and half its
+                   rooms are too narrow to hold their full name in a hand. A narrow room takes the
+                   short name on every screen, because "Sitting Room & Stairs" does not go into
+                   nine per cent of a television either without breaking somewhere ugly. *@
                 <span class="mm-name"><span class="mm-wide">@zone.Name</span><span class="mm-narrow">@(room.Short ?? zone.Name)</span></span>
 
-                @if (here && !ShowCards)
+                @if (here)
                 {
                     <span class="mm-sub">you were here</span>
                 }
@@ -78,14 +86,6 @@
                        only its colour is news — a dot that appeared on being found made the rooms
                        nobody had searched look like rooms with nothing in them. *@
                     <span class="mm-dot @(found ? "is-found" : "")" aria-hidden="true"></span>
-                }
-
-                @if (ShowCards && found)
-                {
-                    @* The card itself, lying in the room it was found in. The board used to stack
-                       nine of these in a column, which threw away the one thing that makes them
-                       argue: where they were in relation to each other and to the study. *@
-                    <p class="mm-card" style="--lines:@Lines(room.Parts[0].H)">@ScanShareService.PublicReading(Trip, clueId)</p>
                 }
 
                 @if (seen > 0)
@@ -104,12 +104,11 @@
            explaining. A paragraph above the plan costs the plan a hundred pixels of
            height and is read once. *@
         <p class="mm-key">
-            @if (ShowCards)
+            @if (ShowPins)
             {
-                <span class="mm-key-item">Every card that has been found, lying in the room it was found in.</span>
+                <span class="mm-key-item"><i class="mm-dot" aria-hidden="true"></i> @(Viewer is null ? "a card nobody has found" : "a card you haven't read")</span>
+                <span class="mm-key-item"><i class="mm-dot is-found" aria-hidden="true"></i> @(Viewer is null ? "found and read out" : "read")</span>
             }
-            <span class="mm-key-item"><i class="mm-dot" aria-hidden="true"></i> a card nobody has found</span>
-            <span class="mm-key-item"><i class="mm-dot is-found" aria-hidden="true"></i> found and read out</span>
 
             @if (ShowTrail)
             {
@@ -125,14 +124,17 @@
     /// <summary>The room to mark as yours, if any.</summary>
     [Parameter] public string? Highlight { get; set; }
 
+    /// <summary>
+    /// Whose phone this is. With a viewer, a card is "found" when <em>they</em> have scanned it and
+    /// not otherwise; without one, when anybody has. The phone always passes one.
+    /// </summary>
+    [Parameter] public string? Viewer { get; set; }
+
     /// <summary>Evidence dots. Off before the murder — there is nothing to find yet.</summary>
     [Parameter] public bool ShowPins { get; set; }
 
     /// <summary>Who read what. Gated on the phase; see <c>PhaseService.TrailVisible</c>.</summary>
     [Parameter] public bool ShowTrail { get; set; }
-
-    /// <summary>Lay the found cards into their rooms. The board's discussion rounds.</summary>
-    [Parameter] public bool ShowCards { get; set; }
 
     /// <summary>Sized for a television rather than a hand.</summary>
     [Parameter] public bool Big { get; set; }
@@ -142,6 +144,11 @@
     private string ClueIn(string zoneId) =>
         Story.Clues.FirstOrDefault(c => c.ZoneId == zoneId)?.Id ?? "";
 
+    private bool Found(string clueId) =>
+        Viewer is { Length: > 0 } who
+            ? ScanShareService.HasScanned(Trip, who, clueId)
+            : ScanShareService.IsFound(Trip, clueId);
+
     /// <summary>
     /// Reads through <c>ScanShareService.Trail</c> rather than the scan list directly, so the phase
     /// gate applies even if a caller passes ShowTrail when it should not.
@@ -149,22 +156,10 @@
     private int TrailCount(string zoneId) => ScanShareService.Trail(Trip, ClueIn(zoneId)).Count;
 
     /// <summary>
-    /// How many lines of card this room can hold.
-    ///
-    /// The rooms are four different heights, so one clamp cannot fit them all: too generous and the
-    /// Entry cuts a sentence off mid-word with no ellipsis, too mean and the Kitchen wastes half its
-    /// box. Derived from the room's own height, so it stays right if a room moves.
-    ///
-    /// The Lawn is the exception that proves it worth deriving: it is the shortest box on the plan
-    /// and also the widest, so one line there holds a whole sentence.
+    /// A room too narrow for its full name at a size anybody could read. Under a seventh of the
+    /// plan's width: the Entry, the study, the Sitting Room and the west extension.
     /// </summary>
-    private static int Lines(int height) => height switch
-    {
-        >= 200 => 4,   // the Kitchen
-        >= 170 => 3,   // the Grand Hall and its extension, the Sitting Room, the Drive
-        >= 130 => 2,   // the Family Room, the study, the Entry
-        _ => 1         // the Lawn, which is a band rather than a box
-    };
+    private static bool Narrow(Rect r) => r.W < 180;
 
     /// <summary>
     /// Percentages of the 1296x946 floor plan, so the whole map scales to whatever it is put in and
@@ -183,11 +178,11 @@
     /// the evidence dot and the card, so it should be the roomiest — the outdoor zones wrap the
     /// house and would otherwise try to label a corridor.
     ///
-    /// <c>Short</c> is the name to use when the plan is in a hand. The real house is not the tidy
-    /// grid this used to draw: the Sitting Room is 9% of the plan's width, which is thirty pixels on
-    /// a 360px phone, and "Sitting Room &amp; Stairs" does not go in thirty pixels at any size anyone
-    /// could read. Floor plans have always labelled tersely for exactly this reason. Null means the
-    /// zone's own name is short enough already.
+    /// <c>Short</c> is the name to use when the room is narrow or the plan is in a hand. The real
+    /// house is not the tidy grid this used to draw: the Sitting Room is 9% of the plan's width,
+    /// which is thirty pixels on a 360px phone, and "Sitting Room &amp; Stairs" does not go in
+    /// thirty pixels at any size anyone could read. Floor plans have always labelled tersely for
+    /// exactly this reason. Null means the zone's own name is short enough already.
     /// </summary>
     private sealed record Room(string Id, string? Short, params Rect[] Parts);
 
@@ -197,19 +192,19 @@
     [
         // Indoors, north to south. Neighbours share an edge exactly, because a one-pixel gutter
         // between two rooms reads as a wall that isn't there.
-        new("extension_room", "Extension",  new Rect(283, 381, 167, 180)),
-        new("grand_hall",     null,         new Rect(450, 381, 318, 180)),
-        new("sitting_room",   "Sitting",    new Rect(768, 378, 122, 183)),
-        new("kitchen",        null,         new Rect(890, 345, 185, 220)),
-        new("family_room",    "Family",     new Rect(910, 565, 205, 136)),
-        new("study",          "Study",      new Rect(910, 701, 113, 137)),
-        new("entry",          null,         new Rect(1023, 701,  92, 137)),
+        new("extension_room", "Extension",    new Rect(283, 381, 167, 180)),
+        new("grand_hall",     null,           new Rect(450, 381, 318, 180)),
+        new("sitting_room",   "Sitting Room", new Rect(768, 378, 122, 183)),
+        new("kitchen",        null,           new Rect(890, 345, 185, 220)),
+        new("family_room",    null,           new Rect(910, 565, 205, 136)),
+        new("study",          "Study",        new Rect(910, 701, 113, 137)),
+        new("entry",          null,           new Rect(1023, 701,  92, 137)),
 
         // The drive is the apron the cars stand on, plus the asphalt that carries on around the
         // north and down the east side. That last leg is what puts it against the Entry and the
         // Kitchen's service door, which is the adjacency zones.json claims and the one the access
         // killer walked.
-        new("driveway", "Drive",
+        new("driveway", null,
             new Rect(460, 186, 430, 190),
             new Rect(890, 186, 398, 159),
             new Rect(1115, 345, 173, 507)),

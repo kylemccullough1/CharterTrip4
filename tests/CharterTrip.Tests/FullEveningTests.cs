@@ -123,7 +123,8 @@ public class FullEveningTests
                     while (await fx.Store.MutateAsync(t => PhaseService.NextSlide(t), TripArea.Mystery)) { }
                     break;
 
-                case MysteryPhase.Mingling:
+                case MysteryPhase.Introductions:
+                    await IntroduceAsync(fx, minute);
                     await MingleAsync(fx, minute);
                     break;
 
@@ -145,6 +146,12 @@ public class FullEveningTests
         }
 
         return fx;
+    }
+
+    /// <summary>Braun steps the room through everybody standing up, one at a time.</summary>
+    private static async Task IntroduceAsync(StoreFixture fx, int minute)
+    {
+        while (await fx.Store.MutateAsync(t => PhaseService.NextIntro(t, At(minute)), TripArea.Mystery)) { }
     }
 
     /// <summary>Everybody scans a few people. Not everybody meets everybody — they never do.</summary>
@@ -399,7 +406,7 @@ public class FullEveningTests
         foreach (var phase in new[]
                  {
                      MysteryPhase.Welcome, MysteryPhase.Presentation,
-                     MysteryPhase.Mingling, MysteryPhase.Murder
+                     MysteryPhase.Introductions, MysteryPhase.Murder
                  })
         {
             await fx.Store.MutateAsync(t => PhaseService.GoToPhase(t, phase, At(10)), TripArea.Mystery);
@@ -435,7 +442,12 @@ public class FullEveningTests
         Assert.Single(fx.Store.Current.Mystery.Play.ClueScans);
         Assert.Empty(ScanShareService.Trail(fx.Store.Current, clue));
 
+        // Still shut through the accusation round and the first trial: people accuse on what
+        // they were told, not on a log.
         await fx.Store.MutateAsync(t => PhaseService.GoToPhase(t, MysteryPhase.Discussion1, At(60)), TripArea.Mystery);
+        Assert.Empty(ScanShareService.Trail(fx.Store.Current, clue));
+
+        await fx.Store.MutateAsync(t => PhaseService.GoToPhase(t, MysteryPhase.Discussion2, At(80)), TripArea.Mystery);
         Assert.Single(ScanShareService.Trail(fx.Store.Current, clue));
     }
 
@@ -462,14 +474,14 @@ public class FullEveningTests
     {
         await using var fx = await ArrivedAsync();
 
-        await fx.Store.MutateAsync(t => PhaseService.GoToPhase(t, MysteryPhase.Mingling, At(20)), TripArea.Mystery);
+        await fx.Store.MutateAsync(t => PhaseService.GoToPhase(t, MysteryPhase.Introductions, At(20)), TripArea.Mystery);
         var after = fx.Store.Current.Mystery.Play.Objectives.Count;
-        Assert.True(after > 0, "mingling issued nothing at all");
+        Assert.True(after > 0, "the introductions issued nothing at all");
 
         await fx.Store.MutateAsync(t =>
         {
             PhaseService.GoToPhase(t, MysteryPhase.Presentation, At(21));
-            PhaseService.GoToPhase(t, MysteryPhase.Mingling, At(22));
+            PhaseService.GoToPhase(t, MysteryPhase.Introductions, At(22));
         }, TripArea.Mystery);
 
         Assert.Equal(after, fx.Store.Current.Mystery.Play.Objectives.Count);

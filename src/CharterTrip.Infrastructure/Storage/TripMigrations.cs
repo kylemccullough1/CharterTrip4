@@ -15,7 +15,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// </summary>
 public static class TripMigrations
 {
-    public const int CurrentVersion = 33;
+    public const int CurrentVersion = 35;
 
     /// <summary>Returns true if anything changed, so the caller knows to persist.</summary>
     public static bool Apply(TripData trip)
@@ -49,6 +49,8 @@ public static class TripMigrations
         if (trip.SchemaVersion < 31) changed |= ToV31_OneDoorPerGame(trip);
         if (trip.SchemaVersion < 32) changed |= ToV32_TheStoryIsWritten(trip);
         if (trip.SchemaVersion < 33) changed |= ToV33_TheBraunManor(trip);
+        if (trip.SchemaVersion < 34) changed |= ToV34_TheEveningIsShorter(trip);
+        if (trip.SchemaVersion < 35) changed |= ToV35_NoChampagneTower(trip);
 
         // v19 carried the seed's hand-written word list across to a file that predated the
         // bee. No step any more: v20 deals the list instead of shipping one, so there is
@@ -959,6 +961,58 @@ public static class TripMigrations
         }
 
         return changed;
+    }
+
+    /// <summary>
+    /// v34 reshapes the evening: an introductions round in place of the mingle, an accusation
+    /// round before the first trial, a final deliberation before the last, three questions on
+    /// every guest for the scan-to-scan conversations, the minions' blame in place of shield and
+    /// decoy, a map slide, and the lying rule put right.
+    ///
+    /// The same trade as v32: the shipped story replaces whatever is in the trip, so prose typed
+    /// into the editor since the last reload is discarded. Only for a trip that seeded — a trip
+    /// that never had a story is left with none. The play is untouched: seats, tokens, scans and
+    /// votes all key by id, and the ids did not move. The phase name itself is rewritten before
+    /// deserialization (<see cref="LegacyJsonShapes"/>), which is why nothing here maps it.
+    /// </summary>
+    private static bool ToV34_TheEveningIsShorter(TripData trip)
+    {
+        if (!trip.Mystery.Story.Seeded) return false;
+
+        trip.Mystery.Story = StoryLoader.Load();
+        return true;
+    }
+
+    /// <summary>
+    /// v35 rewrites the story again: the alibi question is "where were you when Braun was
+    /// murdered" rather than when a champagne tower fell, the sheets read in the second person,
+    /// everybody with a role has an epilogue for the ending, and two of three convictions is the
+    /// whole game. Same trade as v32 and v34 — the written copy replaces whatever was typed in
+    /// the editor — and the same guard.
+    ///
+    /// It also puts away every conversation that had already finished. Those used to vanish the
+    /// moment the last question was answered; now they stay on both phones until each side
+    /// closes them, and a file from before this would otherwise open every phone on a
+    /// conversation from an hour ago.
+    /// </summary>
+    private static bool ToV35_NoChampagneTower(TripData trip)
+    {
+        var changed = false;
+
+        foreach (var session in trip.Mystery.Play.Interactions.Where(i => !i.IsOpen))
+        {
+            foreach (var id in new[] { session.ACharacterId, session.BCharacterId })
+            {
+                if (session.ClosedBy.Contains(id)) continue;
+                session.ClosedBy.Add(id);
+                changed = true;
+            }
+        }
+
+        if (!trip.Mystery.Story.Seeded) return changed;
+
+        trip.Mystery.Story = StoryLoader.Load();
+        return true;
     }
 
     private static bool ToV29_StoryMode(TripData trip)

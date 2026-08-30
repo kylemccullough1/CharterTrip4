@@ -51,14 +51,59 @@ else
         {
             <section class="mp-card">
                 <h3 class="mp-card-title">You could work on this</h3>
-                @foreach (var option in Tampering)
+
+                @if (NeedsTarget)
                 {
-                    <button class="btn btn-sm btn-danger-ghost"
-                            @key="option.Key"
-                            @onclick="() => TamperAsync(option.Ability.Id, option.Mode.Id)">
-                        @option.Mode.Name
-                    </button>
+                    @* The Syndicate's touch points at somebody: their effects go on the card, and
+                       from this moment all three hands' answers put them near the study. Chosen
+                       here, in front of the card, because it is one decision and not two. *@
+                    <label class="sc-field">
+                        <span class="tiny">Who does your story point at?</span>
+                        <select class="se-select" @bind="_target">
+                            <option value="">choose a guest…</option>
+                            @foreach (var guest in Trip.Mystery.Story.Guests.Where(g => g.Id != Me.Id))
+                            {
+                                <option value="@guest.Id">@guest.Name</option>
+                            }
+                        </select>
+                    </label>
                 }
+
+                @* Each way of working on it, with the card as it would then read. One touch is all
+                   anybody gets, so both versions are on the screen before the choice is made. *@
+                <div class="mp-tamper-options">
+                    @foreach (var option in Tampering)
+                    {
+                        var ready = !NeedsTarget || !string.IsNullOrEmpty(_target);
+                        var preview = ready
+                            ? ScanShareService.Preview(Trip, Clue.Id, option.Mode.Id, PreviewTarget)
+                            : null;
+
+                        <section class="mp-tamper-option" @key="option.Key">
+                            <h4 class="mp-tamper-name">@option.Mode.Name</h4>
+                            @if (MysteryText.Written(option.Mode.Text) is { } how)
+                            {
+                                <p class="muted tiny">@how</p>
+                            }
+
+                            @if (preview is not null)
+                            {
+                                <p class="mp-tamper-kicker">The card would read</p>
+                                <p class="mp-tamper-preview">@preview</p>
+                            }
+                            else
+                            {
+                                <p class="muted tiny">Choose who your story points at to see how the card would read.</p>
+                            }
+
+                            <button class="btn btn-sm btn-danger-ghost"
+                                    disabled="@(!ready)"
+                                    @onclick="() => TamperAsync(option.Ability.Id, option.Mode.Id)">
+                                @option.Mode.Name this card
+                            </button>
+                        </section>
+                    }
+                </div>
                 <p class="muted tiny">Once. Somebody else may have got here first.</p>
             </section>
         }
@@ -81,6 +126,17 @@ else
     private bool RolesRevealed => PhaseService.RolesRevealed(Trip);
 
     private bool AlreadyTampered => Clue is not null && Trip.Mystery.Play.StateFor(Clue.Id)?.Tamper is not null;
+
+    /// <summary>Who a killer's plant or scrub points at. Jesters point at themselves.</summary>
+    private string _target = "";
+
+    /// <summary>The Syndicate's modes need a name; the jester's do not.</summary>
+    private bool NeedsTarget => Tampering.Any(o => o.Mode.Id is "plant" or "scrub");
+
+    /// <summary>Whose belongings the preview works in: the chosen guest, or the jester themselves.</summary>
+    private string? PreviewTarget => NeedsTarget
+        ? (string.IsNullOrEmpty(_target) ? null : _target)
+        : Me?.Id;
 
     /// <summary>Every mode of every ability this person holds that works on a card.</summary>
     private sealed record TamperOption(MysteryAbility Ability, MysteryAbilityMode Mode)
@@ -114,13 +170,24 @@ else
     /// Spend the charge and mark the card in one mutation, so a refused tamper never costs a charge
     /// and a spent charge never fails to land.
     /// </summary>
-    private Task TamperAsync(string abilityId, string mode) => MutateAsync(t =>
+    private Task TamperAsync(string abilityId, string mode)
     {
-        if (t.Mystery.Play.StateFor(Clue!.Id)?.Tamper is not null) return;
+        // A plant or a scrub frames the guest chosen above; a self-frame frames the jester.
+        var framed = mode is "plant" or "scrub"
+            ? (string.IsNullOrEmpty(_target) ? null : _target)
+            : Me!.Id;
 
-        if (AbilityService.TryFire(t, Me!.Id, abilityId, Clock.UtcNow, mode, targetClueId: Clue.Id) is null)
-            return;
+        if (framed is null) return Task.CompletedTask;
 
-        ScanShareService.Tamper(t, Clue.Id, mode, Me.Id, Me.Id, Clock.UtcNow);
-    });
+        return MutateAsync(t =>
+        {
+            if (t.Mystery.Play.StateFor(Clue!.Id)?.Tamper is not null) return;
+
+            if (AbilityService.TryFire(t, Me!.Id, abilityId, Clock.UtcNow, mode,
+                    targetCharacterId: framed, targetClueId: Clue.Id) is null)
+                return;
+
+            ScanShareService.Tamper(t, Clue.Id, mode, Me.Id, framed, Clock.UtcNow);
+        });
+    }
 }

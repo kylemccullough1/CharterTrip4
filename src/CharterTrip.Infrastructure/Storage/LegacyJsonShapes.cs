@@ -19,7 +19,57 @@ internal static class LegacyJsonShapes
 {
     /// <summary>Returns true if the document was rewritten and should be re-serialized.</summary>
     public static bool Normalize(JsonNode? root) =>
-        root is JsonObject document && DropPreV9JeopardyBoard(document) | DropPreV21Mystery(document);
+        root is JsonObject document
+        && DropPreV9JeopardyBoard(document) | DropPreV21Mystery(document) | RenameMinglingPhase(document);
+
+    /// <summary>
+    /// v34 renamed the party phase: <c>mingling</c> became <c>introductions</c>. The name is written
+    /// into a saved file in five places, and the same enum converter that made
+    /// <see cref="DropPreV21Mystery"/> necessary throws on the old one — so a trip saved during the
+    /// party, or one that ever issued that phase's objective, would quarantine the whole file.
+    /// Rewritten here, exactly and only where it is a phase name.
+    /// </summary>
+    private static bool RenameMinglingPhase(JsonObject document)
+    {
+        if (document["mystery"] is not JsonObject mystery) return false;
+
+        var changed = Rename(mystery, "phase");
+
+        if (mystery["play"] is JsonObject play)
+        {
+            changed |= RenameIn(play["objectives"], "issuedInPhase");
+            changed |= RenameIn(play["trials"], "phase");
+        }
+
+        if (mystery["story"] is JsonObject story)
+        {
+            changed |= RenameIn(story["objectives"], "phase");
+
+            if (story["factions"] is JsonArray factions)
+                foreach (var faction in factions.OfType<JsonObject>())
+                    changed |= RenameIn(faction["abilities"], "unlock");
+        }
+
+        return changed;
+
+        static bool RenameIn(JsonNode? list, string key)
+        {
+            if (list is not JsonArray items) return false;
+
+            var changed = false;
+            foreach (var item in items.OfType<JsonObject>()) changed |= Rename(item, key);
+            return changed;
+        }
+
+        static bool Rename(JsonObject owner, string key)
+        {
+            if (owner[key] is not JsonValue value) return false;
+            if (!value.TryGetValue<string>(out var text) || text != "mingling") return false;
+
+            owner[key] = "introductions";
+            return true;
+        }
+    }
 
     /// <summary>
     /// v21 rebuilt the murder mystery from the model up: a written story plus a phase machine,

@@ -160,6 +160,56 @@
                                         <EditableText Value="@character.TamperInsert"
                                                       ValueChanged="v => EditCharacterAsync(character.Id, c => c.TamperInsert = v)" />
                                     </Row>
+                                    <Row Label="At the end, if they won">
+                                        <EditableText Value="@character.Epilogue" Multiline Rows="4"
+                                                      ValueChanged="v => EditCharacterAsync(character.Id, c => c.Epilogue = v)" />
+                                    </Row>
+                                }
+
+                                @if (!character.IsStaff)
+                                {
+                                    @* The three things anybody can ask them. The phone shows these
+                                       in conversations; the prompts are what the asker sees, the
+                                       answers what this character reads out. Killers and jesters
+                                       also carry a cover version of the two that matter, with
+                                       {target} for whoever their tamper points at. *@
+                                    <h4 class="se-sub">Three questions</h4>
+
+                                    @if (character.Questions.Count < 3)
+                                    {
+                                        <button class="btn btn-ghost btn-xs" @onclick="() => AddQuestionsAsync(character.Id)">
+                                            Add the three questions
+                                        </button>
+                                    }
+
+                                    @foreach (var q in character.Questions)
+                                    {
+                                        <div class="se-question" @key="q.Id">
+                                            <Row Label="Kind">
+                                                <select class="se-select" value="@q.Importance"
+                                                        @onchange="e => SetImportanceAsync(character.Id, q.Id, e.Value)">
+                                                    <option value="Alibi">Alibi — where they were</option>
+                                                    <option value="Important">Important</option>
+                                                    <option value="Useless">Useless — colour</option>
+                                                </select>
+                                            </Row>
+                                            <Row Label="They can be asked">
+                                                <EditableText Value="@q.Prompt" Multiline Rows="2"
+                                                              ValueChanged="v => EditQuestionAsync(character.Id, q.Id, x => x.Prompt = v)" />
+                                            </Row>
+                                            <Row Label="They answer">
+                                                <EditableText Value="@q.Answer" Multiline Rows="3"
+                                                              ValueChanged="v => EditQuestionAsync(character.Id, q.Id, x => x.Answer = v)" />
+                                            </Row>
+                                            @if (CanCover(character) && q.Importance != MysteryQuestionImportance.Useless)
+                                            {
+                                                <Row Label="Once their lie is in play ({target} = who it points at)">
+                                                    <EditableText Value="@(q.CoverAnswer ?? "")" Multiline Rows="3"
+                                                                  ValueChanged="v => EditQuestionAsync(character.Id, q.Id, x => x.CoverAnswer = Blank(v))" />
+                                                </Row>
+                                            }
+                                        </div>
+                                    }
                                 }
 
                                 <h4 class="se-sub">Things to say</h4>
@@ -260,8 +310,16 @@
                                     </Row>
                                     <p class="muted tiny">
                                         @ability.Charges @(ability.Charges == 1 ? "use" : "uses")@(ability.Shared ? ", shared across the faction" : "")
-                                        · unlocks at @ability.Unlock
+                                        · unlocks at @MysteryPhases.Label(ability.Unlock)
                                     </p>
+                                    <Row Label="Aimed at">
+                                        <select class="se-select" value="@ability.Target"
+                                                @onchange="e => SetTargetAsync(faction.Id, ability.Id, e.Value)">
+                                            <option value="character">a guest</option>
+                                            <option value="clue">a card they've scanned</option>
+                                            <option value="none">nothing — it just fires</option>
+                                        </select>
+                                    </Row>
 
                                     @foreach (var mode in ability.Modes)
                                     {
@@ -321,6 +379,13 @@
                             </Row>
                             <StringList Label="On the screen" Values="slide.Bullets"
                                         Changed="lines => EditSlideAsync(slide.Id, s => s.Bullets = lines)" />
+                            <Row Label="Beside the words">
+                                <select class="se-select" value="@(slide.Figure ?? "")"
+                                        @onchange="e => EditSlideAsync(slide.Id, s => s.Figure = Blank(e.Value?.ToString()))">
+                                    <option value="">nothing</option>
+                                    <option value="map">the house map, with the card spots</option>
+                                </select>
+                            </Row>
                         </div>
                     }
                     break;
@@ -362,6 +427,8 @@
                             ValueChanged="v => EditBeatsAsync(b => b.TownWin = v)" /></Row>
                         <Row Label="The Syndicate wins"><EditableText Value="@Beats.KillerWin" Multiline Rows="2"
                             ValueChanged="v => EditBeatsAsync(b => b.KillerWin = v)" /></Row>
+                        <Row Label="The guests, at the end"><EditableText Value="@Beats.VillagerEpilogue" Multiline Rows="3"
+                            ValueChanged="v => EditBeatsAsync(b => b.VillagerEpilogue = v)" /></Row>
 
                         <StringList Label="The reveal, paragraph by paragraph" Values="Beats.RevealParagraphs"
                                     Changed="lines => EditBeatsAsync(b => b.RevealParagraphs = lines)" />
@@ -427,10 +494,54 @@
         {
             count += new[] { c.Observable, c.SeenAs, c.SignatureItem, c.TamperInsert }
                 .Count(MysteryText.IsPlaceholder);
+
+            // Three questions, each with a prompt and an answer; the two that matter also carry a
+            // cover story for anybody whose story can turn into a lie.
+            count += Math.Max(0, 3 - c.Questions.Count) * 2;
+            foreach (var q in c.Questions)
+            {
+                count += new[] { q.Prompt, q.Answer }.Count(MysteryText.IsPlaceholder);
+                if (CanCover(c) && q.Importance != MysteryQuestionImportance.Useless && !q.HasCover) count++;
+            }
         }
 
         return count;
     }
+
+    /// <summary>Whose answers can turn into a lie: the hands, and the desperate.</summary>
+    private static bool CanCover(MysteryCharacter c) => c.IsKiller || c.FactionId == "jester";
+
+    private Task SetImportanceAsync(string characterId, string questionId, object? raw) =>
+        Enum.TryParse<MysteryQuestionImportance>(raw?.ToString(), out var importance)
+            ? EditQuestionAsync(characterId, questionId, q => q.Importance = importance)
+            : Task.CompletedTask;
+
+    private Task SetTargetAsync(string factionId, string abilityId, object? raw) =>
+        EditAbilityAsync(factionId, abilityId, a => a.Target = Blank(raw?.ToString()) ?? "character");
+
+    private Task EditQuestionAsync(string characterId, string questionId, Action<MysteryQuestion> apply) =>
+        EditCharacterAsync(characterId, c =>
+        {
+            if (c.Questions.FirstOrDefault(q => q.Id == questionId) is { } q) apply(q);
+        });
+
+    /// <summary>The three, as rows of dots, so the gap counter drives the writing.</summary>
+    private Task AddQuestionsAsync(string characterId) =>
+        EditCharacterAsync(characterId, c =>
+        {
+            var wanted = new[]
+            {
+                ("alibi", MysteryQuestionImportance.Alibi),
+                ("q2", MysteryQuestionImportance.Important),
+                ("q3", MysteryQuestionImportance.Useless)
+            };
+
+            foreach (var (id, importance) in wanted)
+            {
+                if (c.Questions.Any(q => q.Id == id)) continue;
+                c.Questions.Add(new MysteryQuestion { Id = id, Importance = importance, Prompt = "........", Answer = "........" });
+            }
+        });
 
     private int Standing(string zoneId) => Story.Guests.Count(c => c.ZoneId == zoneId);
     private int Count(string factionId) => Story.Guests.Count(c => c.FactionId == factionId);

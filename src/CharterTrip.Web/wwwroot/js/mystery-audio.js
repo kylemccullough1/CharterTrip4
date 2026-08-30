@@ -4,13 +4,12 @@
 // wrong on house wifi with no internet. One looping bed at a time, named by the phase, plus a
 // handful of one-shots layered over it.
 //
-// The recordings are the exception. The theme, the rain and the three thunderclaps in
-// wwwroot/audio are real, fetched the moment this module loads and played as buffers through the
-// same master gain as everything else, so one mute button covers the lot. Buffers rather than
-// <audio> elements because an element needs its own play permission on top of the context's,
-// and because this file already knew how: it is how the scream is loaded. That one is still
-// optional — if wwwroot/audio/scream.mp3 exists it is used, and if it does not the synth stands
-// in, so somebody can record it on a phone the afternoon of the party and drop it in.
+// The recordings are the exception. The theme, the rain, the thunderclaps, the scream, the
+// sneaking piece under the rounds and the cell door under a conviction in wwwroot/audio are real,
+// fetched the moment this module loads and played as buffers through the same master gain as
+// everything else, so one mute button covers the lot. Buffers rather than <audio> elements
+// because an element needs its own play permission on top of the context's. The scream is the
+// one with a fallback — if the file is missing or will not decode, the synth stands in.
 //
 // The weather is also here, because the thunder has to land on the flash. Lightning used to be
 // two CSS animations on their own clocks; now strike() decides when, puts a class on the storm
@@ -24,14 +23,15 @@ let bed = null;        // { name, stop }
 let pending = null;    // the bed we want as soon as the browser lets us make noise
 let disarm = null;     // removes the gesture listener waiting on that permission
 
-let screamBuffer = null;
-let screamChecked = false;
-
 const THEME = '/audio/MurderMysteryMain.mp3';
 const RAIN = '/audio/rain-ambience.mp3';
 const CLAPS = ['/audio/thunder-1.mp3', '/audio/thunder-2.mp3', '/audio/thunder-3.mp3'];
-const ROUNDS = '/audio/thunder-3.mp3';   // looped under the rounds: thunder rolling through, every fourteen seconds
+const STUDY = '/audio/thunder-3.mp3';    // looped under the study: thunder rolling through, every fourteen seconds
+const SNEAK = '/audio/sneaking.mp3';     // looped under the investigation and the deliberations
 const TRIAL = '/audio/trial.mp3';        // looped under the trials and the votes
+const MURDER_CLAP = '/audio/murder-thunder.mp3';   // the one clap that goes with the white flash
+const SCREAM = '/audio/scream.mp3';
+const CELL_DOOR = '/audio/metal.mp3';    // a conviction turned face up
 
 const files = new Map();   // url -> { bytes: Promise<ArrayBuffer|null>, buffer: AudioBuffer|null }
 
@@ -159,7 +159,7 @@ function clap(peak) {
 
 /// The recording if there is one; three layers of synth if there is not yet — because one layer
 /// is a hiss and two is a door slamming.
-export function thunder(peak = 0.95) {
+export function thunder(peak = 1.8) {
     if (clap(peak)) return;
 
     // The crack: bright, brief, and the thing that makes people jump.
@@ -172,10 +172,35 @@ export function thunder(peak = 0.95) {
     note({ freq: 42, start: 0.02, dur: 3.0, type: 'sine', peak: 0.34 });
 }
 
-/// A door, a chair going over, something heavy.
-export function crash() {
-    noise({ dur: 0.5, peak: 0.4, type: 'lowpass', from: 1800, to: 120 });
-    note({ freq: 70, dur: 0.4, type: 'triangle', peak: 0.2, glideTo: 38 });
+/// A body hitting the floor: no crack, all weight. Low noise and a sine dropping through the
+/// floor, short, so it reads as one thing landing rather than a room coming apart.
+export function thud() {
+    noise({ dur: 0.32, peak: 0.55, type: 'lowpass', from: 420, to: 60, q: 0.9 });
+    note({ freq: 58, dur: 0.45, type: 'sine', peak: 0.5, glideTo: 30 });
+}
+
+/// One recording, once, at a level. Nothing if it has not decoded yet — a one-shot that lands
+/// seconds late is worse than one that does not land.
+function play(url, peak = 1) {
+    const c = audio();
+    const cached = files.get(url)?.buffer;
+    if (!cached) { loadFile(url); return false; }
+    if (c.state !== 'running') return true;
+
+    const gain = c.createGain();
+    gain.gain.value = peak;
+    gain.connect(master);
+
+    const src = c.createBufferSource();
+    src.buffer = cached;
+    src.connect(gain);
+    src.start();
+    return true;
+}
+
+/// The cell door, when a conviction is turned face up.
+export function cellDoor() {
+    play(CELL_DOOR, 1.4);
 }
 
 /**
@@ -186,13 +211,17 @@ export function crash() {
  * than silence at the one instant everybody is listening.
  */
 export async function scream() {
-    const buffer = await loadScream();
+    const buffer = await loadFile(SCREAM);
 
     if (buffer) {
         const c = audio();
+        const gain = c.createGain();
+        gain.gain.value = 1.6;
+        gain.connect(master);
+
         const src = c.createBufferSource();
         src.buffer = buffer;
-        src.connect(master);
+        src.connect(gain);
         src.start(c.currentTime);
         return;
     }
@@ -239,30 +268,13 @@ export async function scream() {
     noise({ dur: 1.4, peak: 0.1, type: 'bandpass', from: 900, to: 500, q: 1.2 });
 }
 
-async function loadScream() {
-    if (screamChecked) return screamBuffer;
-    screamChecked = true;
-
-    try {
-        const response = await fetch('/audio/scream.mp3', { cache: 'force-cache' });
-        if (!response.ok) return null;
-
-        const bytes = await response.arrayBuffer();
-        screamBuffer = await audio().decodeAudioData(bytes);
-    } catch {
-        // No recording, or it will not decode. The synth covers it.
-        screamBuffer = null;
-    }
-
-    return screamBuffer;
-}
-
-/// The whole murder, in order, so the page fires one thing rather than three on timers.
+/// The whole murder, in order, so the page fires one thing rather than three on timers: the clap
+/// that goes with the white flash, then a man screaming, then the weight of him hitting the
+/// floor. The stylesheet's flash is timed to the same numbers (see .ms-flash).
 export async function murder() {
-    thunder();
-    setTimeout(() => crash(), 260);
-    setTimeout(() => scream(), 520);
-    setTimeout(() => thunder(), 1900);
+    if (!play(MURDER_CLAP, 2.0)) thunder(2.0);
+    setTimeout(() => scream(), 900);
+    setTimeout(() => thud(), 2300);
 }
 
 // ---------------------------------------------------------------- beds
@@ -294,7 +306,7 @@ export async function setBed(name) {
 const START = {
     /// The theme, looped. Starts the moment the bytes are decoded, which on a wall that has been
     /// open since the doors opened is immediately: the fetch began when the module loaded.
-    main() { return loop(THEME, 0.85); },
+    main() { return loop(THEME, 0.6); },
 
     /// The house itself: two low sines beating slowly against each other.
     manor() {
@@ -315,12 +327,15 @@ const START = {
         return () => oscs.forEach(o => { try { o.stop(); } catch { /* already gone */ } });
     },
 
-    /// The rounds — the study, the investigation and both discussions: the third clap on a loop,
-    /// so thunder rolls through the house every fourteen seconds while the room works.
-    rounds() { return loop(ROUNDS, 0.8); },
+    /// The study: the third clap on a loop, so thunder rolls through the house every fourteen
+    /// seconds while the room reads the scene.
+    study() { return loop(STUDY, 1.2); },
+
+    /// The investigation and the deliberations: the sneaking piece, quietly, under the work.
+    sneak() { return loop(SNEAK, 0.55); },
 
     /// The trials, and the votes inside them: their own piece.
-    trial() { return loop(TRIAL, 0.85); }
+    trial() { return loop(TRIAL, 0.6); }
 };
 
 // ---------------------------------------------------------------- the recordings
@@ -361,7 +376,7 @@ async function loadFile(url) {
 
 const loadTheme = () => loadFile(THEME);
 
-[THEME, RAIN, TRIAL, ...CLAPS].forEach(fetchFile);
+[THEME, RAIN, TRIAL, SNEAK, MURDER_CLAP, SCREAM, CELL_DOOR, ...CLAPS].forEach(fetchFile);
 
 /// A recording on a loop at a level, started as soon as it is decoded and stoppable before then.
 function loop(url, level) {
@@ -408,7 +423,7 @@ export function setAmbience(on) {
 
 function startRain() {
     if (rain) return;
-    rain = { stop: loop(RAIN, 0.35) };
+    rain = { stop: loop(RAIN, 0.7) };
 }
 
 function stopRain() {
@@ -435,8 +450,9 @@ export function startStorm() {
 
     // Decoded now, not on first use: clap() only plays what is already decoded, so a clap met
     // for the first time at its strike would be the synth. Decoding works on a context that is
-    // not yet allowed to make noise; only the playing waits on the gesture.
-    CLAPS.forEach(loadFile);
+    // not yet allowed to make noise; only the playing waits on the gesture. The murder's clap,
+    // the scream and the cell door are the same shape of problem.
+    [...CLAPS, MURDER_CLAP, SCREAM, CELL_DOOR].forEach(loadFile);
 
     scheduleStrike();
 }
@@ -461,7 +477,9 @@ function strike() {
     setTimeout(() => el.classList.remove(cls), 2400);
 
     const delay = near ? 150 + Math.random() * 300 : 900 + Math.random() * 1100;
-    setTimeout(() => { if (storm) thunder(near ? 0.95 : 0.5); }, delay);
+    // Well above the music: a clap that has to be listened for is not a clap. The master gain is
+    // half, so these land at roughly 0.9 and 0.5 of full scale over a bed at 0.3.
+    setTimeout(() => { if (storm) thunder(near ? 1.8 : 1.0); }, delay);
 
     scheduleStrike();
 }

@@ -68,22 +68,27 @@ else
             break;
 
         case MysteryTrialStage.Tallying:
+            @* The stand, and only the stand. This used to show everybody who got a vote with the
+               top four flagged, and a room reads a grid of eight faces as eight people on trial. *@
             <div class="ms-nominees">
-                @foreach (var (characterId, votes) in Tally)
+                @foreach (var (characterId, votes) in Tally.Where(t => Trial.NomineeCharacterIds.Contains(t.CharacterId)))
                 {
-                    <div class="ms-nominee @(Trial.NomineeCharacterIds.Contains(characterId) ? "is-standing" : "")"
-                         @key="characterId">
+                    <div class="ms-nominee is-standing" @key="characterId">
                         <Portrait Seat="@SeatFor(characterId)" Character="@Story.Character(characterId)" />
                         <span class="ms-nominee-name">@Story.Character(characterId)?.Name</span>
                         <span class="ms-nominee-votes">@votes @(votes == 1 ? "vote" : "votes")</span>
-
-                        @if (Trial.NomineeCharacterIds.Contains(characterId))
-                        {
-                            <span class="ms-nominee-flag">on the stand</span>
-                        }
+                        <span class="ms-nominee-flag">on the stand</span>
                     </div>
                 }
             </div>
+
+            @if (AlsoNamed.Count > 0)
+            {
+                <p class="ms-count ms-also-named">
+                    <span class="muted">Also named:</span>
+                    @string.Join(" · ", AlsoNamed.Select(t => $"{Story.Character(t.CharacterId)?.Name} ({t.Votes})"))
+                </p>
+            }
             break;
 
         case MysteryTrialStage.Defence:
@@ -121,7 +126,12 @@ else
 
                     <div class="ms-nominee is-jailed @(shown ? "is-turned" : "is-facedown")" @key="characterId">
                         <Portrait Seat="@SeatFor(characterId)" Character="@Story.Character(characterId)" />
-                        <span class="ms-bars" aria-hidden="true"></span>
+                        @if (shown)
+                        {
+                            @* The bars drop with the turn, not before it: on a face-down card they
+                               were reading as "this one is done" on somebody nobody had turned yet. *@
+                            <span class="ms-bars" aria-hidden="true"></span>
+                        }
                         <span class="ms-nominee-name">@Story.Character(characterId)?.Name</span>
                         <span class="ms-nominee-votes">
                             @TrialService.FinalVotesFor(Trip, characterId) against
@@ -162,6 +172,13 @@ else
                     <b>That's the verdict.</b>
                 }
             </p>
+
+            @if (TrialService.NextVerdictCharacterId(Trip) is null && KillersLoose > 0)
+            {
+                @* Said out loud, so a room that just took two people away does not relax. Never
+                   how many: the count is what the last trial is for. *@
+                <p class="ms-alert ms-loose">There is still a killer on the loose.</p>
+            }
             break;
     }
 }
@@ -179,6 +196,14 @@ else
 
     private IReadOnlyList<(string CharacterId, int Votes)> Tally => TrialService.Tally(Trip);
     private string? Speaking => TrialService.CurrentSpeaker(Trip);
+
+    /// <summary>Everybody who got a vote and is not standing, for the one line under the stand.</summary>
+    private IReadOnlyList<(string CharacterId, int Votes)> AlsoNamed =>
+        Trial is null ? [] : Tally.Where(t => !Trial.NomineeCharacterIds.Contains(t.CharacterId)).ToList();
+
+    /// <summary>The Syndicate's hands still at the party, on ground truth.</summary>
+    private int KillersLoose =>
+        Story.Killers.Count() - TrialService.KillersConvicted(Trip);
 
     private MysteryCastMember? SeatFor(string characterId) => Trip.Mystery.Play.ForCharacter(characterId);
 
@@ -213,8 +238,10 @@ else
             "Everybody names one person. Nothing is shown until the last phone is in.",
 
         MysteryTrialStage.Tallying => Trial.NomineeCharacterIds.Count > TrialService.NomineeCount
-            ? "The top four, and everybody level with the fourth. They all stand."
-            : "These four are on the stand.",
+            ? "The top four, and everybody tied with the fourth. They all stand."
+            : Trial.NomineeCharacterIds.Count == 1
+                ? "One person is on the stand."
+                : $"These {Words(Trial.NomineeCharacterIds.Count)} are on the stand.",
 
         MysteryTrialStage.Defence =>
             "Each of them gets the floor to account for their evening. "
@@ -228,5 +255,10 @@ else
             "Turned over one at a time.",
 
         _ => null
+    };
+
+    private static string Words(int n) => n switch
+    {
+        2 => "two", 3 => "three", 4 => "four", 5 => "five", 6 => "six", _ => n.ToString()
     };
 }

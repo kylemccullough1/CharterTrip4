@@ -4,6 +4,7 @@
 @using CharterTrip.Core.Mystery
 @inherits TripAwareComponent
 @inject IClock Clock
+@inject NavigationManager Nav
 @inject IWebHostEnvironment Env
 @inject CharterTrip.Web.Services.SimPhones Sims
 
@@ -14,7 +15,11 @@
    Not an in-app scanner. QRCoder writes codes and cannot read them, and BarcodeDetector does not
    exist in iOS Safari — which is half the party. So the tag is a URL, the phone's own camera opens
    it, and this is an ordinary page: no permission prompt, no library, nothing to go wrong in a
-   dark room. *@
+   dark room.
+
+   After the murder a scan is the start of a conversation: three questions each, on both phones.
+   The session opens here and lives on /m, so both phones show the same thing from the same
+   place; this page only ever shows the card for a scan that did not become one. *@
 
 @if (Me is null)
 {
@@ -38,6 +43,14 @@ else if (Them.Id == Me.Id)
         <a class="btn btn-ghost btn-sm" href="/m">Back to your phone</a>
     </div>
 }
+else if (_busy)
+{
+    <div class="mp-empty">
+        <h1 class="mp-title">@Them.Name is mid-conversation</h1>
+        <p class="muted">Somebody got there first. Try again in a minute.</p>
+        <a class="btn btn-ghost btn-sm" href="/m">Back to your phone</a>
+    </div>
+}
 else
 {
     <div class="mp-met">
@@ -45,7 +58,9 @@ else
         <h1 class="mp-title">@Them.Name</h1>
         <p class="mp-zone">@Them.Job</p>
 
-        @if (MysteryText.Written(Them.WhyInvited) is { } blurb)
+        @* How the room sees them, not their own sheet: the sheet is written to its owner, in the
+           second person, and "You invited yourself" is the wrong thing to read about somebody else. *@
+        @if (MysteryText.Written(Them.SeenAs) is { } blurb)
         {
             <p class="mp-note">@blurb</p>
         }
@@ -82,14 +97,36 @@ else
         ? null
         : ScanShareService.BeefLineFor(Trip, Me.Id, Them.Id);
 
+    /// <summary>Whether the other person is already talking to somebody else.</summary>
+    private bool _busy;
+
     /// <summary>
     /// Logged on arrival, with no confirm button. You are standing in front of somebody holding a
     /// phone; that is the only confirmation that means anything.
+    ///
+    /// Once roles are out, the same scan opens the conversation and sends this phone to it. The
+    /// other phone follows on its own — it is already watching the store.
     /// </summary>
     protected override async Task OnParametersSetAsync()
     {
         if (Me is null || Them is null || Me.Id == Them.Id) return;
 
-        await MutateAsync(t => ScanShareService.RecordMeeting(t, Me.Id, Them.Id, Clock.UtcNow));
+        var me = Me.Id;
+        var them = Them.Id;
+
+        var session = await Store.MutateAsync(
+            t => InteractionService.Start(t, me, them, Clock.UtcNow), Watching);
+
+        if (session is not null)
+        {
+            // A simulated phone carries its identity in the query, and has to keep carrying it.
+            Nav.NavigateTo(IsSimPhone ? $"/m?sim={Sim}" : "/m");
+            return;
+        }
+
+        // Start records the meeting whatever else it decides, so the card is honest either way.
+        _busy = InteractionService.CanTalk(Trip)
+                && !Them.IsStaff && !Me.IsStaff
+                && InteractionService.Between(Trip, me, them) is null;
     }
 }

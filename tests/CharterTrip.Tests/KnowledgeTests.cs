@@ -31,7 +31,7 @@ public class KnowledgeTests
     [Fact]
     public void Nobody_is_told_anything_before_the_study()
     {
-        var trip = At(MysteryPhase.Mingling);
+        var trip = At(MysteryPhase.Introductions);
 
         foreach (var guest in trip.Mystery.Story.Guests)
             Assert.Empty(KnowledgeService.AlliesFor(trip, guest.Id));

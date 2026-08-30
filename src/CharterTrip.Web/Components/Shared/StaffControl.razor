@@ -42,6 +42,24 @@
             <p class="sc-kicker">Right now</p>
             <h3 class="mp-card-title">@MysteryPhases.Label(Phase)</h3>
 
+            @* The suggested length, counting down, for the four phases that have one. A
+               suggestion: nothing moves on its own, and zero means "when the room is ready". *@
+            @if (PhaseService.PhaseDeadline(Trip) is { } deadline)
+            {
+                <Countdown Deadline="deadline">
+                    @if (context > TimeSpan.Zero)
+                    {
+                        <p class="sc-clock @(context < TimeSpan.FromMinutes(1) ? "is-urgent" : "")">
+                            <b>@context.ToString(@"m\:ss")</b> <span class="muted tiny">suggested</span>
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="sc-clock is-up"><b>Time</b> <span class="muted tiny">— move on when the room is ready</span></p>
+                    }
+                </Countdown>
+            }
+
             @* One set of buttons, not two. The generic "on to the next thing" used to sit above
                whatever the phase's own control was, so Assembling had two buttons that both
                started the evening. Braun gets the specific one; the facilitators, who have no
@@ -60,6 +78,18 @@
                 </div>
             }
         </section>
+
+        @if (LineToSay is { } sayLine)
+        {
+            @* The butler reads the murder out loud; the screen shows the words but the room
+               hears them from a person. On his phone, so he is not reading off a wall
+               with his back to everybody. Braun sees the same card as a cue: it is his phone that
+               moves the evening past it. *@
+            <section class="mp-card sc-act sc-line">
+                <h3 class="mp-card-title">@(IsButler ? "Say this" : $"{Butler?.Name ?? "The butler"} says")</h3>
+                <p class="sc-say">@sayLine</p>
+            </section>
+        }
 
         @if (IsHost)
         {
@@ -105,14 +135,31 @@
                             <button class="btn btn-ghost btn-xs" @onclick="PreviousSlideAsync">Back</button>
                             <button class="btn btn-ghost btn-sm" @onclick="NextSlideAsync"
                                     disabled="@PhaseService.OnLastSlide(Trip)">Next slide</button>
-                            <button class="btn btn-gold btn-sm" @onclick="() => GoAsync(MysteryPhase.Mingling)">
-                                Start the party
+                            <button class="btn btn-gold btn-sm" @onclick="() => GoAsync(MysteryPhase.Introductions)">
+                                Start the introductions
                             </button>
                         </div>
                     </section>
                     break;
 
-                case MysteryPhase.Mingling:
+                case MysteryPhase.Introductions:
+                    <section class="mp-card sc-act">
+                        <h3 class="mp-card-title">
+                            Up now: @(PhaseService.CurrentIntro(Trip)?.Name ?? "nobody")
+                            <span class="mp-charges">@(Play.IntroIndex + 1) of @PhaseService.IntroOrder(Trip).Count</span>
+                        </h3>
+                        @if (PhaseService.CurrentIntro(Trip)?.Id == Me.Id)
+                        {
+                            <p class="sc-say">That's you. Name, age, and who you are.</p>
+                        }
+                        <div class="row gap wrap">
+                            <button class="btn btn-ghost btn-xs" @onclick="PreviousIntroAsync"
+                                    disabled="@(Play.IntroIndex == 0)">Back</button>
+                            <button class="btn btn-gold btn-sm" @onclick="NextIntroAsync"
+                                    disabled="@PhaseService.OnLastIntro(Trip)">Next</button>
+                        </div>
+                    </section>
+
                     <section class="mp-card sc-act sc-murder">
                         <h3 class="mp-card-title">When you're ready</h3>
                         <p class="muted tiny">
@@ -128,7 +175,8 @@
                     <section class="mp-card sc-act">
                         <h3 class="mp-card-title">@RevealWhere</h3>
                         <p class="muted tiny">
-                            One at a time, on the big screen. Read the room rather than the clock.
+                            The story, then the winners one card at a time, then the ending. Read
+                            the room rather than the clock.
                         </p>
                         <div class="row gap wrap">
                             <button class="btn btn-ghost btn-xs" @onclick="PreviousRevealAsync"
@@ -139,7 +187,7 @@
 
                         @if (PhaseService.OnRevealFinale(Trip))
                         {
-                            <p class="muted tiny">That's the night. The board has the way out.</p>
+                            <p class="muted tiny">That's the night. The board has the way out — home, or start over.</p>
                         }
                     </section>
                     break;
@@ -306,21 +354,42 @@
 
         @if (Tampered.Count > 0)
         {
-            @* The truth, which the room only ever gets told exists. Facilitators need it to steer
-               people toward a card worth re-reading without ever saying which. *@
+            @* The truth, which the room is never told and the detectives are only told exists.
+               The four phones get the whole of it — who, how, at whom, and the card as it now
+               reads — so a facilitator can steer somebody toward the right room without guessing. *@
             <section class="mp-card">
                 <h3 class="mp-card-title">Tampered with</h3>
-                <ul class="mp-people">
-                    @foreach (var state in Tampered)
-                    {
-                        <li @key="state.ClueId">
-                            <b>@(Story.Zone(Story.Clue(state.ClueId)?.ZoneId ?? "")?.Name)</b>
-                            <span class="muted tiny">
-                                @state.Tamper!.Mode by @(Story.Character(state.Tamper.ByCharacterId)?.Name)
-                            </span>
-                        </li>
-                    }
-                </ul>
+                @foreach (var state in Tampered)
+                {
+                    var tamper = state.Tamper!;
+                    var by = Story.Character(tamper.ByCharacterId);
+                    var at = tamper.TargetCharacterId is { } id ? Story.Character(id) : null;
+
+                    <section class="sc-tamper" @key="state.ClueId">
+                        <h4 class="sc-tamper-room">@(Story.Zone(Story.Clue(state.ClueId)?.ZoneId ?? "")?.Name)</h4>
+                        <p class="sc-tamper-who">
+                            <b>@ModeName(tamper.Mode)</b> by <b>@(by?.Name ?? tamper.ByCharacterId)</b>@(by is null ? "" : $" ({Story.Faction(by.FactionId)?.Name ?? "no faction"})")
+                            at @tamper.At.ToLocalTime().ToString("h:mm tt").
+                            @if (tamper.Mode == "scrub")
+                            {
+                                <span>Wiped — points at nobody on the card; the Syndicate's answers now point at @(CoverName(by) ?? "somebody").</span>
+                            }
+                            else if (at is not null)
+                            {
+                                <span>Points at <b>@at.Name</b>@(at.Id == by?.Id ? " — themselves" : "").</span>
+                            }
+                        </p>
+                        <p class="sc-kicker">The card now reads</p>
+                        <p class="sc-tamper-text">@ScanShareService.CurrentReading(Trip, state.ClueId)</p>
+                        <details class="sc-force">
+                            <summary class="tiny muted">As written</summary>
+                            <p class="sc-tamper-text is-original">@ScanShareService.OriginalReading(Trip, state.ClueId)</p>
+                        </details>
+                        <p class="muted tiny">
+                            @ScanShareService.Trail(Trip, state.ClueId).Count(sc => sc.At >= tamper.At) scanned it since.
+                        </p>
+                    </section>
+                }
             </section>
         }
 
@@ -357,6 +426,23 @@
                 Jumping and stepping are the same thing to the game, so this is safe when something goes wrong.
             </p>
         </section>
+
+        @if (IsHost)
+        {
+            @* The whole evening, back to the door. Two taps, and only Braun's phone has them:
+               a facilitator tidying up mid-trial must not be able to end the night by accident. *@
+            <section class="mp-card sc-act sc-reset">
+                <h3 class="mp-card-title">Start over</h3>
+                <p class="muted tiny">
+                    Unseats everyone and throws away every scan, conversation, vote and verdict.
+                    The story stays. Rehearsals need this; the real night should never.
+                </p>
+                <details class="sc-force">
+                    <summary class="tiny muted">Reset the game…</summary>
+                    <button class="btn btn-danger btn-sm" @onclick="ResetAsync">Yes — reset the whole game</button>
+                </details>
+            </section>
+        }
         break;
 }
 </div>
@@ -376,6 +462,40 @@
     private MysteryPhase Phase => Trip.Mystery.Phase;
 
     private bool IsHost => Me.Staff == MysteryStaffRole.Host;
+
+    /// <summary>The facilitator playing the butler. The one whose job it is, by job title.</summary>
+    private MysteryCharacter? Butler =>
+        Story.Characters.FirstOrDefault(c =>
+            c.Staff == MysteryStaffRole.Facilitator
+            && c.Job.Contains("butler", StringComparison.OrdinalIgnoreCase));
+
+    private bool IsButler => Butler?.Id == Me.Id;
+
+    /// <summary>What the butler reads out in this phase, if anything. Shown to him and to Braun.</summary>
+    private string? LineToSay
+    {
+        get
+        {
+            if (!IsButler && !IsHost) return null;
+
+            // Only the murder. The study scene is a card on the screen and the study's own clue,
+            // not a speech.
+            return Phase == MysteryPhase.Murder ? Written(Story.Beats.MurderAnnouncement) : null;
+        }
+    }
+
+    private static string ModeName(string mode) => mode switch
+    {
+        "plant" => "Planted",
+        "scrub" => "Scrubbed",
+        "subtle" => "Subtly framed",
+        "blatant" => "Blatantly framed",
+        _ => mode
+    };
+
+    /// <summary>Who a scrub pointed the Syndicate's story at — the card forgot, the answers did not.</summary>
+    private string? CoverName(MysteryCharacter? by) =>
+        by is null ? null : Story.Character(InteractionService.CoverTarget(Trip, by.Id) ?? "")?.Name;
 
     private MysteryTrial? Trial => TrialService.Current(Trip);
     private int Waiting => TrialService.AwaitingVote(Trip).Count;
@@ -401,7 +521,7 @@
     /// </summary>
     private bool HasOwnControl =>
         Phase is MysteryPhase.Assembling or MysteryPhase.Presentation
-              or MysteryPhase.Mingling or MysteryPhase.Reveal
+              or MysteryPhase.Introductions or MysteryPhase.Reveal
         || Trial is not null;
 
     private bool OnLastSpeaker =>
@@ -411,6 +531,9 @@
     {
         MysteryPhase.Welcome => "Start the evening",
         MysteryPhase.Murder => "Start the murder",
+        MysteryPhase.Discussion1 => "Open the accusation round",
+        MysteryPhase.Discussion2 => "Open the deliberation",
+        MysteryPhase.Discussion3 => "Final deliberation",
         MysteryPhase.Reveal => "Tell them everything",
         { } p => $"On to {MysteryPhases.Label(p)}",
         _ => "On"
@@ -421,10 +544,13 @@
     {
         get
         {
-            if (Play.RevealIndex == 0) return "The opening";
-            if (PhaseService.OnRevealFinale(Trip)) return "The sides";
+            if (PhaseService.OnRevealOpening(Trip))
+                return $"The story · {Play.RevealIndex + 1} of {PhaseService.RevealOpening(Trip)}";
+            if (PhaseService.OnRevealFinale(Trip)) return "The ending";
 
-            return PhaseService.RevealSubject(Trip)?.Character.Name ?? "The ending";
+            return PhaseService.RevealSubject(Trip) is { } card
+                ? card.Group ? "The guests of the house" : card.Character.Name
+                : "The ending";
         }
     }
 
@@ -477,6 +603,16 @@
     }
 
     private Task NextSlideAsync() => Mutate(t => PhaseService.NextSlide(t));
+
+    private Task NextIntroAsync() => Mutate(t => PhaseService.NextIntro(t, Clock.UtcNow));
+
+    private async Task ResetAsync()
+    {
+        await Store.MutateAsync(CastingService.Discard, TripArea.Mystery);
+        await Store.FlushAsync();
+        await OnChanged.InvokeAsync();
+    }
+    private Task PreviousIntroAsync() => Mutate(t => PhaseService.PreviousIntro(t));
     private Task PreviousSlideAsync() => Mutate(t => PhaseService.PreviousSlide(t));
     private Task NextRevealAsync() => Mutate(t => PhaseService.NextReveal(t));
     private Task PreviousRevealAsync() => Mutate(t => PhaseService.PreviousReveal(t));

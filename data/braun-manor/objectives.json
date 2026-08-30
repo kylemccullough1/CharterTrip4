@@ -1,18 +1,27 @@
 {
   "objectives": [
     {
-      "id": "mingle-three",
-      "label": "Meet three people",
-      "text": "Introduce yourself to at least three guests you don't know. Trade names, trade stories, scan their badges — everything you learn now is evidence later, you just don't know it yet.",
-      "phase": "mingling",
+      "id": "introductions",
+      "label": "Stand up when you're called",
+      "text": "Braun is going round the room. When your name comes up, stand, and say who you are — your name, your age, man or woman, and the 'Who you are' paragraph on your You tab. Listen to the rest. Three people in this room are murderers.",
+      "phase": "introductions",
       "audience": "everyone",
+      "faction_id": null,
+      "slots": []
+    },
+    {
+      "id": "intro-speak",
+      "label": "You're up",
+      "text": "You're up. Stand, and tell the room your name, your age, man or woman, and read 'Who you are' from your You tab. Stay in character.",
+      "phase": null,
+      "audience": "characters",
       "faction_id": null,
       "slots": []
     },
     {
       "id": "to-the-study",
       "label": "Everyone to the study",
-      "text": "Something has happened. Everyone make your way to the study corridor — now. Stay together, touch nothing, and take a good look at who arrives last.",
+      "text": "Something has happened. Everyone make your way to the study — now. Stay together, and touch nothing.",
       "phase": "murder",
       "audience": "everyone",
       "faction_id": null,
@@ -20,20 +29,20 @@
     },
     {
       "id": "investigate",
-      "label": "Follow what you saw",
-      "text": "Spread out through the house. Follow what you saw, find the clue cards hidden in each room, and scan everything. The rooms know more than the guests are telling.",
+      "label": "Thirty minutes",
+      "text": "Thirty minutes. Spread out through the house, find the nine cards and scan them — and scan the guests. Scanning somebody's code starts a conversation: three questions each, taking turns. Star what matters in your Interactions tab.",
       "phase": "investigation",
       "audience": "everyone",
       "faction_id": null,
       "slots": []
     },
     {
-      "id": "jester-frame",
-      "label": "Point it at yourself",
-      "text": "The room is looking for a killer. Make sure some of what they find points at you. Visit clue spots, be seen somewhere incriminating, and start building the case against yourself.",
+      "id": "killer-tamper-how",
+      "label": "The Syndicate's hand",
+      "text": "The three of you share one touch on the evidence tonight, and it's live now. Stand at any clue card, pick who your story points at, and Plant something of theirs or Scrub the card. The moment it fires, all three of your alibis change to put that person near the study — so decide together, and decide who.",
       "phase": "investigation",
       "audience": "faction",
-      "faction_id": "jester",
+      "faction_id": "killer",
       "slots": []
     },
     {
@@ -46,9 +55,27 @@
       "slots": []
     },
     {
+      "id": "jester-tamper-how",
+      "label": "Point it at yourself",
+      "text": "The room is looking for a killer. Make sure what they find points at you. Stand at a clue card and Incriminate Yourself — Subtle or Blatant, twice tonight — and from then on your own answers start confessing. Be seen somewhere you shouldn't be.",
+      "phase": "investigation",
+      "audience": "faction",
+      "faction_id": "jester",
+      "slots": []
+    },
+    {
       "id": "gather-for-trial",
-      "label": "Back to the main room",
-      "text": "Time's up. Everyone back to the main room — the first trial is called. Bring your evidence, bring your suspicions, and be ready to say where you were when the tower fell.",
+      "label": "The accusation round",
+      "text": "Time's up. Everyone back to the main room. Five minutes: who seemed strange, who went quiet, whose answers didn't match somebody else's? Say it out loud. The first trial follows.",
+      "phase": "discussion1",
+      "audience": "everyone",
+      "faction_id": null,
+      "slots": []
+    },
+    {
+      "id": "trial-called",
+      "label": "The first trial",
+      "text": "The first trial is called. Vote for whoever you suspect. The four with the most votes take the stand, defend themselves, answer the jury — then everyone chooses. The top two go down.",
       "phase": "trial1",
       "audience": "everyone",
       "faction_id": null,
@@ -57,17 +84,26 @@
     {
       "id": "tamper-hunt",
       "label": "Which card was touched?",
-      "text": "Someone has been at the evidence. Compare the clue cards you've each scanned, decide which one smells wrong, and consider spending Forensics on it. Find the tampered card and you find the Syndicate's fingerprints.",
-      "phase": "discussion1",
+      "text": "Forensics is ready. Compare the clue cards you've each scanned, decide which one smells wrong, and spend it on that card. Find the tampered card and you find the Syndicate's fingerprints.",
+      "phase": "discussion2",
       "audience": "faction",
       "faction_id": "detective",
       "slots": []
     },
     {
-      "id": "loyalty",
-      "label": "Cover for one of yours",
-      "text": "The detectives are closing in and your Loyalty charge is ready. Decide now: Shield one of the hands, or hang a Decoy on an innocent. Once the Hard Question is asked, it's too late to choose.",
-      "phase": "discussion1",
+      "id": "hard-question",
+      "label": "Find the killer",
+      "text": "The Hard Question is ready. Confer with your fellow investigators, pick the one guest whose answer decides everything, and ask it. Then trust what it tells you — unless you have a reason not to.",
+      "phase": "discussion2",
+      "audience": "faction",
+      "faction_id": "detective",
+      "slots": []
+    },
+    {
+      "id": "take-the-blame",
+      "label": "Take the blame",
+      "text": "Between the two of you, one may Take the Blame tonight. Do it and, if convicted, your card reads KILLER and the room counts you as one of the hands. Hold it for the final deliberation if you'd rather — it dies unspent at the last verdict.",
+      "phase": "discussion2",
       "audience": "faction",
       "faction_id": "minion",
       "slots": []
@@ -76,42 +112,42 @@
       "id": "dig-dirt",
       "label": "Family secrets",
       "text": "Family Secrets is ready. Pick your target — your rival, or whoever the room might convict instead of you — and pull their motive into the light. The estate goes to the last claimant standing.",
-      "phase": "discussion1",
+      "phase": "discussion2",
       "audience": "faction",
       "faction_id": "inheritance",
       "slots": []
     },
     {
       "id": "second-trial",
-      "label": "Back to the main room",
-      "text": "Back to the main room — the second trial is called. The first verdict changed the board; say so out loud. Who benefited from it? Who went quiet? Vote like the night depends on it, because it does.",
+      "label": "The second trial",
+      "text": "The second trial is called. Who benefited from the first verdict? Who went quiet?",
       "phase": "trial2",
       "audience": "everyone",
       "faction_id": null,
       "slots": []
     },
     {
-      "id": "last-loyalty",
+      "id": "final-deliberation",
+      "label": "Last words",
+      "text": "Ten minutes, and then the last trial. Everything anyone knows is already in the room — compare your starred answers, find the contradiction, and say the thing you've been sitting on.",
+      "phase": "discussion3",
+      "audience": "everyone",
+      "faction_id": null,
+      "slots": []
+    },
+    {
+      "id": "blame-last-call",
       "label": "Last chance",
-      "text": "This is the Syndicate's last hour. If your Loyalty charge is unspent, it dies worthless after this — Shield a hand or burn an innocent with a Decoy, but do it now.",
-      "phase": "discussion2",
+      "text": "This is the Syndicate's last hour. If the blame is still unclaimed between you, it dies worthless after this trial — take it now or never.",
+      "phase": "discussion3",
       "audience": "faction",
       "faction_id": "minion",
       "slots": []
     },
     {
-      "id": "hard-question",
-      "label": "Find the killer",
-      "text": "One question left, one trial left. Confer with your fellow investigators, pick the one guest whose answer decides everything, and ask the Hard Question. Then trust what it tells you — unless you have a reason not to.",
-      "phase": "discussion2",
-      "audience": "faction",
-      "faction_id": "detective",
-      "slots": []
-    },
-    {
       "id": "final-trial",
-      "label": "Back to the main room",
-      "text": "The final trial is called. Everyone to the main room. Whatever is still hidden stays hidden after tonight — so say the thing you've been sitting on, cast your vote, and live with it.",
+      "label": "The final trial",
+      "text": "The final trial is called. Whatever is still hidden stays hidden after tonight — cast your vote, and live with it.",
       "phase": "trial3",
       "audience": "everyone",
       "faction_id": null,
@@ -120,7 +156,7 @@
     {
       "id": "go-question",
       "label": "Question someone",
-      "text": "Find {target}. Ask them where they were when the champagne tower fell — and don't accept the first answer. Make them be specific, then check it against someone else.",
+      "text": "Find {target}. Scan their code and ask them where they were when Braun was murdered — and don't accept the first answer. Check it against what somebody else told you.",
       "phase": null,
       "audience": "characters",
       "faction_id": null,
@@ -142,7 +178,7 @@
     {
       "id": "go-compare",
       "label": "Compare notes",
-      "text": "Find {target}. Put your phones side by side and compare what you've each scanned — between the two of you, one contradiction is sitting there waiting to be noticed.",
+      "text": "Find {target}. Put your phones side by side and compare your starred answers — between the two of you, one contradiction is sitting there waiting to be noticed.",
       "phase": null,
       "audience": "characters",
       "faction_id": null,

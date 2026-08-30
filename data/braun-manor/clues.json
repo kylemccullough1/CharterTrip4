@@ -18,7 +18,7 @@
       "id": "clue-family_room",
       "zone_id": "family_room",
       "name": "The Cold Tea Tray",
-      "text": "Braun's evening tea sits abandoned on a side table, stone cold, halfway along the quiet route to the study. Imogen Durham was carrying it to him when she was ordered away to clean up the champagne wreckage — clearing the one servant off the corridor at exactly the wrong moment. Tucked under the tray cloth: a heavy cream envelope, empty now, its broken wax seal pressed with the shape of a small snail.",
+      "text": "Braun's evening tea sits abandoned on a side table, stone cold, halfway along the quiet route to the study. Imogen Durham was carrying it to him when she was ordered away to clear the hall when the singer took the stage — moving the one servant off the corridor at exactly the wrong moment. Tucked under the tray cloth: a heavy cream envelope, empty now, its broken wax seal pressed with the shape of a small snail.",
       "about_character_id": "imogen"
     },
     {
@@ -39,7 +39,7 @@
       "id": "clue-grand_hall",
       "zone_id": "grand_hall",
       "name": "The Snail in the Wreckage",
-      "text": "Pulled from the champagne tower wreckage: a silver flask shaped like a snail shell — Giuliana Andolpho's, the one she calls 'a gift from an admirer' and never drinks from. Two guests separately place Giuliana leaving the study corridor early in the evening, flushed and fast — right around the time a cream calling card appeared on Braun's console announcing a 'gift' to be delivered to the study at nine. Somebody made sure the host would open his door tonight.",
+      "text": "Found beneath the stage, where the hall was thickest at twenty to ten: a silver flask shaped like a snail shell — Giuliana Andolpho's, the one she calls 'a gift from an admirer' and never drinks from. Two guests separately place Giuliana leaving the study corridor early in the evening, flushed and fast — right around the time a cream calling card appeared on Braun's console announcing a 'gift' to be delivered to the study at nine. Somebody made sure the host would open his door tonight.",
       "about_character_id": "giuliana"
     },
     {
@@ -60,7 +60,7 @@
       "id": "clue-lawn",
       "zone_id": "lawn",
       "name": "The Stakeout Log",
-      "text": "Under the far garden bed's stones, wrapped in oilcloth: Remington Whitley's rain-warped notebook. He wasn't at this party as a guest — he was watching the house for Braun, waiting for a midnight handoff. His log: '9:40 — stage grab, tower down, hall floods.' '9:41 — figure on side path toward house. Small build. Carrying.' '9:47 — study lamp out.' '9:54 — figure returns. Still carrying.' The detective saw the whole thing happen. He just didn't know it yet.",
+      "text": "Under the far garden bed's stones, wrapped in oilcloth: Remington Whitley's rain-warped notebook. He wasn't at this party as a guest — he was watching the house for Braun, waiting for a midnight handoff. His log: '9:40 — singer takes the stage. Hall floods.' '9:41 — figure on side path toward house. Small build. Carrying.' '9:47 — a scream from the study. Something heavy hits the floor. Lamp out.' '9:54 — figure returns. Still carrying.' The detective saw the whole thing happen. He just didn't know it yet.",
       "about_character_id": "remington"
     }
   ]

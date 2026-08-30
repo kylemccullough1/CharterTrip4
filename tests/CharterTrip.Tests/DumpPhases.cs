@@ -65,7 +65,7 @@ public class DumpPhases
             {
                 PhaseService.GoToPhase(t, phase, now);
 
-                if (phase == MysteryPhase.Mingling)
+                if (phase == MysteryPhase.Introductions)
                     for (var i = 0; i < guests.Count; i++)
                         foreach (var step in new[] { 1, 5 })
                             ScanShareService.RecordMeeting(t, guests[i], guests[(i + step) % guests.Count], now);

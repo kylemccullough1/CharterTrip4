@@ -78,6 +78,25 @@ public static class ObjectiveBus
         return Publish(trip, issue);
     }
 
+    /// <summary>
+    /// A template aimed at one person by the game itself, rather than by a phase or a staff member:
+    /// the introductions send "you're up" to whoever is standing. Nothing if the template is not in
+    /// the story — a missing template is a content gap, not a crash on the host's phone.
+    /// </summary>
+    public static MysteryObjectiveIssue? SendTemplateTo(
+        TripData trip, string templateId, string characterId, MysteryPhase phase, DateTimeOffset now)
+    {
+        var template = trip.Mystery.Story.Objectives.FirstOrDefault(o => o.Id == templateId);
+        if (template is null) return null;
+
+        var issue = FromTemplate(template, phase, now, issuedBy: null);
+        issue.Audience = MysteryAudience.Characters;
+        issue.FactionId = null;
+        issue.CharacterIds = [characterId];
+
+        return Publish(trip, issue);
+    }
+
     /// <summary>Free text, for the thing nobody wrote a template for.</summary>
     public static MysteryObjectiveIssue SendFreeText(
         TripData trip,

@@ -5,26 +5,26 @@
       "name": "The Syndicate Hand",
       "blurb": "You are the Syndicate's hand — three people, one murder. Each of you supplied a piece: the poison, the bottle, the path. James Braun's ledger would have ended all of you, so tonight the Syndicate ended him first.",
       "knowledge": "You know exactly who your two partners are, and you know how it was done: the doctor's tincture went into the bootlegger's 'peace offering' bottle as it passed through the kitchen, and the chauffeur carried it up the side path at 9:41 while the singer emptied the halls. Get your stories straight — the truth is the one story you can never tell.",
-      "win_condition": "Survive the night. If the guests have not convicted all three of the Syndicate's hands by the end of the final trial, the Syndicate wins and you walk out free.",
+      "win_condition": "Survive the night. If the guests have not convicted at least two of the Syndicate's three hands by the end of the final trial, the Syndicate wins and you walk out free.",
       "knows_each_other": true,
       "abilities": [
         {
           "id": "evidence_hand",
           "name": "The Syndicate's Hand (choose one)",
-          "text": "Once tonight, the Syndicate reaches into the evidence. Choose one clue card and one of two moves: Plant something on it, or Scrub it clean. Spend it well — you only get one touch, and the investigators have ways of noticing.",
+          "text": "Once tonight, the Syndicate reaches into the evidence. Stand at a clue card, choose who your story points at, and choose one of two moves: Plant something of theirs on it, or Scrub it clean. The moment it's done, your own answers change to match — where you were, what you saw — so the three of you tell the same lie. You only get one touch, and the investigators have ways of noticing.",
           "charges": 1,
           "shared": true,
-          "unlock": "discussion2",
+          "unlock": "investigation",
           "modes": [
             {
               "id": "plant",
               "name": "Plant",
-              "text": "Choose a clue card and a guest. That guest's personal effect appears in the clue's text, half-buried in the scene — quiet, deniable, and very easy for a suspicious room to find."
+              "text": "Choose a guest. Their personal effect appears in this card's text, half-buried in the scene — quiet, deniable, and very easy for a suspicious room to find. Your alibi now puts them near the study."
             },
             {
               "id": "scrub",
               "name": "Scrub",
-              "text": "Choose a clue card. Its contents are wiped — anyone scanning it finds only a disturbed scene and the certainty that someone got there first. Destroys the evidence, but announces that evidence existed."
+              "text": "Choose who you'll say you saw. This card's contents are wiped — anyone scanning it finds only a disturbed scene and the certainty that someone got there first. Destroys the evidence, but announces that evidence existed."
             }
           ]
         }
@@ -35,37 +35,27 @@
       "name": "Syndicate Associates",
       "blurb": "You are Syndicate associates — not killers, but not innocent. You made the noise, carried the messages, and cleared the way. Tonight you protect the hands that did the work, because if they fall, you fall next.",
       "knowledge": "You know who all three of the Syndicate's hands are and you know each other. The hands know you are with them. Nobody else at this party knows what you are — keep it that way.",
-      "win_condition": "You win with the Syndicate: if the guests have not convicted all three hands by the end of the final trial, you walk free with them. Protect them at any cost — except being caught yourself.",
+      "win_condition": "You win with the Syndicate: if the guests have not convicted at least two of the three hands by the end of the final trial, you walk free with them. Protect them at any cost — except being caught yourself.",
       "knows_each_other": true,
       "abilities": [
         {
           "id": "loyalty",
-          "name": "Loyalty (choose one)",
-          "text": "Once tonight, you shield the Syndicate from the one question that can end it. Choose your move before the detectives ask theirs: cover one of the hands, or hang the question on an innocent instead.",
+          "name": "Take the Blame",
+          "text": "Once tonight, one of you can step in front of the hands. From the moment you take the blame, if the room convicts you your card reads KILLER — and the room counts you as one of the three. If they'd have caught all three that way, the ending tells them the truth about you. If they wouldn't have, it never does. One charge between the two of you; hold it for the final deliberation if you like, but it dies unspent at the last verdict.",
           "charges": 1,
           "shared": true,
           "unlock": "discussion2",
-          "modes": [
-            {
-              "id": "shield",
-              "name": "Shield",
-              "text": "Secretly choose one of the Syndicate's hands. If the Hard Question is ever asked about them tonight, it comes back INNOCENT. They never know you saved them. That's the job."
-            },
-            {
-              "id": "decoy",
-              "name": "Decoy",
-              "text": "Secretly choose an innocent guest. If the Hard Question is ever asked about them tonight, it comes back GUILTY. May whoever you pick forgive you — the Syndicate won't need to."
-            }
-          ]
+          "modes": [],
+          "target": "none"
         }
       ]
     },
     {
       "id": "detective",
       "name": "The Investigators",
-      "blurb": "You are the investigators — a reporter, a trainee, and a cop, each holding one corner of the same picture. James Braun was about to hand over the Syndicate's ledger, and someone in this house made sure he never did.",
+      "blurb": "You are the investigators — a reporter, a trainee, and a cop, each holding one corner of the same case. James Braun was about to hand over the Syndicate's ledger, and someone in this house made sure he never did.",
       "knowledge": "You three know each other and can trust each other completely. You start with what you've seen and scanned — the rest you'll have to shake loose from the guests, the rooms, and the cards hidden in them.",
-      "win_condition": "Convict all three of the Syndicate's hands by the end of the final trial. Every innocent you convict instead is a gift to the Syndicate — and there are people at this party who look guiltier than the killers do.",
+      "win_condition": "Convict at least two of the Syndicate's three hands by the end of the final trial. Every innocent you convict instead is a gift to the Syndicate — and there are people at this party who look guiltier than the killers do.",
       "knows_each_other": true,
       "abilities": [
         {
@@ -75,25 +65,28 @@
           "charges": 2,
           "shared": false,
           "unlock": "studyScene",
-          "modes": []
+          "modes": [],
+          "target": "character"
         },
         {
           "id": "tamper_check",
           "name": "Forensics",
-          "text": "Once tonight, you run forensics. Choose one clue card and learn the truth about it: untouched, planted, or scrubbed. The Syndicate's hands leave fingerprints on evidence — this is how you find them.",
+          "text": "Once tonight, you run forensics. Choose one clue card you've scanned and learn the truth about it: untouched, planted, or scrubbed. The Syndicate's hands leave fingerprints on evidence — this is how you find them.",
           "charges": 1,
           "shared": false,
-          "unlock": "discussion1",
-          "modes": []
+          "unlock": "discussion2",
+          "modes": [],
+          "target": "clue"
         },
         {
           "id": "killer_check",
           "name": "The Hard Question",
-          "text": "Once tonight, you ask the Hard Question. Choose one guest and learn the answer: are they one of the Syndicate's hands, or not? The answer is true — unless someone loyal to the Syndicate got to your question first.",
+          "text": "Once tonight, you ask the Hard Question. Choose one guest and learn the answer: KILLER, or NOT A KILLER. The answer is true of what the room will be told — and the Syndicate's associates can arrange to be told the wrong thing.",
           "charges": 1,
           "shared": false,
           "unlock": "discussion2",
-          "modes": []
+          "modes": [],
+          "target": "character"
         }
       ]
     },
@@ -108,7 +101,7 @@
         {
           "id": "self_frame",
           "name": "Incriminate Yourself",
-          "text": "Twice tonight, you point the evidence at the only person who deserves the spotlight: you. Choose a clue card and how loudly it should accuse you. Infamy doesn't build itself.",
+          "text": "Twice tonight, you point the evidence at the only person who deserves the spotlight: you. Stand at a clue card and choose how loudly it should accuse you. Once it's done, your own answers start confessing a little too. Infamy doesn't build itself.",
           "charges": 2,
           "shared": false,
           "unlock": "investigation",
@@ -141,8 +134,9 @@
           "text": "Once tonight, family money opens a file. Choose any guest — your rival, or anyone who might have history with them — and you receive what a third party says about that person behind their back: a grudge, a grievance, an accusation you were never in the room to hear. It comes from someone you may never have spoken to, and it is ammunition, not proof. Bring it to trial and make it sound like proof.",
           "charges": 1,
           "shared": false,
-          "unlock": "discussion1",
-          "modes": []
+          "unlock": "discussion2",
+          "modes": [],
+          "target": "character"
         }
       ]
     },
@@ -151,7 +145,7 @@
       "name": "Guests of the House",
       "blurb": "You are guests of the house — invited for dinner, trapped in a murder. You have no secret allies, no hidden agenda, and no idea who to trust, which tonight makes you the most honest people in the building.",
       "knowledge": "You know only what you've seen, heard, and scanned tonight. Everything else is somebody's story — and somebody at this party is lying for their life.",
-      "win_condition": "You win with the town: all three of the Syndicate's hands convicted by the end of the final trial, with you never convicted yourself. Ask questions, compare notes, and don't let them hang this on an innocent — especially not on you.",
+      "win_condition": "You win with the town: at least two of the Syndicate's three hands convicted by the end of the final trial, with you never convicted yourself. Ask questions, compare notes, and don't let them hang this on an innocent — especially not on you.",
       "knows_each_other": false,
       "abilities": []
     }

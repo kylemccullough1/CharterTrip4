@@ -247,6 +247,18 @@ else
     /// <summary>Which organizer is choosing, once they have said. Kept across the two steps.</summary>
     [SupplyParameterFromQuery(Name = "who")] private string? WhoQuery { get; set; }
 
+    /// <summary>
+    /// <c>?pick=host</c>: an organizer has asked for a house part and is being asked which of them
+    /// they are. In the URL for the same reason <c>?who=</c> is — the "which of you" form is a
+    /// real POST, and a page that decides its state from scratch on every request has to be able
+    /// to tell from the request that this form is the one on it. It used to be set in a field on
+    /// the request before, which the next request never saw; the submit then failed with "no form
+    /// on the page currently has that name", because the page had rendered the name picker instead.
+    /// </summary>
+    [SupplyParameterFromQuery(Name = "pick")] private string? PickQuery { get; set; }
+
+    private const string PickHost = "host";
+
     private string? _organiserId;
 
     /// <summary>Which door opened the picker. The two ask the same question of different lists.</summary>
@@ -331,6 +343,14 @@ else
                     _state = State.PickPart;
                     return;
                 }
+            }
+
+            // Step one of the same conversation: they have asked for a house part and not yet said
+            // which of them they are. Only on a browser that could take one — the query is public.
+            if (match.Kind == CodeKind.MysteryParty && PickQuery == PickHost && CanTakeTheHostJob)
+            {
+                _state = State.PickHostName;
+                return;
             }
 
             _state = State.PickName;
@@ -492,7 +512,12 @@ else
 
                 if (_organiserId is null)
                 {
-                    _state = State.PickHostName;
+                    // Into the URL, not only into _state: the "which of you" form is a POST, and
+                    // the page has to know to render it when that POST arrives.
+                    var ask = $"/join/{Uri.EscapeDataString(Code ?? "")}?pick={PickHost}";
+                    if (IsSim) ask += $"&sim={Sim!.Value}";
+
+                    Nav.NavigateTo(ask);
                     return;
                 }
 

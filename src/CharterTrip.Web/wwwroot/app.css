@@ -1249,14 +1249,14 @@ button.team-dot.is-pickable[aria-expanded="true"]::before {
    a television. So in Game Mode the viewport is the whole surface and nothing moves: the shell
    stops being a page that grows past the fold and becomes a frame exactly one screen tall.
 
-   Which means a screen with more in it than fits is cut off rather than reachable. That is the
-   trade being made deliberately — every screen that enters Game Mode is built to a viewport
-   already, and the alternative is the bar. */
+   The one thing that must never happen is a screen with more in it than fits being cut off:
+   the main area scrolls rather than hides, so a wall with more on it than a viewport's worth
+   is reachable rather than gone. Every screen is still built to a viewport first. */
 :root.game-mode,
 :root.game-mode body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 
 :root.game-mode .shell { height: 100%; min-height: 0; }
-:root.game-mode .main { height: 100%; min-height: 0; overflow: hidden; }
+:root.game-mode .main { height: 100%; min-height: 0; overflow-x: hidden; overflow-y: auto; }
 
 /* The page wrapper's 60px of bottom padding is there to keep the last card off the footer. With
    no footer to clear it is 60px of nothing, and on a screen sized to the viewport it is 60px of
@@ -4195,10 +4195,48 @@ pre.code {
 .ms-idle p { font-size: clamp(1rem, 1.7vw, 1.5rem); color: var(--text-dim); max-width: 50rem; }
 
 .ms-reveal-para {
-  font-size: clamp(1rem, 1.75vw, 1.6rem);
-  line-height: 1.5;
+  font-size: clamp(.95rem, 1.3vw, 1.2rem);
+  line-height: 1.6;
   max-width: 52rem;
+  margin: 0;
 }
+.ms-reveal-para + .ms-reveal-para { margin-top: .9em; }
+
+/* How he died, on a card the room can read, scrolling inside itself if the television is short. */
+.ms-reveal.card {
+  display: block;            /* not a centred flex column: that clips the top of overflowing text */
+  text-align: left;
+  max-width: min(92vw, 72ch);
+  padding: clamp(18px, 3vh, 34px) clamp(20px, 3vw, 44px);
+  border-color: var(--gold-dim);
+  background: rgba(10,12,16,.78);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  overflow-y: auto;
+  max-height: calc(100vh - 220px);
+  animation: ms-truth-in .6s ease-out both;
+}
+/* The title over the card is a heading, not the headline: the card is the point. */
+.ms-screen[data-phase="Reveal"] .ms-head .ms-title-big { font-size: clamp(1.4rem, 3vw, 2.4rem); }
+
+/* Each winner on a card of their own. Wide enough that a name stays on one line and the
+   epilogue reads as a paragraph; the portrait keeps its size instead of being squeezed by the
+   column; and the column starts at the top so a long card scrolls rather than clipping. */
+.ms-truth.card {
+  justify-content: flex-start;
+  gap: 8px;
+  max-width: min(92vw, 64ch);
+  padding: clamp(16px, 2.6vh, 30px) clamp(20px, 3vw, 44px);
+  border-color: var(--gold-dim);
+  background: rgba(10,12,16,.78);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+.ms-truth.card .ms-portrait { flex: 0 0 auto; width: clamp(72px, 9vw, 120px); height: clamp(72px, 9vw, 120px); }
+.ms-truth.card .ms-truth-name { font-size: clamp(1.5rem, 3.2vw, 2.5rem); }
+.ms-truth.card .ms-truth-blurb { font-size: clamp(.9rem, 1.15vw, 1.05rem); line-height: 1.55; }
 .ms-winners { margin-top: 1em; }
 .ms-winners h2 {
   font-family: var(--display);
@@ -4719,32 +4757,53 @@ pre.code {
 
 /* Strobing white at party brightness is a real accessibility problem, not a
    checkbox — the reduced-motion branch below replaces it with one soft fade. */
+/* White, with the clap; a flicker as it dies; nothing while the scream and the fall land. The
+   audio module's murder() is timed to the same numbers: clap at 0, scream at .9s, thud at 2.3s. */
 .ms-flash {
   position: fixed; inset: 0; z-index: 90;
   background: #fff; opacity: 0;
   pointer-events: none;
-  animation: ms-strike 2.6s steps(1, end) 1 both;
+  animation: ms-strike 1.4s steps(1, end) 1 both;
 }
 
 @keyframes ms-strike {
-  0%, 6%   { opacity: .92; }
-  7%, 17%  { opacity: 0; }
-  18%, 22% { opacity: .7; }
-  23%, 46% { opacity: 0; }
-  47%, 50% { opacity: .42; }
-  51%, 100%{ opacity: 0; }
+  0%, 22%  { opacity: 1; }
+  23%, 30% { opacity: 0; }
+  31%, 36% { opacity: .75; }
+  37%, 100%{ opacity: 0; }
 }
 
-.ms-murder { text-align: center; padding: 12vh 5vw; }
+/* The words arrive after the sound: three and a half seconds of dark and rain, then the butler. */
+.ms-murder {
+  text-align: center; padding: 8vh 5vw;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  animation: ms-truth-in .8s 3.4s ease-out both;
+}
+.ms-murder-who { color: var(--text-faint); }
 .ms-murder-line {
   font-family: var(--display);
-  font-size: clamp(1.6rem, 4vw, 3rem);
+  font-size: clamp(1.25rem, 2.6vw, 2.1rem);
+  line-height: 1.4;
   color: var(--ruby);
-  max-width: 26ch; margin: 0 auto;
+  max-width: 44ch; margin: 0 auto;
+  padding: clamp(18px, 3vh, 32px) clamp(20px, 3vw, 40px);
+  border: 1px solid rgba(201,79,90,.4);
+  border-radius: var(--radius);
+  background: rgba(10,12,16,.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
-.ms-study { max-width: 52ch; padding: 6vh 4vw; }
-.ms-study-text { font-size: clamp(1.05rem, 2vw, 1.5rem); line-height: 1.75; }
+.ms-study.card {
+  max-width: min(92vw, 60ch);
+  padding: clamp(18px, 3vh, 34px) clamp(20px, 3vw, 44px);
+  border-color: var(--gold-dim);
+  background: rgba(10,12,16,.78);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: ms-truth-in .6s ease-out both;
+}
+.ms-study-text { margin: 0; font-size: clamp(1rem, 1.6vw, 1.35rem); line-height: 1.7; }
 
 /* --- the clue feed --------------------------------------------------------- */
 
@@ -4757,6 +4816,9 @@ pre.code {
 /* --- trials ---------------------------------------------------------------- */
 
 .ms-grid-voting .ms-guest { transition: opacity .3s ease; }
+
+.ms-also-named { font-size: clamp(.8rem, 1.1vw, 1rem); color: var(--text-dim); }
+.ms-loose { margin-top: 6px; animation: ms-truth-in .5s .4s ease-out both; }
 .ms-grid-voting .is-thinking { opacity: .55; }
 
 /* The dots do the work a countdown used to, and better: they point at the
@@ -4873,6 +4935,7 @@ pre.code {
 
 .mm {
   position: relative;
+  container-type: inline-size;
   /* Clamped against the viewport, not just the parent. On a narrow phone the
      ancestor chain reports a content box wider than the screen — the tab strip's
      six pills are its widest child — and a floor plan inheriting that hangs off
@@ -4893,7 +4956,7 @@ pre.code {
 .mm-room {
   position: absolute;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px; padding: 4px;
+  gap: 3px; padding: 4px 5px;
   border: 1px solid var(--line);
   border-radius: 4px;
   background: var(--panel);
@@ -4913,16 +4976,29 @@ pre.code {
 .mm-room.is-annex { padding: 0; }
 
 .mm-name {
-  /* The floor is what a phone gets, and it is low because the plan is the real house: nine rooms
-     and four roped ones in a hand's width, the Entry only 7% of it. At .52rem every narrow room
-     broke its name mid-word — "Ent / ry", "Sittin / g". At .44 only the Entry does, and only on a
-     360px screen. The ceiling is unchanged, so the television is untouched. */
-  font-size: clamp(.44rem, 1.5vw, .82rem);
-  line-height: 1.15;
-  overflow-wrap: anywhere;
+  /* Sized against the plan itself (cqi is a hundredth of the map's width) rather than the
+     viewport, so a floor plan in a column beside something is labelled for the width it actually
+     has. And never broken inside a word: "Ent / ry" and "Sittin / g" were the old failure. A name
+     wraps at its spaces or not at all; the rooms too narrow for that take a short name instead
+     (see .is-narrow and Room.Short). */
+  font-size: clamp(.5rem, 1.55cqi, 1rem);
+  line-height: 1.2;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  text-wrap: balance;
   max-width: 100%;
+  letter-spacing: .01em;
 }
-.mm-sub { font-size: clamp(.44rem, 1.2vw, .68rem); color: var(--text-faint); }
+.mm-sub { font-size: clamp(.44rem, 1.15cqi, .72rem); color: var(--text-faint); white-space: nowrap; }
+
+/* The narrow rooms — the Entry, the study, the Sitting Room, the west extension — get the short
+   name on every screen and a slightly smaller face, so they have air around the word instead of
+   the word pressed against both walls. */
+.mm-room.is-narrow .mm-wide { display: none; }
+.mm-room.is-narrow .mm-narrow { display: inline; }
+.mm-room.is-narrow .mm-name { font-size: clamp(.46rem, 1.3cqi, .9rem); }
+.mm-room.is-narrow .mm-sub { white-space: normal; line-height: 1.15; }
 
 /* The wide name is the default; the phone swaps it below. */
 .mm-narrow { display: none; }
@@ -5009,7 +5085,7 @@ pre.code {
      — a flash by definition — goes altogether rather than becoming a slow one. */
   .ms-storm-rain { display: none; }
   .ms-storm-flash, .ms-storm-sheet, .ms-storm-bolt { animation: none; opacity: 0; }
-  .ms-lobby .ms-guest { animation: none; }
+  .ms-arrival { animation: none; }
   .page-murder .btn-gold::after { animation: none; }
   .ms-drips i, .ms-drips i::after { animation: none; }
   .ms-drips i::after { opacity: 0; }
@@ -5048,6 +5124,7 @@ pre.code {
 
 .se-sub { font-family: var(--display); margin: 18px 0 6px; }
 .se-ability { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line-soft); display: grid; gap: 8px; }
+.se-question { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line-soft); display: grid; gap: 8px; }
 
 .se-select {
   background: var(--ink-2); color: var(--text);
@@ -5287,7 +5364,26 @@ pre.code {
 /* The name, on the door. Sized to the stage rather than to the viewport alone: five words in
    the display face at the heading's full size wrap to two lines on a laptop, and a two-line
    name bleeds onto itself. */
-.page-murder .ms-title-big.is-bleeding { z-index: 2; font-size: min(3.4rem, 4vw); }
+.page-murder .ms-title-big.is-bleeding { z-index: 2; font-size: min(4.6rem, 4.5vw); white-space: nowrap; }
+/* Down from the top edge a little, and air under it for the blood to run into.
+
+   As wide as the words need rather than as wide as the stage: the gradient is clipped to the
+   text, so a letter past the box's edge is simply not drawn — "Mano" — and the stage is only
+   seven-tenths of the screen. Centred as a flex item, because a flex container centres a box
+   wider than itself evenly over both edges where margins cannot. Capped at the viewport so
+   nothing can put a scrollbar on a television. */
+.page-murder .ms-head:has(> .ms-title-wrap) { display: flex; flex-direction: column; align-items: center; }
+.page-murder .ms-title-wrap {
+  width: max-content; max-width: 96vw;
+  flex: 0 0 auto;
+  align-self: center;
+  margin: clamp(10px, 4vh, 44px) 0 clamp(10px, 3vh, 30px);
+}
+/* On something narrow enough to be a phone the name may wrap; the wall is never that narrow. */
+@media (max-width: 700px) {
+  .page-murder .ms-title-big.is-bleeding { white-space: normal; }
+  .page-murder .ms-title-wrap { width: fit-content; }
+}
 /* The bottom of the letters is the last stop of the title's gradient, so that is what the
    blood is. */
 .page-murder .ms-title-wrap .ms-drips { --blood-from: #5e0810; }
@@ -5473,22 +5569,14 @@ pre.code {
   padding: clamp(14px, 2.4vh, 34px) clamp(14px, 3vw, 40px);
   box-sizing: border-box;
 
-  /* Exactly one screen, and it has to stay a fixed height: that is what makes the
-     walls of faces and the clue feed shrink into themselves rather than push the
-     page taller. A min-height would let any of them grow instead.
+  /* One screen at least, and as tall as it needs to be. It was a fixed height with the walls
+     of faces and the clue feed scrolling inside themselves, which on a television meant the
+     bottom of a wall of twenty-five faces was simply not there. Nothing on this screen is
+     cut off now: a stage with more in it than a screen grows, and the page scrolls.
 
-     The two things beside it are what this got wrong. It was overflow: hidden,
-     so content that could not shrink was simply cut off; and it was a plain
-     centred flex column, and a centred flex container that overflows spills in
-     BOTH directions — so on a 560px-tall window the lobby's doors rode up over
-     the title and down across the buttons. Clipping at the stage's own edge does
-     nothing about that, because the title is inside the stage.
-
-     `safe center` centres while there is room and falls back to the top when
-     there is not, so nothing ever spills backwards over what is above it; auto
-     means whatever still does not fit can be scrolled to instead of vanishing. */
-  height: calc(100dvh - var(--ms-chrome, 170px));
-  overflow-y: auto;
+     `safe center` centres while there is room and falls back to the top when there is not,
+     so nothing ever spills backwards over what is above it. */
+  min-height: calc(100dvh - var(--ms-chrome, 170px));
 }
 
 @media (max-width: 700px) { .ms-stage { --ms-chrome: 130px; } }
@@ -5511,7 +5599,7 @@ pre.code {
    that does not fit scrolls inside itself rather than pushing the page taller —
    the alternative is a room being asked to scroll a television. */
 .ms-screen.is-live { padding: 0; }
-.ms-screen.is-live .ms-stage { height: 100dvh; overflow-y: auto; }
+.ms-screen.is-live .ms-stage { min-height: 100dvh; }
 
 /* Headings, counts and instructions keep their size; the one block of content
    in the middle takes whatever is left. */
@@ -5528,45 +5616,51 @@ pre.code {
 
 /* Deliberately not in that list: the reveal's prose is often empty, and an empty
    block that grows pins the headline to the top of an otherwise blank screen. */
-.ms-stage > .ms-reveal { flex: 0 1 auto; overflow-y: auto; }
+.ms-stage > .ms-reveal { flex: 0 1 auto; }
 
 /* Any wall of faces shrinks and scrolls rather than pushing the headline off the
    top of the screen. Twenty-two voting tiles did exactly that. */
-.ms-stage > .ms-grid { flex: 1 1 auto; min-height: 0; overflow-y: auto; align-content: start; }
+.ms-stage > .ms-grid { flex: 1 1 auto; min-height: 0; align-content: start; }
 
 /* Except the investigation's strip, which is the secondary thing on that screen:
    it gives way to the floor plan rather than competing with it. */
 .ms-stage > .ms-grid-thumbs { flex: 0 1 auto; }
 
-.ms-grid-scroll { overflow-y: auto; align-content: start; padding-right: 2px; }
+.ms-grid-scroll { align-content: start; padding-right: 2px; }
 
 /* The door on the left, the people who have come through it on the right.
    There were two QR codes here and stacked they took four hundred pixels of a
    nine-hundred-pixel screen, leaving the arrivals wall — the thing everybody in
    the hall is watching — what was left. */
 .ms-lobby {
+  /* One column now: the door, and the arrivals underneath it. The two-column version put the
+     wall beside the door; the bee's lobby puts the faces under the code, and this does the same. */
   display: grid;
-  grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
   gap: clamp(14px, 2.4vw, 34px);
   align-items: stretch;
   min-height: 0;
 }
 .ms-lobby > * { min-height: 0; }
 .ms-lobby-doors {
-  display: flex; flex-direction: column; gap: 12px;
+  display: flex; flex-direction: column; gap: 10px;
+  /* The door in the middle of what is left under the name, the count and the arrivals with it;
+     "safe" so that when twenty-five faces outgrow the screen it scrolls from the top instead of
+     losing the code off the top edge. */
   justify-content: center;
   justify-content: safe center;
+  width: 100%;
+  max-width: 70rem;
 
-  /* Scrolls rather than spilling. The column is centred inside a stage that is exactly one screen
-     tall, and centred overflow goes out of both ends — so on a short window the count underneath
-     the door used to run out of the bottom and sit on top of the buttons below it. */
-  overflow-y: auto;
 }
 
 /* One door where the grid used to sit two side by side, so without a cap the card takes the whole
    column: a QR blown up to 24rem, and a caption on one long line instead of two short ones. It is
    scanned from across a hall, not read up close — the size it needs is the size it had. */
 .ms-lobby .mys-doors { margin: 0 auto; max-width: 20rem; }
+.ms-lobby .mys-door { padding: 10px 14px; gap: 2px; }
+.ms-lobby .mys-code { font-size: clamp(1.3rem, 2vw, 1.8rem); }
 
 /* The QR carries a fixed size in the markup, because it is scanned from across a
    hall. On a short window that fixed size is the whole difference between the
@@ -5577,7 +5671,7 @@ pre.code {
   width: auto;
   height: auto;
   max-width: 100%;
-  max-height: min(190px, 22vh);
+  max-height: min(190px, 17vh);
 }
 
 @media (max-height: 760px) {
@@ -5600,10 +5694,30 @@ pre.code {
 }
 .ms-lobby.is-waiting > .ms-grid { display: none; }
 
-/* Each tile lands as its phone joins — the bee's drop, on the bee's curve — so the wall fills
-   up rather than counting down. Keyed on the character in the markup, so a new arrival is a new
-   element and gets the entrance; a re-render of the twenty already there does not. */
-.ms-lobby .ms-guest { animation: ms-join-drop .5s cubic-bezier(.22,1.4,.36,1) both; }
+/* The arrivals: a face and a name each, wrapping under the count, and each one lands as its
+   phone joins — the bee's drop, on the bee's curve — so the wall fills up rather than counting
+   down. Keyed on the character in the markup, so a new arrival is a new element and gets the
+   entrance; a re-render of the twenty already there does not. */
+.ms-arrivals {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start;
+  gap: 10px 14px;
+  padding: 4px 0 8px;
+}
+.ms-arrival {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  width: clamp(64px, 6vw, 92px);
+  animation: ms-join-drop .5s cubic-bezier(.22,1.4,.36,1) both;
+}
+.ms-arrival .ms-portrait {
+  width: clamp(48px, 4.4vw, 72px); height: clamp(48px, 4.4vw, 72px);
+  border-color: var(--gold-dim);
+}
+.ms-arrival-name {
+  font-family: var(--display);
+  font-size: clamp(.68rem, .85vw, .86rem);
+  line-height: 1.2; text-align: center;
+  max-width: 100%; overflow-wrap: break-word;
+}
 @keyframes ms-join-drop {
   0%   { opacity: 0; transform: translateY(-22px) scale(.6); }
   70%  { opacity: 1; transform: translateY(3px) scale(1.08); }
@@ -5653,7 +5767,7 @@ pre.code {
 .ms-split-map.is-wide { width: 100%; }
 
 .ms-split-feed { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-.ms-split-feed .ms-feed { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 4px; }
+.ms-split-feed .ms-feed { flex: 1 1 auto; min-height: 0; padding-right: 4px; }
 
 @media (max-width: 900px) {
   .ms-split { grid-template-columns: minmax(0, 1fr); }
@@ -5909,6 +6023,34 @@ pre.code {
 
 .ms-victors .jeo-win-name { font-size: clamp(1.8rem, 5.5vw, 4.2rem); max-width: 24ch; }
 
+/* The ending is a paragraph, not a headline: it was going up at headline size and running off
+   the bottom of the television before anybody reached the Syndicate's thanks. */
+.ms-ending.card {
+  position: relative;
+  max-width: min(92vw, 68ch);
+  padding: clamp(18px, 3vh, 34px) clamp(20px, 3vw, 44px);
+  border-color: var(--gold-dim);
+  background: rgba(10,12,16,.78);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: ms-truth-in .6s ease-out both;
+  overflow-y: auto;
+  max-height: 68vh;
+}
+.ms-ending-text {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(.95rem, 1.3vw, 1.2rem);
+  line-height: 1.55;
+  color: var(--text);
+  text-align: left;
+}
+.ms-ending-actions { position: relative; margin-top: 6px; }
+
+/* The guests of the house, all together on one card at the end. */
+.ms-truth.is-group { max-width: min(92vw, 70ch); }
+.ms-truth-people { width: 100%; margin: 6px 0; }
+
 .ms-sides {
   position: relative;
   display: grid;
@@ -5969,7 +6111,7 @@ pre.code {
    the boxes with the least room in them — "Bedroom 4" is 145 x 78 units, which is two lines of text
    in nineteen pixels on a 360px phone, and the only label on the plan that actually overflowed.
    Quieter suits what they are and fixes it in the same stroke. */
-.mm-room.is-shut .mm-name { font-size: clamp(.36rem, 1.2vw, .66rem); }
+.mm-room.is-shut .mm-name { font-size: clamp(.4rem, 1.1cqi, .72rem); }
 
 .mm-dot {
   position: absolute; top: 6px; right: 6px;
@@ -6003,27 +6145,6 @@ pre.code {
 
 .mm-room.has-card { border-color: var(--gold-dim); background: rgba(212,175,55,.07); }
 
-/* Absolute is right when the room is empty and wrong the moment it holds a card:
-   the pill sat on top of the reading. In card mode it is the last line instead. */
-.mm-room.has-card .mm-trail {
-  position: static;
-  transform: none;
-  margin-top: 3px;
-}
-
-/* The card itself, lying in the room it was found in. */
-.mm-card {
-  margin: 2px 0 0;
-  font-size: clamp(.42rem, .82vw, .8rem);
-  line-height: 1.35;
-  color: var(--text-dim);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: var(--lines, 3);
-  max-width: 100%;
-}
-
 .mm-key {
   display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: center;
   color: var(--text-faint); font-size: .76rem; margin-top: 10px;
@@ -6045,7 +6166,9 @@ pre.code {
   max-width: 100%;
   margin-inline: auto;
 }
-.mm-wrap.is-big .mm-name { font-size: clamp(.6rem, 1.05vw, .95rem); }
+.mm-wrap.is-big .mm-name { font-size: clamp(.6rem, 1.6cqi, 1.15rem); }
+.mm-wrap.is-big .mm-room.is-narrow .mm-name { font-size: clamp(.55rem, 1.35cqi, 1rem); }
+.mm-wrap.is-big .mm-room { padding: 6px 8px; gap: 4px; }
 
 /* --- the phone, with air in it ----------------------------------------------- */
 
@@ -6302,3 +6425,247 @@ h1:focus { outline: none; }
   .pts-row { grid-template-columns: 12px minmax(0, 1fr) 4rem 24px; }
   .pts-row-note, .pts-row-when { grid-column: 2 / -1; }
 }
+
+/* --- the introductions ------------------------------------------------------- */
+
+/* Everybody in one row under the title, the way the bee's wall does it, and whoever is up is
+   pulled down out of the row into the middle of the screen and blown up. The row never wraps and
+   never re-sorts: seats shrink to fit (--seats divides the width), and the turn is shown by moving
+   one seat rather than by reordering — a face you were watching stays where you were watching it. */
+.ms-intro-head { padding-bottom: 0; }
+
+.ms-intro-row {
+  --row-gap: clamp(3px, .6vw, 10px);
+  display: flex; flex-wrap: nowrap; justify-content: center; align-items: flex-start;
+  gap: 6px var(--row-gap); padding: 6px 0 0; flex: 0 0 auto; position: relative; z-index: 4;
+}
+
+.ms-seat {
+  --face: min(clamp(30px, 3.4vw, 68px), calc((94vw - (var(--seats, 1) - 1) * var(--row-gap)) / var(--seats, 1)));
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  width: var(--face); flex: 0 0 var(--face); min-width: 0; position: relative;
+  transition: transform .55s cubic-bezier(.22,1.2,.36,1), opacity .4s ease, filter .4s ease;
+}
+.ms-seat .ms-portrait {
+  width: var(--face); height: var(--face);
+  border-color: var(--gold-dim);
+  flex: 0 0 auto;
+}
+/* Two letters at 1.6rem overflow a seat that is thirty to sixty pixels across. Sized to the
+   circle, so they scale with it — and with the pull, since the pull is a transform. */
+.ms-seat .ms-portrait-monogram { font-size: calc(var(--face) * .36); letter-spacing: 0; }
+.ms-seat-name {
+  font-size: clamp(.48rem, .6vw, .72rem); font-weight: 600; letter-spacing: .02em;
+  color: var(--text); max-width: 100%; box-sizing: border-box; padding: 1px 5px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+/* Already stood up: still in their seat, quieter. */
+.ms-seat.is-done { opacity: .45; }
+
+/* Dragged down out of the row into the middle of the stage: it is your turn. Overshoots and
+   settles, so it reads as something with weight being pulled down. */
+.ms-seat.is-up {
+  --grow: 3;
+  --drop: max(clamp(80px, 22vh, 210px), calc(var(--face) * var(--grow) / 2 + 30px));
+  --pull: calc((calc((var(--seats, 1) - 1) / 2) - var(--i, 0)) * (var(--face) + var(--row-gap)));
+
+  transform: translateX(var(--pull)) translateY(var(--drop)) scale(var(--grow));
+  z-index: 5;
+  opacity: 1;
+  animation: ms-drag .72s cubic-bezier(.34,1.28,.5,1) both;
+}
+.ms-seat.is-up .ms-portrait {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold), 0 0 30px rgba(212,175,55,.5);
+}
+/* The plate would be three times the size down there and the stage already has the name. */
+.ms-seat.is-up .ms-seat-name { opacity: 0; }
+
+@keyframes ms-drag {
+  0%   { transform: translateX(0) translateY(0) scale(1); }
+  55%  { transform: translateX(calc(var(--pull) * 1.02)) translateY(calc(var(--drop) * 1.06)) scale(calc(var(--grow) * 1.04)); }
+  100% { transform: translateX(var(--pull)) translateY(var(--drop)) scale(var(--grow)); }
+}
+
+/* The stage the face lands on: empty at the top to leave the face its room, the name and the
+   job at the bottom. */
+.ms-intro-stage {
+  flex: 1 1 auto; display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-end; gap: 6px; min-height: clamp(150px, 34vh, 320px);
+  padding-bottom: 3vh; text-align: center;
+}
+.ms-intro-card { animation: ms-truth-in .45s .35s cubic-bezier(.2,1.2,.4,1) both; }
+.ms-intro-name { font-family: var(--display); font-size: clamp(1.8rem, 4.6vw, 3.6rem); line-height: 1.05; margin: 0; color: var(--gold-light); }
+.ms-intro-job { color: var(--text-faint); letter-spacing: .18em; text-transform: uppercase; font-size: clamp(.7rem, 1vw, .9rem); margin: 4px 0 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ms-seat, .ms-seat.is-up, .ms-intro-card { animation: none; transition: none; }
+  .ms-seat.is-up { transform: translateX(var(--pull)) translateY(var(--drop)) scale(var(--grow)); }
+}
+
+/* --- the briefing, on a card -------------------------------------------------- */
+
+.ms-slide.card { max-width: 72ch; padding: clamp(18px, 3vh, 34px) clamp(20px, 3vw, 44px); }
+.ms-slide.card .ms-slide-bullets { padding-left: 1.2em; }
+.ms-slide.card .ms-slide-bullets li::marker { color: var(--gold); }
+.ms-slide.has-figure {
+  max-width: min(94vw, 150ch);
+  display: grid; grid-template-columns: minmax(24ch, 1fr) minmax(0, 1.3fr);
+  gap: clamp(14px, 3vw, 44px); align-items: center;
+}
+/* Beside a figure the words are a caption, not the slide: smaller, tighter, and the map gets
+   the room. */
+.ms-slide.has-figure .ms-slide-title { font-size: clamp(1.3rem, 2.4vw, 2.2rem); margin: .1em 0 .4em; }
+.ms-slide.has-figure .ms-slide-bullets { font-size: clamp(.85rem, 1.25vw, 1.1rem); line-height: 1.5; }
+.ms-slide.has-figure .ms-slide-bullets li { margin-bottom: .45em; }
+.ms-slide-figure { min-width: 0; }
+.ms-slide-figure .mm-wrap, .ms-slide-figure .mm { width: 100%; }
+@media (max-width: 900px) { .ms-slide.has-figure { grid-template-columns: minmax(0, 1fr); } }
+
+.ms-reveal-para.is-decoy { color: var(--gold-light); font-style: italic; }
+
+/* --- the console's clock ------------------------------------------------------- */
+
+.sc-clock { margin: 0; font-size: 1.25rem; font-family: var(--display); }
+.sc-clock b { font-variant-numeric: tabular-nums; }
+.sc-clock.is-urgent b { color: var(--ruby); }
+.sc-clock.is-up b { color: var(--text-faint); }
+
+/* --- the conversation, on the phone ------------------------------------------- */
+
+.mp-session { display: grid; gap: 10px; }
+.mp-session-kicker { margin: 0; font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; color: var(--text-faint); }
+.mp-session-who { margin: 0; font-family: var(--display); font-size: 1.5rem; }
+.mp-session-turn { margin: 6px 0 0; font-weight: 600; color: var(--gold); display: flex; align-items: center; gap: 8px; }
+.mp-session-done { color: var(--text-dim); }
+.mp-session-leave { margin-top: 14px; }
+.mp-transcript { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.mp-asks { display: grid; gap: 8px; }
+.mp-ask { white-space: normal; text-align: left; line-height: 1.35; }
+
+.mp-exchange {
+  position: relative;
+  padding: 9px 10px 9px 12px;
+  border-left: 3px solid var(--line);
+  background: rgba(255,255,255,.025);
+  border-radius: 0 8px 8px 0;
+}
+.mp-exchange.is-theirs { border-left-color: var(--gold-dim); }
+.mp-exchange.is-latest.is-theirs { border-left-color: var(--gold); background: rgba(var(--gold-rgb), .08); }
+.mp-exchange.is-starred { border-left-color: var(--gold-light); background: rgba(var(--gold-rgb), .12); }
+.mp-exchange-q { margin: 0 0 4px; font-size: .84rem; color: var(--text-dim); padding-right: 30px; }
+.mp-exchange-q b { color: var(--text); font-weight: 600; }
+.mp-exchange-a { margin: 0; font-size: .95rem; line-height: 1.45; }
+.mp-exchange-cue { margin: 0 0 3px; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.mp-star {
+  position: absolute; top: 6px; right: 6px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: transparent; border: 1px solid transparent; color: var(--text-faint);
+  font-size: 1rem; line-height: 1; cursor: pointer;
+}
+.mp-star:hover, .mp-exchange.is-starred .mp-star { color: var(--gold-light); }
+.mp-interaction.is-open { border-color: var(--gold-dim); }
+
+/* Closed cards. The summary is the whole row; a star on it means something in here was worth
+   keeping. The open card lays its exchanges out below with the usual gap. */
+.mp-interaction { padding: 0; }
+.mp-interaction > .mp-interaction-summary {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 14px; cursor: pointer; list-style: none;
+  font-family: var(--display); font-size: 1.05rem;
+}
+.mp-interaction > .mp-interaction-summary::-webkit-details-marker { display: none; }
+.mp-interaction > .mp-interaction-summary::before {
+  content: "›"; color: var(--text-faint); font-size: 1.1rem; line-height: 1;
+  transition: transform .2s ease;
+}
+.mp-interaction[open] > .mp-interaction-summary::before { transform: rotate(90deg); }
+.mp-interaction-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp-interaction-star { color: var(--gold-light); font-size: 1rem; }
+.mp-interaction.has-star { border-color: var(--gold-dim); }
+.mp-interaction > .mp-exchange { margin: 0 12px 10px; }
+.mp-interaction > .mp-exchange:first-of-type { margin-top: 2px; }
+.mp-interaction > .muted { padding: 0 14px 12px; }
+
+/* The code button, and the code. */
+.mp-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.mp-code-btn {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 10px; border-radius: var(--radius-sm);
+  background: var(--panel); border: 1px solid var(--gold-dim); color: var(--gold-light);
+  font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
+  flex: 0 0 auto;
+}
+.mp-code-icon { font-size: 1.3rem; line-height: 1; }
+.mp-code { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.mp-code img, .mp-code canvas, .mp-code svg { background: #fff; padding: 10px; border-radius: 8px; max-width: min(72vw, 260px); height: auto; }
+.mp-code-hint { margin: 0; color: var(--text-dim); font-size: .9rem; line-height: 1.45; max-width: 30ch; }
+
+/* The one line the investigators get that the room does not. */
+.mp-alert {
+  margin: 0; padding: 10px 14px;
+  border: 1px solid rgba(201,79,90,.5); border-radius: var(--radius-sm);
+  background: rgba(201,79,90,.1); color: #f0b6bb;
+  font-family: var(--display); font-size: 1rem; text-align: center;
+}
+
+/* Working on a card: each way of doing it, with the card as it would then read. */
+.mp-tamper-options { display: grid; gap: 12px; margin-top: 8px; }
+.mp-tamper-option {
+  padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: rgba(255,255,255,.02); display: grid; gap: 8px;
+}
+.mp-tamper-name { margin: 0; font-family: var(--display); font-size: 1.05rem; color: var(--gold-light); }
+.mp-tamper-kicker { margin: 4px 0 0; font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--text-faint); }
+.mp-tamper-preview {
+  margin: 0; padding: 10px 12px; border-left: 3px solid var(--ruby);
+  background: rgba(201,79,90,.07); border-radius: 0 8px 8px 0;
+  font-size: .95rem; line-height: 1.5;
+}
+
+.mp-result { margin: 4px 0 0; font-size: .9rem; }
+.mp-result-value { font-family: var(--display); color: var(--gold-light); margin-left: 6px; }
+
+.mp-rules { margin-top: 14px; color: var(--text-dim); font-size: .9rem; }
+.mp-rules summary { cursor: pointer; color: var(--text-faint); font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; }
+.mp-rules p { margin: 8px 0 0; line-height: 1.5; }
+
+/* The reset, opposite the mute: same footprint, red, and behind a confirm. */
+.ms-reset {
+  position: fixed;
+  left: 18px; bottom: 18px;
+  z-index: 70;
+  height: 42px; padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(10, 12, 16, .62);
+  border: 1px solid rgba(200, 32, 46, .5);
+  color: #f0b6bb;
+  font-size: .8rem; font-weight: 600; letter-spacing: .04em;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: border-color .15s, background .15s, color .15s;
+}
+.ms-reset:hover { border-color: var(--blood-light); background: rgba(74, 5, 9, .7); color: #fff; }
+.sc-reset { border-color: rgba(201,79,90,.45); }
+
+/* The butler's line, and the tamper log in full. */
+.sc-line { border-color: var(--gold-dim); }
+.sc-tamper { padding: 10px 0; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+.sc-tamper:first-of-type { border-top: 0; padding-top: 4px; }
+.sc-tamper-room { margin: 0; font-family: var(--display); font-size: 1.05rem; color: var(--gold-light); }
+.sc-tamper-who { margin: 0; font-size: .9rem; line-height: 1.45; }
+.sc-tamper-text { margin: 0; font-size: .9rem; line-height: 1.5; padding: 8px 10px; border-left: 3px solid var(--ruby); background: rgba(201,79,90,.07); border-radius: 0 8px 8px 0; }
+.sc-tamper-text.is-original { border-left-color: var(--line); background: rgba(255,255,255,.03); color: var(--text-dim); }
+
+/* The testing rail, grouped. */
+.sim-group { margin-top: 10px; }
+.sim-group-name { margin: 0 0 6px; font-family: var(--display); font-size: .95rem; color: var(--gold-light); letter-spacing: .04em; }
+
+/* The board as a guest sees it: rank, colour, name — no bar, no number. Three columns rather
+   than five, or the grid would leave two empty tracks beside every name. */
+.hb-rows.is-ranks { grid-template-columns: 18px 10px 1fr; }

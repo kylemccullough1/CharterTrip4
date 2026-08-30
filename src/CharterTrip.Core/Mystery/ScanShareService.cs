@@ -238,24 +238,41 @@ public static class ScanShareService
     public static string OriginalReading(TripData trip, string clueId) =>
         MysteryText.Written(trip.Mystery.Story.Clue(clueId)?.Text) ?? "";
 
+    /// <summary>
+    /// The card as the next person to scan it will read it: the tamper included, if there is one.
+    /// For the four phones that are allowed to know — the facilitators' log says what the card
+    /// says now and who it points at, rather than only that it was touched.
+    /// </summary>
+    public static string CurrentReading(TripData trip, string clueId) =>
+        Compose(trip, clueId, DateTimeOffset.MaxValue);
+
+    /// <summary>
+    /// What the card would say if this tamper went through, so whoever is about to spend the one
+    /// touch they have can read both versions before choosing. Nothing is written.
+    /// </summary>
+    public static string Preview(TripData trip, string clueId, string mode, string? targetCharacterId) =>
+        Framed(trip, clueId, mode, mode == "scrub" ? null : targetCharacterId);
+
     private static string Compose(TripData trip, string clueId, DateTimeOffset? asOf)
     {
-        var clue = trip.Mystery.Story.Clue(clueId);
-        if (clue is null) return "";
-
-        var text = MysteryText.Written(clue.Text) ?? "";
-
         var tamper = trip.Mystery.Play.StateFor(clueId)?.Tamper;
-        if (tamper is null || asOf is null || tamper.At > asOf) return text;
+        if (tamper is null || asOf is null || tamper.At > asOf) return OriginalReading(trip, clueId);
 
+        return Framed(trip, clueId, tamper.Mode, tamper.TargetCharacterId);
+    }
+
+    /// <summary>The card with a tamper worked into it — the real one, or one being considered.</summary>
+    private static string Framed(TripData trip, string clueId, string mode, string? targetCharacterId)
+    {
+        var text = OriginalReading(trip, clueId);
         var beats = trip.Mystery.Story.Beats;
 
-        if (tamper.Mode == "scrub")
+        if (mode == "scrub")
             return MysteryText.Written(beats.TamperScrubbed) ?? text;
 
-        var frame = tamper.Mode == "blatant" ? beats.TamperBlatant : beats.TamperSubtle;
+        var frame = mode == "blatant" ? beats.TamperBlatant : beats.TamperSubtle;
         var insert = MysteryText.Written(
-            trip.Mystery.Story.Character(tamper.TargetCharacterId ?? "")?.TamperInsert);
+            trip.Mystery.Story.Character(targetCharacterId ?? "")?.TamperInsert);
 
         // Nobody has written the frame or the belongings yet: show the card as it stands rather
         // than a sentence with a hole in it.

@@ -200,6 +200,77 @@ public class MysteryStoryTests
                 Assert.Contains(ability.Unlock, reachable);
     }
 
+    /// <summary>
+    /// Every guest can be asked three things: where they were, something that matters, and
+    /// something that does not — and the asker is never told which is which, so the story has to
+    /// carry exactly one of each. The hands' two that matter carry a cover story naming whoever
+    /// they framed; the desperate carry one that confesses; nobody else's ever changes.
+    /// </summary>
+    [Fact]
+    public void Every_guest_carries_three_questions_and_staff_carry_none()
+    {
+        foreach (var c in Story.Characters)
+        {
+            if (c.IsStaff)
+            {
+                Assert.Empty(c.Questions);
+                continue;
+            }
+
+            Assert.Equal(3, c.Questions.Count);
+            Assert.Equal(3, c.Questions.Select(q => q.Id).Distinct().Count());
+            Assert.Single(c.Questions, q => q.Importance == MysteryQuestionImportance.Alibi);
+            Assert.Single(c.Questions, q => q.Importance == MysteryQuestionImportance.Important);
+            Assert.Single(c.Questions, q => q.Importance == MysteryQuestionImportance.Useless);
+
+            foreach (var q in c.Questions)
+            {
+                Written($"{c.Id}.{q.Id}.prompt", q.Prompt);
+                Written($"{c.Id}.{q.Id}.answer", q.Answer);
+
+                if (q.Importance == MysteryQuestionImportance.Useless)
+                    Assert.False(q.HasCover, $"{c.Id}.{q.Id} is useless and must never change");
+                else if (c.IsKiller)
+                    Assert.True(q.HasCover && q.CoverAnswer!.Split("{target}").Length == 2,
+                        $"{c.Id}.{q.Id} needs a cover answer with {{target}} exactly once");
+                else if (c.FactionId == "jester")
+                    Assert.True(q.HasCover, $"{c.Id}.{q.Id} needs a cover answer");
+                else
+                    Assert.False(q.HasCover, $"{c.Id}.{q.Id}: only the hands and the desperate lie");
+            }
+        }
+    }
+
+    [Fact]
+    public void Every_ability_says_what_it_is_aimed_at()
+    {
+        foreach (var faction in Story.Factions)
+            foreach (var ability in faction.Abilities)
+                Assert.Contains(ability.Target, new[] { "character", "clue", "none" });
+    }
+
+    /// <summary>The blame is one shared charge with nothing to choose, and it comes after the first trial.</summary>
+    [Fact]
+    public void The_minions_blame_is_modeless_shared_and_unlocks_at_the_deliberation()
+    {
+        var blame = Assert.Single(Story.Faction("minion")!.Abilities);
+
+        Assert.Equal(TrialService.BlameAbilityId, blame.Id);
+        Assert.Empty(blame.Modes);
+        Assert.True(blame.Shared);
+        Assert.Equal(1, blame.Charges);
+        Assert.Equal("none", blame.Target);
+        Assert.Equal(MysteryPhase.Discussion2, blame.Unlock);
+    }
+
+    [Fact]
+    public void The_briefing_shows_the_house()
+    {
+        Assert.Contains(Story.Slides, s => s.Figure == "map");
+        Assert.DoesNotContain(Story.Slides.SelectMany(s => s.Bullets), b => b.Contains("cannot lie"));
+        Assert.DoesNotContain("except at trial", Story.Beats.HouseRules);
+    }
+
     [Fact]
     public void Abilities_unlock_only_once_people_know_what_they_are()
     {
@@ -241,6 +312,11 @@ public class MysteryStoryTests
                 Written($"{c.Id}.seenAs", c.SeenAs);
                 Written($"{c.Id}.signatureItem", c.SignatureItem);
                 Written($"{c.Id}.tamperInsert", c.TamperInsert);
+
+                // Everybody with a role is read out on their own at the end; the guests of the
+                // house share the one line in the beats.
+                if (c.FactionId != OutcomeService.VillagerFactionId)
+                    Written($"{c.Id}.epilogue", c.Epilogue);
             }
 
             Assert.All(c.Dialogue.Life, l => Written($"{c.Id}.life", l));
@@ -304,6 +380,7 @@ public class MysteryStoryTests
         Written("beats.houseRules", beats.HouseRules);
         Written("beats.townWin", beats.TownWin);
         Written("beats.killerWin", beats.KillerWin);
+        Written("beats.villagerEpilogue", beats.VillagerEpilogue);
         Written("beats.tamperScrubbed", beats.TamperScrubbed);
 
         Assert.NotEmpty(beats.RevealParagraphs);
@@ -312,6 +389,51 @@ public class MysteryStoryTests
 
     private static void Written(string what, string? value) =>
         Assert.False(MysteryText.IsPlaceholder(value), $"{what} is still unwritten.");
+
+    /// <summary>
+    /// The sheet is read by the person playing the part, about themselves, so it is written to
+    /// them: "You are", never "He is". Every field addresses its owner somewhere — "He" on its own
+    /// is no tell, because half these sentences are about Braun.
+    /// </summary>
+    [Fact]
+    public void The_sheet_speaks_to_its_owner()
+    {
+        var you = new System.Text.RegularExpressions.Regex(@"\b(you|your|yourself|you're|you've)\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        foreach (var c in Story.Characters)
+        {
+            foreach (var (what, text) in new[]
+                     {
+                         ("backstory", c.Backstory), ("whyInvited", c.WhyInvited),
+                         ("dislikesBraun", c.DislikesBraun), ("observable", c.Observable)
+                     })
+            {
+                if (MysteryText.IsPlaceholder(text)) continue;
+                Assert.True(you.IsMatch(text), $"{c.Id}.{what} never addresses its owner: \"{text[..Math.Min(60, text.Length)]}…\"");
+            }
+        }
+    }
+
+    /// <summary>No champagne tower. The alibi question asks where you were when Braun was murdered.</summary>
+    [Fact]
+    public void The_alibi_asks_about_the_murder_and_nothing_mentions_a_tower()
+    {
+        foreach (var c in Story.Characters.Where(c => !c.IsStaff))
+        {
+            var alibi = Assert.Single(c.Questions, q => q.Importance == MysteryQuestionImportance.Alibi);
+            Assert.Contains("murdered", alibi.Prompt);
+        }
+
+        var everything = Story.Characters.SelectMany(c => c.Questions.SelectMany(q => new[] { q.Prompt, q.Answer, q.CoverAnswer ?? "" }))
+            .Concat(Story.Clues.Select(c => c.Text))
+            .Concat(Story.Zones.SelectMany(z => new[] { z.Notes, z.ClueSpot }))
+            .Concat(Story.Slides.SelectMany(s => s.Bullets))
+            .Concat(Story.Objectives.Select(o => o.Text))
+            .Concat(Story.Beats.RevealParagraphs);
+
+        Assert.DoesNotContain(everything, t => t.Contains("tower", StringComparison.OrdinalIgnoreCase));
+    }
 
     /// <summary>
     /// The one field the writing changed structurally rather than textually. The editor will not

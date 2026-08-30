@@ -46,7 +46,25 @@ else
                     <p class="mp-zone">@Me.Job@(RoomName is { } room ? $" · {room}" : "")</p>
                 </div>
             </div>
+
+            @* Your code. The badge lives on the phone rather than on a lanyard: hold it up, somebody
+               points their camera at it, and the conversation opens on both phones — one scan is
+               the whole handshake, because the code already says who you are. *@
+            @if (BadgeUrl is not null)
+            {
+                <button class="mp-code-btn" type="button" @onclick="() => _showCode = true" title="Show my code">
+                    <span class="mp-code-icon" aria-hidden="true">▦</span>
+                    <span>My code</span>
+                </button>
+            }
         </header>
+
+        @if (DetectiveTamperNotice)
+        {
+            @* Only the investigators, and only now. The room is never told; it is what forensics
+               is for. *@
+            <p class="mp-alert">A clue has been tampered with.</p>
+        }
 
         @if (IsGhost)
         {
@@ -59,6 +77,14 @@ else
             <p class="mp-ghost-badge">In custody. Watch, enjoy, say nothing.</p>
         }
 
+        @if (OpenSession is { } open)
+        {
+            @* Mid-conversation, the phone is the conversation. Both phones show this from the
+               same store, so a tap on one lands on the other without anything else being wired. *@
+            <InteractionSession Trip="Trip" Me="Me" Session="open" />
+        }
+        else
+        {
         <nav class="mp-tabs">
             @foreach (var tab in Tabs)
             {
@@ -77,11 +103,13 @@ else
         {
             // ------------------------------------------------------------------------ who I am
             case "You":
+                @* The sheet, in the order the introductions ask for it: age, man or woman, then
+                   who you are. What you were doing that night only exists once there was a night. *@
                 <Field Label="Age" Value="@(Me.Age > 0 ? Me.Age.ToString() : null)" />
+                <Field Label="You are" Value="@SexLabel" />
                 <Field Label="Who you are" Value="@Written(Me.Backstory)" />
                 <Field Label="Why you were invited" Value="@Written(Me.WhyInvited)" />
                 <Field Label="Why you can't stand James Braun" Value="@Written(Me.DislikesBraun)" />
-                <Field Label="How you carry yourself" Value="@Written(Me.Voice)" />
 
                 @if (RolesRevealed)
                 {
@@ -94,21 +122,91 @@ else
                        honest about that; a blank screen just looks broken. *@
                     <p class="mp-empty-note">Nobody has written you yet.</p>
                 }
+
+                @if (Written(Beats.HouseRules) is { } rules)
+                {
+                    <details class="mp-rules">
+                        <summary>How this works</summary>
+                        <p>@rules</p>
+                    </details>
+                }
                 break;
 
             // ---------------------------------------------------------------------- the house
             case "Map":
-                <ManorMap Trip="Trip" Highlight="@Me.ZoneId" ShowPins="@RolesRevealed" ShowTrail="@TrailVisible" />
+                <ManorMap Trip="Trip" Highlight="@MapHighlight" Viewer="@Me.Id" ShowPins="@RolesRevealed" ShowTrail="@TrailVisible" />
                 break;
 
-            // ------------------------------------------------------------------- what to say
-            case "Say":
-                <Lines Label="About your life" Values="Me.Dialogue.Life" />
-                <Lines Label="On the weather" Values="Me.Dialogue.Weather" />
-
-                @foreach (var topic in Me.Dialogue.Topics)
+            // ------------------------------------------------------------ what you were told
+            case "Interactions":
+                @* Every conversation, newest first, and everything the game itself has told you.
+                   Star what matters: by the last deliberation this tab is the case. *@
+                @if (Sessions.Count == 0 && Results.Count == 0)
                 {
-                    <Lines Label="@topic.Prompt" Values="topic.Lines" />
+                    <p class="mp-empty-note">
+                        @(RolesRevealed
+                            ? "Nobody yet. Scan the tag on somebody's chest and ask them three things."
+                            : "Nothing yet. After tonight's events, scanning a badge starts a conversation.")
+                    </p>
+                }
+
+                @foreach (var session in Sessions)
+                {
+                    var other = Story.Character(session.Other(Me.Id) ?? "");
+                    var anyStarred = session.Exchanges.Any(e => e.StarredBy.Contains(Me.Id));
+
+                    @* Closed until tapped. Six exchanges a conversation and a dozen conversations
+                       is a scroll nobody finishes; a row of names with a star on the ones worth
+                       reopening is the case file. *@
+                    <details class="mp-card mp-interaction @(session.IsOpen ? "is-open" : "") @(anyStarred ? "has-star" : "")" @key="session.Id">
+                        <summary class="mp-interaction-summary">
+                            <span class="mp-interaction-name">@(other?.Name ?? "Somebody")</span>
+                            @if (anyStarred)
+                            {
+                                <span class="mp-interaction-star" title="Something starred in here">★</span>
+                            }
+                            <span class="mp-charges">@(session.IsOpen ? "still talking" : session.StartedAt.ToLocalTime().ToString("h:mm tt"))</span>
+                        </summary>
+
+                        @for (var i = 0; i < session.Exchanges.Count; i++)
+                        {
+                            var exchange = session.Exchanges[i];
+                            var index = i;
+                            var mine = exchange.AskerCharacterId == Me.Id;
+                            var starred = exchange.StarredBy.Contains(Me.Id);
+
+                            <div class="mp-exchange @(mine ? "is-mine" : "is-theirs") @(starred ? "is-starred" : "")" @key="i">
+                                <button class="mp-star" type="button" title="@(starred ? "Unstar" : "Star this")"
+                                        aria-pressed="@starred"
+                                        @onclick="() => StarAsync(session.Id, index)">@(starred ? "★" : "☆")</button>
+                                <p class="mp-exchange-q"><b>@(mine ? "You asked" : "They asked")</b> @exchange.Prompt</p>
+                                <p class="mp-exchange-a">@exchange.Answer</p>
+                            </div>
+                        }
+
+                        @if (session.Exchanges.Count == 0)
+                        {
+                            <p class="muted tiny">Nothing said yet.</p>
+                        }
+                    </details>
+                }
+
+                @if (Results.Count > 0)
+                {
+                    <section class="mp-card">
+                        <h3 class="mp-card-title">What the game told you</h3>
+                        @foreach (var use in Results)
+                        {
+                            <p class="mp-result" @key="use.At">
+                                <b>@AbilityName(use)</b>
+                                @if (ResultSubject(use) is { } subject)
+                                {
+                                    <span> — @subject:</span>
+                                }
+                                <span class="mp-result-value">@AbilityService.ResultLabel(use.Result)</span>
+                            </p>
+                        }
+                    </section>
                 }
 
                 <section class="mp-card">
@@ -167,8 +265,6 @@ else
 
             // ---------------------------------------------------------------------- the rules
             case "Role":
-                <Field Label="How this works" Value="@Written(Beats.HouseRules)" />
-
                 @if (!RolesRevealed)
                 {
                     <p class="mp-note-quiet">
@@ -202,6 +298,7 @@ else
                         var charges = AbilityService.ChargesRemaining(Trip, Me.Id, ability);
                         var unlocked = AbilityService.IsUnlocked(Trip, ability);
                         var onCards = OnCards(ability);
+                        var uses = InteractionService.ResultsFor(Trip, Me.Id).Where(u => u.AbilityId == ability.Id).ToList();
 
                         <section class="mp-card mp-ability" @key="ability.Id">
                             <h3 class="mp-card-title">
@@ -240,16 +337,38 @@ else
                             }
                             else
                             {
-                                <label class="sc-field">
-                                    <span class="tiny">On whom</span>
-                                    <select class="se-select" @bind="_target">
-                                        <option value="">nobody in particular</option>
-                                        @foreach (var other in Others)
-                                        {
-                                            <option value="@other.Id">@other.Name</option>
-                                        }
-                                    </select>
-                                </label>
+                                @* What the power is pointed at is content: a person, a card this
+                                   player has scanned, or nothing at all. *@
+                                @if (ability.Target == "clue")
+                                {
+                                    <label class="sc-field">
+                                        <span class="tiny">Which card</span>
+                                        <select class="se-select" @bind="_targetClue">
+                                            <option value="">choose a card you've scanned…</option>
+                                            @foreach (var clue in MyClues)
+                                            {
+                                                <option value="@clue.Id">@(Story.Zone(clue.ZoneId)?.Name ?? clue.Name)</option>
+                                            }
+                                        </select>
+                                    </label>
+                                    @if (MyClues.Count == 0)
+                                    {
+                                        <p class="muted tiny">You haven't scanned a card yet. Forensics needs one in hand.</p>
+                                    }
+                                }
+                                else if (ability.Target != "none")
+                                {
+                                    <label class="sc-field">
+                                        <span class="tiny">On whom</span>
+                                        <select class="se-select" @bind="_target">
+                                            <option value="">choose a guest…</option>
+                                            @foreach (var other in Others)
+                                            {
+                                                <option value="@other.Id">@other.Name</option>
+                                            }
+                                        </select>
+                                    </label>
+                                }
 
                                 <div class="row gap wrap">
                                     @if (ability.HasModes)
@@ -275,6 +394,17 @@ else
                                 {
                                     <p class="mp-fired">@note</p>
                                 }
+                            }
+
+                            @foreach (var use in uses)
+                            {
+                                <p class="mp-result" @key="use.At">
+                                    @if (ResultSubject(use) is { } subject)
+                                    {
+                                        <span>@subject:</span>
+                                    }
+                                    <span class="mp-result-value">@AbilityService.ResultLabel(use.Result)</span>
+                                </p>
                             }
                         </section>
                     }
@@ -308,7 +438,24 @@ else
                 break;
         }
         </main>
+        }
     </div>
+
+    @if (_showCode && BadgeUrl is { } badge)
+    {
+        <div class="mp-modal-back" @onclick="() => _showCode = false">
+            <div class="mp-modal mp-code" @onclick:stopPropagation="true">
+                <p class="mp-modal-kicker">@Me.Name</p>
+                <QrImage Content="@badge" Size="240" Alt="Your code" />
+                <p class="mp-code-hint">
+                    @(RolesRevealed
+                        ? "Have somebody scan this with their camera. The conversation opens on both your phones."
+                        : "Have somebody scan this with their camera, and you've met.")
+                </p>
+                <button class="btn btn-ghost btn-sm" @onclick="() => _showCode = false">Done</button>
+            </div>
+        </div>
+    }
 
     @if (_popped is { } popped)
     {
@@ -336,7 +483,63 @@ else
 
     private string _tab = "You";
     private string _target = "";
+    private string _targetClue = "";
     private string? _fired;
+    private bool _showCode;
+
+    /// <summary>What goes in the code on this phone: the same URL the printed badge carries.</summary>
+    private string? BadgeUrl =>
+        Seat?.BadgeToken is { Length: > 0 } token ? Nav.ToAbsoluteUri($"/m/meet/{token}").ToString() : null;
+
+    /// <summary>
+    /// Your room on the map, once there is a reason to know it. Before the investigation the map is
+    /// a floor plan and nothing more; "you were here" on it during the briefing was telling people
+    /// where they had been before anything had happened.
+    /// </summary>
+    private string? MapHighlight =>
+        Me is not null && MysteryPhases.AtOrAfter(Phase, MysteryPhase.Investigation) ? Me.ZoneId : null;
+
+    /// <summary>
+    /// The one thing the investigators are told that the room is not, and only in the deliberation
+    /// where forensics comes online to act on it.
+    /// </summary>
+    private bool DetectiveTamperNotice =>
+        Faction?.Id == "detective"
+        && Phase == MysteryPhase.Discussion2
+        && ScanShareService.AnyTampering(Trip);
+
+    /// <summary>"Man" or "Woman" from the sheet's one-letter field, or whatever was written.</summary>
+    private string? SexLabel => Me?.Sex?.Trim().ToUpperInvariant() switch
+    {
+        "M" => "Man",
+        "F" => "Woman",
+        null or "" => null,
+        var other => Written(other)
+    };
+
+    /// <summary>The conversation on this screen: in progress, or finished and not yet closed.</summary>
+    private MysteryInteraction? OpenSession =>
+        Me is null ? null : InteractionService.ShowingFor(Trip, Me.Id);
+
+    private IReadOnlyList<MysteryInteraction> Sessions =>
+        Me is null ? [] : InteractionService.SessionsFor(Trip, Me.Id);
+
+    private IReadOnlyList<MysteryAbilityUse> Results =>
+        Me is null ? [] : InteractionService.ResultsFor(Trip, Me.Id);
+
+    private string AbilityName(MysteryAbilityUse use) =>
+        Story.Faction(use.FactionId)?.Abilities.FirstOrDefault(a => a.Id == use.AbilityId)?.Name ?? use.AbilityId;
+
+    /// <summary>Who or what an answer was about, for the line that shows it.</summary>
+    private string? ResultSubject(MysteryAbilityUse use) =>
+        use.TargetClueId is { Length: > 0 } clueId
+            ? Story.Zone(Story.Clue(clueId)?.ZoneId ?? "")?.Name ?? Story.Clue(clueId)?.Name
+            : use.TargetCharacterId is { Length: > 0 } id
+                ? Story.Character(id)?.Name
+                : null;
+
+    private Task StarAsync(string sessionId, int index) =>
+        MutateAsync(t => InteractionService.ToggleStar(t, sessionId, index, Me!.Id));
 
     /// <summary>
     /// Which tab to open on.
@@ -412,10 +615,14 @@ else
     {
         get
         {
-            if (Me is { IsStaff: true }) return ["Control", "You", "Say", "Map"];
+            if (Me is { IsStaff: true }) return ["Control", "You", "Interactions", "Map"];
 
-            List<string> tabs = ["You", "Map", "Say", "Do", "Role"];
+            // The sheet arrives a tab at a time as the night needs it: who you are from the start,
+            // the house once there is something to look for in it, your role once you have one.
+            List<string> tabs = ["You", "Interactions", "Do"];
 
+            if (MysteryPhases.AtOrAfter(Phase, MysteryPhase.Investigation)) tabs.Add("Map");
+            if (RolesRevealed) tabs.Add("Role");
             if (RolesRevealed) tabs.Add("Clues");
             if (MysteryPhases.IsTrial(Phase) && !IsGhost) tabs.Add("Vote");
 
@@ -441,7 +648,7 @@ else
     private bool SheetIsBlank =>
         Me is not null
         && Me.Age == 0
-        && new[] { Me.Backstory, Me.WhyInvited, Me.DislikesBraun, Me.Voice }
+        && new[] { Me.Backstory, Me.WhyInvited, Me.DislikesBraun }
             .All(MysteryText.IsPlaceholder);
 
     // ------------------------------------------------------------------------------------------
@@ -563,15 +770,21 @@ else
     private async Task FireAsync(string abilityId, string? mode)
     {
         var target = string.IsNullOrEmpty(_target) ? null : _target;
+        var clue = string.IsNullOrEmpty(_targetClue) ? null : _targetClue;
 
         var use = await Store.MutateAsync(
-            t => AbilityService.TryFire(t, Me!.Id, abilityId, Clock.UtcNow, mode, target),
+            t => AbilityService.TryFire(t, Me!.Id, abilityId, Clock.UtcNow, mode, target, clue),
             Watching);
 
-        _fired = use is null
-            ? "That didn't go through. Somebody may have spent it first."
-            : target is null ? "Done." : $"Done — on {Story.Character(target)?.Name}.";
+        _fired = use switch
+        {
+            null => "That didn't go through. Pick a target, or somebody may have spent it first.",
+            { Result: { } result } => $"{AbilityService.ResultLabel(result)}.",
+            _ when target is not null => $"Done — on {Story.Character(target)?.Name}.",
+            _ => "Done."
+        };
 
         _target = "";
+        _targetClue = "";
     }
 }

@@ -77,6 +77,14 @@ public static class AbilityService
         // A two-mode ability with no mode chosen is a half-finished tap, not a use.
         if (ability.HasModes && (mode is null || ability.Modes.All(m => m.Id != mode))) return null;
 
+        // An ability that answers a question needs the question to be about something. A Hard
+        // Question about nobody would spend the charge and say nothing.
+        if (result is null && Answers(ability.Id))
+        {
+            result = ResultFor(trip, ability.Id, targetCharacterId, targetClueId);
+            if (result is null) return null;
+        }
+
         var use = new MysteryAbilityUse
         {
             AbilityId = ability.Id,
@@ -92,6 +100,53 @@ public static class AbilityService
         trip.Mystery.Play.AbilityUses.Add(use);
         return use;
     }
+
+    public const string KillerCheckId = "killer_check";
+    public const string TamperCheckId = "tamper_check";
+
+    /// <summary>The abilities that come back with an answer the phone shows.</summary>
+    private static bool Answers(string abilityId) => abilityId is KillerCheckId or TamperCheckId;
+
+    /// <summary>
+    /// The answer to a detective's question, in the words the phone shows.
+    ///
+    /// The Hard Question answers as the room would be told — <see cref="TrialService.ShowsAsKiller"/>
+    /// — which is exactly what makes an associate taking the blame worth anything. Forensics
+    /// reads the card's own state. Null when the question was not about anything.
+    /// </summary>
+    public static string? ResultFor(TripData trip, string abilityId, string? targetCharacterId, string? targetClueId)
+    {
+        switch (abilityId)
+        {
+            case KillerCheckId:
+                if (targetCharacterId is null || trip.Mystery.Story.Character(targetCharacterId) is null) return null;
+                return TrialService.ShowsAsKiller(trip, targetCharacterId) ? "killer" : "clean";
+
+            case TamperCheckId:
+                if (targetClueId is null || trip.Mystery.Story.Clue(targetClueId) is null) return null;
+                return trip.Mystery.Play.StateFor(targetClueId)?.Tamper switch
+                {
+                    null => "untouched",
+                    { Mode: "scrub" } => "scrubbed",
+                    _ => "planted"
+                };
+
+            default:
+                return null;
+        }
+    }
+
+    /// <summary>A result, in capitals, the way the card would say it.</summary>
+    public static string ResultLabel(string? result) => result switch
+    {
+        "killer" => "KILLER",
+        "clean" => "NOT A KILLER",
+        "untouched" => "Untouched",
+        "planted" => "Planted",
+        "scrubbed" => "Scrubbed",
+        null => "",
+        var other => other
+    };
 
     /// <summary>
     /// Abilities that unlock in a phase this evening will never reach.

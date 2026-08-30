@@ -337,40 +337,41 @@ public static class TrialService
         return true;
     }
 
+    /// <summary>The minions' one ability: the id in factions.json.</summary>
+    public const string BlameAbilityId = "loyalty";
+
+    /// <summary>
+    /// Whether this character has stepped in front of the Syndicate's hands. From that moment on
+    /// the room is told they are a killer if it convicts them — and counts them as one.
+    /// </summary>
+    public static bool TookTheBlame(TripData trip, string characterId) =>
+        trip.Mystery.Play.AbilityUses.Any(u => u.AbilityId == BlameAbilityId && u.ByCharacterId == characterId);
+
     /// <summary>
     /// What the room is told about a conviction: KILLER or NON-KILLER, and never the specific role.
     ///
     /// Revealing "detective" or "villager" would hand the killers a confirmed kill-list for free,
     /// and revealing "jester" ends the fun of a silent win. Two words keeps every conviction
-    /// ambiguous, and is also exactly the surface a minion's shield or decoy lies about.
+    /// ambiguous, and is also exactly the surface a minion who took the blame lies on: they read
+    /// KILLER, and the room counts them.
     /// </summary>
     public static bool ShowsAsKiller(TripData trip, string characterId)
     {
         var character = trip.Mystery.Story.Character(characterId);
         if (character is null) return false;
 
-        var truth = character.IsKiller;
-
-        var lie = trip.Mystery.Play.AbilityUses.FirstOrDefault(u =>
-            u.TargetCharacterId == characterId && u.Mode is "shield" or "decoy");
-
-        return lie?.Mode switch
-        {
-            // A killer the associates covered for reads as innocent.
-            "shield" => false,
-
-            // One of their own, sold to the room as a killer.
-            "decoy" => true,
-
-            _ => truth
-        };
+        return character.IsKiller || TookTheBlame(trip, characterId);
     }
 
-    /// <summary>Killers convicted on ground truth. Shield and decoy fool the card, never this.</summary>
+    /// <summary>Killers convicted on ground truth. Taking the blame fools the card, never this.</summary>
     public static int KillersConvicted(TripData trip) =>
         trip.Mystery.Play.ConvictedCharacterIds
             .Select(id => trip.Mystery.Story.Character(id))
             .Count(c => c is { IsKiller: true });
+
+    /// <summary>Killers convicted as the room was told it: the truth plus anyone who took the blame.</summary>
+    public static int ShownKillersConvicted(TripData trip) =>
+        trip.Mystery.Play.ConvictedCharacterIds.Count(id => ShowsAsKiller(trip, id));
 
     /// <summary>
     /// Whether to skip straight to the reveal.

@@ -52,8 +52,11 @@ public enum MysteryPhase
     /// <summary>Braun walks the room through the deck.</summary>
     Presentation,
 
-    /// <summary>Ten minutes of party. No roles exist yet.</summary>
-    Mingling,
+    /// <summary>
+    /// Everybody stands up in turn and says who they are, while the wall shows their face. No
+    /// roles exist yet. Replaced the room-by-room mingle: nobody is sent anywhere.
+    /// </summary>
+    Introductions,
 
     /// <summary>Lights, thunder, the scream.</summary>
     Murder,
@@ -61,11 +64,19 @@ public enum MysteryPhase
     /// <summary>The study. Roles drop here.</summary>
     StudyScene,
 
+    /// <summary>Thirty minutes: mingle, scan each other, find the cards.</summary>
     Investigation,
-    Trial1,
+
+    /// <summary>The accusation round — five minutes of who seemed strange — before the first trial.</summary>
     Discussion1,
-    Trial2,
+    Trial1,
+
+    /// <summary>Deliberation between the trials, where the heavy abilities come online.</summary>
     Discussion2,
+    Trial2,
+
+    /// <summary>The final deliberation. No new powers.</summary>
+    Discussion3,
     Trial3,
     Reveal
 }
@@ -86,14 +97,15 @@ public static class MysteryPhases
         MysteryPhase.Assembling,
         MysteryPhase.Welcome,
         MysteryPhase.Presentation,
-        MysteryPhase.Mingling,
+        MysteryPhase.Introductions,
         MysteryPhase.Murder,
         MysteryPhase.StudyScene,
         MysteryPhase.Investigation,
-        MysteryPhase.Trial1,
         MysteryPhase.Discussion1,
-        MysteryPhase.Trial2,
+        MysteryPhase.Trial1,
         MysteryPhase.Discussion2,
+        MysteryPhase.Trial2,
+        MysteryPhase.Discussion3,
         MysteryPhase.Trial3,
         MysteryPhase.Reveal
     ];
@@ -133,14 +145,15 @@ public static class MysteryPhases
         MysteryPhase.Assembling => "Arriving",
         MysteryPhase.Welcome => "Welcome",
         MysteryPhase.Presentation => "The briefing",
-        MysteryPhase.Mingling => "The party",
+        MysteryPhase.Introductions => "Introductions",
         MysteryPhase.Murder => "The murder",
         MysteryPhase.StudyScene => "The study",
         MysteryPhase.Investigation => "Investigation",
+        MysteryPhase.Discussion1 => "Accusation round",
         MysteryPhase.Trial1 => "First trial",
-        MysteryPhase.Discussion1 => "After the first trial",
+        MysteryPhase.Discussion2 => "Deliberation",
         MysteryPhase.Trial2 => "Second trial",
-        MysteryPhase.Discussion2 => "After the second trial",
+        MysteryPhase.Discussion3 => "Final deliberation",
         MysteryPhase.Trial3 => "Final trial",
         MysteryPhase.Reveal => "The whole truth",
         _ => Spaced(phase.ToString())
@@ -152,12 +165,13 @@ public static class MysteryPhases
         MysteryPhase.Lobby => "Lobby",
         MysteryPhase.Assembling => "Arriving",
         MysteryPhase.Presentation => "Briefing",
-        MysteryPhase.Mingling => "Party",
+        MysteryPhase.Introductions => "Intros",
         MysteryPhase.StudyScene => "Study",
+        MysteryPhase.Discussion1 => "Accuse",
         MysteryPhase.Trial1 => "Trial 1",
-        MysteryPhase.Discussion1 => "Talk 1",
-        MysteryPhase.Trial2 => "Trial 2",
         MysteryPhase.Discussion2 => "Talk 2",
+        MysteryPhase.Trial2 => "Trial 2",
+        MysteryPhase.Discussion3 => "Final talk",
         MysteryPhase.Trial3 => "Trial 3",
         MysteryPhase.Reveal => "Reveal",
         _ => Label(phase)
@@ -199,13 +213,33 @@ public static class MysteryPhases
     /// <summary>
     /// Who scanned which clue, and when.
     ///
-    /// Recorded from the first scan and shown to nobody until the first discussion round, where it
-    /// becomes the detectives' tool for working out which clues were tampered with. Withholding it
-    /// is the mechanic: a public movement log during Investigation would make every alibi checkable
-    /// and there would be nothing left to lie about.
+    /// Recorded from the first scan and shown to nobody until the deliberation after the first
+    /// trial, where it becomes the detectives' tool for working out which clues were tampered
+    /// with. Withholding it is the mechanic: a public movement log during the investigation and
+    /// the accusation round would make every alibi checkable and there would be nothing left to
+    /// lie about.
     /// </summary>
     public static bool TrailVisible(MysteryPhase phase) =>
-        AtOrAfter(phase, MysteryPhase.Discussion1);
+        AtOrAfter(phase, MysteryPhase.Discussion2);
+}
+
+/// <summary>
+/// How long each timed phase is meant to take.
+///
+/// A suggestion, never a gate: the host's console counts it down and the host moves the evening
+/// on when the room is ready, which may be before or after. Null for the phases that have no
+/// natural length — a trial takes as long as the vote takes, a briefing as long as Braun talks.
+/// </summary>
+public static class MysteryPhaseDurations
+{
+    public static TimeSpan? For(MysteryPhase phase) => phase switch
+    {
+        MysteryPhase.Investigation => TimeSpan.FromMinutes(30),
+        MysteryPhase.Discussion1 => TimeSpan.FromMinutes(5),
+        MysteryPhase.Discussion2 => TimeSpan.FromMinutes(10),
+        MysteryPhase.Discussion3 => TimeSpan.FromMinutes(10),
+        _ => null
+    };
 }
 
 // =============================================================================================
@@ -325,10 +359,25 @@ public sealed class MysteryCharacter
 
     public MysteryDialogue Dialogue { get; set; } = new();
 
+    /// <summary>
+    /// The three things anybody who scans this character's badge may ask them, and what they
+    /// answer. One is where they were when Braun died, one is something else worth knowing, and
+    /// one is worth nothing — and the asker is not told which. Empty for staff.
+    /// </summary>
+    public List<MysteryQuestion> Questions { get; set; } = [];
+
     public string SignatureItem { get; set; } = "";
 
     /// <summary>What gets worked into a clue when somebody frames them, or frames themselves.</summary>
     public string TamperInsert { get; set; } = "";
+
+    /// <summary>
+    /// Who they really were and why they did what they did, read out at the end if they won.
+    /// Written for everybody with a role; the guests of the house share one line in
+    /// <see cref="MysteryBeats.VillagerEpilogue"/> instead, because nine variations on "had a
+    /// nice evening" is not an ending anybody watches.
+    /// </summary>
+    public string Epilogue { get; set; } = "";
 
     /// <summary>
     /// Braun and the three facilitators.
@@ -409,11 +458,53 @@ public sealed class MysteryFaction
     public bool KnowsEachOther { get; set; }
 }
 
+/// <summary>
+/// What a question is worth, so the story can be checked for exactly one of each and the
+/// asker can never be told.
+/// </summary>
+public enum MysteryQuestionImportance
+{
+    /// <summary>Where were you when Braun was murdered — worded for the character.</summary>
+    Alibi,
+
+    /// <summary>Something else that matters tonight.</summary>
+    Important,
+
+    /// <summary>Colour. Plausible enough to ask, worth nothing.</summary>
+    Useless
+}
+
+/// <summary>
+/// One question somebody can ask a character, and what they say back.
+///
+/// <see cref="CoverAnswer"/> is the version a killer (or a jester) gives once their story has a
+/// lie in it: it replaces <see cref="Answer"/> the moment their tamper fires, with <c>{target}</c>
+/// filled by whoever they pointed at. Only the two answers that matter get one; the useless one
+/// never changes.
+/// </summary>
+public sealed class MysteryQuestion
+{
+    public string Id { get; set; } = "";
+    public MysteryQuestionImportance Importance { get; set; } = MysteryQuestionImportance.Important;
+    public string Prompt { get; set; } = "";
+    public string Answer { get; set; } = "";
+    public string? CoverAnswer { get; set; }
+
+    public bool HasCover => !MysteryText.IsPlaceholder(CoverAnswer);
+}
+
 public sealed class MysteryAbility
 {
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string Text { get; set; } = "";
+
+    /// <summary>
+    /// What the phone asks for before it fires: <c>character</c>, <c>clue</c> (a card the player
+    /// has scanned) or <c>none</c>. Content, so the picker follows the story rather than a list
+    /// of ability ids in the page.
+    /// </summary>
+    public string Target { get; set; } = "character";
 
     public int Charges { get; set; } = 1;
 
@@ -570,6 +661,9 @@ public sealed class MysteryBeats
 
     public string TownWin { get; set; } = "";
     public string KillerWin { get; set; } = "";
+
+    /// <summary>The guests of the house, all together, when they win. See <see cref="MysteryCharacter.Epilogue"/>.</summary>
+    public string VillagerEpilogue { get; set; } = "";
 }
 
 // =============================================================================================
@@ -590,6 +684,9 @@ public sealed class MysteryPlay
     /// <summary>Who met whom. Badge scans.</summary>
     public List<MysteryMeeting> Meetings { get; set; } = [];
 
+    /// <summary>The conversations: one per pair, three questions each way.</summary>
+    public List<MysteryInteraction> Interactions { get; set; } = [];
+
     /// <summary>The objective queue, append-only.</summary>
     public List<MysteryObjectiveIssue> Objectives { get; set; } = [];
 
@@ -601,6 +698,15 @@ public sealed class MysteryPlay
 
     /// <summary>Stamped on entering Murder, so a screen opened later does not replay the cinematic.</summary>
     public DateTimeOffset? MurderAt { get; set; }
+
+    /// <summary>
+    /// When the current phase began. What the host's countdown is measured from — and only a
+    /// countdown: nothing in the game reads the clock to decide anything.
+    /// </summary>
+    public DateTimeOffset? PhaseEnteredAt { get; set; }
+
+    /// <summary>Who is standing up during the introductions. Only meaningful in that phase.</summary>
+    public int IntroIndex { get; set; }
 
     /// <summary>
     /// How far the ending has been walked. Only meaningful during Reveal.
@@ -716,6 +822,64 @@ public sealed class MysteryMeeting
     public string ByCharacterId { get; set; } = "";
     public string MetCharacterId { get; set; } = "";
     public DateTimeOffset At { get; set; }
+}
+
+/// <summary>
+/// A conversation between two characters: the scanner asks first, then they take turns until each
+/// has asked the other's three. One row per pair, read from either side, like a meeting.
+/// </summary>
+public sealed class MysteryInteraction
+{
+    public string Id { get; set; } = "";
+
+    /// <summary>Whoever scanned. Asks first.</summary>
+    public string ACharacterId { get; set; } = "";
+    public string BCharacterId { get; set; } = "";
+
+    public DateTimeOffset StartedAt { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; }
+
+    public List<MysteryExchange> Exchanges { get; set; } = [];
+
+    /// <summary>
+    /// Who has put the finished conversation away. A conversation used to vanish off both phones
+    /// the instant the last question was answered, before either of them had read it — so it
+    /// stays on the screen until each side closes it, and each side does that for themselves.
+    /// </summary>
+    public List<string> ClosedBy { get; set; } = [];
+
+    public bool IsOpen => CompletedAt is null;
+
+    /// <summary>Still on this person's screen: in progress, or finished and not yet put away.</summary>
+    public bool ShowingTo(string characterId) =>
+        Involves(characterId) && (IsOpen || !ClosedBy.Contains(characterId));
+
+    public bool Involves(string characterId) =>
+        ACharacterId == characterId || BCharacterId == characterId;
+
+    public string? Other(string characterId) =>
+        ACharacterId == characterId ? BCharacterId
+        : BCharacterId == characterId ? ACharacterId
+        : null;
+}
+
+/// <summary>
+/// One question asked and answered.
+///
+/// The prompt and the answer are written down as they were at the time rather than looked up
+/// again later, on purpose: a killer whose story changes between two conversations has been
+/// caught in a contradiction, and the transcript is the evidence.
+/// </summary>
+public sealed class MysteryExchange
+{
+    public string AskerCharacterId { get; set; } = "";
+    public string QuestionId { get; set; } = "";
+    public string Prompt { get; set; } = "";
+    public string Answer { get; set; } = "";
+    public DateTimeOffset At { get; set; }
+
+    /// <summary>Who has starred this as worth remembering. Each side keeps their own stars.</summary>
+    public List<string> StarredBy { get; set; } = [];
 }
 
 public enum MysteryAudience
@@ -866,8 +1030,17 @@ public sealed class MysteryOutcome
 {
     public bool TownWon { get; set; }
 
-    /// <summary>On ground truth — a minion's shield fools the card, not this.</summary>
+    /// <summary>On ground truth — a minion taking the blame fools the card, not this.</summary>
     public int KillersConvicted { get; set; }
+
+    /// <summary>What the room was told: killers convicted plus any minion who took the blame.</summary>
+    public int ShownKillersConvicted { get; set; }
+
+    /// <summary>
+    /// Whether the ending has to admit a KILLER card was a lie: the room would have won on what it
+    /// was shown and did not win on the truth. Otherwise the associate is never named as one.
+    /// </summary>
+    public bool RevealDecoy { get; set; }
 
     /// <summary>Jesters who got themselves convicted, and Brauns who outlived a convicted rival.</summary>
     public List<string> PersonalWinnerCharacterIds { get; set; } = [];

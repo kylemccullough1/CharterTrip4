@@ -64,12 +64,12 @@
       "id": "grand_hall",
       "name": "Grand Hall",
       "players_allowed": true,
-      "notes": "The stage, the bar, and the wreckage of the champagne tower. At 9:40 tonight, every guest in the house was standing here. That was the idea.",
+      "notes": "The stage and the bar. At 9:40 tonight, every guest in the house was standing here, watching the singer. That was the idea.",
       "adjacent": [
         "sitting_room",
         "extension_room"
       ],
-      "clue_spot": "The stage area and the champagne tower wreckage."
+      "clue_spot": "Beneath the front of the stage."
     },
     {
       "id": "extension_room",

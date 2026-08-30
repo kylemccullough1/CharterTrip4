@@ -7,14 +7,14 @@
       "sex": "M",
       "job": "Politician",
       "voice": "Senate-floor baritone that never quite turns off. Speaks in talking points, calls everyone 'my friend,' and dabs his palms with a handkerchief when questions get specific.",
-      "backstory": "Three-term politician whose war chest has quiet Syndicate money in it. He took their donations, delivered their zoning votes, and has spent two years praying nobody ever pulls that thread.",
-      "why_invited": "He invited himself, more or less. Braun's endorsement would lock up his re-election, and he has been circling the study all evening waiting for five minutes alone with the man.",
-      "dislikes_braun": "Braun has dodged endorsing him for months, and lately Braun's questions about campaign financing have felt less like small talk and more like a man comparing notes against a ledger.",
+      "backstory": "You are a three-term politician whose war chest has quiet Syndicate money in it. You took their donations, delivered their zoning votes, and have spent two years praying nobody ever pulls that thread.",
+      "why_invited": "You invited yourself, more or less. Braun's endorsement would lock up your re-election, and you have been circling the study all evening waiting for five minutes alone with the man.",
+      "dislikes_braun": "Braun has dodged endorsing you for months, and lately his questions about campaign financing have felt less like small talk and more like a man comparing notes against a ledger.",
       "zone_id": "entry",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": true,
-      "observable": "Constantly wipes his sweating palms with a monogrammed handkerchief — one embroidered, oddly, with a ring of tiny snails.",
+      "observable": "You constantly wipe your sweating palms with a monogrammed handkerchief — one embroidered, oddly, with a ring of tiny snails.",
       "seen_as": "A glad-handing career politician who wants something from everyone in the room.",
       "rival_character_id": null,
       "dialogue": {
@@ -53,7 +53,28 @@
       },
       "signature_item": "A monogrammed silk handkerchief, 'W.S.', embroidered with a ring of tiny snails.",
       "tamper_insert": "a sweat-damp silk handkerchief monogrammed W.S., stitched with tiny snails",
-      "staff": null
+      "epilogue": "",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "In the corridor outside the study, my friend, where I had been for some time waiting on a word with James. The maid passed me with his tea tray — ask her. When the scream came I was still standing there, and I did not run toward it. My knees would not allow it, and a man in my position does not run toward trouble."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "Why did you need a private word with Braun so badly tonight?",
+          "answer": "Zoning, my friend. A man in my position has donors with opinions about land, and James had opinions about my donors. We were going to reconcile the two. We never got the chance."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "How long have you known James Braun?",
+          "answer": "Twelve years, since his father's funeral. He shook my hand and told me the district was a fine thing to own. I laughed at the time. I have thought about that sentence a great deal since."
+        }
+      ]
     },
     {
       "id": "imogen",
@@ -62,14 +83,14 @@
       "sex": "F",
       "job": "Maid",
       "voice": "Quiet, precise, eyes-down politeness that occasionally slips into something much sharper. Answers questions with exactly as much as was asked and not a syllable more.",
-      "backstory": "Head maid at Braun Manor for six years, since she was eighteen. Knows every corridor, every squeaking stair, and lately, the weight of an envelope of cash someone left in her locker with a snail pressed into the wax.",
-      "why_invited": "She isn't a guest, she's working — pouring, clearing, and hearing every conversation in the house that people assume the help can't follow.",
-      "dislikes_braun": "Six years of loyalty and Mr. Braun still calls her 'the new girl.' The Syndicate's envelope asked only for harmless details about his schedule, and it paid three months' wages.",
+      "backstory": "You have been head maid at Braun Manor for six years, since you were eighteen. You know every corridor, every squeaking stair, and lately, the weight of an envelope of cash someone left in your locker with a snail pressed into the wax.",
+      "why_invited": "You aren't a guest, you're working — pouring, clearing, and hearing every conversation in the house that people assume the help can't follow.",
+      "dislikes_braun": "Six years of loyalty and Mr. Braun still calls you 'the new girl.' The Syndicate's envelope asked only for harmless details about his schedule, and it paid three months' wages.",
       "zone_id": "family_room",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Moves silently and appears at your elbow without warning; keeps touching her apron pocket as if checking something is still there.",
+      "observable": "You move silently and appear at people's elbows without warning, and you keep touching your apron pocket as if checking something is still there.",
       "seen_as": "Invisible, efficient, and probably the only person who actually knows what goes on in this house.",
       "rival_character_id": null,
       "dialogue": {
@@ -108,7 +129,28 @@
       },
       "signature_item": "A ring of brass service keys on a worn leather fob — one key newly cut and shinier than the rest.",
       "tamper_insert": "a maid's brass service key, freshly cut, on a snapped leather fob",
-      "staff": null
+      "epilogue": "",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "Halfway along the back corridor with Mr. Braun's tea tray, sir. The butler called me away to the grand hall when the singer took the stage — the guests needed clearing back from it — and the tray is still on the side table where I set it down. Mr. Shepard was in the front corridor when I left it."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "Who's been through the kitchen tonight that shouldn't have been?",
+          "answer": "The chauffeur, without a word to anyone, and she always has a word. And the doctor, earlier, at the service counter with her bag open. I don't say it means anything. I say I noticed."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "How long have you worked in this house?",
+          "answer": "Six years, since I was eighteen. I know every corridor and which stairs sing. Mr. Braun still called me the new girl."
+        }
+      ]
     },
     {
       "id": "yousef",
@@ -117,14 +159,14 @@
       "sex": "M",
       "job": "Family Attorney",
       "voice": "Measured attorney's cadence, every sentence pre-drafted, with an unfortunate tendency to lose the thread entirely whenever Isla Perry crosses the room.",
-      "backstory": "The Braun family attorney for a decade — wills, trusts, the estate, and most recently the prenuptial agreement between James Braun and Isla Perry, which he drafted while quietly, hopelessly in love with the bride.",
-      "why_invited": "Family counsel attends family occasions. He also has three signature pages in his briefcase and one confession he's been rehearsing for two years.",
-      "dislikes_braun": "Braun has everything and appreciates none of it — the fortune he inherited, the fiancee he treats like a line item. Yousef drafted the prenup that will bind her to him, and he hates every clause of it.",
+      "backstory": "You have been the Braun family attorney for a decade — wills, trusts, the estate, and most recently the prenuptial agreement between James Braun and Isla Perry, which you drafted while quietly, hopelessly in love with the bride.",
+      "why_invited": "Family counsel attends family occasions. You also have three signature pages in your briefcase and one confession you've been rehearsing for two years.",
+      "dislikes_braun": "Braun has everything and appreciates none of it — the fortune he inherited, the fiancée he treats like a line item. You drafted the prenup that will bind her to him, and you hate every clause of it.",
       "zone_id": "sitting_room",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Immaculate suit, briefcase never out of reach, and eyes that find Isla Perry within four seconds of entering any room.",
+      "observable": "Immaculate suit, briefcase never out of reach, and your eyes find Isla Perry within four seconds of entering any room.",
       "seen_as": "The discreet family lawyer — the man who knows where every dollar and every secret is filed.",
       "rival_character_id": null,
       "dialogue": {
@@ -163,7 +205,28 @@
       },
       "signature_item": "A slim leather briefcase with a combination lock, holding an unsigned prenuptial agreement.",
       "tamper_insert": "a page of prenuptial boilerplate initialed Y.M., torn at the corner",
-      "staff": null
+      "epilogue": "",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "In the sitting room, near the foot of the stairs, where I had been for most of the evening. The painter had me in her sightline from the family room the whole time — she has me in three sketches, I'm told. I heard the scream. I stayed where I was. I am not a man who runs toward a noise."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "What was in the paperwork Braun wanted signed before the wedding?",
+          "answer": "A prenuptial agreement, unsigned, and a draft codicil. James was rewriting his will: his brother out for good, Miss Perry's share tied to the prenup. Two people in this house stood to lose a great deal by that document, and neither of them was me."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "How long have you been the family's attorney?",
+          "answer": "Fourteen years. His father hired me, and James kept me on because I already knew where everything was. That is the whole of a family attorney's value: knowing where everything is."
+        }
+      ]
     },
     {
       "id": "santiago",
@@ -172,14 +235,14 @@
       "sex": "M",
       "job": "College Professor",
       "voice": "Lecturing professor who cannot say anything in fewer than three clauses; drops provenance dates the way other people drop names, and handles objects he was not invited to touch.",
-      "backstory": "A college professor of art history with a sideline appraising private collections — some for museums, some for buyers who prefer no receipts. He's been cataloguing Braun's rarities all evening, and his notes include prices.",
-      "why_invited": "Braun asked him months ago to evaluate the collection for insurance. Santiago accepted, then took a second, quieter commission to evaluate it for someone else entirely.",
-      "dislikes_braun": "Braun owns a Quattrocento panel he keeps in a hallway. A hallway. Men like Braun collect beauty the way gravel collects rain — by accident, and without deserving it.",
+      "backstory": "You are a college professor of art history with a sideline appraising private collections — some for museums, some for buyers who prefer no receipts. You've been cataloguing Braun's rarities all evening, and your notes include prices.",
+      "why_invited": "Braun asked you months ago to evaluate the collection for insurance. You accepted, then took a second, quieter commission to evaluate it for someone else entirely.",
+      "dislikes_braun": "Braun owns a Quattrocento panel he keeps in a hallway. A hallway. You have spent your life around men like Braun, who collect beauty the way gravel collects rain — by accident, and without deserving it.",
       "zone_id": "extension_room",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Wears cotton gloves he keeps 'for handling,' and can be found examining objects with a jeweler's loupe when he thinks no one is watching.",
+      "observable": "You wear cotton gloves you keep 'for handling,' and you can be found examining objects with a jeweler's loupe when you think no one is watching.",
       "seen_as": "A fussy academic who is either the most knowledgeable man in the room or the most acquisitive, possibly both.",
       "rival_character_id": null,
       "dialogue": {
@@ -218,7 +281,28 @@
       },
       "signature_item": "A jeweler's loupe on a frayed academic's lanyard, and a notebook of catalogue entries with prices.",
       "tamper_insert": "a torn notebook page listing Braun's antiques with prices, one entry circled: 'leaves tonight?'",
-      "staff": null
+      "epilogue": "",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "In the west wing extension, cataloguing crates I had not been invited to catalogue. Cairo Iwobi was in that room the whole time, with company, and I take no pleasure in owing that man an alibi. The scream reached us faintly. I assumed it was the storm."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "What's in that notebook you keep pricing things in?",
+          "answer": "Braun's rarities, itemised. And one line I am less proud of: a crate number, RR-11, off the bootlegger's stack in the extension. One of those crates went out a bottle light this evening. I was counting. Somebody else was carrying."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "What were you hoping to find in this house tonight?",
+          "answer": "A first edition James promised to show me three years ago and never did. I did not find it. I found a great many other things that are worth more, and that nobody in this house can properly date."
+        }
+      ]
     },
     {
       "id": "molly",
@@ -227,14 +311,14 @@
       "sex": "F",
       "job": "Newspaper Reporter",
       "voice": "Rapid-fire newsroom clip, always mid-question, with a habit of repeating your own words back to you slowly while she writes them down.",
-      "backstory": "Investigative reporter who has spent eighteen months mapping the Midnight Syndicate — shell companies, dock manifests, and a snail insignia that keeps surfacing in the margins of documents nobody will explain.",
-      "why_invited": "Braun's office called her editor personally. He wanted a journalist in the house tonight, and she is increasingly certain he intended to hand her the story of her career.",
-      "dislikes_braun": "He's been dangling the Syndicate story for weeks — 'soon, Miss Henderson, when it's safe' — while her editor threatens to kill the piece. Rich men treat the truth like it's theirs to schedule.",
+      "backstory": "You are an investigative reporter who has spent eighteen months mapping the Midnight Syndicate — shell companies, dock manifests, and a snail insignia that keeps surfacing in the margins of documents nobody will explain.",
+      "why_invited": "Braun's office called your editor personally. He wanted a journalist in the house tonight, and you are increasingly certain he intended to hand you the story of your career.",
+      "dislikes_braun": "Braun has been dangling the Syndicate story for weeks — 'soon, Miss Henderson, when it's safe' — while your editor threatens to kill the piece. Rich men treat the truth like it's theirs to schedule.",
       "zone_id": "kitchen",
       "faction_id": "detective",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "A reporter's notebook lives in her left hand; she writes while maintaining eye contact, which unsettles absolutely everyone.",
+      "observable": "A reporter's notebook lives in your left hand; you write while maintaining eye contact, which unsettles absolutely everyone.",
       "seen_as": "The press — charming for exactly as long as you're useful, and always working.",
       "rival_character_id": null,
       "dialogue": {
@@ -273,7 +357,28 @@
       },
       "signature_item": "A shorthand-filled reporter's notebook, its inside cover sketched with the same small snail, over and over.",
       "tamper_insert": "a reporter's notebook page of shorthand, the margin doodled with tiny snails",
-      "staff": null
+      "epilogue": "Molly Henderson has been threatened in writing twice this year and has kept both letters. She came for a society piece and stayed for the crate counts, and she was the first person in the house to understand that the kitchen mattered more than the study. She will write it up. Her editor will cut the best parts, and she will put them back.",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "In the kitchen, interviewing the cooks, which is where you learn a house. I heard the scream and I wrote down the time — 9:47 — and then I went to see who ran toward it and who didn't. The second list is shorter."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "What did you find on the service counter?",
+          "answer": "Delivery paperwork that doesn't match the crates I counted coming in. And behind it, a small glass vial — empty, the rim still tacky, bitter herbs with smoked plum underneath. Something was opened in that kitchen tonight and poured into something else."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "What story brought you here tonight?",
+          "answer": "The engagement, officially. My editor wanted a society piece. I wanted to know why a man who collects secrets was suddenly throwing a party for everyone he'd collected them from."
+        }
+      ]
     },
     {
       "id": "nishimoto",
@@ -282,14 +387,14 @@
       "sex": "F",
       "job": "Family Doctor",
       "voice": "Clinical bedside calm, unhurried and faintly amused, delivering everything — diagnoses, condolences, lies — in the same reassuring register.",
-      "backstory": "The Braun family physician for eight years. Trained in the Caribbean, and never actually passed her U.S. boards — a defect in her paperwork that the Midnight Syndicate discovered, documented, and has been holding over her ever since.",
-      "why_invited": "She's the family doctor; she attends everything. Earlier tonight she drew Mr. Braun's blood in the study — routine pre-wedding labs, she said, and her hands did not shake even slightly.",
-      "dislikes_braun": "Braun made her do his bloodwork at his own engagement party, because his time matters and hers doesn't. Eight years of house calls and he still introduces her as 'the help that went to medical school.'",
+      "backstory": "You have been the Braun family physician for eight years. You trained in the Caribbean, and never actually passed your U.S. boards — a defect in your paperwork that the Midnight Syndicate discovered, documented, and has been holding over you ever since.",
+      "why_invited": "You're the family doctor; you attend everything. Earlier tonight you drew Mr. Braun's blood in the study — routine pre-wedding labs, you said, and your hands did not shake even slightly.",
+      "dislikes_braun": "Braun made you do his bloodwork at his own engagement party, because his time matters and yours doesn't. Eight years of house calls and he still introduces you as 'the help that went to medical school.'",
       "zone_id": "kitchen",
       "faction_id": "killer",
       "guilt_slot": "means",
       "is_herring": false,
-      "observable": "A doctor's leather bag never leaves her side, and she has the steadiest hands at the party — she poured the shaking butler's coffee for him without spilling a drop.",
+      "observable": "Your doctor's leather bag never leaves your side, and you have the steadiest hands at the party — you poured the shaking butler's coffee for him without spilling a drop.",
       "seen_as": "The unflappable family doctor — the person everyone trusts implicitly and no one has ever actually checked up on.",
       "rival_character_id": null,
       "dialogue": {
@@ -328,7 +433,30 @@
       },
       "signature_item": "A worn leather medical bag with a small brass latch, one vial slot inside conspicuously empty.",
       "tamper_insert": "a glass medical vial, unlabeled and empty, smelling faintly of bitter herbs",
-      "staff": null
+      "epilogue": "Dr. Aiko Nishimoto was the Syndicate's physician for years before she was the Braun family's — patching up the people who fell off trucks, signing what needed signing. James Braun's ledger had her name on its third page. When the Syndicate asked for something bitter that would pass for brandy, she prepared it with the same steady hands she had used on his father, and told herself it was medicine of a kind: one man's death to keep a great many people out of prison.",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "On my way out to my car with tonight's blood samples. I had drawn James's earlier, in that study with its terrible light. I was on the driveway when I heard the scream. The chauffeur wasn't at her stand — I remember, because I'd wanted her to open the gate for me.",
+          "cover_answer": "On my way out to my car with tonight's blood samples, and I was not the only one on that side of the house. {target} was on the side path when I reached the drive. I assumed, at the time, that they wanted some air. I no longer assume that."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "What's gone from the first-aid shelf you stocked in the kitchen?",
+          "answer": "Nothing that should alarm you. I keep an inventory. If the reporter is waving a vial about, vials are what medicine comes in — I could not tell you whose. The kitchen was full of people tonight.",
+          "cover_answer": "I keep an inventory, and one vial is unaccounted for. I'll tell you what I told nobody else: {target} asked me, this spring, what a person could put in a drink that a doctor wouldn't catch. I took it for a joke at the time."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "How long have you been the family's doctor?",
+          "answer": "Eight years. His father, then him. James was a difficult patient — he wanted the diagnosis before the examination, and he wanted it to be good news."
+        }
+      ]
     },
     {
       "id": "isla",
@@ -337,14 +465,14 @@
       "sex": "F",
       "job": "Braun's Fiancée",
       "voice": "Finishing-school polish over a fast, flinty core; sweet until crossed, then suddenly itemizing everything you've ever done wrong in chronological order.",
-      "backstory": "Braun's fiancee, engaged eight months, wedding in six weeks. Came from nothing, curated herself into everything, and three days ago was handed a prenup that values her contribution to the marriage at a number with insultingly few zeroes.",
-      "why_invited": "She's the hostess. Tonight was meant to be her coronation — until Sutton Brady toppled the champagne tower, ruined her dress, and reminded everyone that Braun had a life before her.",
-      "dislikes_braun": "The prenup. He let his lawyer slide it across the table like a dinner check, three days before their engagement party. Whatever she felt for James, that document put a price on it, and the price was low.",
+      "backstory": "You are Braun's fiancée, engaged eight months, wedding in six weeks. You came from nothing, curated yourself into everything, and three days ago you were handed a prenup that values your contribution to the marriage at a number with insultingly few zeroes.",
+      "why_invited": "You're the hostess. Tonight was meant to be your coronation — until Sutton Brady took the stage that should have been yours, and reminded everyone that Braun had a life before you.",
+      "dislikes_braun": "The prenup. He let his lawyer slide it across the table like a dinner check, three days before your engagement party. Whatever you felt for James, that document put a price on it, and the price was low.",
       "zone_id": "sitting_room",
       "faction_id": "inheritance",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Changed dresses partway through the evening — the second gown is beautiful and visibly not the one from the invitations; she keeps smoothing it flat.",
+      "observable": "You changed dresses partway through the evening — the second gown is beautiful and visibly not the one from the invitations, and you keep smoothing it flat.",
       "seen_as": "The gold-digger or the love of Braun's life, depending on which end of the room you're standing in.",
       "rival_character_id": "harry",
       "dialogue": {
@@ -368,7 +496,7 @@
           {
             "prompt": "The other guests",
             "lines": [
-              "The jazz singer destroyed a five-foot champagne tower getting to a microphone nobody offered her. Ask yourself what kind of person needs a stage that badly.",
+              "The jazz singer took a microphone nobody offered her, in front of two hundred people. Ask yourself what kind of person needs a stage that badly.",
               "Martha Kim told me something about Sutton and James tonight that rearranged my entire evening. Ask Martha. I'm done repeating it."
             ]
           },
@@ -382,8 +510,29 @@
         ]
       },
       "signature_item": "An engagement ring with a diamond the size of a grape, which she turns around her finger when she's thinking.",
-      "tamper_insert": "a champagne-stained evening glove in the fiancee's signature color",
-      "staff": null
+      "tamper_insert": "an evening glove in the fiancée's signature color",
+      "epilogue": "Isla Perry did the arithmetic the night James proposed: an estate, a prenup she had not signed, and a brother with a claim. She did not kill James, and she would like that noted. She simply understood, before anyone else in the house did, that a trial can remove a rival as neatly as a will can — and she has always been very good at getting a room to look where she wants it to.",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "Upstairs in the primary suite, changing into the second gown. That was planned — a hostess has two looks — and I was alone, which is called dignity. I heard the scream and took it for the storm. I came down when I was ready to be looked at."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "What did Martha Kim tell you tonight that changed your evening?",
+          "answer": "That Sutton Brady and my fiancé were not finished, whatever James said they were. I won't repeat it, so don't ask twice. Ask Martha. And then ask yourself why the singer needed the whole room looking at her at exactly twenty to ten."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "How did you and James meet?",
+          "answer": "At a charity auction. He outbid me on a painting I wanted, then sent it to my house the next morning with a card. That was James. He liked to win, and he liked to be thanked for it."
+        }
+      ]
     },
     {
       "id": "emilia",
@@ -392,20 +541,20 @@
       "sex": "F",
       "job": "Famous Actress",
       "voice": "Projects to the back row at all times; laughs theatrically, quotes her own past roles, and treats every two-person conversation as a scene she is carrying.",
-      "backstory": "A famous actress two years past her last famous role. Braun pulled his financing from the picture that was going to be her comeback, the production collapsed, and her name has been shrinking on posters ever since.",
-      "why_invited": "Braun books celebrities the way he books florists. She came because being seen at Braun Manor is still being seen — and because a woman with nothing left to lose finds parties like this full of opportunity.",
-      "dislikes_braun": "He killed her comeback with one phone call and then invited her to his engagement party like a centerpiece. He turned her career into an anecdote, and tonight he wanted the anecdote in the room.",
+      "backstory": "You are a famous actress two years past your last famous role. Braun pulled his financing from the movie that was going to be your comeback, the production collapsed, and your name has been shrinking on posters ever since.",
+      "why_invited": "Braun books celebrities the way he books florists. You came because being seen at Braun Manor is still being seen — and because a woman with nothing left to lose finds parties like this full of opportunity.",
+      "dislikes_braun": "He killed your comeback with one phone call and then invited you to his engagement party like a centerpiece. He turned your career into an anecdote, and tonight he wanted the anecdote in the room.",
       "zone_id": "sitting_room",
       "faction_id": "jester",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Keeps positioning herself in doorways and against mantelpieces — anywhere with a frame — and checks who's watching before she reacts to anything.",
+      "observable": "You keep positioning yourself in doorways and against mantelpieces — anywhere with a frame — and you check who's watching before you react to anything.",
       "seen_as": "A fading star hungry for a spotlight, any spotlight, and not particular about what's shining it.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
           "I was in the powder room warming up to perform when that woman took my microphone. My microphone, my slot, my key. I do not forget a stolen key.",
-          "Two years since my last picture. In this business, two years is a lifetime and a lifetime is a comeback. I intend to have one. Tonight, if necessary.",
+          "Two years since my last movie. In this business, two years is a lifetime and a lifetime is a comeback. I intend to have one. Tonight, if necessary.",
           "I've died on screen eleven times. Poison twice, drowning once, misadventure with a chandelier. I'm extremely qualified for this evening."
         ],
         "weather": [
@@ -438,7 +587,30 @@
       },
       "signature_item": "A vintage cigarette holder she doesn't smoke from — 'it's a prop, darling, everything is.'",
       "tamper_insert": "a lipstick-marked vintage cigarette holder, the kind the actress carries",
-      "staff": null
+      "epilogue": "Emilia Cruz spent two years watching her name shrink on posters, and somewhere in the second year she worked out that infamy is a kind of fame. She came tonight to be noticed, and a murder trial is the best stage there is. If the room sent her down for it, she considers the evening a comeback. If it did not, she will try harder next time.",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "In the powder room off the sitting room, warming up. I was to sing at a quarter to ten — my slot — and that woman took the stage before I could. I heard the scream from behind a locked door with my lipstick half on.",
+          "cover_answer": "Nobody can put me in the powder room, because I wasn't there. I'll tell you plainly: I was somewhere I had no business being at a quarter to ten — down a corridor with a rope across it. Write that down."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "What did Braun do to your last movie?",
+          "answer": "Pulled his money the week before we started shooting. The production folded, Hugo's company folded, and my name has been shrinking on posters ever since. If you're looking for people with a grievance, form a queue behind me.",
+          "cover_answer": "Pulled his money, and I told him at eight o'clock tonight, to his face, that he'd regret it before midnight. Those were my exact words. I don't waste a line like that."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "What was your last famous role?",
+          "answer": "A widow who did it. Two years ago. I was very good, and the studio was very quiet about it afterward, and now I'm here."
+        }
+      ]
     },
     {
       "id": "giuliana",
@@ -447,14 +619,14 @@
       "sex": "F",
       "job": "Socialite",
       "voice": "Warm continental purr, cheek-kisses on arrival, and a way of steering any conversation toward her foundation's next gala within ninety seconds.",
-      "backstory": "The season's essential socialite, whose charity galas raise remarkable sums that survive remarkably little auditing. The Midnight Syndicate washes money through her events; in exchange, she never worries about the bill for anything. PRIVATE — WHAT YOU KNOW ABOUT HIM: Remington Whitley is police, and he has been circling you for a year — since the night you had a card left in his kitchen to make a point about a dog. You know exactly why he's in this house and you know he can't prove a thing. He does NOT know that you know. Watch where he steers the room tonight, and remember: a man with a grudge that personal is a man who can be led. PRIVATE — WHAT YOU KNOW ABOUT HIM: Remington Whitley is police, and he has been circling you for a year — since the night you had a card left in his kitchen to make a point about a dog. You know exactly why he's in this house and you know he can't prove a thing. He does NOT know that you know. Watch where he steers the room tonight, and remember: a man with a grudge that personal is a man who can be led.",
-      "why_invited": "No party at this level happens without her, and she made sure of it. She also had one quiet errand to run tonight — a delivery of an envelope to the study corridor that she badly wishes she could un-run.",
-      "dislikes_braun": "Braun asked her, twice this month, delicate questions about her foundation's donor list, wearing the smile of a man who already knows the answers. She has been at war with that smile ever since.",
+      "backstory": "You are the season's essential socialite, whose charity galas raise remarkable sums that survive remarkably little auditing. The Midnight Syndicate washes money through your events; in exchange, you never worry about the bill for anything. PRIVATE — WHAT YOU KNOW ABOUT HIM: Remington Whitley is police, and he has been circling you for a year — since the night you had a card left in his kitchen to make a point about a dog. You know exactly why he's in this house and you know he can't prove a thing. He does NOT know that you know. Watch where he steers the room tonight, and remember: a man with a grudge that personal is a man who can be led.",
+      "why_invited": "No party at this level happens without you, and you made sure of it. You also had one quiet errand to run tonight — delivering an envelope to the study corridor — that you badly wish you could un-run.",
+      "dislikes_braun": "Braun asked you, twice this month, delicate questions about your foundation's donor list, wearing the smile of a man who already knows the answers. You have been at war with that smile ever since.",
       "zone_id": "grand_hall",
       "faction_id": "minion",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Was seen leaving the study corridor early in the evening, flushed and walking fast — and she has been over-explaining her whereabouts to anyone who'll listen ever since.",
+      "observable": "You were seen leaving the study corridor early in the evening, flushed and walking fast — and you have been over-explaining your whereabouts to anyone who'll listen ever since.",
       "seen_as": "Society's favorite hostess — beloved, connected, and financed by absolutely no visible means.",
       "rival_character_id": null,
       "dialogue": {
@@ -471,8 +643,8 @@
           {
             "prompt": "The house",
             "lines": [
-              "The grand hall was built for exactly this — two hundred people and one disaster. The champagne tower was the disaster. Well. The first one.",
-              "Whoever stacks five feet of champagne glasses next to a stage deserves what happened. I said so before it fell. Witnesses exist."
+              "The grand hall was built for exactly this — two hundred people and one disaster. The singer was the disaster. Well. The first one.",
+              "Whoever lets Sutton Brady within reach of a microphone deserves what happens. I said so before she stood up. Witnesses exist."
             ]
           },
           {
@@ -493,7 +665,28 @@
       },
       "signature_item": "A silver flask shaped like a snail shell — 'a gift from an admirer' — from which she never actually drinks.",
       "tamper_insert": "a silver flask shaped like a snail shell, engraved but not monogrammed",
-      "staff": null
+      "epilogue": "Giuliana Andolpho's foundation is the Syndicate's cleanest front, and her galas are where its money learns manners. She did not kill James Braun. She wrote the calling card that made him open his study door to a gift, and then she smiled through the rest of the evening. She has been smiling through things for twenty years. It is, she would tell you, what a hostess is for.",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "In the grand hall, applauding. Sutton and I are old friends — when she took the microphone I was the first pair of hands going. I was still there when the scream came; I thought it was part of the storm. Plenty of people can put me in that room. I made sure of it."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "Two people saw you leaving the study corridor early on, flushed. Why?",
+          "answer": "Looking for the powder room. This house eats people. I turned a corner, I found a rope, I turned back. If I looked flushed it's because I walk quickly in heels. I've explained this to everyone who has asked, which by now is everyone."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "What does your foundation actually do?",
+          "answer": "Galas, mostly. Eleven this year. The money goes where it's needed, and the people who make sure of that are very well paid, so you needn't worry about it."
+        }
+      ]
     },
     {
       "id": "sutton",
@@ -502,14 +695,14 @@
       "sex": "F",
       "job": "Jazz Singer",
       "voice": "Smoky lounge-singer drawl, unbothered on the surface, with a torch-song ache underneath that flares whenever James Braun's name comes up.",
-      "backstory": "A jazz singer who was Braun's lover for three years, before Isla, and never entirely stopped. The Syndicate owns the clubs she sings in and has owned a piece of her since the first booking — tonight they asked her for one small favor: be unforgettable at exactly the right moment.",
-      "why_invited": "Braun booked her to sing at his own engagement party, which is either cruelty or nostalgia, and with James it was never possible to tell the difference. She came to show him what he gave up.",
-      "dislikes_braun": "He replaced her with a woman he needs a contract to trust, and then hired her to soundtrack it. She believes — has to believe — that he was still in love with her. The invitation was proof. The prenup gossip was proof. Everything is proof.",
+      "backstory": "You are a jazz singer who was Braun's lover for three years, before Isla, and never entirely stopped. The Syndicate owns the clubs you sing in and has owned a piece of you since the first booking — tonight they asked you for one small favor: be unforgettable at exactly the right moment.",
+      "why_invited": "Braun booked you to sing at his own engagement party, which is either cruelty or nostalgia, and with James it was never possible to tell the difference. You came to show him what he gave up.",
+      "dislikes_braun": "He replaced you with a woman he needs a contract to trust, and then hired you to soundtrack it. You believe — have to believe — that he was still in love with you. The invitation was proof. The prenup gossip was proof. Everything is proof.",
       "zone_id": "grand_hall",
       "faction_id": "minion",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Wears a pair of small gold lapel pins shaped like snails, and commandeered the stage mid-evening — grabbing the microphone from Emilia Cruz and taking down the champagne tower in the process.",
+      "observable": "You wear a pair of small gold lapel pins shaped like snails, and you commandeered the stage mid-evening — taking the microphone from Emilia Cruz before her slot and holding the whole hall for a quarter of an hour.",
       "seen_as": "The ex who never left — magnetic on stage, reckless off it, and clearly not done with the host.",
       "rival_character_id": null,
       "dialogue": {
@@ -526,7 +719,7 @@
           {
             "prompt": "The house",
             "lines": [
-              "The acoustics in the grand hall are the best in the county. You can hear a pin drop. Or a tower of champagne glasses. Acoustics don't judge.",
+              "The acoustics in the grand hall are the best in the county. You can hear a pin drop. Or a scream from the far end of the house. Acoustics don't judge.",
               "I know which floorboards creak between here and the study. Old houses tell on everyone eventually. Even me."
             ]
           },
@@ -548,7 +741,28 @@
       },
       "signature_item": "A pair of gold snail lapel pins, worn like medals, origin never explained.",
       "tamper_insert": "a tiny gold lapel pin shaped like a snail, its clasp bent",
-      "staff": null
+      "epilogue": "Sutton Brady loved James Braun once, and she sang for the Syndicate before that, and when the two ran into each other she chose the one that still paid. Her job tonight was the stage: at twenty to ten she took a microphone that was not hers and held every eye in the house for a quarter of an hour, so that nobody was watching the side path. She finished the song after the scream. Professionals finish the song.",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "On the stage in the grand hall, with the microphone. I took it at twenty to ten because it was my stage before it was hers, and I felt like it. Everyone in that hall was looking at me when the scream came, and I finished the song. That's what a professional does."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "What were you and James Braun to each other?",
+          "answer": "Three years, before her. Not finished, whatever he told his fiancée. He never paid me for singing tonight — said it would be crass, said he'd owe me. So if you're asking who he owed, put me on the list. It's long."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "What do the little gold snails on your lapel mean?",
+          "answer": "That somebody thought I looked good in gold. They were given like medals, so I wear them like medals. I don't explain my jewellery."
+        }
+      ]
     },
     {
       "id": "martha",
@@ -557,14 +771,14 @@
       "sex": "F",
       "job": "Detective in Training",
       "voice": "Earnest academy-textbook diction — recites procedure like scripture, takes notes on everything, and gets visibly excited when anything resembles a real case.",
-      "backstory": "A detective-in-training three months from her shield, unofficially shadowing Remington Whitley, who did not agree to be shadowed. She has memorized every guest list, floor plan, and rumor in this house, on principle.",
-      "why_invited": "Officially, a guest. Actually, she found out Remington would be here and inferred — correctly — that a working detective at a party means the party is work.",
-      "dislikes_braun": "Braun once had her escorted off his property for 'loitering' when she was canvassing the neighborhood on a case. Rich men treat public servants like trespassers right up until they need one.",
+      "backstory": "You are a detective-in-training three months from your shield, unofficially shadowing Remington Whitley, who did not agree to be shadowed. You have memorized every guest list, floor plan, and rumor in this house, on principle.",
+      "why_invited": "Officially, a guest. Actually, you found out Remington would be here and inferred — correctly — that a working detective at a party means the party is work.",
+      "dislikes_braun": "Braun once had you escorted off his property for 'loitering' when you were canvassing the neighborhood on a case. Rich men treat public servants like trespassers right up until they need one.",
       "zone_id": "grand_hall",
       "faction_id": "detective",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Takes notes on a small pad in careful block letters, and has been discreetly timing people's absences all evening — she'll tell you, if asked, that she does this at every party.",
+      "observable": "You take notes on a small pad in careful block letters, and you have been discreetly timing people's absences all evening — you'll tell anyone who asks that you do this at every party.",
       "seen_as": "The overeager rookie — either adorable or exhausting, depending on whether she's currently interrogating you.",
       "rival_character_id": null,
       "dialogue": {
@@ -582,7 +796,7 @@
             "prompt": "The house",
             "lines": [
               "Two interior routes to the study, one window route from the lawn, one side path from the driveway. Four ways in. I mapped it during cocktails. For fun. It was for fun at the time.",
-              "The champagne tower fell at 9:40. Everyone ran toward the noise. Procedure says: always ask who ran away from it."
+              "The scream came at 9:47. Everyone ran toward the noise. Procedure says: always ask who ran away from it."
             ]
           },
           {
@@ -603,7 +817,28 @@
       },
       "signature_item": "A pristine training-academy notepad with a timeline of the evening already half-drawn in it.",
       "tamper_insert": "a page of block-letter notes timing guests' movements, torn from a training notepad",
-      "staff": null
+      "epilogue": "Martha Kim is three months from her shield and has been timing absences at parties since the academy. Tonight it counted. She wrote down 9:33 and 9:56 from a valet log nobody else read, and she will get a commendation for it that Detective Whitley will pretend not to have recommended.",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "Grand hall, north side, timing absences on my pad, which I do at every party. 9:40, the singer took the stage. 9:47, the scream. Everyone ran toward it. Procedure says ask who ran away from it, so I did. The list is short and I keep it in ink."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "What did you check at the valet stand?",
+          "answer": "Whether the chauffeur was at it. Twice, because twice is procedure. She wasn't — not between roughly 9:35 and 9:50. And the study passkey in her log was signed out at 9:33 and back at 9:56. Those numbers are hers. I only wrote them down."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "Does Detective Whitley know you're shadowing him?",
+          "answer": "He pretends not to, which I respect. Acknowledging me would make it official, and then there'd be paperwork. Three months to my shield. I'll take the silence."
+        }
+      ]
     },
     {
       "id": "hugo",
@@ -612,24 +847,24 @@
       "sex": "M",
       "job": "Movie Director",
       "voice": "Booming director's bark gone slightly hollow — still frames every sentence like he's pitching it, still says 'picture this,' still pretends the phone calls he keeps taking are good news.",
-      "backstory": "A once-great movie director whose production company collapsed the week Braun pulled his financing. He is broke in the way that has stages, and he has quietly reached the stage where the people offering him money don't use banks.",
-      "why_invited": "Braun kept inviting him after the collapse — 'no hard feelings' — which is what victors say. Hugo came because staying home would confirm everything, and because desperate men go where money gathers.",
-      "dislikes_braun": "One phone call from Braun and thirty years of work went to auction. Braun called it 'a portfolio decision.' Hugo has directed better villains, but never a colder one.",
+      "backstory": "You are a once-great movie director whose production company collapsed the week Braun pulled his financing. You are broke in the way that has stages, and you have quietly reached the stage where the people offering you money don't use banks.",
+      "why_invited": "Braun kept inviting you after the collapse — 'no hard feelings' — which is what victors say. You came because staying home would confirm everything, and because desperate men go where money gathers.",
+      "dislikes_braun": "One phone call from Braun and thirty years of your work went to auction. Braun called it 'a portfolio decision.' You have directed better villains, but never a colder one.",
       "zone_id": "entry",
       "faction_id": "jester",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Keeps stepping into the entry hall to take hushed phone calls, and returns from each one looking slightly worse.",
+      "observable": "You keep stepping into the entry hall to take hushed phone calls, and you return from each one looking slightly worse.",
       "seen_as": "A great director in freefall — charming, loud, and one bad week from doing something stupid.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
-          "Thirty-one pictures. Two of them mattered, which is two more than most people get. Picture this: a third.",
+          "Thirty-one movies. Two of them mattered, which is two more than most people get. I'm still pitching a third.",
           "I was in the entry half the night on calls with my 'team.' My team is one accountant and he's crying.",
           "You know what a director actually does? Makes people believe a lie in a lit room. It's a transferable skill. I'm finding that out."
         ],
         "weather": [
-          "I'd have killed for this storm on my last picture. We rented rain. Rain! It cost forty grand and looked like soup.",
+          "I'd have killed for this storm on my last movie. We rented rain. Rain! It cost forty grand and looked like soup.",
           "Thunder on cue all night. Whoever's directing this evening has a bigger budget than I ever did."
         ],
         "topics": [
@@ -644,7 +879,7 @@
             "prompt": "The other guests",
             "lines": [
               "Solomon Roka did not come through the front door. I was standing in the entry and I'd have seen him. Men who use side doors have side businesses.",
-              "Emilia blames me for the picture collapsing. I blame Braun. Braun blamed the market. Somewhere in that triangle is an honest man, and it isn't the market."
+              "Emilia blames me for the movie collapsing. I blame Braun. Braun blamed the market. Somewhere in that triangle is an honest man, and it isn't the market."
             ]
           },
           {
@@ -658,7 +893,30 @@
       },
       "signature_item": "A dead cell phone he keeps checking anyway, and a director's viewfinder on a chain around his neck.",
       "tamper_insert": "a director's viewfinder on a broken chain, lens cracked",
-      "staff": null
+      "epilogue": "Hugo Hahn has made thirty-one movies and is out of people who will fund a thirty-second. He came tonight because being suspected of murder is the only kind of headline he can still get for free, and he directed himself into every shadow in the house to earn it. He would tell you it was for the art. It was for the phone calls.",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "The entry hall, on a call with my team — my team is one accountant, and he was crying. I was standing in the doorway with a dead phone when I heard the scream from the back of the house. I stayed in the doorway. I've never been a man who runs toward a noise.",
+          "cover_answer": "Not in the entry, whatever I told you before. I was one corridor off the hall, in the dark, where I wasn't supposed to be, when the scream came. I'm telling you that myself. Make of it what you like."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "Who didn't come through the front door tonight?",
+          "answer": "Solomon Roka. I was standing in the entry and I'd have seen him. He came in round the side with the chauffeur, smelling like a cellar. Men who use side doors have side businesses. I'd know — I'm being offered one.",
+          "cover_answer": "It doesn't matter who came through the front. Ask who left it. I did, twice, and the second time I didn't come back for a while."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "Which of your movies are you proudest of?",
+          "answer": "The second one. Everybody says the ninth, and the ninth made the money, but the second is the one I'd keep. I'm still trying to make a third that matters, for anyone with a chequebook."
+        }
+      ]
     },
     {
       "id": "sharkeisha",
@@ -667,14 +925,14 @@
       "sex": "F",
       "job": "Famous Painter",
       "voice": "Dry, unimpressed artist's deadpan; narrates the room like she's composing it, and delivers devastating observations in the tone of someone mixing paint.",
-      "backstory": "A famous painter whose gallery shows sell out in hours. Braun 'invited' her tonight and then informed her she'd be painting the event — working, at a party, like a hired string quartet with opinions.",
-      "why_invited": "To paint the engagement gala for the Braun collection. She said yes before he mentioned it wasn't a request, and she has spent the evening at her easel in the family room, seeing everything.",
-      "dislikes_braun": "He collects artists the way he collects their art — signed, framed, and hung where guests can admire his taste. She came as a guest and got repositioned as staff. She notices composition. She noticed that.",
+      "backstory": "You are a famous painter whose gallery shows sell out in hours. Braun 'invited' you tonight and then informed you that you'd be painting the event — working, at a party, like a hired string quartet with opinions.",
+      "why_invited": "To paint the engagement gala for the Braun collection. You said yes before he mentioned it wasn't a request, and you have spent the evening at your easel in the family room, seeing everything.",
+      "dislikes_braun": "He collects artists the way he collects their art — signed, framed, and hung where guests can admire his taste. You came as a guest and got repositioned as staff. You notice composition. You noticed that.",
       "zone_id": "family_room",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Set up an easel with a view of the room and has been sketching guests all night; her charcoal studies are unnervingly accurate.",
+      "observable": "You set up an easel with a view of the room and have been sketching guests all night; your charcoal studies are unnervingly accurate.",
       "seen_as": "The artist in residence — silent, watchful, and definitely putting you in the painting whether you like it or not.",
       "rival_character_id": null,
       "dialogue": {
@@ -699,7 +957,7 @@
             "prompt": "The other guests",
             "lines": [
               "The jazz singer wears two gold snails on her lapel. I sketched them before I knew why they bothered me. They still bother me.",
-              "I was studying the crowd before painting when the mic thing happened. Sutton didn't glance at the falling tower even once. Performers always check their damage. She didn't need to. She'd budgeted for it."
+              "I was studying the crowd when the singer took the stage. When the scream came, Sutton didn't flinch even once. Performers always check the room. She didn't need to. She'd budgeted for it."
             ]
           },
           {
@@ -713,7 +971,28 @@
       },
       "signature_item": "A charcoal-smudged sketchbook of tonight's guests, several faces circled.",
       "tamper_insert": "a charcoal study of the study corridor, torn from a sketchbook, one figure smudged out",
-      "staff": null
+      "epilogue": "",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "At my easel in the family room, facing the sitting-room doorway, where I'd been all night. I heard the scream, I looked up, I kept drawing. Painters see everything, and I have the lawyer at the foot of those stairs in three sketches, checking his watch."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "What did you notice about the singer tonight?",
+          "answer": "When the scream came, she didn't flinch. Not once. Performers always break when something goes wrong in the room — it's reflex — and Sutton kept singing. I sketched her face in the two seconds after, and it's the calmest face in the book."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "Why do half your subjects hate their portraits?",
+          "answer": "Because I paint people the way they actually stand. Then they pay anyway. My last canvas sold for more than my mother's house."
+        }
+      ]
     },
     {
       "id": "cairo",
@@ -722,21 +1001,21 @@
       "sex": "M",
       "job": "Neighboring Millionaire",
       "voice": "Relaxed new-money swagger, first-name-basis with everyone within minutes, forever comparing this manor unfavorably to his own slightly smaller one next door.",
-      "backstory": "The neighboring millionaire — self-made in logistics, which he'll mention — whose property line, it turned out, had been quietly digesting three acres of Braun's land for a decade until an assessment made him give it back.",
-      "why_invited": "Neighbors of a certain net worth invite each other out of mutually assured politeness. He came for the wine, stayed for Priya Patel, and spent a suspicious amount of the evening in the west wing with her.",
-      "dislikes_braun": "The assessment. Braun could have let three acres slide between gentlemen; instead he sent surveyors, then lawyers, then a fruit basket. The fruit basket was the part Cairo can't forgive.",
+      "backstory": "You are the neighboring millionaire — self-made in logistics, which you'll mention — whose property line, it turned out, had been quietly digesting three acres of Braun's land for a decade until an assessment made you give it back.",
+      "why_invited": "Neighbors of a certain net worth invite each other out of mutually assured politeness. You came for the wine, stayed for Priya Patel, and spent a suspicious amount of the evening in the west wing with her.",
+      "dislikes_braun": "The assessment. Braun could have let three acres slide between gentlemen; instead he sent surveyors, then lawyers, then a fruit basket. The fruit basket is the part you can't forgive.",
       "zone_id": "grand_hall",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Keeps reappearing from the direction of the grand hall extension looking pleased with himself, usually a polite thirty seconds after Priya Patel does.",
+      "observable": "You keep reappearing from the direction of the grand hall extension looking pleased with yourself, usually a polite thirty seconds after Priya Patel does.",
       "seen_as": "The fun-money neighbor — harmless, flirtatious, and unbothered by anything except the word 'assessment.'",
       "rival_character_id": null,
       "dialogue": {
         "life": [
           "I built my money in shipping and logistics. You want something moved quietly? Not me, but I know the type on sight, is my point.",
           "I spent a good part of the evening in the west wing extension. Privately. With company. A gentleman stops the story there.",
-          "I spent the back half of the evening in the west wing extension with Priya Patel — from before the tower fell until well after. A gentleman stops the story there, except to say we were interrupted twice: once by a woman with a silver flask she did not want us looking at, and the whole time by Santiago Costa fussing over the crates in the corner. Ask either of them. I'd rather you asked Priya."
+          "I spent the back half of the evening in the west wing extension with Priya Patel — from before the scream until well after. A gentleman stops the story there, except to say we were interrupted twice: once by a woman with a silver flask she did not want us looking at, and the whole time by Santiago Costa fussing over the crates in the corner. Ask either of them. I'd rather you asked Priya."
         ],
         "weather": [
           "My grounds drain better than his, for the record. His lawn will be a swamp by midnight. Small victories.",
@@ -768,7 +1047,28 @@
       },
       "signature_item": "A house key to his own manor on a gold fob, which he jingles when making a point.",
       "tamper_insert": "a gold key fob stamped with the neighboring estate's crest",
-      "staff": null
+      "epilogue": "",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "The west wing extension, with Priya Patel, from well before the scream until well after. A gentleman stops the story there — except to say the professor was fussing over crates in the corner the whole time, and a woman with a silver flask burst in on us and left faster than she came. Ask any of them. I'd rather you asked Priya."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "You move freight for a living. What's in those crates out west?",
+          "answer": "Not Braun's, I'll tell you that. Import stamps, no house inventory tags — freight that doesn't want to be freight. The bootlegger checks on them the way I check on my daughter. More, actually. One of them went out lighter than it came in tonight."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "Is your manor really smaller than this one?",
+          "answer": "Slightly. Three acres slightly, and for ten years it wasn't. I gave them back with interest and a smile, and the smile cost more than the acres."
+        }
+      ]
     },
     {
       "id": "priya",
@@ -777,21 +1077,21 @@
       "sex": "F",
       "job": "Golf Pro",
       "voice": "Easy country-club charm with a competitor's edge; talks in golf metaphors, laughs off hard questions, and goes very quiet whenever her father comes up.",
-      "backstory": "A rising golf pro with a clean swing and a complicated bloodline — her father was Midnight Syndicate, years ago, before he got out. She has spent her whole career being one tabloid headline away from being his daughter first and an athlete second.",
-      "why_invited": "Braun sponsors the club championship and collects promising people. She came for the networking and found Cairo Iwobi instead, which was better networking.",
-      "dislikes_braun": "At a dinner last spring, Braun introduced her to a senator as 'the Syndicate girl who golfs.' He apologized with a case of wine. She kept the wine and the grudge in equal condition.",
+      "backstory": "You are a rising golf pro with a clean swing and a complicated bloodline — your father was Midnight Syndicate, years ago, before he got out. You have spent your whole career being one tabloid headline away from being his daughter first and an athlete second.",
+      "why_invited": "Braun sponsors the club championship and collects promising people. You came for the networking and found Cairo Iwobi instead, which was better networking.",
+      "dislikes_braun": "At a dinner last spring, Braun introduced you to a senator as 'the Syndicate girl who golfs.' He apologized with a case of wine. You kept the wine and the grudge in equal condition.",
       "zone_id": "extension_room",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": true,
-      "observable": "Was conspicuously absent with Cairo Iwobi in the extension room during the key stretch of the evening, and answers questions about her father with a practiced, too-smooth deflection.",
+      "observable": "You were conspicuously absent with Cairo Iwobi in the extension room during the key stretch of the evening, and you answer questions about your father with a practiced, too-smooth deflection.",
       "seen_as": "The charming athlete with the dangerous last name — probably innocent, definitely tired of proving it.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
           "I've won four tournaments this season. The headline on three of them still mentioned my father. You learn to play through.",
           "I was in the west wing extension for a stretch of the evening. With Cairo. We were not discussing golf, and that's all the detail anyone's getting.",
-          "I was in the west wing extension with Cairo Iwobi through the whole stretch everyone keeps asking about — before the champagne went over, and after. We were interrupted once, by Giuliana, holding a little silver flask like it was stolen. Cairo saw it too. Go and check, I'll wait."
+          "I was in the west wing extension with Cairo Iwobi through the whole stretch everyone keeps asking about — before the scream, and after. We were interrupted once, by Giuliana, holding a little silver flask like it was stolen. Cairo saw it too. Go and check, I'll wait."
         ],
         "weather": [
           "Wind like this adds two clubs. Storm reading is half my job — you learn to feel when something's about to break.",
@@ -823,7 +1123,28 @@
       },
       "signature_item": "A worn golf glove tucked in her clutch — 'for luck' — with her father's initials inked inside the cuff.",
       "tamper_insert": "a worn golf glove, initials inked inside the cuff that don't match the owner's",
-      "staff": null
+      "epilogue": "",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "In the west wing extension with Cairo Iwobi, through the whole stretch — before the scream and after. We were not discussing golf. We were interrupted once, by Giuliana, holding a little silver flask like it was stolen. Cairo saw it too. Go and check. I'll wait."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "What's this about a bolted door in the extension?",
+          "answer": "The storage door out west was bolted at eight and unbolted at ten. I notice lines — sight lines, fairway lines, bolt lines. Somebody used that door while the whole house was watching the stage. It wasn't me. I was busy."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "What's the glove in your clutch for?",
+          "answer": "Luck. It's my father's old one — his initials inside the cuff, not mine, and yes, I know how that reads tonight. He sold that life for a driving range. Look at someone who's still buying."
+        }
+      ]
     },
     {
       "id": "solomon",
@@ -832,14 +1153,14 @@
       "sex": "M",
       "job": "Bootleg King",
       "voice": "Gravel-and-honey salesman's warmth, always mid-toast, pressing a glass into your hand before you've said hello — and going polite and flat the moment anyone mentions manifests.",
-      "backstory": "The Bootleg King — importer of spirits that skip certain paperwork, distributor for rooms that don't ask. The Midnight Syndicate runs its liquor through him, and Braun's ledger had his routes in it, dated and priced. He knew, because the Syndicate told him, and then told him what tonight required.",
-      "why_invited": "He supplied the party's bar — crates of it, staged in the west wing — and invited himself along with the delivery. He spent the front half of the evening in the foyer pouring samples and being magnificent, which is called an alibi.",
-      "dislikes_braun": "Braun drank his imports for five years and then started writing them down. A customer becoming a witness is the oldest heartbreak in Solomon's business, and it only ever ends one way.",
+      "backstory": "You are the Bootleg King — importer of spirits that skip certain paperwork, distributor for rooms that don't ask. The Midnight Syndicate runs its liquor through you, and Braun's ledger had your routes in it, dated and priced. You knew, because the Syndicate told you, and then told you what tonight required.",
+      "why_invited": "You supplied the party's bar — crates of it, staged in the west wing — and invited yourself along with the delivery. You spent the front half of the evening in the foyer pouring samples and being magnificent, which is called an alibi.",
+      "dislikes_braun": "Braun drank your imports for five years and then started writing them down. A customer becoming a witness is the oldest heartbreak in your business, and it only ever ends one way.",
       "zone_id": "extension_room",
       "faction_id": "killer",
       "guilt_slot": "signature",
       "is_herring": false,
-      "observable": "Came in through the side, not the front — and guards the bar crates in the extension room with a geniality that gets less genial the closer you stand to them.",
+      "observable": "You came in through the side, not the front — and you guard the bar crates in the extension room with a geniality that gets less genial the closer anyone stands to them.",
       "seen_as": "Everyone's favorite bad influence — the man with the good bottles, the better stories, and no visible supply chain.",
       "rival_character_id": null,
       "dialogue": {
@@ -878,7 +1199,30 @@
       },
       "signature_item": "A bottle of his own private label — Roka Reserve, a smoked plum brandy with a distinctive burnt-sweet nose.",
       "tamper_insert": "a cork stamped ROKA RESERVE, still damp, smelling of smoked plum",
-      "staff": null
+      "epilogue": "Solomon Roka built the Syndicate's routes out of his father's rowboat, and every crate in the west wing was his. Braun had bought his liquor for ten years and written down every delivery, and a bootlegger's ledger in a detective's hands is a noose. So Roka gave up one bottle of his own label — the peace offering that carried the doctor's tincture up to the study — and poured for fifty witnesses while it did its work. He would have preferred a fair fight. He has never been offered one.",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "The foyer, pouring my imports for anyone who'd hold a glass out. Fifty witnesses, all of them a little happier for it. I heard the scream and I thought it was the storm. I kept pouring. A man doesn't put a bottle down for weather.",
+          "cover_answer": "The foyer, pouring, same as I said — but you're asking the wrong man about the wrong room. {target} took a glass off me at half past nine and walked it toward the study corridor. Never came back for the second. I notice who comes back for the second."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "Did one of your bottles go to the study tonight?",
+          "answer": "One did. Roka Reserve, my own label, smoked plum — a peace offering to a man who didn't much like me. I handed it to the house to deliver, the way you do. What the house did with it, you'd have to ask the house.",
+          "cover_answer": "One did, and I didn't carry it. I handed the bottle to {target} to take up, because they offered and I had fifty glasses to fill. If it got opened before it got there, you'll want to ask them, not me."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "How did you get into the liquor business?",
+          "answer": "My father sold it out of a rowboat. I sell it out of freighters. The paperwork is the only part of the business that ever changed, and I never cared for paperwork."
+        }
+      ]
     },
     {
       "id": "remington",
@@ -887,14 +1231,14 @@
       "sex": "M",
       "job": "Police Detective",
       "voice": "Clipped, economical cop cadence — answers in facts, asks in wedges, and lets silences do most of his interrogating.",
-      "backstory": "A twenty-five-year police detective who has chased the Midnight Syndicate his entire career and watched every case die in a drawer. Six months ago, James Braun approached him privately: Braun had a ledger, and he was almost ready to hand it over. PRIVATE — YOUR VENDETTA: One year ago you came home to find your dog dead on your kitchen floor, and a cream-coloured calling card on the counter. No message, just a small snail pressed into the wax. You knew what it meant and you knew who sends cards like that: Giuliana Andolpho. You have never been able to prove it and you have never stopped wanting to. SECONDARY OBJECTIVE: if Giuliana Andolpho is convicted at any trial tonight, you claim your vendetta — worth points in the wider game regardless of how the night ends. This does not replace your job. You still win or lose with the investigators, and she is not one of the three hands, so every vote you spend on her is a vote the town needed elsewhere. That is the price. Decide whether you'll pay it. PRIVATE — YOUR VENDETTA: One year ago you came home to find your dog dead on your kitchen floor, and a cream-coloured calling card on the counter. No message, just a small snail pressed into the wax. You knew what it meant and you knew who sends cards like that: Giuliana Andolpho. You have never been able to prove it and you have never stopped wanting to. SECONDARY OBJECTIVE: if Giuliana Andolpho is convicted at any trial tonight, you claim your vendetta — worth points in the wider game regardless of how the night ends. This does not replace your job. You still win or lose with the investigators, and she is not one of the three hands, so every vote you spend on her is a vote the town needed elsewhere. That is the price. Decide whether you'll pay it.",
-      "why_invited": "Braun invited him as insurance. The handoff was set for midnight tonight — the ledger, the names, the whole snail-stamped network. Remington spent the evening outside, watching the house, because he doesn't believe in 'almost ready.'",
-      "dislikes_braun": "Braun sat on that ledger for six months, playing it like a hand of cards — protecting his investments, timing his exit, letting the Syndicate operate while he negotiated his own safety. Men died in those six months. Remington keeps the list.",
+      "backstory": "You are a twenty-five-year police detective who has chased the Midnight Syndicate your entire career and watched every case die in a drawer. Six months ago, James Braun approached you privately: Braun had a ledger, and he was almost ready to hand it over. PRIVATE — YOUR VENDETTA: One year ago you came home to find your dog dead on your kitchen floor, and a cream-coloured calling card on the counter. No message, just a small snail pressed into the wax. You knew what it meant and you knew who sends cards like that: Giuliana Andolpho. You have never been able to prove it and you have never stopped wanting to. SECONDARY OBJECTIVE: if Giuliana Andolpho is convicted at any trial tonight, you claim your vendetta — worth points in the wider game regardless of how the night ends. This does not replace your job. You still win or lose with the investigators, and she is not one of the three hands, so every vote you spend on her is a vote the town needed elsewhere. That is the price. Decide whether you'll pay it.",
+      "why_invited": "Braun invited you as insurance. The handoff was set for midnight tonight — the ledger, the names, the whole snail-stamped network. You spent the evening outside, watching the house, because you don't believe in 'almost ready.'",
+      "dislikes_braun": "Braun sat on that ledger for six months, playing it like a hand of cards — protecting his investments, timing his exit, letting the Syndicate operate while he negotiated his own safety. Men died in those six months. You keep the list.",
       "zone_id": "lawn",
       "faction_id": "detective",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Spent most of the evening on the lawn and around the cars 'getting air,' and has a habit of writing in a weatherproof notebook without looking down at it.",
+      "observable": "You spent most of the evening on the lawn and around the cars 'getting air,' and you have a habit of writing in a weatherproof notebook without looking down at it.",
       "seen_as": "The cop at the party — nobody's sure if he's off duty, and he has done nothing whatsoever to clarify.",
       "rival_character_id": null,
       "dialogue": {
@@ -933,7 +1277,28 @@
       },
       "signature_item": "A weatherproof stakeout notebook with a rubber band around it, pages warped by tonight's rain.",
       "tamper_insert": "a rain-warped page of stakeout notes in a policeman's shorthand",
-      "staff": null
+      "epilogue": "Remington Whitley has spent thirty years arriving too late, and tonight he was outside the right window with a notebook and still missed it by one path. He had been waiting for a midnight handoff that never came. What he got instead was the times, in ink, and a room full of dinner guests who did the rest. He will say the case closed itself. It did not.",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "Outside. The far garden bed, under the study windows, getting air — a man my age needs a lot of air. I heard the scream at 9:47 and I wrote it down. I write everything down. Some of it I understand later."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "What's in the notebook you keep writing in without looking?",
+          "answer": "Times. The singer took the stage at 9:40 and the hall filled. A figure on the side path at 9:41, small build, carrying something. The scream at 9:47, and the study lamp out right after. The same figure coming back at 9:54, still carrying. Four ways into that study and I had eyes on one. That's the failure I'll be living with."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "Off duty tonight, or on?",
+          "answer": "A detective's never off. I'm not here for money, which makes me rare in this room, and I know it."
+        }
+      ]
     },
     {
       "id": "carla",
@@ -942,14 +1307,14 @@
       "sex": "F",
       "job": "Chauffeur",
       "voice": "Flat, watchful economy of words — service-industry politeness worn thin, with sudden dry humor and a habit of answering questions with slightly wrong questions.",
-      "backstory": "Braun's chauffeur for four years — and the Midnight Syndicate's for eleven. She was placed in this house, the way the Syndicate places people: patiently. She knows every route, every door, every schedule, and tonight she used all three.",
-      "why_invited": "Staff. She ran the valet stand, directed the cars, and controlled the one stretch of ground nobody watches: the side path that wraps from the driveway to the study wall.",
-      "dislikes_braun": "Four years of 'the car, Carla' and not one full sentence besides. Being furniture was the job — the Syndicate's whole point — but somewhere in year two, being invisible stopped being tactical and started being personal.",
+      "backstory": "You have been Braun's chauffeur for four years — and the Midnight Syndicate's for eleven. You were placed in this house the way the Syndicate places people: patiently. You know every route, every door, every schedule, and tonight you used all three.",
+      "why_invited": "Staff. You ran the valet stand, directed the cars, and controlled the one stretch of ground nobody watches: the side path that wraps from the driveway to the study wall.",
+      "dislikes_braun": "Four years of 'the car, Carla' and not one full sentence besides. Being furniture was the job — the Syndicate's whole point — but somewhere in year two, being invisible stopped being tactical and started being personal to you.",
       "zone_id": "driveway",
       "faction_id": "killer",
       "guilt_slot": "access",
       "is_herring": false,
-      "observable": "Was away from the valet stand between roughly 9:35 and 9:50; she keeps her driving gloves on indoors and went short and impatient with anyone who made small talk near the cars.",
+      "observable": "You were away from the valet stand between roughly 9:35 and 9:50; you keep your driving gloves on indoors and went short and impatient with anyone who made small talk near the cars.",
       "seen_as": "Part of the house — competent, unreadable, and the person who knows exactly who arrived when, and how.",
       "rival_character_id": null,
       "dialogue": {
@@ -988,7 +1353,30 @@
       },
       "signature_item": "A master key ring for the house and cars, worn on her belt — including a study passkey she signed out tonight and quietly returned.",
       "tamper_insert": "a driver's leather glove, sized small, smelling faintly of smoked plum brandy",
-      "staff": null
+      "epilogue": "Carla Lucciano drove for the Syndicate for eleven years before she drove for the Brauns, and the family never asked where she had learned to keep her eyes forward. She holds every key on the property, knows which path the rain wipes clean, and was the only one of the three willing to walk through the study door. She did it because the Syndicate told her to, and because in her experience people who refuse the Syndicate stop being people. She raked the path afterward. It is her job.",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "Walking a late guest round the side of the house. He reeked of brandy, and guests who reek don't go through the front — Braun's own rule. Then I raked the path, because the rain had it like soup. I heard the scream from out there and took it for the storm. I was back at the stand before anyone missed me, apart from the trainee, who counts.",
+          "cover_answer": "Walking a late guest round the side, and I wasn't the only one on that path. {target} came down it toward the study door while I was raking, quick, head down, and told me to mind my own business when I asked. So I did. Now I'm telling you."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "You signed the study passkey out at 9:33. Why?",
+          "answer": "Because Braun asked for a bottle to be put in his study before ten, and the house was short-handed with everyone in the hall. I let myself in, left it on the desk, locked up, and signed it back at 9:56. It's in the log in my own initials. Thieves don't keep logs.",
+          "cover_answer": "Because {target} asked me to. Came to the stand at half past nine, said Braun wanted something taken up and could I open the study door — I hold every key on this property, it's the job. I opened it. I did not go in. Whoever did, you should ask them what they were carrying."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "Why do you keep your driving gloves on indoors?",
+          "answer": "Habit. Four years driving this family, eleven driving for people you don't put on a résumé. The gloves stay on."
+        }
+      ]
     },
     {
       "id": "harry",
@@ -997,14 +1385,14 @@
       "sex": "M",
       "job": "Braun's Estranged Brother",
       "voice": "Bitter aristocratic drawl running on fumes and cigarettes — the accent of money delivered by a man who no longer has any, every sentence a toast to his own ruin.",
-      "backstory": "James Braun's older, estranged brother — written out of the family estate nine years ago after 'the incident with the trust,' which he maintains was a misunderstanding involving only slightly forged signatures. He has been circling the family fortune ever since like weather.",
-      "why_invited": "Nobody is sure he was. The invitation he showed at the door looks real from a distance, which is also a fair description of Harry.",
-      "dislikes_braun": "James got the house, the money, the name — and then got to play the wounded party when Harry took what any starving man takes. Nine years of Christmas cards with no checks in them. The engagement was the last insult: a new heir incoming, and Harry's claim dissolving in champagne.",
+      "backstory": "You are James Braun's older, estranged brother — written out of the family estate nine years ago after 'the incident with the trust,' which you maintain was a misunderstanding involving only slightly forged signatures. You have been circling the family fortune ever since like weather.",
+      "why_invited": "Nobody is sure you were. The invitation you showed at the door looks real from a distance, which is also a fair description of you.",
+      "dislikes_braun": "James got the house, the money, the name — and then got to play the wounded party when you took what any starving man takes. Nine years of Christmas cards with no checks in them. The engagement was the last insult: a new heir incoming, and your claim dissolving in champagne.",
       "zone_id": "entry",
       "faction_id": "inheritance",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Chain-smoked outside near the entry for long stretches of the evening, and pats his breast pocket compulsively — there's a folded document in there he keeps touching and not showing anyone.",
+      "observable": "You chain-smoked outside near the entry for long stretches of the evening, and you pat your breast pocket compulsively — there's a folded document in there you keep touching and not showing anyone.",
       "seen_as": "The disgraced brother — charming at fifty paces, radioactive at five, and very obviously here for the will.",
       "rival_character_id": "isla",
       "dialogue": {
@@ -1043,7 +1431,28 @@
       },
       "signature_item": "A silver cigarette case with the Braun family crest, which he was pointedly not allowed to keep and kept anyway.",
       "tamper_insert": "a crested silver cigarette case, the Braun family arms worn nearly smooth",
-      "staff": null
+      "epilogue": "Harry Braun grew up in this house and was written out of it twice: once by his father and once by his brother. He came tonight with a document in his breast pocket and a cigarette in his hand, and he has never pretended to grieve. The estate was always going to go to whichever Braun was left standing. He would have preferred it to be him without help. He will take it with.",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "Outside the entry with a cigarette, where I spent most of the evening — the house makes my chest tight, always has, even before it wasn't mine. I heard the scream. I lit another one. Nobody in that house wanted the elder Braun rushing in to help."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "What's the document you keep patting in your breast pocket?",
+          "answer": "Paper, tonight. Tomorrow, certain lawyers will find it very interesting — it concerns a trust, a pen, and my brother's signature. And I'll tell you this for free: the chauffeur walked some fellow marinated in brandy round the side of the house while the rest of us waited out front. Since when does this house have a brandy entrance?"
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "Did you really grow up in this house?",
+          "answer": "Every corridor. I used to hide in the one to the study; I know which floorboard doesn't creak, and I resent that you're now wondering about that. The family crest and the nose I kept. The money went to James."
+        }
+      ]
     },
     {
       "id": "florence",
@@ -1052,14 +1461,14 @@
       "sex": "F",
       "job": "Investment Banker",
       "voice": "Precise banker's diction that warms only on two subjects — compound interest and botany — and turns witheringly polite when asked about anyone's 'foundation.'",
-      "backstory": "An investment banker with an immaculate reputation and a greenhouse obsession — a serious amateur herbalist who corresponds with botanical archives about historic medicinal plants. She has declined exactly one major client in her career: Giuliana Andolpho's foundation.",
-      "why_invited": "She manages a slice of Braun's portfolio — the boring, legal slice, she likes to specify. She spent much of the evening in the gardens, because plants don't ask her to launder anything.",
-      "dislikes_braun": "Braun kept nudging her, all year, to take on 'a friend's foundation' whose books she'd already privately reviewed and privately incinerated. He didn't like being told no by staff, and he made sure she felt like staff.",
+      "backstory": "You are an investment banker with an immaculate reputation and a greenhouse obsession — a serious amateur herbalist who corresponds with botanical archives about historic medicinal plants. You have declined exactly one major client in your career: Giuliana Andolpho's foundation.",
+      "why_invited": "You manage a slice of Braun's portfolio — the boring, legal slice, you like to specify. You spent much of the evening in the gardens, because plants don't ask you to launder anything.",
+      "dislikes_braun": "Braun kept nudging you, all year, to take on 'a friend's foundation' whose books you'd already privately reviewed and privately incinerated. He didn't like being told no by staff, and he made sure you felt like staff.",
       "zone_id": "lawn",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Spent long stretches alone in the gardens even as the storm built, and can identify any plant on the grounds on sight — a talent that got much less charming around ten o'clock.",
+      "observable": "You spent long stretches alone in the gardens even as the storm built, and you can identify any plant on the grounds on sight — a talent that got much less charming around ten o'clock.",
       "seen_as": "The straightest arrow at the party — which, tonight, everyone suddenly finds suspicious in itself.",
       "rival_character_id": null,
       "dialogue": {
@@ -1098,7 +1507,28 @@
       },
       "signature_item": "A pocket botanical field guide, annotated in her tiny handwriting, ribbon-marked at the toxicology section.",
       "tamper_insert": "a pocket field guide to medicinal plants, ribbon-marked at the poisons chapter",
-      "staff": null
+      "epilogue": "",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "The gardens, checking the beds — storms are the best time for it. Da'Quan Wilson was out by the cars and we spoke twice. He warned me about the wet gravel on the side path, which I thought was fussing at the time. I heard the scream from the lawn. I think about the gravel differently now."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "Who did you see on the side of the house?",
+          "answer": "The chauffeur, hurrying back toward the valet stand mid-evening, in the rain, without an umbrella. Staff never forget umbrellas; it's practically the uniform. And the grass under the study windows, the one patch nobody tends, was freshly flattened. I notice plants. Tonight that's a liability."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "Foxglove, seriously?",
+          "answer": "Foxglove, digitalis, and I'm aware of exactly how that sounds this evening. The greenhouse lock has been broken for a month. I reported it to James, who did nothing. I'd like that on the record before anyone else puts it there."
+        }
+      ]
     },
     {
       "id": "daquan",
@@ -1107,14 +1537,14 @@
       "sex": "M",
       "job": "Personal Trainer",
       "voice": "High-energy motivational-coach patter — counts things in reps, calls everyone 'champ,' and narrates his own alibi like a workout video.",
-      "backstory": "Personal trainer to the county's rich and inflexible, including — disastrously — James Braun, who ignored the wedding fitness plan so completely that Da'Quan's 'Braun Body by June' marketing campaign has become a local joke.",
-      "why_invited": "Braun invited him as a gesture, the way you invite the trainer you've been standing up for months. Da'Quan came intending to have one professional conversation about the campaign, and never got it.",
-      "dislikes_braun": "Braun agreed to be the face of his program, skipped nine sessions out of twelve, and then joked about it at the club. In fitness, your client's body is your billboard. Braun turned his billboard into an apology.",
+      "backstory": "You are personal trainer to the county's rich and inflexible, including — disastrously — James Braun, who ignored the wedding fitness plan so completely that your 'Braun Body by June' marketing campaign has become a local joke.",
+      "why_invited": "Braun invited you as a gesture, the way you invite the trainer you've been standing up for months. You came intending to have one professional conversation about the campaign, and never got it.",
+      "dislikes_braun": "Braun agreed to be the face of your program, skipped nine sessions out of twelve, and then joked about it at the club. In fitness, your client's body is your billboard. Braun turned your billboard into an apology.",
       "zone_id": "driveway",
       "faction_id": "villager",
       "guilt_slot": null,
       "is_herring": true,
-      "observable": "Did stretching circuits out by the cars for stretches of the evening 'to stay loose,' and repeatedly tried to corner Braun for 'five minutes, champ, just five' — witnesses noticed, because he announced it.",
+      "observable": "You did stretching circuits out by the cars for stretches of the evening 'to stay loose,' and repeatedly tried to corner Braun for 'five minutes, champ, just five' — witnesses noticed, because you announced it.",
       "seen_as": "The intense trainer with the public grudge — too loud to be sneaky, which is either his defense or his cover.",
       "rival_character_id": null,
       "dialogue": {
@@ -1153,7 +1583,28 @@
       },
       "signature_item": "A branded resistance band — 'BRAUN BODY BY JUNE' printed down the side — that he wears like a sash.",
       "tamper_insert": "a snapped resistance band printed BRAUN BODY BY JUNE",
-      "staff": null
+      "epilogue": "",
+      "staff": null,
+      "questions": [
+        {
+          "id": "alibi",
+          "importance": "alibi",
+          "prompt": "Where were you when Braun was murdered?",
+          "answer": "Out by the cars, doing my evening mobility work, rain or shine. And I wasn't alone — Florence Li was in the gardens the whole stretch, and we talked twice. I heard the scream from the driveway. Two people, one storm, no opportunity."
+        },
+        {
+          "id": "q2",
+          "importance": "important",
+          "prompt": "What did you see from the driveway?",
+          "answer": "The politician pacing that front corridor window for the better part of an hour, right in front of the study. And the chauffeur kept not being there. Her stand, her driveway, and she was gone for a good stretch. I told the banker somebody should rake that side path. Somebody did."
+        },
+        {
+          "id": "q3",
+          "importance": "useless",
+          "prompt": "What happened to 'Braun Body by June'?",
+          "answer": "It became a joke. My best client skipped training for a decade and now my trademark lawyer isn't answering. That's grounds for a lawsuit, not a murder."
+        }
+      ]
     },
     {
       "id": "braun",
@@ -1162,14 +1613,14 @@
       "sex": "M",
       "job": "Master of Braun Manor",
       "voice": "Rich, unhurried host's baritone — magnanimous on the surface, with a collector's chill underneath, and a fondness for toasts that go on one sentence too long.",
-      "backstory": "James Braun: master of Braun Manor, third of his name, expander of an inherited fortune into shipping, property, and quiet leverage. For a year he has been compiling a ledger on the Midnight Syndicate — partly justice, mostly exit strategy — and tonight he planned to trade it for a clean conscience at midnight.",
-      "why_invited": "It's his house, his engagement, his stage. He gathered everyone who loves him, owes him, or fears him into one building, on the theory that those are the only three kinds of people worth knowing.",
-      "dislikes_braun": "Even James has complaints about James: he knows he has played both sides too long — drinking the Syndicate's liquor, banking their neighbors, and cataloguing it all for leverage. Tonight was supposed to be the night he finally picked a side.",
+      "backstory": "You are James Braun: master of Braun Manor, third of your name, expander of an inherited fortune into shipping, property, and quiet leverage. For a year you have been compiling a ledger on the Midnight Syndicate — partly justice, mostly exit strategy — and tonight you planned to trade it for a clean conscience at midnight.",
+      "why_invited": "It's your house, your engagement, your stage. You gathered everyone who loves you, owes you, or fears you into one building, on the theory that those are the only three kinds of people worth knowing.",
+      "dislikes_braun": "Even you have complaints about yourself: you know you have played both sides too long — drinking the Syndicate's liquor, banking their neighbors, and cataloguing it all for leverage. Tonight was supposed to be the night you finally picked a side.",
       "zone_id": "study",
       "faction_id": "",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Withdrew to his study mid-party, as he always does — 'the host must count the silver' — carrying a single glass and expecting a delivery.",
+      "observable": "You withdrew to your study mid-party, as you always do — 'the host must count the silver' — carrying a single glass and expecting a delivery.",
       "seen_as": "The most generous man in the county, by the people he owns; a patient predator, by the people he doesn't.",
       "rival_character_id": null,
       "dialogue": {
@@ -1208,7 +1659,9 @@
       },
       "signature_item": "A crystal nightcap glass, monogrammed J.B., that no staff member is permitted to wash but him.",
       "tamper_insert": "a monogrammed crystal glass, J.B., with a ring of residue at the bottom",
-      "staff": "host"
+      "epilogue": "",
+      "staff": "host",
+      "questions": []
     },
     {
       "id": "leo",
@@ -1217,14 +1670,14 @@
       "sex": "M",
       "job": "French Chef",
       "voice": "Volcanic French kitchen-brigade energy — tender about food, murderous about timing, and constitutionally incapable of whispering.",
-      "backstory": "Braun Manor's French chef for seven years, poached from a two-star kitchen in Lyon with a salary he describes as 'an apology in advance.' The kitchen is his sovereign territory, and tonight it was full of strangers.",
-      "why_invited": "He's staff — the general of tonight's twelve-course service, which was proceeding magnificently until the household began producing corpses instead of compliments.",
-      "dislikes_braun": "Braun salts finished dishes at the table, in front of guests, every single time. Seven years. Leo has forgiven larger crimes committed by better men.",
+      "backstory": "You have been Braun Manor's French chef for seven years, poached from a two-star kitchen in Lyon with a salary you describe as 'an apology in advance.' The kitchen is your sovereign territory, and tonight it was full of strangers.",
+      "why_invited": "You're staff — the general of tonight's twelve-course service, which was proceeding magnificently until the household began producing corpses instead of compliments.",
+      "dislikes_braun": "Braun salts finished dishes at the table, in front of guests, every single time. Seven years. You have forgiven larger crimes committed by better men.",
       "zone_id": "kitchen",
       "faction_id": "",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Never leaves the kitchen except to glare at the service counter paperwork, and can account for every knife in the house by heart — he counted them, loudly, at half past ten.",
+      "observable": "You never leave the kitchen except to glare at the service counter paperwork, and you can account for every knife in the house by heart — you counted them, loudly, at half past ten.",
       "seen_as": "The tyrant of the kitchen — terrifying, incorruptible, and weirdly the most trustworthy person in the building.",
       "rival_character_id": null,
       "dialogue": {
@@ -1263,7 +1716,9 @@
       },
       "signature_item": "A carbon-steel chef's knife he sharpens nightly and refers to, without irony, as 'my colleague.'",
       "tamper_insert": "a kitchen tasting spoon, licked clean, from the chef's private roll",
-      "staff": "facilitator"
+      "epilogue": "",
+      "staff": "facilitator",
+      "questions": []
     },
     {
       "id": "chloe",
@@ -1272,20 +1727,20 @@
       "sex": "F",
       "job": "Fashion Designer",
       "voice": "Breathless fashion-atelier chatter, air-kisses and pin-sharp observations — reads a room by its hemlines and remembers every outfit like testimony.",
-      "backstory": "Braun's personal fashion designer, hired to dress the household and tonight's wedding party. She fitted every principal guest this month, which means she has been alone in a room with half the suspects and measured all of them.",
-      "why_invited": "Working staff tonight — running last looks, emergency stitches, and the champagne-soaked crisis of Isla's ruined gown, which she repaired into a triumph in under forty minutes.",
-      "dislikes_braun": "Braun negotiated her wedding commission down twice and called couture 'upholstery for people.' She smiled through it. Designers always smile through it; it's why they remember everything.",
+      "backstory": "You are Braun's personal fashion designer, hired to dress the household and tonight's wedding party. You fitted every principal guest this month, which means you have been alone in a room with half the suspects and measured all of them.",
+      "why_invited": "Working staff tonight — running last looks, emergency stitches, and the crisis of Isla's torn hem, which you repaired into a triumph in under forty minutes.",
+      "dislikes_braun": "Braun negotiated your wedding commission down twice and called couture 'upholstery for people.' You smiled through it. Designers always smile through it; it's why they remember everything.",
       "zone_id": "grand_hall",
       "faction_id": "",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Carries a pincushion cuff on her wrist and openly appraises every garment in the room; she can tell you who changed clothes tonight, and when, without checking notes.",
+      "observable": "You carry a pincushion cuff on your wrist and openly appraise every garment in the room; you can tell anyone who changed clothes tonight, and when, without checking notes.",
       "seen_as": "The stylist who knows where all the bodies are buttoned.",
       "rival_character_id": null,
       "dialogue": {
         "life": [
           "I dressed eleven people in this room, so believe me when I say: I know everyone's measurements and half their secrets. They come out in fittings. Both.",
-          "Isla's gown was my masterpiece and that champagne tower martyred it. I rebuilt her second look in forty minutes flat. In the grand hall coat room. With witnesses. Excellent ones.",
+          "Isla's gown was my masterpiece and a stair rail tore its hem. I rebuilt her second look in forty minutes flat. In the grand hall coat room. With witnesses. Excellent ones.",
           "Fashion is armor, darling. Tonight I watched several people arrive in armor and one person arrive in camouflage. I'm still deciding which one."
         ],
         "weather": [
@@ -1318,7 +1773,9 @@
       },
       "signature_item": "A pincushion cuff bristling with pins, and a measuring tape she snaps like punctuation.",
       "tamper_insert": "a tailor's pin with a black glass head, the kind from the designer's cuff",
-      "staff": "facilitator"
+      "epilogue": "",
+      "staff": "facilitator",
+      "questions": []
     },
     {
       "id": "bertram",
@@ -1327,14 +1784,14 @@
       "sex": "M",
       "job": "Estate Butler",
       "voice": "Glacial butler's formality, forty years deep — speaks in announcements, disapproves in millimeters, and deploys 'sir' and 'madam' like sentencing.",
-      "backstory": "Estate butler to the Braun family for four decades — served James's father, raised James's standards, and privately considers himself the last load-bearing wall of the household. Nothing enters or leaves this house without, in theory, crossing his ledger.",
-      "why_invited": "He runs the household; tonight he ran the door, the service, and the increasingly futile effort to maintain standards while guests trampled the rope lines and someone murdered his employer.",
-      "dislikes_braun": "Master James let standards slip his father would have died over — side-door deliveries, unvetted vendors, liquor arriving without house seals. Bertram filed his objections. Master James filed them further.",
+      "backstory": "You have been estate butler to the Braun family for four decades — you served James's father, raised James's standards, and privately consider yourself the last load-bearing wall of the household. Nothing enters or leaves this house without, in theory, crossing your ledger.",
+      "why_invited": "You run the household; tonight you ran the door, the service, and the increasingly futile effort to maintain standards while guests trampled the rope lines and someone murdered your employer.",
+      "dislikes_braun": "Master James let standards slip his father would have died over — side-door deliveries, unvetted vendors, liquor arriving without house seals. You filed your objections. Master James filed them further.",
       "zone_id": "grand_hall",
       "faction_id": "",
       "guilt_slot": null,
       "is_herring": false,
-      "observable": "Hands trembling slightly since the body was found — the doctor poured his coffee for him — but his memory for the evening's comings and goings remains terrifyingly exact.",
+      "observable": "Your hands have been trembling slightly since the body was found — the doctor poured your coffee for you — but your memory for the evening's comings and goings remains terrifyingly exact.",
       "seen_as": "The institution — the one person who has always been here, knows how everything is done, and says nothing until it counts.",
       "rival_character_id": null,
       "dialogue": {
@@ -1373,7 +1830,9 @@
       },
       "signature_item": "A leather-bound household ledger and a pocket watch he consults before answering any question about time.",
       "tamper_insert": "a page from the household ledger, one delivery entry crossed out in fresh ink",
-      "staff": "facilitator"
+      "epilogue": "",
+      "staff": "facilitator",
+      "questions": []
     }
   ]
 }

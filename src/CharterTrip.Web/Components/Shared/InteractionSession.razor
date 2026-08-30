@@ -1,0 +1,105 @@
+@using CharterTrip.Core.Abstractions
+@using CharterTrip.Core.Models
+@using CharterTrip.Core.Mystery
+@inject ITripStore Store
+@inject IClock Clock
+
+@* Two people, one conversation, both phones.
+
+   The scanner asks first. Whoever's turn it is sees the other person's three questions as buttons;
+   the other sees "waiting". A tap writes the answer down on both phones at once — the store's
+   Changed event is the whole of the plumbing — and the answering player reads it out. Nobody
+   types anything. When each has asked the other's three, the conversation is over, and it stays
+   on both screens until each of them closes it: it used to vanish the instant the sixth answer
+   landed, before either of them had read it.
+
+   Read-only on everything but the conversation: no faction, no clues, no role. What the other
+   person is is exactly what this screen must never help anyone find out. *@
+
+<section class="mp-session">
+    <p class="mp-session-kicker">Talking to</p>
+    <h2 class="mp-session-who">@(Other?.Name ?? "somebody")</h2>
+    <p class="mp-zone">@Other?.Job</p>
+
+    @if (Session.Exchanges.Count > 0)
+    {
+        <ol class="mp-transcript">
+            @for (var i = 0; i < Session.Exchanges.Count; i++)
+            {
+                var exchange = Session.Exchanges[i];
+                var mine = exchange.AskerCharacterId == Me.Id;
+                var latest = i == Session.Exchanges.Count - 1;
+
+                <li class="mp-exchange @(mine ? "is-mine" : "is-theirs") @(latest ? "is-latest" : "")" @key="i">
+                    <p class="mp-exchange-q"><b>@(mine ? "You asked" : "They asked")</b> @exchange.Prompt</p>
+                    @if (!mine && latest && Session.IsOpen)
+                    {
+                        <p class="mp-exchange-cue">Read this out:</p>
+                    }
+                    @if (!mine && latest && !Session.IsOpen)
+                    {
+                        <p class="mp-exchange-cue">Read this out, then close:</p>
+                    }
+                    <p class="mp-exchange-a">@exchange.Answer</p>
+                </li>
+            }
+        </ol>
+    }
+
+    @if (!Session.IsOpen)
+    {
+        <p class="mp-session-done">That's everything. It's all in your Interactions tab.</p>
+        <button class="btn btn-gold btn-sm" @onclick="CloseAsync">Close</button>
+    }
+    else if (MyTurn)
+    {
+        <p class="mp-session-turn">Your turn to ask</p>
+        <div class="mp-asks">
+            @foreach (var question in Askable)
+            {
+                <button class="btn btn-gold btn-sm btn-block mp-ask" @key="question.Id"
+                        @onclick="() => AskAsync(question.Id)">
+                    @question.Prompt
+                </button>
+            }
+        </div>
+    }
+    else
+    {
+        <p class="mp-session-turn muted">
+            Waiting for @(Other?.Name ?? "them") to ask<span class="ms-typing" aria-hidden="true"><i></i><i></i><i></i></span>
+        </p>
+    }
+
+    @if (Session.IsOpen)
+    {
+        @* Deliberately two taps: leaving mid-conversation ends it for both of you. *@
+        <details class="sc-force mp-session-leave">
+            <summary class="tiny muted">Walked away?</summary>
+            <button class="btn btn-danger-ghost btn-xs" @onclick="LeaveAsync">End the conversation</button>
+        </details>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public TripData Trip { get; set; } = default!;
+    [Parameter, EditorRequired] public MysteryCharacter Me { get; set; } = default!;
+    [Parameter, EditorRequired] public MysteryInteraction Session { get; set; } = default!;
+
+    private MysteryCharacter? Other =>
+        Session.Other(Me.Id) is { } id ? Trip.Mystery.Story.Character(id) : null;
+
+    private bool MyTurn => InteractionService.NextAsker(Trip, Session) == Me.Id;
+
+    private IReadOnlyList<MysteryQuestion> Askable => InteractionService.Askable(Trip, Session, Me.Id);
+
+    private Task AskAsync(string questionId) =>
+        Store.MutateAsync(t => InteractionService.Ask(t, Session.Id, Me.Id, questionId, Clock.UtcNow), TripArea.Mystery);
+
+    private Task LeaveAsync() =>
+        Store.MutateAsync(t => InteractionService.Abandon(t, Session.Id, Clock.UtcNow, Me.Id), TripArea.Mystery);
+
+    /// <summary>Put it away on this phone only. The other person is still reading theirs.</summary>
+    private Task CloseAsync() =>
+        Store.MutateAsync(t => InteractionService.Dismiss(t, Session.Id, Me.Id), TripArea.Mystery);
+}

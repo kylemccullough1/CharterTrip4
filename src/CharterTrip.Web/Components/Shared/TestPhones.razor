@@ -46,6 +46,13 @@
                         <button class="chip" @onclick="() => Sims.RemoveLast()">− last</button>
                         <button class="chip" @onclick="() => Sims.Reset()">clear</button>
                     }
+
+                    @if (GroupOf is not null && Sims.Joined > 0)
+                    {
+                        <button class="chip @(_grouped ? "on" : "")" @onclick="() => SetGroupedAsync(!_grouped)">
+                            ⊞ Group by @(GroupLabel)
+                        </button>
+                    }
                 </div>
 
                 @if (Sims.Count == 0)
@@ -55,14 +62,53 @@
                         would.
                     </p>
                 }
+                else if (_grouped && GroupOf is not null)
+                {
+                    @* The same frames, sorted into the game's own groups — the mystery's factions —
+                       so the three killers, say, sit side by side. Each frame keeps its slot and its
+                       key, so regrouping never reloads a phone somebody is halfway through. *@
+                    @foreach (var group in Grouped)
+                    {
+                        <section class="sim-group" @key="group.Key">
+                            <h4 class="sim-group-name">@group.Key <span class="muted tiny">· @group.Count()</span></h4>
+                            <div class="sim-rail">
+                                @foreach (var slot in group)
+                                {
+                                    @Frame(slot)
+                                }
+                            </div>
+                        </section>
+                    }
+                }
                 else
                 {
                     <div class="sim-rail">
                         @foreach (var slot in Sims.Slots)
                         {
+                            @Frame(slot)
+                        }
+                    </div>
+                }
+
+                @if (Sims.Count > 0)
+                {
+                    <p class="muted tiny center sim-nav">@Sims.Joined of @Sims.Count signed in</p>
+                }
+            </div>
+        }
+    </section>
+}
+
+@code {
+    /// <summary>
+    /// One phone. A fragment rather than markup in two places, because the grouped and the
+    /// flat rail draw exactly the same card.
+    /// </summary>
+    private RenderFragment Frame(int slot) => @<text>
+                            @{
                             var seat = slot;
                             var holder = Sims.PersonFor(seat);
-
+                            }
                             <div class="sim-card" @key="seat">
                                 <span class="sim-label">Phone @seat @NameOf(holder)</span>
 
@@ -96,17 +142,8 @@
                                     </div>
                                 }
                             </div>
-                        }
-                    </div>
+    </text>;
 
-                    <p class="muted tiny center sim-nav">@Sims.Joined of @Sims.Count signed in</p>
-                }
-            </div>
-        }
-    </section>
-}
-
-@code {
     /// <summary>Which game this rail belongs to. Names the persisted panel state and the rail.</summary>
     [Parameter, EditorRequired] public string Game { get; set; } = "";
 
@@ -142,11 +179,42 @@
     /// <summary>Places one frame can be driven, the way a QR code would have driven it.</summary>
     [Parameter] public IReadOnlyList<PhoneDestinations> Destinations { get; set; } = [];
 
+    /// <summary>
+    /// Which group a signed-in phone belongs to, for sorting the rail — the mystery's factions.
+    /// Null for a game with nothing to group by; a phone still at the door lands in "Not in yet".
+    /// </summary>
+    [Parameter] public Func<TripData, string, string?>? GroupOf { get; set; }
+
+    /// <summary>What the groups are called on the toggle: "faction".</summary>
+    [Parameter] public string GroupLabel { get; set; } = "group";
+
     /// <summary>All: a testing panel watches whatever the game it is testing watches.</summary>
     protected override TripArea Watching => TripArea.All;
 
     private bool _open;
+    private bool _grouped;
     private bool _restored;
+
+    private string GroupKey => $"trip.testing.{Game}.grouped";
+
+    /// <summary>The slots by group, groups in the order their first phone appears.</summary>
+    private IEnumerable<IGrouping<string, int>> Grouped =>
+        Sims.Slots.GroupBy(slot =>
+            Sims.PersonFor(slot) is { } person
+                ? GroupOf!(Trip, person) ?? "Ungrouped"
+                : "Not in yet");
+
+    private async Task SetGroupedAsync(bool grouped)
+    {
+        _grouped = grouped;
+
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", GroupKey, grouped ? "1" : "0");
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+    }
 
 
     /// <summary>
@@ -236,9 +304,13 @@
 
         try
         {
-            if (await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey) == "1")
+            var open = await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey) == "1";
+            var grouped = await JS.InvokeAsync<string?>("localStorage.getItem", GroupKey) == "1";
+
+            if (open || grouped)
             {
-                _open = true;
+                _open = open;
+                _grouped = grouped;
                 StateHasChanged();
             }
         }

@@ -5,7 +5,7 @@
       "title": "Everything is on your phone",
       "bullets": [
         "Your phone is your character sheet, your evidence file, and your conscience — keep it on you all night.",
-        "The tabs across the top hold who you are, what you can say, your role, your clues, and your history with other guests.",
+        "The tabs across the top hold who you are, your conversations, your map, your role, and your clues — each one arrives when the night needs it.",
         "When the main screen gives an instruction, it outranks whatever you were doing. Even gossip."
       ],
       "braun_says": "Everything you need tonight is on the device in your hand. I've put my entire evening on there — my guests, my secrets, my house. Do try not to drop it in the champagne.",
@@ -17,7 +17,7 @@
       "title": "Who you are tonight",
       "bullets": [
         "Tonight you are the person on your screen — their name, their job, their voice, their grudges.",
-        "Read your backstory and your 'say' lines; they're yours to perform, embellish, and weaponize.",
+        "Read your backstory. It's yours to perform, embellish, and weaponize — and it's what you'll say when Braun calls your name.",
         "Your secrets are real. Guard them like money, spend them like money."
       ],
       "braun_says": "I've taken the liberty of deciding who each of you really is. Some of you are exactly who you appear to be. The rest of you — well. That's rather the point of the evening.",
@@ -49,14 +49,24 @@
       "callouts": []
     },
     {
+      "id": "map",
+      "title": "The house, and where the cards are",
+      "bullets": [
+        "Nine rooms, nine cards. There is one card hidden somewhere in each room — the map on your phone shows the rooms, and the searching is up to you.",
+        "The study is roped off. Its card is the scene itself, and you'll see it when the house is ready to show you."
+      ],
+      "braun_says": "My house, as you'll find it. I've been generous in every room. The study is mine and mine alone — that door stays shut, and I'd take it as a personal insult if anyone tested it before I do.",
+      "figure": "map",
+      "callouts": []
+    },
+    {
       "id": "scanning",
       "title": "Scan the people you meet",
       "bullets": [
-        "Every guest wears a badge — scan the people you meet and they're added to your phone's records.",
-        "Scanning someone unlocks your history with them, and history is where motives live.",
-        "You can't question a person your phone hasn't met. Mingle like your verdict depends on it."
+        "Everyone's code is on their phone. Scan somebody's and the two of you are in a conversation: three questions each, taking turns, scanner asks first.",
+        "Everything you're told is saved under Interactions. Star what matters."
       ],
-      "braun_says": "Introductions at my parties are mandatory and now, I'm pleased to say, electronic. Point your phone, collect my guests. I acquired most of them the same way — one favor at a time.",
+      "braun_says": "Introductions at my parties are mandatory and now, I'm pleased to say, electronic. Point your phone at somebody's, collect my guests. I acquired most of them the same way — one favor at a time.",
       "figure": "badge",
       "callouts": []
     },
@@ -64,8 +74,8 @@
       "id": "trials",
       "title": "How somebody goes to jail",
       "bullets": [
-        "Three trials tonight. At each one, the room accuses, the accused answer, and everyone votes.",
-        "At trial, the accused cannot lie — direct questions get true answers. Everywhere else, all bets are off.",
+        "Three trials tonight. The room accuses, the four most suspected take the stand, the jury questions them, and everyone votes. The top two go down.",
+        "Anyone may lie, anywhere — on the stand included. Nobody is obliged to tell the truth; catching them at it is the game.",
         "Convictions are permanent, and the convicted lose their vote. Choose like it counts, because it does."
       ],
       "braun_says": "Should this evening require justice, it will be served the way I serve everything: publicly, dramatically, and in courses. Three trials. Whoever you convict stays convicted — so do be sure. Or be persuasive.",
@@ -73,14 +83,14 @@
       "callouts": []
     },
     {
-      "id": "mingle",
-      "title": "First, let's get to know each other",
+      "id": "introductions",
+      "title": "First, introductions",
       "bullets": [
-        "First: drinks, introductions, and reconnaissance — meet at least three guests you don't know.",
-        "Scan badges, trade stories, and check your history with the people you meet.",
-        "Pay attention to who's where. Later tonight, 'where were you?' becomes the only question that matters."
+        "Before anything else, the room meets itself. Braun goes round everybody, one at a time, and the screen shows whose turn it is.",
+        "When it's you: stand, say your name, your age, man or woman, and the 'Who you are' paragraph from your phone.",
+        "Listen. Three of you are murderers."
       ],
-      "braun_says": "Enough instruction — this is a party. Go. Meet each other. Learn names, trade lies, admire my house. I'll be circulating for a while yet, and then, as always, the study at nine. A host must count the silver.",
+      "braun_says": "Enough instruction. Before the drinks, the introductions — I like to know exactly who is in my house. When I say your name, stand up and tell the room who you are. I'll go first, naturally. It is my house.",
       "figure": null,
       "callouts": []
     }

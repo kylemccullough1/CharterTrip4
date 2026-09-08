@@ -196,3 +196,36 @@ removed from the model rather than built, and the site does not track money. The
 champagne tower were cut from the weekend. The murder mystery was first designed as a generator that
 dealt a fresh game every time; that was replaced by one hand-written story, and
 [`docs/MYSTERY-PLAN.md`](docs/MYSTERY-PLAN.md) is kept only for the reasoning that survived.
+
+---
+
+## Showcase mode (a sandbox, not a wall)
+
+The trip is over, and the site now stands as a portfolio piece embedded in duckdgoose.net, with
+the committee sign-in printed in that site's tutorial so visitors can see the admin view. For
+that to be safe, nothing a visitor does can stick — but a site whose buttons do nothing is not a
+demonstration of the site, it is a screenshot with a working cursor. So showcase mode gives every
+visitor a private, throwaway copy of the trip instead of taking their pen away:
+
+- `SiteMode.ReadOnly` in `src/CharterTrip.Core/SiteMode.cs` is **on**. It is a compile-time
+  switch on purpose: turning it off means a commit and a deploy, not a portal setting.
+- `SandboxTripStore` is registered **scoped**, which on Blazor Server means one per browser tab's
+  circuit. It deep-copies the trip when the tab connects, applies every mutation to the copy, and
+  dies with the connection. Edits are therefore real, private to that tab, and gone on refresh.
+  `JsonTripStore` stays a singleton and is the only thing that ever touches `trip.json`.
+- `SandboxPhotoStore` does the same for uploads, holding them in memory so a clue picture really
+  does upload and really does render. It is a singleton rather than scoped, because `/photos/{id}`
+  is a separate HTTP request that cannot see the circuit's scope; it is capped and evicts
+  oldest-first so strangers cannot fill the server's memory.
+- `TripPermissions.CanEdit` is unchanged — the committee can edit everything, in both modes.
+  Nothing above the storage layer knows which mode it is running in. A banner across the top says
+  what is happening, and `/healthz` reports `readOnly`.
+- The trade-off, stated plainly: two tabs no longer share a game. Live, the television and the
+  phones are one conversation; here each tab talks only to itself. Cross-tab sync and
+  reset-on-refresh are the same piece of state, and the frozen site is the promise being kept.
+- `Program.cs` also relaxes Blazor Server's clickjacking headers to allow framing by
+  duckdgoose.net (and only that origin), which is what lets the portfolio show the site in a
+  window. `/healthz` and `/admin/trip.json` deliberately ask `JsonTripStore` rather than
+  `ITripStore`, so they report on and export the real trip rather than a sandbox.
+
+To run the site as the live trip again, set `ReadOnly` to `false` and deploy.

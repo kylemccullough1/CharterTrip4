@@ -21,6 +21,12 @@ public sealed record TripPermissions(
     bool IsBuzzerHost = false,
     bool IsBeeHost = false)
 {
+    /// <summary>
+    /// Committee. In showcase mode this stays true, and deliberately so: taking the edit buttons
+    /// away was the old answer, and it left a visitor holding the committee password with nothing
+    /// to press. The store underneath is a sandbox there, so an edit made here is real, private
+    /// and gone on refresh. Nothing about permission changes between the two modes.
+    /// </summary>
     public bool CanEdit => IsAdmin;
 
     /// <summary>Admin-only areas: money, the full roster, clue text.</summary>

@@ -1,4 +1,6 @@
-@* The committee's view: every section, everything editable. *@
+@using CharterTrip.Core
+@* The committee's view: every section, everything editable. In showcase mode it is still every
+   section and still everything editable — the only difference is where the edits go. *@
 
 <div class="shell shell-admin">
     <NavMenu Admin="true" />
@@ -9,7 +11,14 @@
 
     <SiteFooter>
         <span class="chip tiny ok">Admin mode</span>
-        <span class="muted tiny">You can edit anything on the site.</span>
+        @if (SiteMode.ReadOnly)
+        {
+            <span class="muted tiny">You can edit anything on the site. Nothing is saved.</span>
+        }
+        else
+        {
+            <span class="muted tiny">You can edit anything on the site.</span>
+        }
         <a class="btn btn-ghost btn-xs" href="/logout">Sign out</a>
     </SiteFooter>
 </div>

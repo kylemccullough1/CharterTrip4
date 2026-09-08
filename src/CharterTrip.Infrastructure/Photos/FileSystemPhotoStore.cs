@@ -21,25 +21,7 @@ public sealed class FileSystemPhotoStore(IOptions<TripStoreOptions> options) : I
     {
         Directory.CreateDirectory(_root);
 
-        // The extension is what tells the serving route its content type back, and what tells the
-        // board whether to render a picture or a player. Guessing wrong on a video means a clue
-        // that shows nothing, so an unrecognised video type keeps the video default rather than
-        // falling through to the image one.
-        var extension = contentType switch
-        {
-            "image/png" => ".png",
-            "image/webp" => ".webp",
-            "image/gif" => ".gif",
-            "video/mp4" => ".mp4",
-            "video/webm" => ".webm",
-            "video/quicktime" => ".mov",
-            "video/x-m4v" => ".m4v",
-            "video/ogg" => ".ogv",
-            _ when contentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase) => ".mp4",
-            _ => ".jpg"
-        };
-
-        var id = $"{Guid.NewGuid():n}{extension}";
+        var id = PhotoContentTypes.NewId(contentType);
         var path = Path.Combine(_root, id);
 
         await using (var file = File.Create(path))

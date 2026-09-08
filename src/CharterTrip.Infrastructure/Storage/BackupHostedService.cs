@@ -1,4 +1,3 @@
-using CharterTrip.Core.Abstractions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -11,7 +10,7 @@ namespace CharterTrip.Infrastructure.Storage;
 /// deleting the wrong thing at 1am. Restoring is then "copy a file back".
 /// </summary>
 public sealed class BackupHostedService(
-    ITripStore store,
+    JsonTripStore store,
     IOptions<TripStoreOptions> options,
     ILogger<BackupHostedService> logger) : BackgroundService
 {

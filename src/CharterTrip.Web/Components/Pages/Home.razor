@@ -88,6 +88,14 @@
 
             <div class="hero-cd">
                 <b>@_countdown.Headline</b><span>@_countdown.Detail</span>
+                @* The flag rides inside the countdown pill rather than beside it, so on a phone it
+                   wraps with the blurb it qualifies instead of drifting off on its own line. The
+                   ShowcaseBanner at the top of the page carries the full sentence; here it is one
+                   word plus a tooltip, because the hero is already dense. *@
+                @if (CharterTrip.Core.SiteMode.ReadOnly)
+                {
+                    <span class="hero-cd-flag" title="@CharterTrip.Core.SiteMode.ReadOnlyMessage">Read-only</span>
+                }
             </div>
         </div>
 

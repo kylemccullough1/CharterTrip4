@@ -1,6 +1,7 @@
 ﻿using Microsoft.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using CharterTrip.Core;
 using CharterTrip.Core.Abstractions;
 using CharterTrip.Core.Services;
 using CharterTrip.Infrastructure;
@@ -34,6 +35,33 @@ builder.Services.Configure<AdminCredentialOptions>(
 builder.Services.AddSingleton<IAdminSignIn, AdminSignIn>();
 builder.Services.AddScoped<ICurrentUser, CookieCurrentUser>();
 
+// Whether this deployment expects to be looked at from inside somebody else's page.
+//
+// The showcase is embedded in duckdgoose.net, and a cookie is only sent into a frame on another
+// site if it says SameSite=None. The default is Lax for the sign-in cookie and Strict for the
+// antiforgery one, and Strict is the one that bites first: the login form posts, its antiforgery
+// cookie is not sent because the top-level site is not this one, validation fails, and the guard
+// further down redirects back to /login. From the visitor's side the password simply does not
+// work — no error, no clue, and it works perfectly when the same site is opened in its own tab.
+//
+// SameSite=None requires Secure, and a Secure cookie is silently discarded on a plain http
+// origin, so this stays off in Development where the fallback plan is this app on a laptop and
+// twenty-five phones over house wifi. It is also off for the live trip: that deployment is not
+// framed by anything, and relaxing a cookie nobody needs relaxed is how CSRF protection gets
+// quietly given away.
+var framed = SiteMode.ReadOnly && !builder.Environment.IsDevelopment();
+
+// Chrome is retiring unpartitioned third-party cookies. Partitioned (CHIPS) keeps this working
+// past that: the cookie is still sent into the frame, but it is filed under the embedding site,
+// so a sign-in made inside duckdgoose.net belongs to that page and not to the whole browser.
+// Browsers that do not know the attribute ignore it, so there is nothing to detect here.
+static void Embeddable(Microsoft.AspNetCore.Http.CookieBuilder cookie)
+{
+    cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+    cookie.SecurePolicy = CookieSecurePolicy.Always;
+    cookie.Extensions.Add("Partitioned");
+}
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -59,7 +87,17 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/login";
         options.LogoutPath = "/logout";
         options.AccessDeniedPath = "/";
+
+        if (framed) Embeddable(options.Cookie);
     });
+
+// The antiforgery cookie defaults to SameSite=Strict, which is the stricter of the two and the
+// one that actually stops the sign-in going through from inside the frame. Same conditions.
+builder.Services.AddAntiforgery(options =>
+{
+    if (framed) Embeddable(options.Cookie);
+});
+
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 

@@ -497,6 +497,20 @@ select.textfield { cursor: pointer; }
 .hero-cd b { font-family: var(--display); font-size: 1.25rem; color: var(--gold); letter-spacing: .06em; }
 .hero-cd span { color: var(--text-dim); font-size: 0.813rem; }
 
+/* The showcase flag sits in the countdown pill next to "That's a wrap". It has to beat the
+   `.hero-cd span` rule above, hence the two-class selector: as a plain span it inherited the
+   dim body colour and read as more of the blurb rather than as a label about the site. */
+.hero-cd .hero-cd-flag {
+  align-self: center;
+  padding: 2px 9px; border-radius: 999px;
+  font-family: var(--display); font-size: 0.688rem;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--gold-light);
+  background: rgba(var(--gold-rgb),.14);
+  border: 1px solid rgba(var(--gold-rgb),.38);
+  cursor: help;
+}
+
 /* hero scoreboard */
 .hero-board {
   background: rgba(12,15,21,.82); backdrop-filter: blur(12px);

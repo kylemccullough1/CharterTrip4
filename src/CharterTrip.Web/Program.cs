@@ -104,6 +104,30 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 
+// Let duckdgoose.net frame this site, and nobody else.
+//
+// Blazor Server protects its circuit from clickjacking by sending `X-Frame-Options: SAMEORIGIN`
+// and `Content-Security-Policy: frame-ancestors 'self'` on every page, which is why the portfolio's
+// window showed only "refused to connect". Those defaults are written by the components endpoint
+// while it runs, so the override is registered early and applied late: OnStarting fires just
+// before the headers go out, after the framework has written its own.
+//
+// X-Frame-Options cannot name a second origin (ALLOW-FROM died with old Edge), so it is removed
+// and frame-ancestors carries the whole policy. Every current browser honours frame-ancestors.
+// The list is an allow-list of origins Kyle controls; an attacker's page still cannot frame this
+// site, which is the entire threat clickjacking protection exists for.
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        context.Response.Headers.Remove("X-Frame-Options");
+        context.Response.Headers["Content-Security-Policy"] =
+            "frame-ancestors 'self' https://duckdgoose.net https://www.duckdgoose.net http://localhost:5173";
+        return Task.CompletedTask;
+    });
+    await next();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -150,7 +174,12 @@ app.MapRazorComponents<App>()
 //
 // Deliberately still a 200 — the deploy workflow smoke-tests this endpoint, and a data-root
 // problem should not be able to block shipping a fix during the trip.
-app.MapGet("/healthz", (ITripStore store) =>
+//
+// Takes JsonTripStore, not ITripStore, and that matters in showcase mode: ITripStore is a
+// per-circuit sandbox there, so an endpoint asking for it would be handed a brand-new copy of
+// the baseline and would report on a document that had existed for a microsecond. Health is a
+// question about the file, so it is asked of the thing that owns the file.
+app.MapGet("/healthz", (JsonTripStore store) =>
 {
     var status = store.Status;
     return Results.Ok(new
@@ -161,7 +190,8 @@ app.MapGet("/healthz", (ITripStore store) =>
         updatedUtc = store.Current.UpdatedUtc,
         dataPath = status.DataPath,
         seeded = status.Seeded,
-        canPersist = status.CanPersist
+        canPersist = status.CanPersist,
+        readOnly = CharterTrip.Core.SiteMode.ReadOnly
     });
 });
 
@@ -174,7 +204,12 @@ app.MapGet("/healthz", (ITripStore store) =>
 //
 // This is the whole trip, including the mystery solution and every buzzer code, so it is behind
 // the same sign-in as the admin pages rather than merely unlinked.
-app.MapGet("/admin/trip.json", (ITripStore store) =>
+//
+// JsonTripStore for the same reason as /healthz, and with a second one on top: in showcase mode
+// this hands back the real trip rather than whatever the person downloading it has been playing
+// with. A file called trip.json that quietly contained a stranger's afternoon of edits would be
+// a worse export than no export at all.
+app.MapGet("/admin/trip.json", (JsonTripStore store) =>
 {
     var json = JsonSerializer.Serialize(store.Current, TripJson.Options);
     var name = $"trip-r{store.Current.Revision}-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}.json";
@@ -234,6 +269,6 @@ app.MapGet(TripMedia.UrlPrefix + "{id}", async (string id, IPhotoStore media, Ht
 
 // Touch the store during startup so a broken data file fails loudly here rather than on
 // the first page request.
-_ = app.Services.GetRequiredService<ITripStore>().Current;
+_ = app.Services.GetRequiredService<JsonTripStore>().Current;
 
 app.Run();

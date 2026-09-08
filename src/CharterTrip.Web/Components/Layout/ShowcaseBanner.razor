@@ -1,0 +1,13 @@
+@using CharterTrip.Core
+
+@* One line across the top of every page while SiteMode.ReadOnly is on. Rendered by MainLayout
+   above whichever shell is chosen, so the committee sees it in the admin view too: that view is
+   the whole reason the mode exists, and the one place where "nothing is saved" is a surprise
+   worth stating out loud before somebody spends an hour rewriting the itinerary. *@
+@if (SiteMode.ReadOnly)
+{
+    <div class="showcase-banner" role="status">
+        <span class="showcase-chip">Showcase</span>
+        <span>@SiteMode.ReadOnlyMessage</span>
+    </div>
+}
